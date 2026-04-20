@@ -21,14 +21,30 @@ test("project is an Astro blog instead of a Jekyll site", () => {
   assert.equal(exists("_posts/2026-04-20-welcome.md"), false);
 });
 
-test("homepage remains a writing-first bilingual research blog", () => {
+test("homepage is a minimal writing-first notes index", () => {
   const index = read("src/pages/index.astro");
 
   assert.match(index, /getCollection\(["']blog["']/);
-  assert.match(index, /AI, Systems, and Research Notes/);
-  assert.match(index, /写一些关于大模型、机器学习、工程实践和论文阅读的笔记/);
-  assert.match(index, /Latest Notes/);
+  assert.match(index, />Latest</);
+  assert.match(index, />Topics</);
+  assert.doesNotMatch(index, /home-hero|site-title|hero-copy|AI, Systems, and Research Notes/);
   assert.doesNotMatch(index, /About me|自我介绍|bio/i);
+});
+
+test("homepage does not keep unused hero styling", () => {
+  const css = read("src/styles/global.css");
+
+  assert.doesNotMatch(css, /\.home-hero|\.hero-copy|\.kicker/);
+  assert.match(css, /\.post-index\s*\{\s*padding:\s*36px 0 44px;/);
+});
+
+test("navigation stays minimal and does not promote GitHub", () => {
+  const layout = read("src/layouts/BaseLayout.astro");
+
+  assert.match(layout, />Notes</);
+  assert.match(layout, />Topics</);
+  assert.doesNotMatch(layout, />Research Notes</);
+  assert.doesNotMatch(layout, />GitHub</);
 });
 
 test("Astro content collection defines blog post metadata", () => {

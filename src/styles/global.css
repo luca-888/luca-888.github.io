@@ -69,18 +69,6 @@ main {
   margin: 0 auto;
 }
 
-.home-hero {
-  padding: 72px 0 54px;
-  border-bottom: 1px solid var(--line);
-}
-
-.kicker {
-  margin: 0 0 18px;
-  color: var(--accent);
-  font-size: 14px;
-  font-weight: 650;
-}
-
 h1,
 h2,
 h3,
@@ -89,27 +77,23 @@ p {
 }
 
 h1 {
-  max-width: 760px;
-  margin-bottom: 24px;
-  font-size: 58px;
-  line-height: 1.02;
+  max-width: 620px;
+  margin-bottom: 16px;
+  font-size: 34px;
+  line-height: 1.12;
   font-weight: 560;
   letter-spacing: 0;
-}
-
-.hero-copy {
-  max-width: 650px;
-  margin-bottom: 8px;
-  color: var(--ink);
-  font-size: 18px;
-  line-height: 1.65;
 }
 
 .muted {
   color: var(--muted);
 }
 
-.post-index,
+.post-index {
+  padding: 36px 0 44px;
+  border-bottom: 1px solid var(--line);
+}
+
 .topic-index {
   padding: 44px 0;
   border-bottom: 1px solid var(--line);
@@ -276,17 +260,9 @@ h1 {
     width: min(100% - 28px, var(--max));
   }
 
-  .home-hero {
-    padding: 48px 0 38px;
-  }
-
   h1 {
-    font-size: 40px;
-    line-height: 1.08;
-  }
-
-  .hero-copy {
-    font-size: 16px;
+    font-size: 30px;
+    line-height: 1.14;
   }
 
   .section-head {
@@ -326,7 +302,7 @@ h1 {
 
 @media (max-width: 460px) {
   h1 {
-    font-size: 34px;
+    font-size: 28px;
   }
 
   .post-link {

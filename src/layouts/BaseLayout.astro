@@ -7,7 +7,7 @@ interface Props {
 }
 
 const {
-  title = "Writing",
+  title = "Notes",
   description = "AI, Systems, and Research Notes",
 } = Astro.props;
 
@@ -26,9 +26,8 @@ const pageTitle = title === "Luca" ? title : `${title} | Luca`;
     <header class="site-header">
       <a class="brand" href="/">Luca</a>
       <nav aria-label="Primary navigation">
-        <a href="/">Writing</a>
-        <a href="/#topics">Research Notes</a>
-        <a href="https://github.com/luca-888">GitHub</a>
+        <a href="/">Notes</a>
+        <a href="/#topics">Topics</a>
       </nav>
     </header>
 

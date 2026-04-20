@@ -13,18 +13,11 @@ const formatDate = new Intl.DateTimeFormat("en", {
 });
 ---
 
-<BaseLayout title="Writing">
-  <section class="home-hero" aria-labelledby="site-title">
-    <p class="kicker">Writing</p>
-    <h1 id="site-title">AI, Systems, and Research Notes</h1>
-    <p class="hero-copy">写一些关于大模型、机器学习、工程实践和论文阅读的笔记。</p>
-    <p class="hero-copy muted">Notes on LLMs, machine learning, engineering, and research papers.</p>
-  </section>
-
+<BaseLayout title="Notes">
   <section class="post-index" aria-labelledby="latest-notes">
     <div class="section-head">
-      <h2 id="latest-notes">Latest Notes</h2>
-      <p>最新文章</p>
+      <h2 id="latest-notes">Latest</h2>
+      <p>最新</p>
     </div>
 
     {posts.length > 0 ? (

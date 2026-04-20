@@ -24,7 +24,7 @@ const formatDate = new Intl.DateTimeFormat("en", {
 <BaseLayout title={entry.data.title} description={entry.data.description}>
   <article class="post">
     <header class="post-header">
-      <a class="back-link" href="/">Writing</a>
+      <a class="back-link" href="/">Notes</a>
       <time datetime={entry.data.pubDate.toISOString()}>{formatDate.format(entry.data.pubDate)}</time>
       <h1>{entry.data.title}</h1>
       <p>{entry.data.description}</p>
