@@ -1,0 +1,62 @@
+---
+layout: default
+title: Writing
+---
+
+<section class="home-hero" aria-labelledby="site-title">
+  <p class="kicker">Writing</p>
+  <h1 id="site-title">AI, Systems, and Research Notes</h1>
+  <p class="hero-copy">写一些关于大模型、机器学习、工程实践和论文阅读的笔记。</p>
+  <p class="hero-copy muted">Notes on LLMs, machine learning, engineering, and research papers.</p>
+</section>
+
+<section class="post-index" aria-labelledby="latest-notes">
+  <div class="section-head">
+    <h2 id="latest-notes">Latest Notes</h2>
+    <p>最新文章</p>
+  </div>
+
+  {% if site.posts.size > 0 %}
+    <div class="posts">
+      {% for post in site.posts limit: 8 %}
+        <article class="post-row">
+          <a class="post-link" href="{{ post.url | relative_url }}" aria-label="{{ post.title }}">
+            {% if post.image %}
+              <img class="post-thumb" src="{{ post.image | relative_url }}" alt="" loading="lazy">
+            {% endif %}
+            <div class="post-meta">
+              <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%b %-d, %Y" }}</time>
+              {% if post.tags.size > 0 %}
+                <span>{{ post.tags | join: " / " }}</span>
+              {% endif %}
+            </div>
+            <div class="post-main">
+              <h3>{{ post.title }}</h3>
+              {% if post.subtitle %}
+                <p>{{ post.subtitle }}</p>
+              {% elsif post.excerpt %}
+                <p>{{ post.excerpt | strip_html | truncate: 128 }}</p>
+              {% endif %}
+            </div>
+          </a>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty-state">No notes yet.</p>
+  {% endif %}
+</section>
+
+<section class="topic-index" aria-labelledby="topics">
+  <div class="section-head">
+    <h2 id="topics">Topics</h2>
+    <p>主题</p>
+  </div>
+  <div class="topics" aria-label="Writing topics">
+    <span>LLMs</span>
+    <span>Agents</span>
+    <span>Papers</span>
+    <span>Systems</span>
+    <span>Learning</span>
+  </div>
+</section>

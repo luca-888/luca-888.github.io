@@ -1,0 +1,11 @@
+title: Luca
+description: AI, Systems, and Research Notes
+url: "https://luca-888.github.io"
+baseurl: ""
+markdown: kramdown
+permalink: /writing/:year/:month/:day/:title/
+timezone: Etc/UTC
+
+collections:
+  posts:
+    output: true
