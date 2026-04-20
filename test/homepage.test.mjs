@@ -1,42 +1,53 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+const exists = (path) => existsSync(new URL(`../${path}`, import.meta.url));
 
-test("homepage is a writing-first bilingual Jekyll blog", () => {
-  const index = read("index.html");
+test("project is an Astro blog instead of a Jekyll site", () => {
+  const packageJson = JSON.parse(read("package.json"));
+  const workflow = read(".github/workflows/deploy.yml");
+  const astroConfig = read("astro.config.mjs");
 
+  assert.equal(packageJson.scripts.dev, "astro dev");
+  assert.equal(packageJson.scripts.build, "astro build");
+  assert.ok(packageJson.dependencies.astro);
+  assert.match(workflow, /withastro\/action@v/);
+  assert.match(astroConfig, /site:\s*["']https:\/\/luca-888\.github\.io["']/);
+  assert.equal(exists(".github/workflows/jekyll-gh-pages.yml"), false);
+  assert.equal(exists("_config.yml"), false);
+  assert.equal(exists("_layouts/default.html"), false);
+  assert.equal(exists("_posts/2026-04-20-welcome.md"), false);
+});
+
+test("homepage remains a writing-first bilingual research blog", () => {
+  const index = read("src/pages/index.astro");
+
+  assert.match(index, /getCollection\(["']blog["']/);
   assert.match(index, /AI, Systems, and Research Notes/);
   assert.match(index, /写一些关于大模型、机器学习、工程实践和论文阅读的笔记/);
-  assert.match(index, /site\.posts/);
   assert.match(index, /Latest Notes/);
   assert.doesNotMatch(index, /About me|自我介绍|bio/i);
 });
 
-test("Jekyll layouts and styling are present", () => {
-  const defaultLayout = read("_layouts/default.html");
-  const postLayout = read("_layouts/post.html");
-  const stylesheet = read("assets/css/main.css");
+test("Astro content collection defines blog post metadata", () => {
+  const config = read("src/content.config.ts");
+  const post = read("src/content/blog/welcome.md");
 
-  assert.match(defaultLayout, /stylesheet/);
-  assert.match(defaultLayout, /Writing/);
-  assert.match(postLayout, /article/);
-  assert.match(stylesheet, /--paper/);
-  assert.match(stylesheet, /@media/);
-});
-
-test("sample post gives the empty blog a real latest-note entry", () => {
-  const post = read("_posts/2026-04-20-welcome.md");
-
-  assert.match(post, /layout: post/);
-  assert.match(post, /subtitle:/);
+  assert.match(config, /defineCollection/);
+  assert.match(config, /glob\(\{\s*pattern:\s*["']\*\*\/\*\.md["']/);
+  assert.match(config, /pubDate:\s*z\.coerce\.date/);
+  assert.match(post, /title:/);
+  assert.match(post, /description:/);
+  assert.match(post, /pubDate:/);
   assert.match(post, /tags:/);
-  assert.match(post, /LLM/);
 });
 
-test("brainstorm artifacts are ignored", () => {
-  const gitignore = read(".gitignore");
+test("post routes render collection entries", () => {
+  const route = read("src/pages/writing/[...slug].astro");
 
-  assert.match(gitignore, /^\.superpowers\/$/m);
+  assert.match(route, /getStaticPaths/);
+  assert.match(route, /render/);
+  assert.match(route, /entry\.data\.title/);
 });

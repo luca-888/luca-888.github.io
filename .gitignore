@@ -1,5 +1,7 @@
 .superpowers/
 _site/
+dist/
+.astro/
 .jekyll-cache/
 .sass-cache/
 vendor/

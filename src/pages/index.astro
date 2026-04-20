@@ -1,0 +1,70 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const posts = (await getCollection("blog", ({ data }) => data.draft !== true))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 8);
+
+const formatDate = new Intl.DateTimeFormat("en", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+---
+
+<BaseLayout title="Writing">
+  <section class="home-hero" aria-labelledby="site-title">
+    <p class="kicker">Writing</p>
+    <h1 id="site-title">AI, Systems, and Research Notes</h1>
+    <p class="hero-copy">写一些关于大模型、机器学习、工程实践和论文阅读的笔记。</p>
+    <p class="hero-copy muted">Notes on LLMs, machine learning, engineering, and research papers.</p>
+  </section>
+
+  <section class="post-index" aria-labelledby="latest-notes">
+    <div class="section-head">
+      <h2 id="latest-notes">Latest Notes</h2>
+      <p>最新文章</p>
+    </div>
+
+    {posts.length > 0 ? (
+      <div class="posts">
+        {posts.map((post) => (
+          <article class="post-row">
+            <a class="post-link" href={`/writing/${post.id}/`} aria-label={post.data.title}>
+              {post.data.image && (
+                <img class="post-thumb" src={post.data.image} alt="" loading="lazy" />
+              )}
+              <div class="post-meta">
+                <time datetime={post.data.pubDate.toISOString()}>
+                  {formatDate.format(post.data.pubDate)}
+                </time>
+                {post.data.tags.length > 0 && <span>{post.data.tags.join(" / ")}</span>}
+              </div>
+              <div class="post-main">
+                <h3>{post.data.title}</h3>
+                <p>{post.data.description}</p>
+              </div>
+            </a>
+          </article>
+        ))}
+      </div>
+    ) : (
+      <p class="empty-state">No notes yet.</p>
+    )}
+  </section>
+
+  <section class="topic-index" aria-labelledby="topics">
+    <div class="section-head">
+      <h2 id="topics">Topics</h2>
+      <p>主题</p>
+    </div>
+    <div class="topics" aria-label="Writing topics">
+      <span>LLMs</span>
+      <span>Agents</span>
+      <span>Papers</span>
+      <span>Systems</span>
+      <span>Learning</span>
+    </div>
+  </section>
+</BaseLayout>

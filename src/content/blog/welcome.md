@@ -1,10 +1,9 @@
 ---
-layout: post
 title: "开始记录 AI 与工程笔记"
-subtitle: "LLM notes, paper reading, and systems experiments"
-date: 2026-04-20 00:00:00 +0000
-tags: [LLM, Papers, Systems]
-image: /assets/img/llm-notes.png
+description: "LLM notes, paper reading, and systems experiments"
+pubDate: 2026-04-20
+tags: ["LLM", "Papers", "Systems"]
+image: "/assets/img/llm-notes.png"
 ---
 
 这里会放一些关于大模型、机器学习、工程实践和论文阅读的笔记。

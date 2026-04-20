@@ -1,5 +1,11 @@
 {
   "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
     "test": "node --test test/homepage.test.mjs"
+  },
+  "dependencies": {
+    "astro": "^6.1.8"
   }
 }
