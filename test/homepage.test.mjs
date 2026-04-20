@@ -26,7 +26,7 @@ test("homepage is a minimal writing-first notes index", () => {
 
   assert.match(index, /getCollection\(["']blog["']/);
   assert.match(index, />Latest</);
-  assert.match(index, />Topics</);
+  assert.doesNotMatch(index, /Topics|topic-index|topics/);
   assert.doesNotMatch(index, /home-hero|site-title|hero-copy|AI, Systems, and Research Notes/);
   assert.doesNotMatch(index, /About me|自我介绍|bio/i);
 });
@@ -42,7 +42,7 @@ test("navigation stays minimal and does not promote GitHub", () => {
   const layout = read("src/layouts/BaseLayout.astro");
 
   assert.match(layout, />Notes</);
-  assert.match(layout, />Topics</);
+  assert.doesNotMatch(layout, />Topics</);
   assert.doesNotMatch(layout, />Research Notes</);
   assert.doesNotMatch(layout, />GitHub</);
 });

@@ -94,11 +94,6 @@ h1 {
   border-bottom: 1px solid var(--line);
 }
 
-.topic-index {
-  padding: 44px 0;
-  border-bottom: 1px solid var(--line);
-}
-
 .section-head {
   display: flex;
   align-items: baseline;
@@ -172,13 +167,6 @@ h1 {
   color: var(--muted);
 }
 
-.topics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.topics span,
 .post-tags span {
   border: 1px solid var(--line);
   border-radius: 8px;
