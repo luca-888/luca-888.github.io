@@ -33,5 +33,26 @@ const pageTitle = title === "Luca" ? title : `${title} | Luca`;
     <main>
       <slot />
     </main>
+    <script>
+      for (const card of document.querySelectorAll(".reference-card[href]")) {
+        const icon = card.querySelector(".reference-icon");
+
+        if (!(icon instanceof HTMLElement)) continue;
+
+        const url = new URL(card.href);
+        const img = document.createElement("img");
+
+        icon.dataset.fallback = url.hostname.slice(0, 1).toUpperCase();
+        img.alt = "";
+        img.loading = "lazy";
+        img.decoding = "async";
+        img.src = new URL("/favicon.ico", url.origin).toString();
+        img.addEventListener("error", () => {
+          img.remove();
+          icon.classList.add("is-fallback");
+        });
+        icon.append(img);
+      }
+    </script>
   </body>
 </html>
