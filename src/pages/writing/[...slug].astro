@@ -13,6 +13,9 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+const isPodcast = entry.id.startsWith("lex-");
+const backHref = isPodcast ? "/podcasts/" : "/";
+const backLabel = isPodcast ? "Podcasts" : "Notes";
 
 const formatDate = new Intl.DateTimeFormat("en", {
   month: "long",
@@ -24,7 +27,7 @@ const formatDate = new Intl.DateTimeFormat("en", {
 <BaseLayout title={entry.data.title} description={entry.data.description}>
   <article class="post">
     <header class="post-header">
-      <a class="back-link" href="/">Notes</a>
+      <a class="back-link" href={backHref}>{backLabel}</a>
       <time datetime={entry.data.pubDate.toISOString()}>{formatDate.format(entry.data.pubDate)}</time>
       <h1>{entry.data.title}</h1>
       <p>{entry.data.description}</p>

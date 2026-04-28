@@ -63,6 +63,7 @@ nav {
 
 nav a:hover,
 .post-link:hover h3,
+.podcast-link:hover h3,
 .back-link:hover {
   color: var(--accent);
 }
@@ -131,6 +132,15 @@ h1 {
   gap: 28px;
   align-items: center;
   min-height: 132px;
+  padding: 22px 0;
+}
+
+.podcast-link {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 28px;
+  align-items: center;
+  min-height: 112px;
   padding: 22px 0;
 }
 
@@ -432,16 +442,22 @@ h1 {
     min-height: 0;
   }
 
+  .podcast-link {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    min-height: 0;
+  }
+
   .post-thumb {
     width: 92px;
     grid-row: span 2;
   }
 
-  .post-meta {
+  .post-link .post-meta {
     grid-column: 2;
   }
 
-  .post-main {
+  .post-link .post-main {
     grid-column: 2;
   }
 
