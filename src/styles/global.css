@@ -181,6 +181,7 @@ h1 {
 
 .post {
   max-width: 780px;
+  margin: 0 auto;
   padding: 58px 0 84px;
 }
 
@@ -197,6 +198,7 @@ h1 {
 }
 
 .post-header h1 {
+  max-width: 100%;
   font-size: 46px;
 }
 
