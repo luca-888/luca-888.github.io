@@ -24,7 +24,11 @@ const formatDate = new Intl.DateTimeFormat("en", {
       <div class="posts">
         {posts.map((post) => (
           <article class="post-row">
-            <a class="post-link" href={`/writing/${post.id}/`} aria-label={post.data.title}>
+            <a
+              class={post.data.image ? "post-link" : "post-link post-link--text"}
+              href={`/writing/${post.id}/`}
+              aria-label={post.data.title}
+            >
               {post.data.image && (
                 <img class="post-thumb" src={post.data.image} alt="" loading="lazy" />
               )}
