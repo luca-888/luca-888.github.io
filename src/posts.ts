@@ -13,11 +13,12 @@ export type Post = {
 export const posts: Post[] = [
   {
     slug: 'rmsnorm',
-    title: 'RMSNorm：数学推导与 GPU 算子优化',
-    description: '从数学公式到 GPU 算子优化：前向与反向推导、Triton 实现，以及性能与精度的取舍。',
+    title: 'RMSNorm：计算原理与 GPU 算子优化',
+    description: '从计算图与 PyTorch 参考实现出发，分析 eager、torch.compile 与手写 Triton 的执行结构、性能和显存开销。',
     category: '算子优化',
     tags: ['RMSNorm', '机器学习', '性能优化', 'Triton', 'GPU'],
-    status: 'draft',
+    status: 'published',
+    publishedAt: '2026-09-15',
   },
 ];
 

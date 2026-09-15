@@ -4,6 +4,8 @@
   --color-muted: #73797e;
   --color-surface: #f7f8f9;
   --color-border: #e1e4e7;
+  --color-accent: #567891;
+  --color-secondary: #587767;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Noto Sans CJK SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   font-size: 16px;
   color: var(--color-text);

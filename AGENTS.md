@@ -56,13 +56,13 @@
 - 前端开发遵循上述技术栈。
 - KaTeX、Shiki 和 ECharts 在对应内容或功能需要时引入。
 
-## 内容组织
+## GitHub Pages 部署
 
 - 使用 GitHub Pages 托管静态构建产物。
 - 部署工作流位于 `.github/workflows/pages.yml`，由 `main` 分支推送或手动运行触发。
-- 使用 Vite 后，将 `base` 配置为 `/ml-portal/`，适配当前仓库的 GitHub Pages 子路径。
-- 静态资源引用须兼容该子路径；若更换仓库名或改用自定义域名，同步调整 `base`。
-- 初始化 Vite 时，同步将工作流中的 HTML 复制步骤替换为依赖安装和构建，部署 `dist/` 目录。
+- 仓库为 `luca-888/luca-888.github.io`，站点为 `https://luca-888.github.io/`；Vite 的 `base` 配置为 `/`。
+- 静态资源引用使用 Vite 处理的路径或 `import.meta.env.BASE_URL`；更换部署路径时同步调整 `base`。
+- 工作流安装锁定依赖并构建，部署 `dist/` 目录。
 - 页面功能应适用于静态托管；涉及性能对比时，使用真实测量数据，正文仅注明测试显卡型号，演示数据须明确标注。
 
 ## 快速迭代与验证
@@ -72,4 +72,11 @@
 - 日常文案、样式和局部交互修改，默认不运行 build、完整类型检查或自动化测试，不例行重复截图和浏览器检查。
 - 仅在出现错误、改动涉及关键逻辑或用户明确要求时，执行与当前问题直接相关的最小验证；完成后不额外扩大验证范围。
 - 初始化前端工程后，提供 `npm run dev`、`npm run build` 和 `npm run preview` 命令，并提交依赖锁文件。
-- 构建命令应包含 TypeScript 类型检查；发布前再运行完整构建，并检查桌面页面及 `/ml-portal/` 子路径下的资源加载。
+- 构建命令应包含 TypeScript 类型检查；发布前再运行完整构建，并检查桌面页面及 `/posts/rmsnorm/` 下的资源加载；旧 `/ml-portal/` 入口重定向至首页。
+
+## 主页与文章目录
+
+- 保留站点名称 `luca’s blog`，首页直接展示文章目录、主题筛选和搜索。
+- 文章信息统一维护在 `src/posts.ts`；正式发布填写真实日期和 `published` 状态。
+- 每篇文章使用 `/posts/<slug>/` 稳定地址，在 Vite 中登记对应 HTML 构建入口。
+- 主页与文章共享 `src/styles.css` 的颜色变量及 `src/SiteLayout.tsx` 的页头页脚；主页布局在 `src/site.css` 中维护，遵循统一的白底规范。
