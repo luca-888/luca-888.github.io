@@ -1,0 +1,58 @@
+.post-shell { max-width: 1340px; }
+.post-layout { width: 100%; max-width: 780px; margin: 0 auto; padding-top: 50px; padding-bottom: 90px; }
+.post-content { min-width: 0; }
+.post-header { padding: 3px 0 32px; border-bottom: 1px solid var(--line); margin-bottom: 32px; }
+.post-meta { display: flex; align-items: center; gap: 14px; font-size: .8125rem; color: var(--muted); margin-bottom: 20px; }
+.post-header h1 { font-size: clamp(1.8rem, 2.7vw, 2.35rem); line-height: 1.55; font-weight: 600; letter-spacing: -.035em; margin: 0; text-wrap: pretty; scroll-margin-top: 28px; }
+.post-author { display: flex; align-items: center; flex-wrap: wrap; gap: 13px; margin-top: 24px; color: var(--muted); font-size: .8125rem; line-height: 1.8; }
+.post-author span { color: var(--soft-border); }
+.prose { font-size: 1rem; line-height: 1.95; overflow-wrap: break-word; }
+.prose > :first-child { margin-top: 0; }
+.prose p { margin: 20px 0; }
+.prose h2 { font-size: 1.5rem; font-weight: 600; line-height: 1.6; margin: 62px 0 24px; padding-top: 30px; border-top: 1px solid var(--line); letter-spacing: -.025em; scroll-margin-top: 24px; }
+.prose h3 { font-size: 1.125rem; font-weight: 600; line-height: 1.7; margin: 36px 0 16px; scroll-margin-top: 24px; }
+.prose h2:focus, .prose h3:focus { outline: none; }
+.prose ul, .prose ol { padding-left: 1.5em; margin: 20px 0; }
+.prose li { padding-left: .2em; margin: 8px 0; }
+.prose strong { font-weight: 600; }
+.prose a { color: var(--link); text-decoration: underline; text-decoration-color: var(--link-line); text-underline-offset: 4px; }
+.prose a:hover { text-decoration-color: currentColor; }
+.prose blockquote { margin: 26px 0; padding: 10px 20px; border-left: 3px solid var(--accent); background: var(--surface); }
+.prose blockquote p { margin: 6px 0; }
+.prose code { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace; font-size: .875em; }
+.prose :not(pre) > code { padding: 3px 6px; border-radius: 3px; background: var(--inline-code); }
+.code-block { margin: 26px 0; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+.code-toolbar { display: flex; justify-content: space-between; align-items: center; min-height: 42px; padding: 0 16px; background: var(--surface); border-bottom: 1px solid var(--line); color: var(--muted); font: .75rem/1.5 ui-monospace, monospace; }
+.code-toolbar button { color: var(--muted); font-size: .75rem; line-height: 1.5; min-height: 36px; padding: 6px 9px; background: transparent; border: 0; border-radius: 3px; }
+.code-toolbar button:hover { background: var(--hover); }
+.prose pre { padding: 16px 20px; margin: 0; overflow-x: auto; background: var(--code-bg) !important; font-size: .8125rem; line-height: 1.55; tab-size: 4; }
+.prose pre code { font-size: inherit; }
+.prose .katex { font-size: 1.1em; }
+.prose .katex-display { margin: 26px 0; padding: 18px 12px; overflow-x: auto; overflow-y: hidden; background: var(--math-bg); border: 1px solid var(--math-line); border-radius: 4px; }
+.prose .katex-display > .katex { white-space: nowrap; }
+.prose .katex-display > .katex > .katex-html { display: inline-block; min-width: 100%; }
+.prose table { width: 100%; border-collapse: collapse; margin: 28px 0; font-size: .9375rem; }
+.prose th { background: var(--surface); text-align: left; font-weight: 500; }
+.prose td, .prose th { border-bottom: 1px solid var(--line); padding: 13px 17px; }
+.prose td { background: var(--table-bg); }
+.prose hr { border: 0; border-top: 1px solid var(--line); margin: 46px 0; }
+.post-end { display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid var(--line); margin-top: 54px; padding-top: 24px; font-size: .875rem; color: var(--muted); }
+.post-end a { padding: 10px 0; }
+
+@media (min-width: 1500px) { .post-shell { max-width: 1392px; } }
+@media (max-width: 600px) {
+  .post-header h1 { font-size: 1.625rem; line-height: 1.65; }
+  .post-header { padding-bottom: 24px; margin-bottom: 24px; }
+  .post-author { font-size: .75rem; gap: 10px; }
+  .prose { line-height: 1.9; }
+  .prose h2 { font-size: 1.3rem; margin-top: 44px; padding-top: 25px; }
+  .prose h3 { font-size: 1.0625rem; }
+  .prose pre { padding: 15px; }
+  .prose .katex-display { padding: 18px 8px; }
+  .prose td, .prose th { padding: 10px 12px; }
+}
+
+:root[data-theme='dark'] .shiki,
+:root[data-theme='dark'] .shiki span {
+  color: var(--shiki-dark) !important;
+}
