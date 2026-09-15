@@ -1,0 +1,50 @@
+.rms-demo {
+  --demo-input: #b57935;
+  --demo-output: #6d8751;
+  width: min(1080px, calc(100vw - 64px));
+  box-sizing: border-box;
+  margin: 28px 0 28px 50%;
+  transform: translateX(-50%);
+  padding: 20px 22px;
+  border: 1px solid var(--soft-border);
+  border-radius: 5px;
+  background: var(--bg);
+  line-height: 1.5;
+  font-size: .8125rem;
+}
+:root[data-theme='dark'] .rms-demo { --demo-input: #d5a362; --demo-output: #a8bf8b; }
+.prose .demo-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.prose .demo-header h2 { font-size: 1rem; line-height: 1.5; border: 0; padding: 0; margin: 0; letter-spacing: 0; }
+.demo-header > span { color: var(--muted); font-size: .75rem; }
+.demo-controls { display: grid; grid-template-columns: auto minmax(100px, 1fr) 80px; gap: 16px; align-items: center; margin: 19px 0 26px; padding: 13px 15px; background: var(--surface); border-radius: 4px; }
+.demo-controls > label { color: var(--text); }
+.rms-demo input[type='range'] { width: 100%; margin: 0; accent-color: var(--demo-input); cursor: pointer; }
+.demo-multiplier { font: 1rem/1.5 ui-monospace, monospace; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.flow-columns { display: grid; grid-template-columns: 30px minmax(0, 1fr) 130px minmax(0, 1fr) 64px; gap: 9px; align-items: center; }
+.matrix-head { color: var(--muted); font-size: .75rem; text-align: center; margin-bottom: 12px; }
+.matrix-head .input-heading { color: var(--demo-input); font-size: .875rem; }
+.matrix-head .output-heading { color: var(--demo-output); font-size: .875rem; }
+.matrix-features { display: block; color: var(--muted); margin-top: 5px; font-size: .6875rem; }
+.matrix-row { min-height: 61px; border-radius: 3px; }
+.matrix-row.is-active { background: var(--surface); }
+.matrix-row-label { text-align: center; color: var(--muted); font-size: .75rem; }
+.matrix-pair { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; height: 100%; align-items: center; padding: 0 9px; border-left: 1px solid var(--soft-border); border-right: 1px solid var(--soft-border); position: relative; }
+.matrix-row:first-child .matrix-pair::before, .matrix-row:last-child .matrix-pair::after { content: ''; position: absolute; left: 0; right: 0; height: 1px; background: linear-gradient(to right, var(--soft-border) 6px, transparent 6px, transparent calc(100% - 6px), var(--soft-border) calc(100% - 6px)); }
+.matrix-row:first-child .matrix-pair::before { top: 0; }
+.matrix-row:last-child .matrix-pair::after { bottom: 0; }
+.matrix-cell { min-width: 0; padding: 4px 0; }
+.matrix-value { display: block; text-align: center; font: .875rem/1.6 ui-monospace, monospace; color: var(--text); }
+.cell-meter { height: 7px; position: relative; background: var(--surface); margin: 5px 0 0; border-radius: 2px; }
+.cell-zero { position: absolute; height: 11px; width: 1px; left: 50%; top: -2px; background: var(--soft-border); }
+.cell-fill { position: absolute; top: 0; height: 7px; background: var(--demo-input); border-radius: 1px; }
+.matrix-output .cell-fill { background: var(--demo-output); }
+.row-division { display: flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; color: var(--muted); }
+.row-division output { font: .8125rem/1.5 ui-monospace, monospace; color: var(--demo-input); }
+.row-rms { text-align: center; font: .875rem/1.5 ui-monospace, monospace; color: var(--demo-output); white-space: nowrap; }
+.matrix-scales { color: var(--muted); font-size: .625rem; text-align: center; margin-top: 12px; }
+
+.prose .demo-data-note { margin: -12px 0 18px; font-size: .75rem; color: var(--muted); }
+.matrix-weights { font-size: .6875rem; text-align: center; color: var(--muted); padding-bottom: 12px; }
+.weight-pair { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; padding: 0 9px; color: var(--demo-output); font-family: ui-monospace, monospace; white-space: nowrap; }
+
+.prose .demo-source { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: .6875rem; line-height: 1.8; }
