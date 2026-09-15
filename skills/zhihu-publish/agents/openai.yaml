@@ -1,0 +1,4 @@
+interface:
+  display_name: "知乎文章导出与发布"
+  short_description: "将技术文章转为知乎静态稿，并通过网页自动导入、定位补图和检查草稿"
+  default_prompt: "使用 $zhihu-publish 导出这篇文章，并在知乎网页编辑器中导入正文、补齐图片，保存为草稿。"
