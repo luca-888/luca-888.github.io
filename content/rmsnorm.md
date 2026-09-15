@@ -84,8 +84,6 @@ def rmsnorm_triton(x, weight, eps=1e-6):
     return y
 ```
 
-固定 warp 数时，BLOCK 增大会增加每个线程分担的元素数量，可能提高寄存器占用；实际占用取决于编译结果。后续结合编译信息和性能测量调整配置。
-
 ## 二、Backward：dX 与 dγ 的归约实现
 
 - 推导 dX、dγ，明确沿 N 和沿 M 的归约分别出现在哪里。
