@@ -1,0 +1,28 @@
+{
+  "source": "public/measurements/rmsnorm-compile/4096x8192/backward.py",
+  "source_sha256": "94da4eb7ea6afe62f5494e07a8ff56f8fb0e263c3340f0d45911249ab9402a65",
+  "kernels_sha256": "8543e5f02ef4fb7a3a595d6be0b7f0c838536b50b42daf09f026a4a3ed604b45",
+  "supported_shapes": [
+    [
+      1,
+      4096
+    ],
+    [
+      128,
+      4096
+    ],
+    [
+      1024,
+      4096
+    ],
+    [
+      4096,
+      4096
+    ],
+    [
+      4096,
+      8192
+    ]
+  ],
+  "constraint": "dx_reuse: XBLOCK=1, R0_BLOCK=N; BF16 x/g/gamma/dx/dgamma and FP32 r/intermediates; contiguous input; no autograd integration."
+}

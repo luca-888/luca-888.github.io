@@ -1,0 +1,9 @@
+{
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "torch": "2.9.1+cu128",
+  "cuda": "12.8",
+  "driver": "570.153.02",
+  "python": "3.12.14",
+  "cpu": "AMD EPYC 7543 (KVM guest, 16 vCPUs)",
+  "note": "Same GPU and Python environment as earlier article measurements; full measurement protocol in README.md and results.json."
+}

@@ -1,0 +1,16 @@
+.triton-reduction { margin: 20px 0; }
+.triton-reduction svg { display: block; width: 100%; height: auto; }
+.triton-reduction text { fill: var(--color-text); text-anchor: middle; font: 13px "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+.triton-reduction .reduction-label { text-anchor: start; font-family: inherit; font-weight: 500; }
+.triton-reduction .reduction-detail { fill: var(--color-muted); font-size: 11px; }
+.triton-reduction rect { stroke-width: 1; }
+.reduction-input { fill: #edf1f4; stroke: #9eafbd; }
+.reduction-main { fill: var(--color-surface); stroke: var(--color-border); }
+.reduction-partial { fill: var(--color-surface); stroke: var(--color-border); }
+.reduction-output { fill: #edf2ee; stroke: #9db2a5; }
+.reduction-edge { fill: none; stroke: #98a2aa; stroke-width: 1.2; marker-end: url(#triton-reduction-arrow); }
+.triton-reduction figcaption { margin-top: 6px; text-align: center; color: var(--color-muted); font-size: 12px; }
+.triton-benchmark .table-scroll .triton-summary td,
+.triton-benchmark .table-scroll .triton-summary th { padding-left: 16px; padding-right: 16px; }
+.triton-benchmark .table-scroll .triton-summary tbody td:first-child,
+.triton-benchmark .table-scroll .triton-summary thead tr:first-child th:first-child { text-align: left; font-family: inherit; }

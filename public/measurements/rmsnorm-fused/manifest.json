@@ -1,0 +1,8 @@
+{
+  "kernel.py": "44fd0a85caa7b948c86ca264a97ac2459cfbd86914001e9400026de1922d0432",
+  "benchmark.py": "f324a6e4374226d8964721b898f4ae2f9fcdf42856283a5adc0781239582adf8",
+  "results.json": "17521413a3e04d316f692a6febdf3435ed38f993fe29e67f789fcc8bb82a44ab",
+  "README.md": "06df8889bb162d8362c053eeddd35f4a9b474fe7d4c13d19338b9b70ce4a39d3",
+  "environment.json": "bfd17444cda257a1913a3f5bfe2f89b2cfd0e8224bcafcf73e127bafd46c3683",
+  "original_backward_sha256": "94da4eb7ea6afe62f5494e07a8ff56f8fb0e263c3340f0d45911249ab9402a65"
+}

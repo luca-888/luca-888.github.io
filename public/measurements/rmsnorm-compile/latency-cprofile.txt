@@ -1,0 +1,34 @@
+{"eager": [64.31489899841836, 64.45743699805462, 64.42696000158321], "compile": [71.11364599768422, 72.12994799920125, 71.54351500139455], "generated_wrapper": [13.64908440009458, 13.660412699755398, 14.688714799922309]}
+         100543 function calls (98043 primitive calls) in 0.069 seconds
+
+   Ordered by: cumulative time
+   List reduced from 126 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+      500    0.008    0.000    0.069    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:791(compile_wrapper)
+      500    0.001    0.000    0.056    0.000 <string>:1(rmsnorm_forward_reference)
+     1500    0.002    0.000    0.054    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:1039(_fn)
+      500    0.001    0.000    0.048    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/_functorch/aot_autograd.py:1126(forward)
+      500    0.002    0.000    0.048    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:310(runtime_wrapper)
+      500    0.001    0.000    0.045    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/utils.py:119(call_func_at_runtime_with_args)
+      500    0.000    0.000    0.043    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:716(inner_fn)
+      500    0.000    0.000    0.043    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/_functorch/_aot_autograd/runtime_wrappers.py:512(wrapper)
+      500    0.002    0.000    0.042    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/_inductor/output_code.py:590(__call__)
+      500    0.001    0.000    0.021    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/_inductor/utils.py:3013(run)
+      500    0.003    0.000    0.019    0.000 /tmp/torchinductor_root/ch/cchy3266daxjjm2av3uuq7ly7c3fmzdjtos37yrvfsqz3e5a274c.py:143(call)
+      500    0.001    0.000    0.014    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/autograd/profiler.py:789(__exit__)
+      500    0.000    0.000    0.012    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/_ops.py:1068(__call__)
+      500    0.002    0.000    0.010    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/_inductor/runtime/triton_heuristics.py:1242(run)
+      500    0.000    0.000    0.010    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/_ops.py:1128(_must_dispatch_in_python)
+      500    0.000    0.000    0.009    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/utils/_pytree.py:1630(tree_any)
+      500    0.000    0.000    0.009    0.000 {built-in method builtins.any}
+3500/1000    0.002    0.000    0.008    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/utils/_pytree.py:1302(tree_iter)
+      500    0.000    0.000    0.007    0.000 <string>:1(launcher)
+      500    0.001    0.000    0.006    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/_inductor/runtime/static_cuda_launcher.py:215(run)
+      500    0.005    0.000    0.005    0.000 {_launch_kernel}
+     1000    0.001    0.000    0.005    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/_compile.py:41(inner)
+     3500    0.001    0.000    0.004    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/utils/_pytree.py:1008(_get_node_type)
+      500    0.001    0.000    0.004    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/autograd/profiler.py:783(__enter__)
+      500    0.000    0.000    0.003    0.000 /root/.cache/uv/archive-v0/QQbOS_vLhD9n3Mep/lib/python3.12/site-packages/torch/_ops.py:1244(__call__)
+
+
