@@ -52,7 +52,7 @@ const markdown = article
 export function App() {
   return (
     <main>
-      <article className="article">
+      <article className="article" id="article-content">
         <Markdown
           remarkPlugins={[remarkGfm, remarkMath]}
           rehypePlugins={[rehypeKatex]}
