@@ -1,0 +1,1424 @@
+{
+  "timestamp_utc": "2026-09-15T08:44:17.589609+00:00",
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "torch": "2.9.1+cu128",
+  "triton": "3.5.1",
+  "cuda": "12.8",
+  "driver": "570.153.02",
+  "python": "3.12.14",
+  "cpu": "x86_64",
+  "reference_sha256": "783b097d37628ccd0043fe45b3df9232808818fa684fac0028ab7701ebdd7f51",
+  "reference_source": "def rmsnorm_forward_reference(x, gamma, eps=1e-6):\n    x_dtype = x.dtype\n    x, gamma = x.float(), gamma.float()\n    s = x.square().mean(dim=1, keepdim=True)\n    r = torch.rsqrt(s + eps)\n    x_hat = x * r\n    y = x_hat * gamma\n    return y.to(x_dtype), r\n\n\ndef rmsnorm_backward_reference(x, gamma, g, r):\n    x_dtype, gamma_dtype = x.dtype, gamma.dtype\n    x, gamma, g = x.float(), gamma.float(), g.float()\n    N = x.shape[1]\n    x_hat = x * r\n\n    dx_hat = g * gamma\n    dr = (dx_hat * x).sum(dim=1, keepdim=True)\n    dx = r * dx_hat - x * r.pow(3) * dr / N\n    dgamma = (g * x_hat).sum(dim=0)\n    return dx.to(x_dtype), dgamma.to(gamma_dtype)\n",
+  "compile": {
+    "backend": "inductor",
+    "fullgraph": true,
+    "dynamic": false,
+    "mode": "default",
+    "cuda_graphs": false
+  },
+  "method": "torch.utils.benchmark.Timer.blocked_autorange(min_run_time=0.3), 3 rounds, median of round medians; 30 warmup calls; no_grad; contiguous CUDA inputs; reused inputs; no cache flush; 1 CPU thread; default GPU clocks; no CUDA Graph; eps=1e-6; backward excludes forward; profiler separate from timing",
+  "memory_method": "Incremental peak tensor memory allocated during a single call: max_memory_allocated minus memory_allocated immediately before the call. Includes new outputs and intermediates; excludes pre-existing inputs, saved r for backward, allocator reserved-but-unused memory and CUDA context. Forward includes newly returned r. no_grad; outputs released between samples; 3 warmups, 3 samples; report maximum; measured separately from latency. Unit MiB = 2**20 bytes.",
+  "profile_method": "3 warmup calls inside profiler, then 3 labeled calls; each call ends with synchronize; count CUDA kernel events inside each labeled region; exclude memcpy and memset events; timing collected separately",
+  "first_call_note": "Wall time including capture, compilation/cache loading and first execution; not a cold-cache compiler benchmark. Excluded from latency and memory measurements.",
+  "validation_method": "Compare y/r to eager; compare dx/dgamma using identical eager r, and additionally run backward with compiled r. BF16 rtol=0.016 atol=0.001, FP32 r rtol=1e-5 atol=1e-6. Random normal inputs, seed 20260915; representative shape also checked for zero, 1e-3 and 1e2 scale inputs.",
+  "measurements": [
+    {
+      "M": 1,
+      "N": 4096,
+      "dtype": "torch.bfloat16",
+      "validation": {
+        "y": {
+          "passed": true,
+          "dtype": "torch.bfloat16",
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.0,
+          "relative_l2_error": 0.0
+        },
+        "r": {
+          "passed": true,
+          "dtype": "torch.float32",
+          "rtol": 1e-05,
+          "atol": 1e-06,
+          "max_abs_error": 5.960464477539063e-08,
+          "relative_l2_error": 5.96265365970794e-08
+        },
+        "dx": {
+          "passed": true,
+          "dtype": "torch.bfloat16",
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.0,
+          "relative_l2_error": 0.0
+        },
+        "dgamma": {
+          "passed": true,
+          "dtype": "torch.bfloat16",
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.0,
+          "relative_l2_error": 0.0
+        },
+        "composed": {
+          "dx": {
+            "passed": true,
+            "dtype": "torch.bfloat16",
+            "rtol": 0.016,
+            "atol": 0.001,
+            "max_abs_error": 0.0,
+            "relative_l2_error": 0.0
+          },
+          "dgamma": {
+            "passed": true,
+            "dtype": "torch.bfloat16",
+            "rtol": 0.016,
+            "atol": 0.001,
+            "max_abs_error": 0.0,
+            "relative_l2_error": 0.0
+          }
+        }
+      },
+      "forward": {
+        "median_us": 71.95118299932801,
+        "round_medians_us": [
+          71.95118299932801,
+          75.12883000163129,
+          71.47841600090032
+        ],
+        "round_iqr_us": [
+          0.6391220013028914,
+          3.23530199966626,
+          1.5993870001693742
+        ],
+        "calls_per_block": [
+          1000,
+          1000,
+          1000
+        ],
+        "blocks": [
+          5,
+          5,
+          5
+        ],
+        "memory": {
+          "peak_increment_bytes": 8704,
+          "samples": [
+            {
+              "baseline_allocated_bytes": 33280,
+              "peak_allocated_bytes": 41984,
+              "peak_increment_bytes": 8704,
+              "output_live_increment_bytes": 8704
+            },
+            {
+              "baseline_allocated_bytes": 33280,
+              "peak_allocated_bytes": 41984,
+              "peak_increment_bytes": 8704,
+              "output_live_increment_bytes": 8704
+            },
+            {
+              "baseline_allocated_bytes": 33280,
+              "peak_allocated_bytes": 41984,
+              "peak_increment_bytes": 8704,
+              "output_live_increment_bytes": 8704
+            }
+          ]
+        },
+        "first_call_s": 5.58614293500068,
+        "code": "public/measurements/rmsnorm-compile/1x4096/forward.py",
+        "code_sha256": "754c2134903faeecb42f3d0e886a6b1ea749be4116c7e7762138f51a2aa65fa9",
+        "profile": {
+          "samples": [
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 1.696,
+              "span_us": 1.6962890625,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+                  "start_us": 0.0,
+                  "duration_us": 1.696
+                }
+              ]
+            },
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 1.696,
+              "span_us": 1.6962890625,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+                  "start_us": 0.0,
+                  "duration_us": 1.696
+                }
+              ]
+            },
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 1.696,
+              "span_us": 1.6962890625,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+                  "start_us": 0.0,
+                  "duration_us": 1.696
+                }
+              ]
+            }
+          ],
+          "trace": "public/measurements/rmsnorm-compile/1x4096/forward-trace.json.gz",
+          "trace_sha256": "635f468e94c6b5f9af511193b36989cbe8f2c1bb5777fd441141d1cb20375c49"
+        }
+      },
+      "backward": {
+        "median_us": 78.78004600024724,
+        "round_medians_us": [
+          78.86032650094421,
+          78.13055999940843,
+          78.78004600024724
+        ],
+        "round_iqr_us": [
+          0.42748349733301894,
+          0.4443060033736525,
+          0.5009062533645192
+        ],
+        "calls_per_block": [
+          1000,
+          1000,
+          1000
+        ],
+        "blocks": [
+          4,
+          4,
+          4
+        ],
+        "memory": {
+          "peak_increment_bytes": 16384,
+          "samples": [
+            {
+              "baseline_allocated_bytes": 33280,
+              "peak_allocated_bytes": 49664,
+              "peak_increment_bytes": 16384,
+              "output_live_increment_bytes": 16384
+            },
+            {
+              "baseline_allocated_bytes": 33280,
+              "peak_allocated_bytes": 49664,
+              "peak_increment_bytes": 16384,
+              "output_live_increment_bytes": 16384
+            },
+            {
+              "baseline_allocated_bytes": 33280,
+              "peak_allocated_bytes": 49664,
+              "peak_increment_bytes": 16384,
+              "output_live_increment_bytes": 16384
+            }
+          ]
+        },
+        "first_call_s": 0.3094786120018398,
+        "code": "public/measurements/rmsnorm-compile/1x4096/backward.py",
+        "code_sha256": "a56dc9e17dc65655654bd7ee0cf9b72ef632220dc9d006ce800d033e978c9fd6",
+        "profile": {
+          "samples": [
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 1.951,
+              "span_us": 1.951171875,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_0",
+                  "start_us": 0.0,
+                  "duration_us": 1.951
+                }
+              ]
+            },
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 1.952,
+              "span_us": 1.9521484375,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_0",
+                  "start_us": 0.0,
+                  "duration_us": 1.952
+                }
+              ]
+            },
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 1.952,
+              "span_us": 1.9521484375,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_0",
+                  "start_us": 0.0,
+                  "duration_us": 1.952
+                }
+              ]
+            }
+          ],
+          "trace": "public/measurements/rmsnorm-compile/1x4096/backward-trace.json.gz",
+          "trace_sha256": "5f34d09d897edd8360b87d5b2987e86e8ab74523dd5d97806e0777213b1e7549"
+        }
+      }
+    },
+    {
+      "M": 128,
+      "N": 4096,
+      "dtype": "torch.bfloat16",
+      "validation": {
+        "y": {
+          "passed": true,
+          "dtype": "torch.bfloat16",
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.00390625,
+          "relative_l2_error": 5.9232111198070925e-06
+        },
+        "r": {
+          "passed": true,
+          "dtype": "torch.float32",
+          "rtol": 1e-05,
+          "atol": 1e-06,
+          "max_abs_error": 1.1920928955078125e-07,
+          "relative_l2_error": 4.0158450786975664e-08
+        },
+        "dx": {
+          "passed": true,
+          "dtype": "torch.bfloat16",
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.0078125,
+          "relative_l2_error": 1.2147202141932212e-05
+        },
+        "dgamma": {
+          "passed": true,
+          "dtype": "torch.bfloat16",
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.0001220703125,
+          "relative_l2_error": 1.687866273414329e-07
+        },
+        "composed": {
+          "dx": {
+            "passed": true,
+            "dtype": "torch.bfloat16",
+            "rtol": 0.016,
+            "atol": 0.001,
+            "max_abs_error": 0.0078125,
+            "relative_l2_error": 1.426893322786782e-05
+          },
+          "dgamma": {
+            "passed": true,
+            "dtype": "torch.bfloat16",
+            "rtol": 0.016,
+            "atol": 0.001,
+            "max_abs_error": 0.0001220703125,
+            "relative_l2_error": 1.687866273414329e-07
+          }
+        }
+      },
+      "forward": {
+        "median_us": 81.34314249946328,
+        "round_medians_us": [
+          81.99171600062984,
+          81.23548349976774,
+          81.34314249946328
+        ],
+        "round_iqr_us": [
+          5.586344001130787,
+          0.9349017509521226,
+          0.5253457493381624
+        ],
+        "calls_per_block": [
+          1000,
+          1000,
+          1000
+        ],
+        "blocks": [
+          4,
+          4,
+          4
+        ],
+        "memory": {
+          "peak_increment_bytes": 1049088,
+          "samples": [
+            {
+              "baseline_allocated_bytes": 3154432,
+              "peak_allocated_bytes": 4203520,
+              "peak_increment_bytes": 1049088,
+              "output_live_increment_bytes": 1049088
+            },
+            {
+              "baseline_allocated_bytes": 3154432,
+              "peak_allocated_bytes": 4203520,
+              "peak_increment_bytes": 1049088,
+              "output_live_increment_bytes": 1049088
+            },
+            {
+              "baseline_allocated_bytes": 3154432,
+              "peak_allocated_bytes": 4203520,
+              "peak_increment_bytes": 1049088,
+              "output_live_increment_bytes": 1049088
+            }
+          ]
+        },
+        "first_call_s": 0.47675680099928286,
+        "code": "public/measurements/rmsnorm-compile/128x4096/forward.py",
+        "code_sha256": "221dc0dac8b20607e60b1e6c604975b495bd4cbd79d7eb823cd18ec37ba6b319",
+        "profile": {
+          "samples": [
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 2.144,
+              "span_us": 2.1435546875,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+                  "start_us": 0.0,
+                  "duration_us": 2.144
+                }
+              ]
+            },
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 2.144,
+              "span_us": 2.1435546875,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+                  "start_us": 0.0,
+                  "duration_us": 2.144
+                }
+              ]
+            },
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 2.176,
+              "span_us": 2.17578125,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+                  "start_us": 0.0,
+                  "duration_us": 2.176
+                }
+              ]
+            }
+          ],
+          "trace": "public/measurements/rmsnorm-compile/128x4096/forward-trace.json.gz",
+          "trace_sha256": "8be3c31f2381b23e9eaa03ed6e8ee9624dea1271a0dba5f75b47722215d8a368"
+        }
+      },
+      "backward": {
+        "median_us": 91.31522449933982,
+        "round_medians_us": [
+          91.35206199971435,
+          90.41665400036436,
+          91.31522449933982
+        ],
+        "round_iqr_us": [
+          2.1124599979884806,
+          0.363977252163764,
+          0.9175117520499075
+        ],
+        "calls_per_block": [
+          1000,
+          1000,
+          1000
+        ],
+        "blocks": [
+          4,
+          4,
+          4
+        ],
+        "memory": {
+          "peak_increment_bytes": 1056768,
+          "samples": [
+            {
+              "baseline_allocated_bytes": 3154432,
+              "peak_allocated_bytes": 4211200,
+              "peak_increment_bytes": 1056768,
+              "output_live_increment_bytes": 1056768
+            },
+            {
+              "baseline_allocated_bytes": 3154432,
+              "peak_allocated_bytes": 4211200,
+              "peak_increment_bytes": 1056768,
+              "output_live_increment_bytes": 1056768
+            },
+            {
+              "baseline_allocated_bytes": 3154432,
+              "peak_allocated_bytes": 4211200,
+              "peak_increment_bytes": 1056768,
+              "output_live_increment_bytes": 1056768
+            }
+          ]
+        },
+        "first_call_s": 0.646646088000125,
+        "code": "public/measurements/rmsnorm-compile/128x4096/backward.py",
+        "code_sha256": "a6e7dd164c49931f55efa2bf8f7e358d4dc53dd678566203f6e6c5b8a28ed63b",
+        "profile": {
+          "samples": [
+            {
+              "kernel_count": 2,
+              "kernel_duration_us": 4.7669999999999995,
+              "span_us": 30.748046875,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_mul_sum_0",
+                  "start_us": 0.0,
+                  "duration_us": 2.207
+                },
+                {
+                  "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_1",
+                  "start_us": 28.1884765625,
+                  "duration_us": 2.56
+                }
+              ]
+            },
+            {
+              "kernel_count": 2,
+              "kernel_duration_us": 4.735,
+              "span_us": 40.5068359375,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_mul_sum_0",
+                  "start_us": 0.0,
+                  "duration_us": 2.208
+                },
+                {
+                  "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_1",
+                  "start_us": 37.9794921875,
+                  "duration_us": 2.527
+                }
+              ]
+            },
+            {
+              "kernel_count": 2,
+              "kernel_duration_us": 4.7989999999999995,
+              "span_us": 28.7001953125,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_mul_sum_0",
+                  "start_us": 0.0,
+                  "duration_us": 2.207
+                },
+                {
+                  "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_1",
+                  "start_us": 26.1083984375,
+                  "duration_us": 2.592
+                }
+              ]
+            }
+          ],
+          "trace": "public/measurements/rmsnorm-compile/128x4096/backward-trace.json.gz",
+          "trace_sha256": "42ef2b9395f09f4e67e6eca64635e6d736a180c2871a9935aff91718138e8b87"
+        }
+      }
+    },
+    {
+      "M": 1024,
+      "N": 4096,
+      "dtype": "torch.bfloat16",
+      "validation": {
+        "y": {
+          "passed": true,
+          "dtype": "torch.bfloat16",
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.015625,
+          "relative_l2_error": 8.925590009312145e-06
+        },
+        "r": {
+          "passed": true,
+          "dtype": "torch.float32",
+          "rtol": 1e-05,
+          "atol": 1e-06,
+          "max_abs_error": 1.1920928955078125e-07,
+          "relative_l2_error": 3.691682692874565e-08
+        },
+        "dx": {
+          "passed": true,
+          "dtype": "torch.bfloat16",
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.0078125,
+          "relative_l2_error": 7.030747383396374e-06
+        },
+        "dgamma": {
+          "passed": true,
+          "dtype": "torch.bfloat16",
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.0625,
+          "relative_l2_error": 3.050733903364744e-05
+        },
+        "composed": {
+          "dx": {
+            "passed": true,
+            "dtype": "torch.bfloat16",
+            "rtol": 0.016,
+            "atol": 0.001,
+            "max_abs_error": 0.0078125,
+            "relative_l2_error": 8.208248800656293e-06
+          },
+          "dgamma": {
+            "passed": true,
+            "dtype": "torch.bfloat16",
+            "rtol": 0.016,
+            "atol": 0.001,
+            "max_abs_error": 0.0625,
+            "relative_l2_error": 3.050733903364744e-05
+          }
+        },
+        "scaled_inputs": [
+          {
+            "scale": 0.0,
+            "checks": {
+              "y": {
+                "passed": true,
+                "dtype": "torch.bfloat16",
+                "rtol": 0.016,
+                "atol": 0.001,
+                "max_abs_error": 0.0,
+                "relative_l2_error": 0.0
+              },
+              "r": {
+                "passed": true,
+                "dtype": "torch.float32",
+                "rtol": 1e-05,
+                "atol": 1e-06,
+                "max_abs_error": 0.0,
+                "relative_l2_error": 0.0
+              },
+              "dx": {
+                "passed": true,
+                "dtype": "torch.bfloat16",
+                "rtol": 0.016,
+                "atol": 0.001,
+                "max_abs_error": 0.0,
+                "relative_l2_error": 0.0
+              },
+              "dgamma": {
+                "passed": true,
+                "dtype": "torch.bfloat16",
+                "rtol": 0.016,
+                "atol": 0.001,
+                "max_abs_error": 0.0,
+                "relative_l2_error": 0.0
+              }
+            }
+          },
+          {
+            "scale": 0.001,
+            "checks": {
+              "y": {
+                "passed": true,
+                "dtype": "torch.bfloat16",
+                "rtol": 0.016,
+                "atol": 0.001,
+                "max_abs_error": 0.001953125,
+                "relative_l2_error": 3.4273346045665676e-06
+              },
+              "r": {
+                "passed": true,
+                "dtype": "torch.float32",
+                "rtol": 1e-05,
+                "atol": 1e-06,
+                "max_abs_error": 0.0001220703125,
+                "relative_l2_error": 2.7638035859922638e-08
+              },
+              "dx": {
+                "passed": true,
+                "dtype": "torch.bfloat16",
+                "rtol": 0.016,
+                "atol": 0.001,
+                "max_abs_error": 4.0,
+                "relative_l2_error": 6.847717486380134e-06
+              },
+              "dgamma": {
+                "passed": true,
+                "dtype": "torch.bfloat16",
+                "rtol": 0.016,
+                "atol": 0.001,
+                "max_abs_error": 0.0078125,
+                "relative_l2_error": 5.390925707615679e-06
+              }
+            }
+          },
+          {
+            "scale": 100.0,
+            "checks": {
+              "y": {
+                "passed": true,
+                "dtype": "torch.bfloat16",
+                "rtol": 0.016,
+                "atol": 0.001,
+                "max_abs_error": 0.015625,
+                "relative_l2_error": 9.559385944157839e-06
+              },
+              "r": {
+                "passed": true,
+                "dtype": "torch.float32",
+                "rtol": 1e-05,
+                "atol": 1e-06,
+                "max_abs_error": 9.313225746154785e-10,
+                "relative_l2_error": 3.968438733181756e-08
+              },
+              "dx": {
+                "passed": true,
+                "dtype": "torch.bfloat16",
+                "rtol": 0.016,
+                "atol": 0.001,
+                "max_abs_error": 0.0001220703125,
+                "relative_l2_error": 1.3631375622935593e-05
+              },
+              "dgamma": {
+                "passed": true,
+                "dtype": "torch.bfloat16",
+                "rtol": 0.016,
+                "atol": 0.001,
+                "max_abs_error": 0.0,
+                "relative_l2_error": 0.0
+              }
+            }
+          }
+        ]
+      },
+      "forward": {
+        "median_us": 83.2388990002073,
+        "round_medians_us": [
+          88.49334849946898,
+          83.2388990002073,
+          80.26993150087947
+        ],
+        "round_iqr_us": [
+          2.2472227492471553,
+          3.9672665043326654,
+          1.6164669968929988
+        ],
+        "calls_per_block": [
+          1000,
+          1000,
+          1000
+        ],
+        "blocks": [
+          4,
+          4,
+          4
+        ],
+        "memory": {
+          "peak_increment_bytes": 8392704,
+          "samples": [
+            {
+              "baseline_allocated_bytes": 25178112,
+              "peak_allocated_bytes": 33570816,
+              "peak_increment_bytes": 8392704,
+              "output_live_increment_bytes": 8392704
+            },
+            {
+              "baseline_allocated_bytes": 25178112,
+              "peak_allocated_bytes": 33570816,
+              "peak_increment_bytes": 8392704,
+              "output_live_increment_bytes": 8392704
+            },
+            {
+              "baseline_allocated_bytes": 25178112,
+              "peak_allocated_bytes": 33570816,
+              "peak_increment_bytes": 8392704,
+              "output_live_increment_bytes": 8392704
+            }
+          ]
+        },
+        "first_call_s": 0.44396345000131987,
+        "code": "public/measurements/rmsnorm-compile/1024x4096/forward.py",
+        "code_sha256": "c46744a7beed7e0493eb0e28068d22b9a8110b572e5e73651e30e09a5069f35a",
+        "profile": {
+          "samples": [
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 6.24,
+              "span_us": 6.240234375,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+                  "start_us": 0.0,
+                  "duration_us": 6.24
+                }
+              ]
+            },
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 6.24,
+              "span_us": 6.240234375,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+                  "start_us": 0.0,
+                  "duration_us": 6.24
+                }
+              ]
+            },
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 6.176,
+              "span_us": 6.17578125,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+                  "start_us": 0.0,
+                  "duration_us": 6.176
+                }
+              ]
+            }
+          ],
+          "trace": "public/measurements/rmsnorm-compile/1024x4096/forward-trace.json.gz",
+          "trace_sha256": "f565608bab07942b56bc934ce7732f65a07f2883a04f13e9721f0c0a0cd96c4c"
+        }
+      },
+      "backward": {
+        "median_us": 116.53161800131784,
+        "round_medians_us": [
+          118.24827300006291,
+          109.16395399908652,
+          116.53161800131784
+        ],
+        "round_iqr_us": [
+          6.600781001907295,
+          0.49855299948831794,
+          1.324811501035575
+        ],
+        "calls_per_block": [
+          1000,
+          1000,
+          1000
+        ],
+        "blocks": [
+          3,
+          3,
+          3
+        ],
+        "memory": {
+          "peak_increment_bytes": 8396800,
+          "samples": [
+            {
+              "baseline_allocated_bytes": 25178112,
+              "peak_allocated_bytes": 33574912,
+              "peak_increment_bytes": 8396800,
+              "output_live_increment_bytes": 8396800
+            },
+            {
+              "baseline_allocated_bytes": 25178112,
+              "peak_allocated_bytes": 33574912,
+              "peak_increment_bytes": 8396800,
+              "output_live_increment_bytes": 8396800
+            },
+            {
+              "baseline_allocated_bytes": 25178112,
+              "peak_allocated_bytes": 33574912,
+              "peak_increment_bytes": 8396800,
+              "output_live_increment_bytes": 8396800
+            }
+          ]
+        },
+        "first_call_s": 0.5831042980025813,
+        "code": "public/measurements/rmsnorm-compile/1024x4096/backward.py",
+        "code_sha256": "5cb62dda08a0a808c03618e846542a578e476bb1bd06262e62bbf54a51afa8ed",
+        "profile": {
+          "samples": [
+            {
+              "kernel_count": 3,
+              "kernel_duration_us": 20.416,
+              "span_us": 82.59375,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_mul_sum_0",
+                  "start_us": 0.0,
+                  "duration_us": 10.112
+                },
+                {
+                  "name": "triton_per_fused__to_copy_mul_sum_1",
+                  "start_us": 41.537109375,
+                  "duration_us": 2.016
+                },
+                {
+                  "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_2",
+                  "start_us": 74.3056640625,
+                  "duration_us": 8.288
+                }
+              ]
+            },
+            {
+              "kernel_count": 3,
+              "kernel_duration_us": 20.64,
+              "span_us": 61.185546875,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_mul_sum_0",
+                  "start_us": 0.0,
+                  "duration_us": 10.336
+                },
+                {
+                  "name": "triton_per_fused__to_copy_mul_sum_1",
+                  "start_us": 24.9931640625,
+                  "duration_us": 2.016
+                },
+                {
+                  "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_2",
+                  "start_us": 52.8974609375,
+                  "duration_us": 8.288
+                }
+              ]
+            },
+            {
+              "kernel_count": 3,
+              "kernel_duration_us": 20.672,
+              "span_us": 69.087890625,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_mul_sum_0",
+                  "start_us": 0.0,
+                  "duration_us": 10.432
+                },
+                {
+                  "name": "triton_per_fused__to_copy_mul_sum_1",
+                  "start_us": 24.1591796875,
+                  "duration_us": 2.016
+                },
+                {
+                  "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_2",
+                  "start_us": 60.8642578125,
+                  "duration_us": 8.224
+                }
+              ]
+            }
+          ],
+          "trace": "public/measurements/rmsnorm-compile/1024x4096/backward-trace.json.gz",
+          "trace_sha256": "1edf1c40528c3a93294fe575f03307d0e9cc2ccd47e7c9244fcdee757e628977"
+        }
+      }
+    },
+    {
+      "M": 4096,
+      "N": 4096,
+      "dtype": "torch.bfloat16",
+      "validation": {
+        "y": {
+          "passed": true,
+          "dtype": "torch.bfloat16",
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.015625,
+          "relative_l2_error": 9.353699169878382e-06
+        },
+        "r": {
+          "passed": true,
+          "dtype": "torch.float32",
+          "rtol": 1e-05,
+          "atol": 1e-06,
+          "max_abs_error": 1.1920928955078125e-07,
+          "relative_l2_error": 3.7970036004253416e-08
+        },
+        "dx": {
+          "passed": true,
+          "dtype": "torch.bfloat16",
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.015625,
+          "relative_l2_error": 8.396240446018055e-06
+        },
+        "dgamma": {
+          "passed": true,
+          "dtype": "torch.bfloat16",
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.0001220703125,
+          "relative_l2_error": 2.9542327695253334e-08
+        },
+        "composed": {
+          "dx": {
+            "passed": true,
+            "dtype": "torch.bfloat16",
+            "rtol": 0.016,
+            "atol": 0.001,
+            "max_abs_error": 0.03125,
+            "relative_l2_error": 1.276237890124321e-05
+          },
+          "dgamma": {
+            "passed": true,
+            "dtype": "torch.bfloat16",
+            "rtol": 0.016,
+            "atol": 0.001,
+            "max_abs_error": 0.0,
+            "relative_l2_error": 0.0
+          }
+        }
+      },
+      "forward": {
+        "median_us": 82.3748874990997,
+        "round_medians_us": [
+          85.3552659991692,
+          81.85369799866749,
+          82.3748874990997
+        ],
+        "round_iqr_us": [
+          7.905988000857179,
+          2.97484450220508,
+          6.421401501938831
+        ],
+        "calls_per_block": [
+          1000,
+          1000,
+          1000
+        ],
+        "blocks": [
+          4,
+          4,
+          4
+        ],
+        "memory": {
+          "peak_increment_bytes": 33570816,
+          "samples": [
+            {
+              "baseline_allocated_bytes": 100687872,
+              "peak_allocated_bytes": 134258688,
+              "peak_increment_bytes": 33570816,
+              "output_live_increment_bytes": 33570816
+            },
+            {
+              "baseline_allocated_bytes": 100687872,
+              "peak_allocated_bytes": 134258688,
+              "peak_increment_bytes": 33570816,
+              "output_live_increment_bytes": 33570816
+            },
+            {
+              "baseline_allocated_bytes": 100687872,
+              "peak_allocated_bytes": 134258688,
+              "peak_increment_bytes": 33570816,
+              "output_live_increment_bytes": 33570816
+            }
+          ]
+        },
+        "first_call_s": 0.47641428600036306,
+        "code": "public/measurements/rmsnorm-compile/4096x4096/forward.py",
+        "code_sha256": "1d3d80c056a03db2dd0c981da4b86ed06cfca7b6bca3c11cb51b043c5e4009c9",
+        "profile": {
+          "samples": [
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 19.968,
+              "span_us": 19.9677734375,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+                  "start_us": 0.0,
+                  "duration_us": 19.968
+                }
+              ]
+            },
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 19.615,
+              "span_us": 19.615234375,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+                  "start_us": 0.0,
+                  "duration_us": 19.615
+                }
+              ]
+            },
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 19.615,
+              "span_us": 19.615234375,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+                  "start_us": 0.0,
+                  "duration_us": 19.615
+                }
+              ]
+            }
+          ],
+          "trace": "public/measurements/rmsnorm-compile/4096x4096/forward-trace.json.gz",
+          "trace_sha256": "73924d2045a8421305c43443c9df33dd4b161f8b1fb5d9d2752e1dc571ec3f25"
+        }
+      },
+      "backward": {
+        "median_us": 115.45924600068247,
+        "round_medians_us": [
+          114.78800100303488,
+          118.59319700306514,
+          115.45924600068247
+        ],
+        "round_iqr_us": [
+          0.5719749988202243,
+          3.7180460003583016,
+          0.44749600056092664
+        ],
+        "calls_per_block": [
+          1000,
+          1000,
+          1000
+        ],
+        "blocks": [
+          3,
+          3,
+          3
+        ],
+        "memory": {
+          "peak_increment_bytes": 33562624,
+          "samples": [
+            {
+              "baseline_allocated_bytes": 100687872,
+              "peak_allocated_bytes": 134250496,
+              "peak_increment_bytes": 33562624,
+              "output_live_increment_bytes": 33562624
+            },
+            {
+              "baseline_allocated_bytes": 100687872,
+              "peak_allocated_bytes": 134250496,
+              "peak_increment_bytes": 33562624,
+              "output_live_increment_bytes": 33562624
+            },
+            {
+              "baseline_allocated_bytes": 100687872,
+              "peak_allocated_bytes": 134250496,
+              "peak_increment_bytes": 33562624,
+              "output_live_increment_bytes": 33562624
+            }
+          ]
+        },
+        "first_call_s": 0.5730504569983168,
+        "code": "public/measurements/rmsnorm-compile/4096x4096/backward.py",
+        "code_sha256": "0c2cd39450ff4f4b76b4f30de1e1d7a687d8718d3b4b6c137bb7a6f86b901780",
+        "profile": {
+          "samples": [
+            {
+              "kernel_count": 3,
+              "kernel_duration_us": 113.794,
+              "span_us": 175.42578125,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_mul_sum_0",
+                  "start_us": 0.0,
+                  "duration_us": 31.969
+                },
+                {
+                  "name": "triton_per_fused__to_copy_mul_sum_1",
+                  "start_us": 32.609375,
+                  "duration_us": 2.144
+                },
+                {
+                  "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_2",
+                  "start_us": 95.7451171875,
+                  "duration_us": 79.681
+                }
+              ]
+            },
+            {
+              "kernel_count": 3,
+              "kernel_duration_us": 113.89,
+              "span_us": 131.1064453125,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_mul_sum_0",
+                  "start_us": 0.0,
+                  "duration_us": 32.321
+                },
+                {
+                  "name": "triton_per_fused__to_copy_mul_sum_1",
+                  "start_us": 32.9931640625,
+                  "duration_us": 2.4
+                },
+                {
+                  "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_2",
+                  "start_us": 51.9375,
+                  "duration_us": 79.169
+                }
+              ]
+            },
+            {
+              "kernel_count": 3,
+              "kernel_duration_us": 114.04799999999999,
+              "span_us": 130.7529296875,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_mul_sum_0",
+                  "start_us": 0.0,
+                  "duration_us": 32.16
+                },
+                {
+                  "name": "triton_per_fused__to_copy_mul_sum_1",
+                  "start_us": 32.736328125,
+                  "duration_us": 2.368
+                },
+                {
+                  "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_2",
+                  "start_us": 51.2333984375,
+                  "duration_us": 79.52
+                }
+              ]
+            }
+          ],
+          "trace": "public/measurements/rmsnorm-compile/4096x4096/backward-trace.json.gz",
+          "trace_sha256": "10f8fdd524260e5b5892baa28f36db546646a66be5b2309b9bf671a76b5b0ce8"
+        }
+      }
+    },
+    {
+      "M": 4096,
+      "N": 8192,
+      "dtype": "torch.bfloat16",
+      "validation": {
+        "y": {
+          "passed": true,
+          "dtype": "torch.bfloat16",
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.03125,
+          "relative_l2_error": 1.1423565410950687e-05
+        },
+        "r": {
+          "passed": true,
+          "dtype": "torch.float32",
+          "rtol": 1e-05,
+          "atol": 1e-06,
+          "max_abs_error": 1.1920928955078125e-07,
+          "relative_l2_error": 3.697087436194124e-08
+        },
+        "dx": {
+          "passed": true,
+          "dtype": "torch.bfloat16",
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.015625,
+          "relative_l2_error": 1.0075514182972256e-05
+        },
+        "dgamma": {
+          "passed": true,
+          "dtype": "torch.bfloat16",
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 6.103515625e-05,
+          "relative_l2_error": 1.157693763076395e-08
+        },
+        "composed": {
+          "dx": {
+            "passed": true,
+            "dtype": "torch.bfloat16",
+            "rtol": 0.016,
+            "atol": 0.001,
+            "max_abs_error": 0.015625,
+            "relative_l2_error": 1.2432063158485107e-05
+          },
+          "dgamma": {
+            "passed": true,
+            "dtype": "torch.bfloat16",
+            "rtol": 0.016,
+            "atol": 0.001,
+            "max_abs_error": 6.103515625e-05,
+            "relative_l2_error": 1.2681899974609223e-08
+          }
+        }
+      },
+      "forward": {
+        "median_us": 145.71768699897802,
+        "round_medians_us": [
+          145.52594300039345,
+          146.21317699857173,
+          145.71768699897802
+        ],
+        "round_iqr_us": [
+          0.3507234996504981,
+          0.3835059997072624,
+          0.2066930010187029
+        ],
+        "calls_per_block": [
+          1000,
+          1000,
+          1000
+        ],
+        "blocks": [
+          3,
+          3,
+          3
+        ],
+        "memory": {
+          "peak_increment_bytes": 67125248,
+          "samples": [
+            {
+              "baseline_allocated_bytes": 201359360,
+              "peak_allocated_bytes": 268484608,
+              "peak_increment_bytes": 67125248,
+              "output_live_increment_bytes": 67125248
+            },
+            {
+              "baseline_allocated_bytes": 201359360,
+              "peak_allocated_bytes": 268484608,
+              "peak_increment_bytes": 67125248,
+              "output_live_increment_bytes": 67125248
+            },
+            {
+              "baseline_allocated_bytes": 201359360,
+              "peak_allocated_bytes": 268484608,
+              "peak_increment_bytes": 67125248,
+              "output_live_increment_bytes": 67125248
+            }
+          ]
+        },
+        "first_call_s": 0.51481185800003,
+        "code": "public/measurements/rmsnorm-compile/4096x8192/forward.py",
+        "code_sha256": "11b831b9037a4c27b5d07b2c2967944d027175309fe5e6b8df8d12dd2d0ab6ac",
+        "profile": {
+          "samples": [
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 143.833,
+              "span_us": 143.8330078125,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+                  "start_us": 0.0,
+                  "duration_us": 143.833
+                }
+              ]
+            },
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 143.001,
+              "span_us": 143.0009765625,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+                  "start_us": 0.0,
+                  "duration_us": 143.001
+                }
+              ]
+            },
+            {
+              "kernel_count": 1,
+              "kernel_duration_us": 143.48,
+              "span_us": 143.48046875,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+                  "start_us": 0.0,
+                  "duration_us": 143.48
+                }
+              ]
+            }
+          ],
+          "trace": "public/measurements/rmsnorm-compile/4096x8192/forward-trace.json.gz",
+          "trace_sha256": "2d9bc061c29a8366fc59711a9aaa734a36b15bc00dce7033d775ddcac6f5d99b"
+        }
+      },
+      "backward": {
+        "median_us": 335.4301400031545,
+        "round_medians_us": [
+          335.4301400031545,
+          335.50449003087124,
+          335.42113000294194
+        ],
+        "round_iqr_us": [
+          0.7418799941660902,
+          0.18405000446364717,
+          0.2623899854370154
+        ],
+        "calls_per_block": [
+          100,
+          100,
+          100
+        ],
+        "blocks": [
+          9,
+          9,
+          9
+        ],
+        "memory": {
+          "peak_increment_bytes": 67125248,
+          "samples": [
+            {
+              "baseline_allocated_bytes": 201359360,
+              "peak_allocated_bytes": 268484608,
+              "peak_increment_bytes": 67125248,
+              "output_live_increment_bytes": 67125248
+            },
+            {
+              "baseline_allocated_bytes": 201359360,
+              "peak_allocated_bytes": 268484608,
+              "peak_increment_bytes": 67125248,
+              "output_live_increment_bytes": 67125248
+            },
+            {
+              "baseline_allocated_bytes": 201359360,
+              "peak_allocated_bytes": 268484608,
+              "peak_increment_bytes": 67125248,
+              "output_live_increment_bytes": 67125248
+            }
+          ]
+        },
+        "first_call_s": 1.1703275509971718,
+        "code": "public/measurements/rmsnorm-compile/4096x8192/backward.py",
+        "code_sha256": "94da4eb7ea6afe62f5494e07a8ff56f8fb0e263c3340f0d45911249ab9402a65",
+        "profile": {
+          "samples": [
+            {
+              "kernel_count": 2,
+              "kernel_duration_us": 333.547,
+              "span_us": 334.154296875,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_mul_sum_0",
+                  "start_us": 0.0,
+                  "duration_us": 128.056
+                },
+                {
+                  "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_1",
+                  "start_us": 128.6630859375,
+                  "duration_us": 205.491
+                }
+              ]
+            },
+            {
+              "kernel_count": 2,
+              "kernel_duration_us": 334.155,
+              "span_us": 334.8271484375,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_mul_sum_0",
+                  "start_us": 0.0,
+                  "duration_us": 127.864
+                },
+                {
+                  "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_1",
+                  "start_us": 128.5361328125,
+                  "duration_us": 206.291
+                }
+              ]
+            },
+            {
+              "kernel_count": 2,
+              "kernel_duration_us": 332.971,
+              "span_us": 333.5791015625,
+              "kernels": [
+                {
+                  "name": "triton_red_fused__to_copy_mul_sum_0",
+                  "start_us": 0.0,
+                  "duration_us": 127.608
+                },
+                {
+                  "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_1",
+                  "start_us": 128.2158203125,
+                  "duration_us": 205.363
+                }
+              ]
+            }
+          ],
+          "trace": "public/measurements/rmsnorm-compile/4096x8192/backward-trace.json.gz",
+          "trace_sha256": "5d7f87b9ca17b3ae214affd8a65b914491cf6837ef796129a057da58a77dec70"
+        }
+      }
+    }
+  ]
+}

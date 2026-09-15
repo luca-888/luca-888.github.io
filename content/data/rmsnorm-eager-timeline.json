@@ -1,0 +1,311 @@
+{
+  "gpu": "RTX 4090",
+  "dtype": "BF16",
+  "M": 1024,
+  "N": 4096,
+  "sourceRegion": "measured_1",
+  "timeUnit": "us",
+  "origin": "First GPU kernel start in each invocation. Real gaps preserved. GPU kernels only; CPU, memcpy and memset are not drawn. Timings are from one profiled invocation, not the benchmark median.",
+  "directions": {
+    "forward": {
+      "sourceFile": "ml-portal-eager-torch.bfloat16-forward.json",
+      "sourceSha256": "a96822c3d15c43baadd7e4143793b21c0d987f5a8c716b4bb82dc11ae09ce650",
+      "spanUs": 161.148,
+      "kernels": [
+        {
+          "index": 1,
+          "category": "cast",
+          "code": "x.float()",
+          "cpuOp": "aten::copy_",
+          "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, 4, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >(int, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1>)",
+          "startUs": 0.0,
+          "durationUs": 12.64,
+          "stream": 7,
+          "correlation": 442
+        },
+        {
+          "index": 2,
+          "category": "cast",
+          "code": "gamma.float()",
+          "cpuOp": "aten::copy_",
+          "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, 4, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >(int, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1>)",
+          "startUs": 16.959,
+          "durationUs": 2.561,
+          "stream": 7,
+          "correlation": 456
+        },
+        {
+          "index": 3,
+          "category": "elementwise",
+          "code": "x.square()",
+          "cpuOp": "aten::pow",
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::pow_tensor_scalar_kernel_impl<float, float>(at::TensorIteratorBase&, float)::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::(anonymous namespace)::pow_tensor_scalar_kernel_impl<float, float>(at::TensorIteratorBase&, float)::{lambda(float)#1}, std::array<char*, 2ul>)",
+          "startUs": 33.599,
+          "durationUs": 11.264,
+          "stream": 7,
+          "correlation": 467
+        },
+        {
+          "index": 4,
+          "category": "reduce",
+          "code": "s = x.square().mean(dim=1, keepdim=True)",
+          "cpuOp": "aten::mean",
+          "name": "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<float, at::native::MeanOps<float, float, float, float>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::MeanOps<float, float, float, float>, unsigned int, float, 4, 4>)",
+          "startUs": 68.862,
+          "durationUs": 7.04,
+          "stream": 7,
+          "correlation": 481
+        },
+        {
+          "index": 5,
+          "category": "elementwise",
+          "code": "s + eps",
+          "cpuOp": "aten::add",
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char*, 2ul> >(int, at::native::CUDAFunctorOnSelf_add<float>, std::array<char*, 2ul>)",
+          "startUs": 94.846,
+          "durationUs": 1.056,
+          "stream": 7,
+          "correlation": 491
+        },
+        {
+          "index": 6,
+          "category": "elementwise",
+          "code": "r = torch.rsqrt(s + eps)",
+          "cpuOp": "aten::rsqrt",
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::rsqrt_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::rsqrt_kernel_cuda(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#2}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>)",
+          "startUs": 107.998,
+          "durationUs": 1.087,
+          "stream": 7,
+          "correlation": 501
+        },
+        {
+          "index": 7,
+          "category": "elementwise",
+          "code": "x_hat = x * r",
+          "cpuOp": "aten::mul",
+          "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})",
+          "startUs": 121.565,
+          "durationUs": 10.944,
+          "stream": 7,
+          "correlation": 511
+        },
+        {
+          "index": 8,
+          "category": "elementwise",
+          "code": "y = x_hat * gamma",
+          "cpuOp": "aten::mul",
+          "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})",
+          "startUs": 133.277,
+          "durationUs": 10.816,
+          "stream": 7,
+          "correlation": 521
+        },
+        {
+          "index": 9,
+          "category": "cast",
+          "code": "y.to(x_dtype)",
+          "cpuOp": "aten::copy_",
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(float)#1}, std::array<char*, 2ul>)",
+          "startUs": 153.98,
+          "durationUs": 7.168,
+          "stream": 7,
+          "correlation": 534
+        }
+      ]
+    },
+    "backward": {
+      "sourceFile": "ml-portal-eager-torch.bfloat16-backward.json",
+      "sourceSha256": "c1d21206e74636af74a9fc76439e8f122ef0b448ebb0d74e55c159368a2bb9a2",
+      "spanUs": 256.001,
+      "kernels": [
+        {
+          "index": 1,
+          "category": "cast",
+          "code": "x.float()",
+          "cpuOp": "aten::copy_",
+          "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, 4, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >(int, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1>)",
+          "startUs": 0.0,
+          "durationUs": 22.176,
+          "stream": 7,
+          "correlation": 6360
+        },
+        {
+          "index": 2,
+          "category": "cast",
+          "code": "gamma.float()",
+          "cpuOp": "aten::copy_",
+          "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, 4, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >(int, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1>)",
+          "startUs": 22.88,
+          "durationUs": 2.496,
+          "stream": 7,
+          "correlation": 6374
+        },
+        {
+          "index": 3,
+          "category": "cast",
+          "code": "g.float()",
+          "cpuOp": "aten::copy_",
+          "name": "void at::native::unrolled_elementwise_kernel<at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, 4, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1> >(int, at::native::direct_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda()#3}::operator()() const::{lambda()#7}::operator()() const::{lambda(float)#1}, std::array<char*, 2ul>, TrivialOffsetCalculator<1, unsigned int>, TrivialOffsetCalculator<1, unsigned int>, at::native::memory::LoadWithCast<1>, at::native::memory::StoreWithCast<1>)",
+          "startUs": 30.016,
+          "durationUs": 25.216,
+          "stream": 7,
+          "correlation": 6388
+        },
+        {
+          "index": 4,
+          "category": "elementwise",
+          "code": "x_hat = x * r",
+          "cpuOp": "aten::mul",
+          "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})",
+          "startUs": 56.096,
+          "durationUs": 21.824,
+          "stream": 7,
+          "correlation": 6399
+        },
+        {
+          "index": 5,
+          "category": "elementwise",
+          "code": "dx_hat = g * gamma",
+          "cpuOp": "aten::mul",
+          "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})",
+          "startUs": 78.625,
+          "durationUs": 10.752,
+          "stream": 7,
+          "correlation": 6409
+        },
+        {
+          "index": 6,
+          "category": "elementwise",
+          "code": "dx_hat * x",
+          "cpuOp": "aten::mul",
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 3ul>)",
+          "startUs": 89.985,
+          "durationUs": 16.8,
+          "stream": 7,
+          "correlation": 6419
+        },
+        {
+          "index": 7,
+          "category": "reduce",
+          "code": "dr = (dx_hat * x).sum(dim=1, keepdim=True)",
+          "cpuOp": "aten::sum",
+          "name": "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4>)",
+          "startUs": 107.425,
+          "durationUs": 7.264,
+          "stream": 7,
+          "correlation": 6433
+        },
+        {
+          "index": 8,
+          "category": "elementwise",
+          "code": "r * dx_hat",
+          "cpuOp": "aten::mul",
+          "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})",
+          "startUs": 115.393,
+          "durationUs": 13.952,
+          "stream": 7,
+          "correlation": 6443
+        },
+        {
+          "index": 9,
+          "category": "elementwise",
+          "code": "r.pow(3)",
+          "cpuOp": "aten::pow",
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::(anonymous namespace)::pow_tensor_scalar_kernel_impl<float, float>(at::TensorIteratorBase&, float)::{lambda(float)#2}, std::array<char*, 2ul> >(int, at::native::(anonymous namespace)::pow_tensor_scalar_kernel_impl<float, float>(at::TensorIteratorBase&, float)::{lambda(float)#2}, std::array<char*, 2ul>)",
+          "startUs": 129.985,
+          "durationUs": 1.088,
+          "stream": 7,
+          "correlation": 6453
+        },
+        {
+          "index": 10,
+          "category": "elementwise",
+          "code": "x * r.pow(3)",
+          "cpuOp": "aten::mul",
+          "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})",
+          "startUs": 131.841,
+          "durationUs": 10.752,
+          "stream": 7,
+          "correlation": 6463
+        },
+        {
+          "index": 11,
+          "category": "elementwise",
+          "code": "x * r.pow(3) * dr",
+          "cpuOp": "aten::mul",
+          "name": "void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1}>(int, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > >(at::TensorIteratorBase&, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> > const&)::{lambda(int)#1})",
+          "startUs": 143.329,
+          "durationUs": 17.12,
+          "stream": 7,
+          "correlation": 6473
+        },
+        {
+          "index": 12,
+          "category": "elementwise",
+          "code": "x * r.pow(3) * dr / N",
+          "cpuOp": "aten::div",
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 2ul> >(int, at::native::BUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 2ul>)",
+          "startUs": 161.121,
+          "durationUs": 10.048,
+          "stream": 7,
+          "correlation": 6483
+        },
+        {
+          "index": 13,
+          "category": "elementwise",
+          "code": "dx = r * dx_hat - x * r.pow(3) * dr / N",
+          "cpuOp": "aten::sub",
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul> >(int, at::native::CUDAFunctor_add<float>, std::array<char*, 3ul>)",
+          "startUs": 171.841,
+          "durationUs": 14.528,
+          "stream": 7,
+          "correlation": 6493
+        },
+        {
+          "index": 14,
+          "category": "elementwise",
+          "code": "g * x_hat",
+          "cpuOp": "aten::mul",
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 3ul> >(int, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float> >, std::array<char*, 3ul>)",
+          "startUs": 187.041,
+          "durationUs": 48.0,
+          "stream": 7,
+          "correlation": 6503
+        },
+        {
+          "index": 15,
+          "category": "reduce",
+          "code": "dgamma = (g * x_hat).sum(dim=0)",
+          "cpuOp": "aten::sum",
+          "name": "void at::native::reduce_kernel<128, 4, at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4> >(at::native::ReduceOp<float, at::native::func_wrapper_t<float, at::native::sum_functor<float, float, float>::operator()(at::TensorIterator&)::{lambda(float, float)#1}>, unsigned int, float, 4, 4>)",
+          "startUs": 237.761,
+          "durationUs": 8.32,
+          "stream": 7,
+          "correlation": 6520
+        },
+        {
+          "index": 16,
+          "category": "cast",
+          "code": "dx.to(x_dtype)",
+          "cpuOp": "aten::copy_",
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(float)#1}, std::array<char*, 2ul>)",
+          "startUs": 246.721,
+          "durationUs": 7.489,
+          "stream": 7,
+          "correlation": 6533
+        },
+        {
+          "index": 17,
+          "category": "cast",
+          "code": "dgamma.to(gamma_dtype)",
+          "cpuOp": "aten::copy_",
+          "name": "void at::native::vectorized_elementwise_kernel<4, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(float)#1}, std::array<char*, 2ul> >(int, at::native::bfloat16_copy_kernel_cuda(at::TensorIteratorBase&)::{lambda(float)#1}, std::array<char*, 2ul>)",
+          "startUs": 254.946,
+          "durationUs": 1.055,
+          "stream": 7,
+          "correlation": 6547
+        }
+      ]
+    }
+  }
+}

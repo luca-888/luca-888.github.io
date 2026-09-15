@@ -1,0 +1,34 @@
+{
+  "M": 1024,
+  "N": 4096,
+  "method": "torch.utils.benchmark.Timer.blocked_autorange(min_run_time=0.3), 3 rounds, median of round medians; 30 warmup calls; no_grad; contiguous CUDA inputs; reused inputs; no cache flush; 1 CPU thread; default GPU clocks; no CUDA Graph; eps=1e-6; backward excludes forward; profiler separate from timing",
+  "round_medians_us": {
+    "eager": [
+      64.31489899841836,
+      64.45743699805462,
+      64.42696000158321
+    ],
+    "compile": [
+      71.11364599768422,
+      72.12994799920125,
+      71.54351500139455
+    ],
+    "generated_wrapper": [
+      13.64908440009458,
+      13.660412699755398,
+      14.688714799922309
+    ]
+  },
+  "note": "Diagnostic only; generated_wrapper bypasses Dynamo and AOT runtime wrappers and is not used as the torch.compile article result.",
+  "environment": {
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "torch": "2.9.1+cu128",
+    "triton": "3.5.1",
+    "cuda": "12.8",
+    "driver": "570.153.02",
+    "python": "3.12.14",
+    "cpu": "x86_64"
+  },
+  "reference_sha256": "783b097d37628ccd0043fe45b3df9232808818fa684fac0028ab7701ebdd7f51",
+  "cpu_profile_file": "latency-cprofile.txt"
+}

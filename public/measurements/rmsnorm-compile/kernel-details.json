@@ -1,0 +1,310 @@
+[
+  {
+    "M": 1,
+    "N": 4096,
+    "direction": "forward",
+    "kernels": [
+      {
+        "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+        "tile": {
+          "XBLOCK": 1,
+          "R0_BLOCK": 2048
+        },
+        "num_warps": 16,
+        "num_stages": 1,
+        "registers_per_thread": 21,
+        "spills": 0,
+        "shared_bytes": 64,
+        "cache_hash": "K6PPVREK77XU75L6SEZZDMMUCM2COJPCBZPQ75X42CMMUDFNB4ZA",
+        "ptx": "public/measurements/rmsnorm-compile/1x4096/triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0.ptx",
+        "ptx_sha256": "456805464f3557fb1b11fcb3c5f321941ee890a871f52b20654f7757a227c6fc"
+      }
+    ]
+  },
+  {
+    "M": 1,
+    "N": 4096,
+    "direction": "backward",
+    "kernels": [
+      {
+        "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_0",
+        "tile": {
+          "XBLOCK": 1,
+          "R0_BLOCK": 2048
+        },
+        "num_warps": 16,
+        "num_stages": 1,
+        "registers_per_thread": 34,
+        "spills": 0,
+        "shared_bytes": 64,
+        "cache_hash": "5YGGSDN6GV67XTPBFOAWMPXHUNSOAHLPPD7XJTRCZ55LTEGZN7TA",
+        "ptx": "public/measurements/rmsnorm-compile/1x4096/triton_red_fused__to_copy_div_mul_pow_sub_sum_0.ptx",
+        "ptx_sha256": "7f43dcea3b4a17519c95e37d23ecc95fa7a748cb504b8275a3729b1a403f21a1"
+      }
+    ]
+  },
+  {
+    "M": 128,
+    "N": 4096,
+    "direction": "forward",
+    "kernels": [
+      {
+        "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+        "tile": {
+          "XBLOCK": 1,
+          "R0_BLOCK": 4096
+        },
+        "num_warps": 16,
+        "num_stages": 1,
+        "registers_per_thread": 24,
+        "spills": 0,
+        "shared_bytes": 64,
+        "cache_hash": "QXGEIBRHPENXYWCZXXHTN7YOCA7R3II7KPJ4YSKVP35KO33RBOLA",
+        "ptx": "public/measurements/rmsnorm-compile/128x4096/triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0.ptx",
+        "ptx_sha256": "d2f67655155e9b16bef91439829d28f5946d442e16e11b8255cea9353c6f11ea"
+      }
+    ]
+  },
+  {
+    "M": 128,
+    "N": 4096,
+    "direction": "backward",
+    "kernels": [
+      {
+        "name": "triton_red_fused__to_copy_mul_sum_0",
+        "tile": {
+          "XBLOCK": 16,
+          "R0_BLOCK": 32
+        },
+        "num_warps": 4,
+        "num_stages": 1,
+        "registers_per_thread": 37,
+        "spills": 0,
+        "shared_bytes": 256,
+        "cache_hash": "KSACKQG3Q2ORSKGUPHTY6TDXMUACGL57URI5HRXE5KCLDMW7ZXLA",
+        "ptx": "public/measurements/rmsnorm-compile/128x4096/triton_red_fused__to_copy_mul_sum_0.ptx",
+        "ptx_sha256": "e47f68a8eee297f018091f0d017d42ced9e94ad2acb3b47bff22ca978bb0a655"
+      },
+      {
+        "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_1",
+        "tile": {
+          "XBLOCK": 1,
+          "R0_BLOCK": 2048
+        },
+        "num_warps": 16,
+        "num_stages": 1,
+        "registers_per_thread": 32,
+        "spills": 0,
+        "shared_bytes": 64,
+        "cache_hash": "6RM5V4DWL437OFTMBVVJ5PMG46BJ35QUM6S7VMZ4XYRPKIDTTS2Q",
+        "ptx": "public/measurements/rmsnorm-compile/128x4096/triton_red_fused__to_copy_div_mul_pow_sub_sum_1.ptx",
+        "ptx_sha256": "a49886b24adf36cceab8f8078d0405929059fa7b566330a91fdf5b30994b71e0"
+      }
+    ]
+  },
+  {
+    "M": 1024,
+    "N": 4096,
+    "direction": "forward",
+    "kernels": [
+      {
+        "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+        "tile": {
+          "XBLOCK": 1,
+          "R0_BLOCK": 4096
+        },
+        "num_warps": 16,
+        "num_stages": 1,
+        "registers_per_thread": 24,
+        "spills": 0,
+        "shared_bytes": 64,
+        "cache_hash": "RKXT334P7C32YO2IZHP4MRFIRTJ32UMQJSMXQTIUA7GXKOJIB5GQ",
+        "ptx": "public/measurements/rmsnorm-compile/1024x4096/triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0.ptx",
+        "ptx_sha256": "3129bf6b49fa61360fa1d7d3ebe0b19cc7a653835f535a34dc8af71f0611d5c5"
+      }
+    ]
+  },
+  {
+    "M": 1024,
+    "N": 4096,
+    "direction": "backward",
+    "kernels": [
+      {
+        "name": "triton_red_fused__to_copy_mul_sum_0",
+        "tile": {
+          "XBLOCK": 16,
+          "R0_BLOCK": 32
+        },
+        "num_warps": 4,
+        "num_stages": 1,
+        "registers_per_thread": 40,
+        "spills": 0,
+        "shared_bytes": 1024,
+        "cache_hash": "B6MY53EF22WD6FIXG3EG45HYNIXRC5TFUPG3MUJHVWMQYKNLRJQA",
+        "ptx": "public/measurements/rmsnorm-compile/1024x4096/triton_red_fused__to_copy_mul_sum_0.ptx",
+        "ptx_sha256": "8d28a901b263b99fdf8aaf872d0e845631d1a7f039433584526292dd5c353350"
+      },
+      {
+        "name": "triton_per_fused__to_copy_mul_sum_1",
+        "tile": {
+          "XBLOCK": 128
+        },
+        "num_warps": 8,
+        "num_stages": 1,
+        "registers_per_thread": 22,
+        "spills": 0,
+        "shared_bytes": 4096,
+        "cache_hash": "UKMIHJWEDJHTCKSKSP4BF633XQ7JOWZ66IAZINNRBN7L7HJSYWTQ",
+        "ptx": "public/measurements/rmsnorm-compile/1024x4096/triton_per_fused__to_copy_mul_sum_1.ptx",
+        "ptx_sha256": "1c38a5da50ab80041c59d0448345d611ac5d175ca72254a5b67b30ad6c0e5e4f"
+      },
+      {
+        "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_2",
+        "tile": {
+          "XBLOCK": 1,
+          "R0_BLOCK": 4096
+        },
+        "num_warps": 16,
+        "num_stages": 1,
+        "registers_per_thread": 38,
+        "spills": 0,
+        "shared_bytes": 64,
+        "cache_hash": "FA6J3QSZ5KNUQQDV6NTMXVIS6H2UQGPXTW5VE3XWGDIT35DHOJPA",
+        "ptx": "public/measurements/rmsnorm-compile/1024x4096/triton_red_fused__to_copy_div_mul_pow_sub_sum_2.ptx",
+        "ptx_sha256": "37577d76a38cad4b36b06ff664dac543eae35c5f211af727544b336bd4fb0a8c"
+      }
+    ]
+  },
+  {
+    "M": 4096,
+    "N": 4096,
+    "direction": "forward",
+    "kernels": [
+      {
+        "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+        "tile": {
+          "XBLOCK": 1,
+          "R0_BLOCK": 2048
+        },
+        "num_warps": 16,
+        "num_stages": 1,
+        "registers_per_thread": 21,
+        "spills": 0,
+        "shared_bytes": 64,
+        "cache_hash": "7DLRPZTKRL7UP2F55MBKZJ4Q2TOVIUAP4QSQN6VAD7FASBJGPD7A",
+        "ptx": "public/measurements/rmsnorm-compile/4096x4096/triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0.ptx",
+        "ptx_sha256": "af86e6be35f2b0968c62314e31869c774ff18491c5962cf2f04f45212b99b781"
+      }
+    ]
+  },
+  {
+    "M": 4096,
+    "N": 4096,
+    "direction": "backward",
+    "kernels": [
+      {
+        "name": "triton_red_fused__to_copy_mul_sum_0",
+        "tile": {
+          "XBLOCK": 64,
+          "R0_BLOCK": 8
+        },
+        "num_warps": 4,
+        "num_stages": 1,
+        "registers_per_thread": 40,
+        "spills": 0,
+        "shared_bytes": 1024,
+        "cache_hash": "A3SCMSIXYT33KXSJVYRRJJ5W7XA7NVAYOVBEHHL7ZBQTZHIN5XWQ",
+        "ptx": "public/measurements/rmsnorm-compile/4096x4096/triton_red_fused__to_copy_mul_sum_0.ptx",
+        "ptx_sha256": "312964b123dc293aaf5d5aa860a0e11917507c9ec652df4934733955d59208fe"
+      },
+      {
+        "name": "triton_per_fused__to_copy_mul_sum_1",
+        "tile": {
+          "XBLOCK": 128
+        },
+        "num_warps": 8,
+        "num_stages": 1,
+        "registers_per_thread": 28,
+        "spills": 0,
+        "shared_bytes": 4096,
+        "cache_hash": "4OBY2NFBU6UMO7XAF5PJ4AJ5IXILRWRBGXJCIL7WGAP4WZNP6UZA",
+        "ptx": "public/measurements/rmsnorm-compile/4096x4096/triton_per_fused__to_copy_mul_sum_1.ptx",
+        "ptx_sha256": "517b1f951688708f0fc29974cf017672270bf42f7e7188dcb082416755a7cb38"
+      },
+      {
+        "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_2",
+        "tile": {
+          "XBLOCK": 1,
+          "R0_BLOCK": 2048
+        },
+        "num_warps": 16,
+        "num_stages": 1,
+        "registers_per_thread": 32,
+        "spills": 0,
+        "shared_bytes": 64,
+        "cache_hash": "ERG7C6AWTGGU2QYCZJWNUEHTIJIIFCBUFCEFCI72B4JDSMHF7PLA",
+        "ptx": "public/measurements/rmsnorm-compile/4096x4096/triton_red_fused__to_copy_div_mul_pow_sub_sum_2.ptx",
+        "ptx_sha256": "4a616ab3ff835c0089f5ef381da062b84cc5f73a04c0e9359d51713d69f8f9a4"
+      }
+    ]
+  },
+  {
+    "M": 4096,
+    "N": 8192,
+    "direction": "forward",
+    "kernels": [
+      {
+        "name": "triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0",
+        "tile": {
+          "XBLOCK": 1,
+          "R0_BLOCK": 8192
+        },
+        "num_warps": 16,
+        "num_stages": 1,
+        "registers_per_thread": 34,
+        "spills": 0,
+        "shared_bytes": 64,
+        "cache_hash": "R453ZPGJU2U2XNO36M5ITBGHXNMMGFM53FDYA7AER77UKTXQRSLQ",
+        "ptx": "public/measurements/rmsnorm-compile/4096x8192/triton_red_fused__to_copy_add_mean_mul_pow_rsqrt_0.ptx",
+        "ptx_sha256": "cb82fbef87f09465ef580023195275c0cc4f45094154cb01e33c33fab10a9296"
+      }
+    ]
+  },
+  {
+    "M": 4096,
+    "N": 8192,
+    "direction": "backward",
+    "kernels": [
+      {
+        "name": "triton_red_fused__to_copy_mul_sum_0",
+        "tile": {
+          "XBLOCK": 64,
+          "R0_BLOCK": 64
+        },
+        "num_warps": 16,
+        "num_stages": 1,
+        "registers_per_thread": 33,
+        "spills": 0,
+        "shared_bytes": 4096,
+        "cache_hash": "UITN7MTGFERWREV5P2D7UK3Q2SJINST6RWWYAINNS22ITNFYA74Q",
+        "ptx": "public/measurements/rmsnorm-compile/4096x8192/triton_red_fused__to_copy_mul_sum_0.ptx",
+        "ptx_sha256": "38a4bde44876734102cf31bd23f750b3498e44a7cb8de70477187e5e57f8495b"
+      },
+      {
+        "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_1",
+        "tile": {
+          "XBLOCK": 1,
+          "R0_BLOCK": 8192
+        },
+        "num_warps": 16,
+        "num_stages": 1,
+        "registers_per_thread": 54,
+        "spills": 0,
+        "shared_bytes": 64,
+        "cache_hash": "LNZISXKFGXG4GCMMZSQWI5TPEJGZRFSWY3TBRZPV5UOHGJTR5IVQ",
+        "ptx": "public/measurements/rmsnorm-compile/4096x8192/triton_red_fused__to_copy_div_mul_pow_sub_sum_1.ptx",
+        "ptx_sha256": "def457431ee683c06f7773a8765fb63185d8629fd7dce8be747e4d7bb1f369ea"
+      }
+    ]
+  }
+]

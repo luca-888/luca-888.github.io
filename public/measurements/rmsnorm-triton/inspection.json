@@ -1,0 +1,689 @@
+{
+  "ptx": [
+    {
+      "file": "public/measurements/rmsnorm-compile/4096x8192/triton_red_fused__to_copy_div_mul_pow_sub_sum_1.ptx",
+      "sha256": "def457431ee683c06f7773a8765fb63185d8629fd7dce8be747e4d7bb1f369ea",
+      "global_load_instructions": 18,
+      "vector_global_load_instructions": 10
+    },
+    {
+      "file": "public/measurements/rmsnorm-triton/dx-copy_16-0.ptx",
+      "sha256": "9a9ac332b8391f1f45e47435c96f85804965a860d88d45c85594c1d1a783b82e",
+      "global_load_instructions": 18,
+      "vector_global_load_instructions": 10
+    },
+    {
+      "file": "public/measurements/rmsnorm-triton/dx-reuse_16-0.ptx",
+      "sha256": "e95017ce3c934b19b0d73ff04a696caae4f1671b77016cf7461c3e5d9947f54c",
+      "global_load_instructions": 14,
+      "vector_global_load_instructions": 6
+    },
+    {
+      "file": "public/measurements/rmsnorm-triton/dx-reuse_4-0.ptx",
+      "sha256": "b2e963c18b0eb4862f383fa92ca96fa6c70009033d91008bc72d2c4357c3e8d8",
+      "global_load_instructions": 32,
+      "vector_global_load_instructions": 24
+    },
+    {
+      "file": "public/measurements/rmsnorm-triton/dx-reuse_8-0.ptx",
+      "sha256": "63ba04794c7630715bf4eefa8f4e61264ae7b5b0916b34da33c615cc9ffaaeec",
+      "global_load_instructions": 20,
+      "vector_global_load_instructions": 12
+    }
+  ],
+  "profiles": [
+    {
+      "M": 1,
+      "N": 4096,
+      "implementation": "compile",
+      "validation": {
+        "dx": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.0,
+          "relative_l2_error": 0.0
+        },
+        "dgamma": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.0,
+          "relative_l2_error": 0.0
+        }
+      },
+      "samples": [
+        {
+          "kernel_count": 1,
+          "kernels": [
+            {
+              "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_0",
+              "duration_us": 2.304
+            }
+          ]
+        },
+        {
+          "kernel_count": 1,
+          "kernels": [
+            {
+              "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_0",
+              "duration_us": 2.304
+            }
+          ]
+        },
+        {
+          "kernel_count": 1,
+          "kernels": [
+            {
+              "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_0",
+              "duration_us": 2.433
+            }
+          ]
+        }
+      ],
+      "trace": "1x4096-compile-trace.json.gz",
+      "sha256": "9a406a28b347963a98c3a1b2f3256d9bf38b7c2d5c9ca0f38d4ec21c71f6a940"
+    },
+    {
+      "M": 1,
+      "N": 4096,
+      "implementation": "triton",
+      "validation": {
+        "dx": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.0,
+          "relative_l2_error": 0.0
+        },
+        "dgamma": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.0,
+          "relative_l2_error": 0.0
+        }
+      },
+      "samples": [
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "dgamma_direct",
+              "duration_us": 2.271
+            },
+            {
+              "name": "dx_reuse",
+              "duration_us": 1.856
+            }
+          ]
+        },
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "dgamma_direct",
+              "duration_us": 2.271
+            },
+            {
+              "name": "dx_reuse",
+              "duration_us": 1.856
+            }
+          ]
+        },
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "dgamma_direct",
+              "duration_us": 2.304
+            },
+            {
+              "name": "dx_reuse",
+              "duration_us": 1.888
+            }
+          ]
+        }
+      ],
+      "trace": "1x4096-triton-trace.json.gz",
+      "sha256": "ba27af72d490574666b3c4975433515f8ad398ad795b0fd493792d33ec01bae8"
+    },
+    {
+      "M": 128,
+      "N": 4096,
+      "implementation": "compile",
+      "validation": {
+        "dx": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.0078125,
+          "relative_l2_error": 1.5486282791243866e-05
+        },
+        "dgamma": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.0,
+          "relative_l2_error": 0.0
+        }
+      },
+      "samples": [
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "triton_red_fused__to_copy_mul_sum_0",
+              "duration_us": 6.24
+            },
+            {
+              "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_1",
+              "duration_us": 2.72
+            }
+          ]
+        },
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "triton_red_fused__to_copy_mul_sum_0",
+              "duration_us": 6.368
+            },
+            {
+              "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_1",
+              "duration_us": 2.688
+            }
+          ]
+        },
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "triton_red_fused__to_copy_mul_sum_0",
+              "duration_us": 6.273
+            },
+            {
+              "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_1",
+              "duration_us": 2.687
+            }
+          ]
+        }
+      ],
+      "trace": "128x4096-compile-trace.json.gz",
+      "sha256": "95b0343e636e15064054a6f3fea09b91bf057585348a6a4524a3585b1c567c89"
+    },
+    {
+      "M": 128,
+      "N": 4096,
+      "implementation": "triton",
+      "validation": {
+        "dx": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.0078125,
+          "relative_l2_error": 1.542772770335432e-05
+        },
+        "dgamma": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.0,
+          "relative_l2_error": 0.0
+        }
+      },
+      "samples": [
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "dgamma_direct",
+              "duration_us": 5.536
+            },
+            {
+              "name": "dx_reuse",
+              "duration_us": 2.944
+            }
+          ]
+        },
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "dgamma_direct",
+              "duration_us": 5.952
+            },
+            {
+              "name": "dx_reuse",
+              "duration_us": 2.88
+            }
+          ]
+        },
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "dgamma_direct",
+              "duration_us": 5.696
+            },
+            {
+              "name": "dx_reuse",
+              "duration_us": 2.912
+            }
+          ]
+        }
+      ],
+      "trace": "128x4096-triton-trace.json.gz",
+      "sha256": "e896ec54a380ca92f2be5c44e7b06d4bd9b549b26846f8801d05591c682ed934"
+    },
+    {
+      "M": 1024,
+      "N": 4096,
+      "implementation": "compile",
+      "validation": {
+        "dx": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.015625,
+          "relative_l2_error": 8.309627446578816e-06
+        },
+        "dgamma": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.015625,
+          "relative_l2_error": 7.639345312782098e-06
+        }
+      },
+      "samples": [
+        {
+          "kernel_count": 3,
+          "kernels": [
+            {
+              "name": "triton_red_fused__to_copy_mul_sum_0",
+              "duration_us": 26.399
+            },
+            {
+              "name": "triton_per_fused__to_copy_mul_sum_1",
+              "duration_us": 2.08
+            },
+            {
+              "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_2",
+              "duration_us": 23.263
+            }
+          ]
+        },
+        {
+          "kernel_count": 3,
+          "kernels": [
+            {
+              "name": "triton_red_fused__to_copy_mul_sum_0",
+              "duration_us": 26.271
+            },
+            {
+              "name": "triton_per_fused__to_copy_mul_sum_1",
+              "duration_us": 2.112
+            },
+            {
+              "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_2",
+              "duration_us": 22.943
+            }
+          ]
+        },
+        {
+          "kernel_count": 3,
+          "kernels": [
+            {
+              "name": "triton_red_fused__to_copy_mul_sum_0",
+              "duration_us": 24.959
+            },
+            {
+              "name": "triton_per_fused__to_copy_mul_sum_1",
+              "duration_us": 2.112
+            },
+            {
+              "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_2",
+              "duration_us": 23.519
+            }
+          ]
+        }
+      ],
+      "trace": "1024x4096-compile-trace.json.gz",
+      "sha256": "549cbb5143d1f1b4ddf9f29f1c10115e83f8641125c5db7eaa018d1f6363469c"
+    },
+    {
+      "M": 1024,
+      "N": 4096,
+      "implementation": "triton",
+      "validation": {
+        "dx": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.015625,
+          "relative_l2_error": 8.309627446578816e-06
+        },
+        "dgamma": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.001953125,
+          "relative_l2_error": 9.549181640977622e-07
+        }
+      },
+      "samples": [
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "dgamma_direct",
+              "duration_us": 26.24
+            },
+            {
+              "name": "dx_reuse",
+              "duration_us": 24.224
+            }
+          ]
+        },
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "dgamma_direct",
+              "duration_us": 25.825
+            },
+            {
+              "name": "dx_reuse",
+              "duration_us": 24.225
+            }
+          ]
+        },
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "dgamma_direct",
+              "duration_us": 24.576
+            },
+            {
+              "name": "dx_reuse",
+              "duration_us": 24.672
+            }
+          ]
+        }
+      ],
+      "trace": "1024x4096-triton-trace.json.gz",
+      "sha256": "2549f6208d0e52811f035e7ae43bd86574c9c9714d33c7daf71c46a7d7b7ed4b"
+    },
+    {
+      "M": 4096,
+      "N": 4096,
+      "implementation": "compile",
+      "validation": {
+        "dx": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.015625,
+          "relative_l2_error": 8.857613465806935e-06
+        },
+        "dgamma": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.000244140625,
+          "relative_l2_error": 5.9515109285257495e-08
+        }
+      },
+      "samples": [
+        {
+          "kernel_count": 3,
+          "kernels": [
+            {
+              "name": "triton_red_fused__to_copy_mul_sum_0",
+              "duration_us": 81.984
+            },
+            {
+              "name": "triton_per_fused__to_copy_mul_sum_1",
+              "duration_us": 2.272
+            },
+            {
+              "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_2",
+              "duration_us": 102.977
+            }
+          ]
+        },
+        {
+          "kernel_count": 3,
+          "kernels": [
+            {
+              "name": "triton_red_fused__to_copy_mul_sum_0",
+              "duration_us": 82.112
+            },
+            {
+              "name": "triton_per_fused__to_copy_mul_sum_1",
+              "duration_us": 2.272
+            },
+            {
+              "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_2",
+              "duration_us": 102.048
+            }
+          ]
+        },
+        {
+          "kernel_count": 3,
+          "kernels": [
+            {
+              "name": "triton_red_fused__to_copy_mul_sum_0",
+              "duration_us": 81.856
+            },
+            {
+              "name": "triton_per_fused__to_copy_mul_sum_1",
+              "duration_us": 2.304
+            },
+            {
+              "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_2",
+              "duration_us": 100.352
+            }
+          ]
+        }
+      ],
+      "trace": "4096x4096-compile-trace.json.gz",
+      "sha256": "c2d1d42b53445ce20609b974e001bd0df28580f2587e045d00568ef7be8ee0e0"
+    },
+    {
+      "M": 4096,
+      "N": 4096,
+      "implementation": "triton",
+      "validation": {
+        "dx": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.015625,
+          "relative_l2_error": 8.862532013154123e-06
+        },
+        "dgamma": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.000244140625,
+          "relative_l2_error": 5.9515109285257495e-08
+        }
+      },
+      "samples": [
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "dgamma_direct",
+              "duration_us": 80.894
+            },
+            {
+              "name": "dx_reuse",
+              "duration_us": 102.943
+            }
+          ]
+        },
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "dgamma_direct",
+              "duration_us": 81.503
+            },
+            {
+              "name": "dx_reuse",
+              "duration_us": 102.11
+            }
+          ]
+        },
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "dgamma_direct",
+              "duration_us": 81.567
+            },
+            {
+              "name": "dx_reuse",
+              "duration_us": 100.479
+            }
+          ]
+        }
+      ],
+      "trace": "4096x4096-triton-trace.json.gz",
+      "sha256": "24f843502d855e96b114d5be34a17df8a50a12460434169c78c9c03a663f9871"
+    },
+    {
+      "M": 4096,
+      "N": 8192,
+      "implementation": "compile",
+      "validation": {
+        "dx": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.015625,
+          "relative_l2_error": 9.122808478423394e-06
+        },
+        "dgamma": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 7.62939453125e-06,
+          "relative_l2_error": 1.315837661053365e-09
+        }
+      },
+      "samples": [
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "triton_red_fused__to_copy_mul_sum_0",
+              "duration_us": 154.563
+            },
+            {
+              "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_1",
+              "duration_us": 209.635
+            }
+          ]
+        },
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "triton_red_fused__to_copy_mul_sum_0",
+              "duration_us": 152.035
+            },
+            {
+              "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_1",
+              "duration_us": 208.259
+            }
+          ]
+        },
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "triton_red_fused__to_copy_mul_sum_0",
+              "duration_us": 153.154
+            },
+            {
+              "name": "triton_red_fused__to_copy_div_mul_pow_sub_sum_1",
+              "duration_us": 207.908
+            }
+          ]
+        }
+      ],
+      "trace": "4096x8192-compile-trace.json.gz",
+      "sha256": "bc74e357c1c23691f8831db43c8e2a6061144618e684c405a97ae4df4fa35cef"
+    },
+    {
+      "M": 4096,
+      "N": 8192,
+      "implementation": "triton",
+      "validation": {
+        "dx": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 0.015625,
+          "relative_l2_error": 9.048299034475349e-06
+        },
+        "dgamma": {
+          "passed": true,
+          "rtol": 0.016,
+          "atol": 0.001,
+          "max_abs_error": 7.62939453125e-06,
+          "relative_l2_error": 1.315837661053365e-09
+        }
+      },
+      "samples": [
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "dgamma_direct",
+              "duration_us": 153.283
+            },
+            {
+              "name": "dx_reuse",
+              "duration_us": 208.293
+            }
+          ]
+        },
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "dgamma_direct",
+              "duration_us": 153.956
+            },
+            {
+              "name": "dx_reuse",
+              "duration_us": 208.965
+            }
+          ]
+        },
+        {
+          "kernel_count": 2,
+          "kernels": [
+            {
+              "name": "dgamma_direct",
+              "duration_us": 154.02
+            },
+            {
+              "name": "dx_reuse",
+              "duration_us": 207.812
+            }
+          ]
+        }
+      ],
+      "trace": "4096x8192-triton-trace.json.gz",
+      "sha256": "5a926c38b64d1f339d2aeda7445955c56fd876d5252fb4c616ac63051fed3a9a"
+    }
+  ],
+  "note": "PTX instruction counts are static source counts, not dynamic DRAM transactions. Profile timings are diagnostic only; tables use measurements.json."
+}

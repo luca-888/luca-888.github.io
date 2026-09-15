@@ -1,0 +1,21 @@
+.kernel-timeline { margin: 20px 0; padding: 16px 18px 12px; border: 1px solid var(--color-border); border-radius: 5px; background: var(--color-surface); color: var(--color-text); line-height: 1.5; }
+.kernel-timeline-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.kernel-timeline h4 { margin: 0 0 3px; font-size: 14px; font-weight: 600; }
+.kernel-timeline-header span { color: var(--color-muted); font-size: 12px; }
+.kernel-direction { display: flex; gap: 2px; }
+.kernel-direction button { padding: 4px 8px; border: 0; border-radius: 3px; background: transparent; color: var(--color-muted); font: inherit; font-size: 12px; cursor: pointer; }
+.kernel-direction button[aria-pressed="true"] { background: #edf1f4; color: var(--color-text); }
+.kernel-legend { display: flex; justify-content: flex-end; gap: 16px; margin-top: 12px; color: var(--color-muted); font-size: 12px; }
+.kernel-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.kernel-legend i { width: 8px; height: 8px; border-radius: 2px; }
+.kernel-chart { height: 132px; width: 100%; }
+.kernel-selection { display: flex; align-items: center; gap: 10px; min-height: 42px; margin-top: 8px; padding: 8px 10px; background: #edf1f4; border-radius: 3px; font-size: 12px; }
+.kernel-selection label { color: var(--color-muted); font-size: 12px; }
+.kernel-selection select { max-width: 118px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 3px; color: var(--color-muted); background: var(--color-surface); font: inherit; cursor: pointer; }
+.kernel-selection code { flex: 1; padding: 0; background: transparent; font-size: 12px; }
+.kernel-selection strong { white-space: nowrap; font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.kernel-selection strong span { color: var(--color-muted); font-size: 12px; }
+.kernel-timeline figcaption { margin-top: 9px; color: var(--color-muted); font-size: 12px; }
+.kernel-tooltip { max-width: 390px; white-space: normal; color: var(--color-text); font-size: 12px; line-height: 1.5; }
+.kernel-tooltip strong { font-family: Consolas, "Liberation Mono", monospace; font-size: 12px; overflow-wrap: anywhere; }
+.kernel-tooltip-name { margin-top: 6px; max-height: 108px; overflow: auto; color: var(--color-muted); font-size: 12px; overflow-wrap: anywhere; }

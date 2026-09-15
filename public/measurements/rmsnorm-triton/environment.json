@@ -1,0 +1,10 @@
+{
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "torch": "2.9.1+cu128",
+  "cuda": "12.8",
+  "driver": "570.153.02",
+  "python": "3.12.14",
+  "cpu": "AMD EPYC 7543 (KVM guest, 16 vCPUs)",
+  "triton": "3.5.1",
+  "note": "Same GPU and Python/torch environment as chapter two; GPU, torch, Python asserted by experiment runner. Clocks were not fixed."
+}

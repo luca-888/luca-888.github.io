@@ -1,4 +1,4 @@
-# RMSNorm：数学推导与 GPU 算子优化
+# RMSNorm：计算原理与 GPU 算子优化
 
 **RMSNorm 对每个 token 的 hidden 向量计算均方根，用它归一化输入，再按特征乘以可学习权重。**
 
@@ -9,106 +9,209 @@ y_i=\frac{x_i}{\operatorname{RMS}(x)}\cdot\gamma_i,
 \qquad \text{where}\quad \operatorname{RMS}(x)=\sqrt{\epsilon+\frac{1}{N}\sum_{i=1}^{N}x_i^2}.
 \]
 
-- **RMS 沿 N 计算**：每个 token 得到一个标量；保留归约维度时，整批结果的形状为 \([M,1]\)。这里的 RMS 已包含 ε，用于防止除零。
-- **γ 沿 M 共享**：形状为 \([N]\)，每个特征 \(i\) 有独立的 \(\gamma_i\)。下表中的 \(\odot\) 表示逐元素相乘。
+每行独立计算 RMS，ε 用于防止除零。权重 γ 是长度为 N 的向量，同一列的所有 token 共享一个权重。
 
-忽略 ε 且输入非零时，\(x\) 除以自身 RMS 后，RMS 为 1；**乘 γ 后，输出 RMS 不必为 1。**
+**归一化后还要乘 γ，因此输出的 RMS 不必为 1。** 在下面的示例中，可以调整输入与权重，观察输出如何变化。
 
 ::rmsnorm-demo::
 
-对比时，BatchNorm 使用二维 batch 输入 \(X[B,N]\)，\(B\) 为 batch size；LayerNorm、RMSNorm 使用上面的 \(X[M,N]\)，\(M\) 始终表示 token 数。
+LayerNorm 先减去均值，再按标准差缩放；RMSNorm 不减均值，直接按均方根缩放。两者都沿每个 token 的 hidden 维归约。
 
-| 算子 | reduction dim | 归一化目标 | 可学习变换（通常） |
-|---|---|---|---|
-| BatchNorm（训练时） | B (`dim=0`) | \(\mathrm{mean}=0\)，\(\mathrm{std}=1\) | \(\gamma\odot\hat{x}+\beta\) |
-| LayerNorm | N (`dim=1`) | \(\mathrm{mean}=0\)，\(\mathrm{std}=1\) | \(\gamma\odot\hat{x}+\beta\) |
-| RMSNorm | N (`dim=1`) | \(\mathrm{RMS}=1\)，不减 mean | \(\gamma\odot\hat{x}\) |
+## 一、计算流程与 PyTorch 参考实现
 
-表中目标忽略 ε，并假设方差或 RMS 非零；描述的是可学习变换之前的结果。
+代码用 `x[M,N]` 表示整批输入，`gamma[N]` 表示权重，`dgamma` 表示权重梯度；计算图展示其中一行。本文输入输出使用 BF16，中间计算使用 FP32。
 
-从计算结构看，forward 对每个 token 沿 N 归约，随后逐元素缩放；backward 还需要沿 M 累加共享权重 γ 的梯度。下面从这两种归约出发，实现 kernel，再通过 benchmark 和 profiler 确定优化方向。
+### 1. 计算图与梯度流
 
-## 一、Forward：计算映射与 Triton baseline
+`s` 为平方均值，`r = rsqrt(s + eps)`，`x_hat = x * r`；`g` 为输出 y 的上游梯度。Backward 中，x 直接参与缩放，也通过 r 影响输出，**这两条路径的梯度需要相加**。
 
-### 1. PyTorch reference
+::rmsnorm-graph::
 
-本章处理连续存储的 \(X[M,N]\) 和 \(\gamma[N]\)，两者位于同一 CUDA 设备，且 M、N 均大于零。平方、归约和缩放使用 FP32，最后将输出转回输入 dtype：
+### 2. Forward 参考实现
+
+返回 `y`，并保留 FP32 的 `r[M,1]` 供 Backward 复用。
 
 ```python
-def rmsnorm_reference(x, weight, eps=1e-6):
-    x32 = x.float()
-    mean_square = x32.square().mean(dim=1, keepdim=True)
-    inv_rms = torch.rsqrt(mean_square + eps)
-    return ((x32 * inv_rms) * weight.float()).to(x.dtype)
+def rmsnorm_forward_reference(x, gamma, eps=1e-6):
+    x_dtype = x.dtype
+    x, gamma = x.float(), gamma.float()
+    s = x.square().mean(dim=1, keepdim=True)
+    r = torch.rsqrt(s + eps)
+    x_hat = x * r
+    y = x_hat * gamma
+    return y.to(x_dtype), r
 ```
 
-先计算 `inv_rms`，再依次乘以输入和权重。下面的 Triton 实现采用相同的精度语义。
+### 3. Backward 参考实现
 
-### 2. Triton baseline
-
-各个 token 的输出可以独立计算，因此启动 M 个 **program**。本例使用默认的 `num_ctas=1`，每个 program 对应一个 CTA，处理一行：读入 N 个元素，归约得到 `inv_rms`，再广播到整行，与 γ 一起完成缩放。
-
-归约和缩放融合在同一个 kernel 中，中间结果无需显式写入全局内存。按行组织 program 的方式参考 [Triton LayerNorm 教程](https://triton-lang.org/main/getting-started/tutorials/05-layer-norm.html)。
+Backward 接收上游梯度 `g[M,N]`，复用 Forward 保存的 r，返回 dx 与 dgamma。
 
 ```python
-@triton.jit
-def _rmsnorm_forward(X, W, Y, N: tl.constexpr, BLOCK: tl.constexpr, eps: tl.constexpr):
-    row = tl.program_id(0)
-    cols = tl.arange(0, BLOCK)
-    mask = cols < N
-    offsets = row.to(tl.int64) * N + cols
+def rmsnorm_backward_reference(x, gamma, g, r):
+    x_dtype, gamma_dtype = x.dtype, gamma.dtype
+    x, gamma, g = x.float(), gamma.float(), g.float()
+    N = x.shape[1]
+    x_hat = x * r
 
-    x = tl.load(X + offsets, mask=mask, other=0).to(tl.float32)
-    w = tl.load(W + cols, mask=mask, other=0).to(tl.float32)
-
-    mean_square = tl.sum(x * x, axis=0) / N
-    inv_rms = tl.rsqrt(mean_square + eps)
-    y = (x * inv_rms) * w
-
-    tl.store(Y + offsets, y.to(Y.dtype.element_ty), mask=mask)
+    dx_hat = g * gamma
+    dr = (dx_hat * x).sum(dim=1, keepdim=True)
+    dx = r * dx_hat - x * r.pow(3) * dr / N
+    dgamma = (g * x_hat).sum(dim=0)
+    return dx.to(x_dtype), dgamma.to(gamma_dtype)
 ```
 
-`BLOCK` 取不小于 N 的最小 2 的幂，超出 N 的位置补零。例如 N=1000 时，BLOCK=1024，其中 24 个位置为零，**计算均值仍然除以 N。**
+`dx_hat` 是传给 x_hat 的梯度；`dr` 沿 N 求和，`dgamma` 沿 M 求和。dx 由两条路径的贡献相加：固定 r 时的**直接路径贡献** `r * dx_hat`，以及 x 改变 r 带来的**经 r 路径贡献** `-x * r³ * dr / N`。
 
-启动时固定 `num_warps=4`，即每个 CTA 使用 128 个线程。BLOCK 是逻辑元素数量，这些元素在线程间的具体分配由编译器决定。
+## 二、PyTorch eager 性能分析
+
+**eager 将各项张量运算逐个提交给 GPU，中间结果需要在 kernel 之间传递。** 以下展示参考实现的性能，后续 SOL 估算与优化分析统一以 `4096×8192` 为主样本。
+
+### 1. 性能与显存基线
+
+::rmsnorm-benchmark::
+
+小输入的延迟受调用开销与运行波动影响；M 从 1024 增至 4096 时，延迟和显存占用都明显上升。优化需要同时减少中间张量的读写和占用。
+
+### 2. 从表达式到 kernel
+
+这里用 `1024×4096` 的 trace 展示 eager 如何拆分计算：Forward 启动 **9 个 kernel**，Backward 启动 **17 个**。
+
+::rmsnorm-timeline::
+
+::rmsnorm-eager-ops::
+
+**一行表达式仍会拆成多个 kernel。** `dx = r * dx_hat - x * r.pow(3) * dr / N` 在 eager 中对应 6 个 kernel；除 r³ 外，各步结果都是 `[M,N]`。
+
+**完整的 FP32 中间张量反复读写。** 对于这里的 `1024×4096` 输入，x 占 8 MiB，每个完整的 FP32 中间张量占 16 MiB。仅写出、再读入 x_hat，就有 **32 MiB 的逻辑读写**，其中部分访问可能命中缓存。
+
+**中间张量同时存活，推高显存占用。** Forward、Backward 的峰值显存增量分别约 **56 MiB、128 MiB**；保存的 r 则只有 4 KiB。
+
+此外，dr 沿 N 归约，每行独立；dgamma 沿 M 汇总所有 token 的贡献。这两种归约方向决定了后续如何组织 GPU 上的计算。
+
+### 3. 必要读写量与带宽 SOL
+
+**带宽 SOL（Speed of Light）估算的是：只搬运必要数据时，显存带宽允许的理想耗时。** 假设充分融合，每个大张量只读写一次，暂略较小的 gamma、r 和 dgamma：
+
+| 阶段 | 必要读写 | BF16 数据量（字节） |
+| :--- | :--- | ---: |
+| Forward | 读取 x，写出 y | `2MN + 2MN = 4MN` |
+| Backward | 读取 x、g，写出 dx | `2MN + 2MN + 2MN = 6MN` |
+
+每个 BF16 元素占 2 字节。FP32 中间计算若保留在寄存器中，就不需要为这些中间结果增加显存读写。
+
+RTX 4090 的理论显存带宽为 **1008 GB/s**，即每秒传输 `1008 × 10⁹` 字节。[NVIDIA 规格](https://images.nvidia.com/aem-dam/Solutions/Data-Center/l4/nvidia-ada-gpu-architecture-whitepaper-v2.1.pdf)
+
+对 `M=4096, N=8192`，Forward 的必要数据量为 **128 MiB**，Backward 为 **192 MiB**。用数据量除以带宽：
+
+\[
+\begin{aligned}
+T_{\text{forward}}^{\text{SOL}} &\approx \frac{128\times 2^{20}}{1008\times 10^9}\ \text{s} \approx 133.2\ \mu\text{s},\\
+T_{\text{backward}}^{\text{SOL}} &\approx \frac{192\times 2^{20}}{1008\times 10^9}\ \text{s} \approx 199.7\ \mu\text{s}.
+\end{aligned}
+\]
+
+同一 shape 下，Forward 的 eager 实测为 **1462.4 μs**，SOL 为 **133.2 μs**；Backward 实测为 **4007.8 μs**，SOL 为 **199.7 μs**。SOL 是数据经过显存时的理想参照，实际耗时还受计算、归约和缓存影响。
+
+**SOL 用读写量估算，不能用峰值显存占用代替。**
+
+优化首先需要把逐元素计算与归约融合，减少完整中间张量的写出。`torch.compile` 可以直接从参考实现开始完成这一步。
+
+## 三、torch.compile 自动融合
+
+### 1. 编译参考实现
+
+直接编译第一章的 Forward 和手写 Backward，保持 BF16 输入输出、FP32 中间计算与返回接口不变。
 
 ```python
-def rmsnorm_triton(x, weight, eps=1e-6):
-    m, n = x.shape
-    y = torch.empty_like(x)
-    with torch.cuda.device(x.device):
-        _rmsnorm_forward[(m,)](
-            x, weight, y, n, triton.next_power_of_2(n), eps,
-            num_warps=4,
-        )
-    return y
+forward_compiled = torch.compile(rmsnorm_forward_reference, fullgraph=True, dynamic=False)
+backward_compiled = torch.compile(rmsnorm_backward_reference, fullgraph=True, dynamic=False)
+
+y, r = forward_compiled(x, gamma)
+dx, dgamma = backward_compiled(x, gamma, g, r)
 ```
 
-## 二、Backward：dX 与 dγ 的归约实现
+默认后端 TorchInductor 在这里生成 Triton kernel。`fullgraph=True` 要求完整捕获函数，`dynamic=False` 针对具体 shape 编译；一张计算图仍可生成多个 kernel。[PyTorch 文档](https://docs.pytorch.org/docs/2.9/generated/torch.compile.html)
 
-- 推导 dX、dγ，明确沿 N 和沿 M 的归约分别出现在哪里。
-- 实现梯度计算，说明 forward 中间结果的保存或重算，以及 dγ 的累加方式与代价。
-- 对照 PyTorch autograd 验证两种梯度，明确测试输入、dtype 和误差标准。
+### 2. 性能与显存变化
 
-## 三、Benchmark：测量方法与基线结果
+::rmsnorm-compile-benchmark::
 
-- 固定 workload、GPU、软件版本和精度语义，说明预热、同步、重复次数与计时范围。
-- 分别测量 forward 和 backward；比较 PyTorch、Liger、FlashInfer 各自支持且语义一致的路径，注明版本和具体接口。
-- 按 M、N 和 dtype 展示基线延迟，选出需要进一步分析的 workload。
+**大输入收益明显。** 以 `M=4096, N=8192` 为例，Forward 从 **1462.4 μs** 降至 **145.7 μs**，加速 **10.04×**；Backward 从 **4007.8 μs** 降至 **335.4 μs**，加速 **11.95×**。峰值显存分别从约 **448 MiB、896 MiB** 降至约 **64 MiB**，接近返回结果本身的大小。
 
-## 四、瓶颈分析与逐项优化
+**小输入仍受调用开销影响。** `128×4096` 与 `1024×4096` 的 Forward 即使只剩一个 kernel，整体耗时也略高于 eager。减少 kernel 数量能降低 GPU 执行成本，但不能保证每种 shape 都加速。五组输入的 y、r、dx、dgamma 均通过 reference 数值检查。
 
-- 简述 nsys / ncu 的采集方式；用 profiler 证据定位所选 workload 的具体瓶颈。
-- 每项优化围绕“现象 → 代码改动 → 代价 → 测量结果”展开，紧邻展示证据与关键代码差异。
-- 每次改动后复查正确性，用独立 benchmark 报告性能，并记录收益和退化分别出现在哪些 shape 下。
+### 3. 编译器融合了什么
 
-## 五、CuTe DSL：实现与对比
+在 `4096×8192` 下，Forward 生成 **1 个 kernel**，Backward 生成 **2 个 kernel**：
 
-- 选取前文的具体 kernel 设计，说明用 CuTe DSL 表达的线程布局和归约方式，以及需要检验的问题。
-- 对照关键代码，在相同 workload、精度语义和测量方法下验证正确性与性能。
-- 区分实现设计与工具差异；若未形成独立的分析问题，将相关对比并入上一章。
+::rmsnorm-compile-graph::
 
-## 六、结果与适用范围
+- **Forward**：平方、沿 N 归约和缩放融合，只写出 y 与保存的 r。
+- **Backward**：一个 kernel 沿 M 归约得到 dgamma；另一个融合 dr 的行内归约和 dx 计算。
 
-- 汇总各实现的性能与误差，标明对应 workload 和测量环境。
-- 说明各项优化适用的 shape、dtype、额外开销与已知限制，不将局部收益推广到未测场景。
+融合省去了平方结果、x_hat、dx_hat 等完整 FP32 中间张量的显存读写。Backward 的两个分支内部都已融合，但仍分别读取 x、g。
+
+::rmsnorm-compile-source::
+
+能否在读入一行 x、g 时，同时计算 dx 和这一行对 dgamma 的贡献？
+
+## 四、Triton 梯度融合优化
+
+对主样本 `4096×8192`，手写 Triton 将 dx 与 dgamma 的计算放进同一个 kernel，让两个分支共享已经读入的 x、g。Forward 继续使用第三章的 compile 实现。
+
+### 1. 融合 dx 与 dgamma
+
+手写版将 4096 行分成 **128 组，每组 32 行**。一个 program 是由一组 GPU 线程执行的独立任务，这里负责处理一组行：**每读入一行，就计算并写出 dx，同时累加这一行对 dgamma 的贡献**。第二个 kernel 汇总各组的局部结果 partial。
+
+::rmsnorm-triton-graph::
+
+**分组是为了减少写出的局部结果。** 如果每行都为 dgamma 写一份长度为 8192 的 FP32 梯度贡献向量，需要 128 MiB；每 32 行先在组内合并一次，写出的 `partial[128, 8192]` 就只需 **4 MiB**。
+
+program 每次处理一行，跨行保留 gamma 与 dgamma 的累加向量，无需同时保存整组 32 行的输入。**kernel 数仍是 2 个，第二个 kernel 只需读取小得多的 partial。**
+
+### 2. 核心实现与读写量
+
+以下节选第一个 kernel 的核心逻辑。X、W、G、R 是输入指针，DX、P 分别指向 dx 和 partial：
+
+```python
+group = tl.program_id(0)
+col = tl.arange(0, N)
+gamma = tl.load(W + col).to(tl.float32)
+dg = tl.full((N,), 0, tl.float32)
+for offset in range(32):
+    row = group * 32 + offset
+    x = tl.load(X + row * N + col).to(tl.float32)
+    g = tl.load(G + row * N + col).to(tl.float32)
+    r = tl.load(R + row)
+    dx_hat = g * gamma
+    dr = tl.sum(dx_hat * x, 0)
+    dx = r * dx_hat - x * (r * r * r) * dr / N
+    tl.store(DX + row * N + col, dx)
+    dg += g * (x * r)
+tl.store(P + group * N + col, dg)
+```
+
+`dg` 是当前组的 dgamma 累加值。它与 dx 共用 x、g、r；gamma 也在组内复用。第二个 kernel 沿 partial 的 128 组求和，写出 BF16 dgamma。
+
+计算 x、g 的读取，以及 dx、partial 的读写：
+
+| 执行结构 | x、g 遍历次数 | 主要逻辑读写量（MiB） |
+| :--- | ---: | ---: |
+| 两个分支分别读取 | 2 | 320 |
+| 融合两个分支 | 1 | 200 |
+
+这里省略 gamma、r 和最终 dgamma 的小额读写，分开执行按每个分支各读一次 x、g 估算。**逻辑读写量减少约 37.5%**；它不是实测显存流量，缓存与 kernel 内的重复读取仍会影响实际访问。
+
+### 3. 性能与显存代价
+
+::rmsnorm-triton-benchmark::
+
+**Backward 调用耗时从 336.2 μs 降至 210.2 μs，加速约 1.60×。** GPU 耗时也从 334.2 μs 降至 208.8 μs。代价是 partial 与 dx 输出同时存活，峰值显存从 **64.02 MiB 增至 68.02 MiB**。
+
+本实现的 BF16 输入输出、FP32 中间计算与 reference 一致；随机输入、零输入及不同幅度输入均通过数值检查。这一结果对应 **`4096×8192`**，其他 shape 的表现仍需单独验证。
+
+**208.8 μs 已接近第二章估算的 Backward SOL：199.7 μs。** SOL / 实测约为 95.6%，这是主要张量读写模型的比值；该模型未计入 partial 读写与缓存影响，不能直接视为实测显存带宽利用率。
+
+从 eager 到 compile，减少了完整中间张量的写出；再到手写融合，让两个梯度分支共享已读入的数据。**先减少中间结果的显存读写，再减少分支间的重复读取，是本文的优化主线。**
+
+::rmsnorm-triton-artifacts::
