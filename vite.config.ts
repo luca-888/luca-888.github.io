@@ -9,6 +9,7 @@ export default defineConfig({
       input: {
         main: 'index.html',
         rmsnorm: 'posts/rmsnorm/index.html',
+        cudaGraph: 'posts/cuda-graph/index.html',
       },
     },
   },

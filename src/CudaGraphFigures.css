@@ -1,0 +1,7 @@
+.cuda-graph-traces { margin: 22px 0; }
+.cuda-graph-trace { margin: 0 0 18px; }
+.cuda-graph-trace figcaption { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 7px; font-size: 13px; line-height: 1.5; }
+.cuda-graph-trace figcaption strong { color: var(--color-heading); font-weight: 500; }
+.cuda-graph-trace figcaption span { color: var(--color-muted); }
+.cuda-graph-trace img { display: block; width: 100%; height: auto; border: 1px solid var(--color-border); border-radius: 3px; }
+.cuda-graph-traces .cuda-graph-trace-note { margin: 0; color: var(--color-muted); font-size: 12px; line-height: 1.5; }

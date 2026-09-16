@@ -1,0 +1,1398 @@
+{
+  "source": "NVIDIA Nsight Systems 2024.6.2.225, exported SQLite",
+  "device": "NVIDIA GeForce RTX 4090",
+  "torch": "2.9.1+cu128",
+  "cuda": "12.8",
+  "shape": [
+    4096
+  ],
+  "dtype": "torch.float32",
+  "kernel_count": 4,
+  "not_benchmark": "Node-level profiling adds overhead; durations are trace coordinates, not benchmark measurements.",
+  "correctness": {
+    "capture_left_output_unchanged": true,
+    "final_value": 31
+  },
+  "timestamps": "Nanoseconds from Nsight Systems report origin; divide by 1e6 for timeline milliseconds.",
+  "files": {
+    "diamond.nsys-rep": {
+      "sha256": "087cf3a53ae2960baac5231aca9e23542bebf3196c932a77d56b8ca1dcbf7123"
+    },
+    "diamond.sqlite": {
+      "sha256": "0e7ad0e3cc581aaa4570f2b986c3bd1fed70998614c3c5eb1a5954a0e2ababd6"
+    },
+    "../profile.py": {
+      "sha256": "6f321706a4498ceb6eba8b087063cb84b849f327e95d827b4aa6a6833046ee0b"
+    },
+    "../example.py": {
+      "sha256": "76985e62eb6552961066d17d6b39b2b5d22a2f511437abcbf644533de8bf3a4f"
+    },
+    "extract_summary.py": {
+      "sha256": "de0de4b9c05309a35ce30e9cc3bf1201b69149375120ef26ee0d8553447c8a59"
+    }
+  },
+  "capture_note": "PyTorch executes two FillFunctor<long> metadata-initialization kernels before cudaStreamBeginCapture; capture/diamond contains 4 captured launch API calls and zero GPU kernels.",
+  "ranges": [
+    {
+      "name": "capture",
+      "start_ns": 17949185,
+      "end_ns": 18671104,
+      "start_ms": 17.949185,
+      "end_ms": 18.671104,
+      "duration_us": 721.919,
+      "cuda_api_counts": {
+        "cudaDeviceSynchronize_v3020": 1,
+        "cudaStreamIsCapturing_v10000": 6,
+        "cudaMalloc_v3020": 1,
+        "cudaLaunchKernel_v7000": 6,
+        "cudaStreamBeginCapture_v10000": 1,
+        "cudaStreamGetCaptureInfo_v2_v11030": 1,
+        "cudaEventCreateWithFlags_v3020": 2,
+        "cudaEventRecordWithFlags_v11010": 2,
+        "cudaStreamWaitEvent_v3020": 2,
+        "cudaEventDestroy_v3020": 2,
+        "cudaStreamEndCapture_v10000": 1,
+        "cudaGraphGetNodes_v10000": 1
+      },
+      "gpu_kernel_count_in_range": 2,
+      "gpu_kernel_count_by_launch_correlation": 2,
+      "gpu_kernel_names": {
+        "void at::native::vectorized_elementwise_kernel<(int)2, at::native::FillFunctor<long>, std::array<char *, (unsigned long)1>>(int, T2, T3)": 2
+      },
+      "launch_correlations": [
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 37,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 43,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 56,
+          "gpu_kernel_count": 0
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 82,
+          "gpu_kernel_count": 0
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 92,
+          "gpu_kernel_count": 0
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 119,
+          "gpu_kernel_count": 0
+        }
+      ],
+      "kernels": [
+        {
+          "start_ns": 18383811,
+          "end_ns": 18385059,
+          "correlation_id": 37,
+          "graph_node_id": null,
+          "stream_id": 13,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)2, at::native::FillFunctor<long>, std::array<char *, (unsigned long)1>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 18395971,
+          "end_ns": 18397027,
+          "correlation_id": 43,
+          "graph_node_id": null,
+          "stream_id": 13,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)2, at::native::FillFunctor<long>, std::array<char *, (unsigned long)1>>(int, T2, T3)"
+        }
+      ]
+    },
+    {
+      "name": "capture/diamond",
+      "start_ns": 18416945,
+      "end_ns": 18648270,
+      "start_ms": 18.416945,
+      "end_ms": 18.64827,
+      "duration_us": 231.325,
+      "cuda_api_counts": {
+        "cudaLaunchKernel_v7000": 4,
+        "cudaEventCreateWithFlags_v3020": 2,
+        "cudaStreamIsCapturing_v10000": 4,
+        "cudaEventRecordWithFlags_v11010": 2,
+        "cudaStreamWaitEvent_v3020": 2,
+        "cudaEventDestroy_v3020": 2
+      },
+      "gpu_kernel_count_in_range": 0,
+      "gpu_kernel_count_by_launch_correlation": 0,
+      "gpu_kernel_names": {},
+      "launch_correlations": [
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 56,
+          "gpu_kernel_count": 0
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 82,
+          "gpu_kernel_count": 0
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 92,
+          "gpu_kernel_count": 0
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 119,
+          "gpu_kernel_count": 0
+        }
+      ],
+      "kernels": []
+    },
+    {
+      "name": "validate_capture",
+      "start_ns": 18676664,
+      "end_ns": 18815255,
+      "start_ms": 18.676664,
+      "end_ms": 18.815255,
+      "duration_us": 138.591,
+      "cuda_api_counts": {
+        "cudaMemcpyAsync_v3020": 1,
+        "cudaStreamSynchronize_v3020": 1
+      },
+      "gpu_kernel_count_in_range": 0,
+      "gpu_kernel_count_by_launch_correlation": 0,
+      "gpu_kernel_names": {},
+      "launch_correlations": [],
+      "kernels": []
+    },
+    {
+      "name": "instantiate",
+      "start_ns": 18821056,
+      "end_ns": 18896287,
+      "start_ms": 18.821056,
+      "end_ms": 18.896287,
+      "duration_us": 75.231,
+      "cuda_api_counts": {
+        "cudaGraphInstantiateWithFlags_v11040": 1
+      },
+      "gpu_kernel_count_in_range": 0,
+      "gpu_kernel_count_by_launch_correlation": 0,
+      "gpu_kernel_names": {},
+      "launch_correlations": [],
+      "kernels": []
+    },
+    {
+      "name": "first_replay",
+      "start_ns": 18900645,
+      "end_ns": 18952843,
+      "start_ms": 18.900645,
+      "end_ms": 18.952843,
+      "duration_us": 52.198,
+      "cuda_api_counts": {
+        "cudaStreamIsCapturing_v10000": 1,
+        "cudaGraphLaunch_v10000": 1,
+        "cudaDeviceSynchronize_v3020": 1
+      },
+      "gpu_kernel_count_in_range": 4,
+      "gpu_kernel_count_by_launch_correlation": 4,
+      "gpu_kernel_names": {
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 1,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 2,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)": 1
+      },
+      "launch_correlations": [
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 141,
+          "gpu_kernel_count": 4
+        }
+      ],
+      "kernels": [
+        {
+          "start_ns": 18929316,
+          "end_ns": 18930724,
+          "correlation_id": 141,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 18930916,
+          "end_ns": 18931940,
+          "correlation_id": 141,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 18931204,
+          "end_ns": 18932260,
+          "correlation_id": 141,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 18932292,
+          "end_ns": 18933348,
+          "correlation_id": 141,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        }
+      ]
+    },
+    {
+      "name": "replay_warmup",
+      "start_ns": 18956671,
+      "end_ns": 19074252,
+      "start_ms": 18.956671,
+      "end_ms": 19.074252,
+      "duration_us": 117.581,
+      "cuda_api_counts": {
+        "cudaStreamIsCapturing_v10000": 10,
+        "cudaGraphLaunch_v10000": 10,
+        "cudaDeviceSynchronize_v3020": 1
+      },
+      "gpu_kernel_count_in_range": 40,
+      "gpu_kernel_count_by_launch_correlation": 40,
+      "gpu_kernel_names": {
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 10,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 20,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)": 10
+      },
+      "launch_correlations": [
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 155,
+          "gpu_kernel_count": 4
+        },
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 165,
+          "gpu_kernel_count": 4
+        },
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 175,
+          "gpu_kernel_count": 4
+        },
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 185,
+          "gpu_kernel_count": 4
+        },
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 195,
+          "gpu_kernel_count": 4
+        },
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 205,
+          "gpu_kernel_count": 4
+        },
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 215,
+          "gpu_kernel_count": 4
+        },
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 225,
+          "gpu_kernel_count": 4
+        },
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 235,
+          "gpu_kernel_count": 4
+        },
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 245,
+          "gpu_kernel_count": 4
+        }
+      ],
+      "kernels": [
+        {
+          "start_ns": 18972356,
+          "end_ns": 18973412,
+          "correlation_id": 155,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 18973604,
+          "end_ns": 18974564,
+          "correlation_id": 155,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 18973732,
+          "end_ns": 18974724,
+          "correlation_id": 155,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 18974788,
+          "end_ns": 18975812,
+          "correlation_id": 155,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 18983140,
+          "end_ns": 18984196,
+          "correlation_id": 165,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 18984388,
+          "end_ns": 18985380,
+          "correlation_id": 165,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 18984516,
+          "end_ns": 18985540,
+          "correlation_id": 165,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 18985572,
+          "end_ns": 18986596,
+          "correlation_id": 165,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 18992868,
+          "end_ns": 18993893,
+          "correlation_id": 175,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 18994085,
+          "end_ns": 18995077,
+          "correlation_id": 175,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 18994213,
+          "end_ns": 18995237,
+          "correlation_id": 175,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 18995269,
+          "end_ns": 18996325,
+          "correlation_id": 175,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19001733,
+          "end_ns": 19002789,
+          "correlation_id": 185,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19002981,
+          "end_ns": 19003973,
+          "correlation_id": 185,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19003109,
+          "end_ns": 19004133,
+          "correlation_id": 185,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19004165,
+          "end_ns": 19005189,
+          "correlation_id": 185,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19010341,
+          "end_ns": 19011397,
+          "correlation_id": 195,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19011589,
+          "end_ns": 19012549,
+          "correlation_id": 195,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19011717,
+          "end_ns": 19012709,
+          "correlation_id": 195,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19012773,
+          "end_ns": 19013797,
+          "correlation_id": 195,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19019525,
+          "end_ns": 19020581,
+          "correlation_id": 205,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19020773,
+          "end_ns": 19021765,
+          "correlation_id": 205,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19020901,
+          "end_ns": 19021925,
+          "correlation_id": 205,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19021957,
+          "end_ns": 19022981,
+          "correlation_id": 205,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19028421,
+          "end_ns": 19029445,
+          "correlation_id": 215,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19029669,
+          "end_ns": 19030629,
+          "correlation_id": 215,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19029797,
+          "end_ns": 19030789,
+          "correlation_id": 215,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19030821,
+          "end_ns": 19031845,
+          "correlation_id": 215,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19040325,
+          "end_ns": 19041381,
+          "correlation_id": 225,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19041573,
+          "end_ns": 19042533,
+          "correlation_id": 225,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19041701,
+          "end_ns": 19042693,
+          "correlation_id": 225,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19042725,
+          "end_ns": 19043781,
+          "correlation_id": 225,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19049797,
+          "end_ns": 19050853,
+          "correlation_id": 235,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19051045,
+          "end_ns": 19052037,
+          "correlation_id": 235,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19051173,
+          "end_ns": 19052197,
+          "correlation_id": 235,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19052229,
+          "end_ns": 19053253,
+          "correlation_id": 235,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19058629,
+          "end_ns": 19059685,
+          "correlation_id": 245,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19059877,
+          "end_ns": 19060837,
+          "correlation_id": 245,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19060005,
+          "end_ns": 19061029,
+          "correlation_id": 245,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19061061,
+          "end_ns": 19062085,
+          "correlation_id": 245,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        }
+      ]
+    },
+    {
+      "name": "ordinary",
+      "start_ns": 19077979,
+      "end_ns": 19522445,
+      "start_ms": 19.077979,
+      "end_ms": 19.522445,
+      "duration_us": 444.466,
+      "cuda_api_counts": {
+        "cudaLaunchKernel_v7000": 12,
+        "cudaEventCreateWithFlags_v3020": 6,
+        "cudaStreamIsCapturing_v10000": 12,
+        "cudaEventRecordWithFlags_v11010": 6,
+        "cudaStreamWaitEvent_v3020": 6,
+        "cudaEventDestroy_v3020": 6,
+        "cudaDeviceSynchronize_v3020": 3
+      },
+      "gpu_kernel_count_in_range": 12,
+      "gpu_kernel_count_by_launch_correlation": 12,
+      "gpu_kernel_names": {
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 3,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 6,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)": 3
+      },
+      "launch_correlations": [
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 257,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 283,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 293,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 320,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 332,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 358,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 368,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 395,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 407,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 433,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 443,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 470,
+          "gpu_kernel_count": 1
+        }
+      ],
+      "kernels": [
+        {
+          "start_ns": 19118277,
+          "end_ns": 19119461,
+          "correlation_id": 257,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19154629,
+          "end_ns": 19155813,
+          "correlation_id": 283,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19192293,
+          "end_ns": 19193445,
+          "correlation_id": 293,
+          "graph_node_id": null,
+          "stream_id": 17,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19223077,
+          "end_ns": 19224165,
+          "correlation_id": 320,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19276261,
+          "end_ns": 19277285,
+          "correlation_id": 332,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19305253,
+          "end_ns": 19306277,
+          "correlation_id": 358,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19338949,
+          "end_ns": 19340101,
+          "correlation_id": 368,
+          "graph_node_id": null,
+          "stream_id": 17,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19365958,
+          "end_ns": 19367014,
+          "correlation_id": 395,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19415718,
+          "end_ns": 19416742,
+          "correlation_id": 407,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19443270,
+          "end_ns": 19444294,
+          "correlation_id": 433,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19475622,
+          "end_ns": 19476678,
+          "correlation_id": 443,
+          "graph_node_id": null,
+          "stream_id": 17,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19503046,
+          "end_ns": 19504134,
+          "correlation_id": 470,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        }
+      ]
+    },
+    {
+      "name": "ordinary/iteration_0",
+      "start_ns": 19081956,
+      "end_ns": 19242178,
+      "start_ms": 19.081956,
+      "end_ms": 19.242178,
+      "duration_us": 160.222,
+      "cuda_api_counts": {
+        "cudaLaunchKernel_v7000": 4,
+        "cudaEventCreateWithFlags_v3020": 2,
+        "cudaStreamIsCapturing_v10000": 4,
+        "cudaEventRecordWithFlags_v11010": 2,
+        "cudaStreamWaitEvent_v3020": 2,
+        "cudaEventDestroy_v3020": 2,
+        "cudaDeviceSynchronize_v3020": 1
+      },
+      "gpu_kernel_count_in_range": 4,
+      "gpu_kernel_count_by_launch_correlation": 4,
+      "gpu_kernel_names": {
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 1,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 2,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)": 1
+      },
+      "launch_correlations": [
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 257,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 283,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 293,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 320,
+          "gpu_kernel_count": 1
+        }
+      ],
+      "kernels": [
+        {
+          "start_ns": 19118277,
+          "end_ns": 19119461,
+          "correlation_id": 257,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19154629,
+          "end_ns": 19155813,
+          "correlation_id": 283,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19192293,
+          "end_ns": 19193445,
+          "correlation_id": 293,
+          "graph_node_id": null,
+          "stream_id": 17,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19223077,
+          "end_ns": 19224165,
+          "correlation_id": 320,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        }
+      ],
+      "dependency_timestamps_passed": true,
+      "branch_overlap_ns": 0
+    },
+    {
+      "name": "ordinary/iteration_1",
+      "start_ns": 19248479,
+      "end_ns": 19383974,
+      "start_ms": 19.248479,
+      "end_ms": 19.383974,
+      "duration_us": 135.495,
+      "cuda_api_counts": {
+        "cudaLaunchKernel_v7000": 4,
+        "cudaEventCreateWithFlags_v3020": 2,
+        "cudaStreamIsCapturing_v10000": 4,
+        "cudaEventRecordWithFlags_v11010": 2,
+        "cudaStreamWaitEvent_v3020": 2,
+        "cudaEventDestroy_v3020": 2,
+        "cudaDeviceSynchronize_v3020": 1
+      },
+      "gpu_kernel_count_in_range": 4,
+      "gpu_kernel_count_by_launch_correlation": 4,
+      "gpu_kernel_names": {
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 1,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 2,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)": 1
+      },
+      "launch_correlations": [
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 332,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 358,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 368,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 395,
+          "gpu_kernel_count": 1
+        }
+      ],
+      "kernels": [
+        {
+          "start_ns": 19276261,
+          "end_ns": 19277285,
+          "correlation_id": 332,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19305253,
+          "end_ns": 19306277,
+          "correlation_id": 358,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19338949,
+          "end_ns": 19340101,
+          "correlation_id": 368,
+          "graph_node_id": null,
+          "stream_id": 17,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19365958,
+          "end_ns": 19367014,
+          "correlation_id": 395,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        }
+      ],
+      "dependency_timestamps_passed": true,
+      "branch_overlap_ns": 0
+    },
+    {
+      "name": "ordinary/iteration_2",
+      "start_ns": 19389956,
+      "end_ns": 19520431,
+      "start_ms": 19.389956,
+      "end_ms": 19.520431,
+      "duration_us": 130.475,
+      "cuda_api_counts": {
+        "cudaLaunchKernel_v7000": 4,
+        "cudaEventCreateWithFlags_v3020": 2,
+        "cudaStreamIsCapturing_v10000": 4,
+        "cudaEventRecordWithFlags_v11010": 2,
+        "cudaStreamWaitEvent_v3020": 2,
+        "cudaEventDestroy_v3020": 2,
+        "cudaDeviceSynchronize_v3020": 1
+      },
+      "gpu_kernel_count_in_range": 4,
+      "gpu_kernel_count_by_launch_correlation": 4,
+      "gpu_kernel_names": {
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 1,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 2,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)": 1
+      },
+      "launch_correlations": [
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 407,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 433,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 443,
+          "gpu_kernel_count": 1
+        },
+        {
+          "api": "cudaLaunchKernel_v7000",
+          "correlation_id": 470,
+          "gpu_kernel_count": 1
+        }
+      ],
+      "kernels": [
+        {
+          "start_ns": 19415718,
+          "end_ns": 19416742,
+          "correlation_id": 407,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19443270,
+          "end_ns": 19444294,
+          "correlation_id": 433,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19475622,
+          "end_ns": 19476678,
+          "correlation_id": 443,
+          "graph_node_id": null,
+          "stream_id": 17,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19503046,
+          "end_ns": 19504134,
+          "correlation_id": 470,
+          "graph_node_id": null,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        }
+      ],
+      "dependency_timestamps_passed": true,
+      "branch_overlap_ns": 0
+    },
+    {
+      "name": "graph",
+      "start_ns": 19526733,
+      "end_ns": 19650226,
+      "start_ms": 19.526733,
+      "end_ms": 19.650226,
+      "duration_us": 123.493,
+      "cuda_api_counts": {
+        "cudaStreamIsCapturing_v10000": 3,
+        "cudaGraphLaunch_v10000": 3,
+        "cudaDeviceSynchronize_v3020": 3
+      },
+      "gpu_kernel_count_in_range": 12,
+      "gpu_kernel_count_by_launch_correlation": 12,
+      "gpu_kernel_names": {
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 3,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 6,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)": 3
+      },
+      "launch_correlations": [
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 484,
+          "gpu_kernel_count": 4
+        },
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 498,
+          "gpu_kernel_count": 4
+        },
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 512,
+          "gpu_kernel_count": 4
+        }
+      ],
+      "kernels": [
+        {
+          "start_ns": 19546182,
+          "end_ns": 19547238,
+          "correlation_id": 484,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19547430,
+          "end_ns": 19548390,
+          "correlation_id": 484,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19547558,
+          "end_ns": 19548550,
+          "correlation_id": 484,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19548614,
+          "end_ns": 19549638,
+          "correlation_id": 484,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19586502,
+          "end_ns": 19587558,
+          "correlation_id": 498,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19587750,
+          "end_ns": 19588710,
+          "correlation_id": 498,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19587878,
+          "end_ns": 19588902,
+          "correlation_id": 498,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19588934,
+          "end_ns": 19589958,
+          "correlation_id": 498,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19631398,
+          "end_ns": 19632454,
+          "correlation_id": 512,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19632646,
+          "end_ns": 19633638,
+          "correlation_id": 512,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19632774,
+          "end_ns": 19633798,
+          "correlation_id": 512,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19633830,
+          "end_ns": 19634854,
+          "correlation_id": 512,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        }
+      ]
+    },
+    {
+      "name": "graph/iteration_0",
+      "start_ns": 19530180,
+      "end_ns": 19562291,
+      "start_ms": 19.53018,
+      "end_ms": 19.562291,
+      "duration_us": 32.111,
+      "cuda_api_counts": {
+        "cudaStreamIsCapturing_v10000": 1,
+        "cudaGraphLaunch_v10000": 1,
+        "cudaDeviceSynchronize_v3020": 1
+      },
+      "gpu_kernel_count_in_range": 4,
+      "gpu_kernel_count_by_launch_correlation": 4,
+      "gpu_kernel_names": {
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 1,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 2,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)": 1
+      },
+      "launch_correlations": [
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 484,
+          "gpu_kernel_count": 4
+        }
+      ],
+      "kernels": [
+        {
+          "start_ns": 19546182,
+          "end_ns": 19547238,
+          "correlation_id": 484,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19547430,
+          "end_ns": 19548390,
+          "correlation_id": 484,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19547558,
+          "end_ns": 19548550,
+          "correlation_id": 484,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19548614,
+          "end_ns": 19549638,
+          "correlation_id": 484,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        }
+      ],
+      "dependency_timestamps_passed": true,
+      "branch_overlap_ns": 832
+    },
+    {
+      "name": "graph/iteration_1",
+      "start_ns": 19568332,
+      "end_ns": 19602536,
+      "start_ms": 19.568332,
+      "end_ms": 19.602536,
+      "duration_us": 34.204,
+      "cuda_api_counts": {
+        "cudaStreamIsCapturing_v10000": 1,
+        "cudaGraphLaunch_v10000": 1,
+        "cudaDeviceSynchronize_v3020": 1
+      },
+      "gpu_kernel_count_in_range": 4,
+      "gpu_kernel_count_by_launch_correlation": 4,
+      "gpu_kernel_names": {
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 1,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 2,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)": 1
+      },
+      "launch_correlations": [
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 498,
+          "gpu_kernel_count": 4
+        }
+      ],
+      "kernels": [
+        {
+          "start_ns": 19586502,
+          "end_ns": 19587558,
+          "correlation_id": 498,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19587750,
+          "end_ns": 19588710,
+          "correlation_id": 498,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19587878,
+          "end_ns": 19588902,
+          "correlation_id": 498,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19588934,
+          "end_ns": 19589958,
+          "correlation_id": 498,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        }
+      ],
+      "dependency_timestamps_passed": true,
+      "branch_overlap_ns": 832
+    },
+    {
+      "name": "graph/iteration_2",
+      "start_ns": 19606333,
+      "end_ns": 19648763,
+      "start_ms": 19.606333,
+      "end_ms": 19.648763,
+      "duration_us": 42.43,
+      "cuda_api_counts": {
+        "cudaStreamIsCapturing_v10000": 1,
+        "cudaGraphLaunch_v10000": 1,
+        "cudaDeviceSynchronize_v3020": 1
+      },
+      "gpu_kernel_count_in_range": 4,
+      "gpu_kernel_count_by_launch_correlation": 4,
+      "gpu_kernel_names": {
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 1,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)": 2,
+        "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)": 1
+      },
+      "launch_correlations": [
+        {
+          "api": "cudaGraphLaunch_v10000",
+          "correlation_id": 512,
+          "gpu_kernel_count": 4
+        }
+      ],
+      "kernels": [
+        {
+          "start_ns": 19631398,
+          "end_ns": 19632454,
+          "correlation_id": 512,
+          "graph_node_id": 8589934592,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::AUnaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19632646,
+          "end_ns": 19633638,
+          "correlation_id": 512,
+          "graph_node_id": 8589934593,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19632774,
+          "end_ns": 19633798,
+          "correlation_id": 512,
+          "graph_node_id": 8589934594,
+          "stream_id": 142,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctorOnSelf_add<float>, std::array<char *, (unsigned long)2>>(int, T2, T3)"
+        },
+        {
+          "start_ns": 19633830,
+          "end_ns": 19634854,
+          "correlation_id": 512,
+          "graph_node_id": 8589934595,
+          "stream_id": 7,
+          "name": "void at::native::vectorized_elementwise_kernel<(int)4, at::native::CUDAFunctor_add<float>, std::array<char *, (unsigned long)3>>(int, T2, T3)"
+        }
+      ],
+      "dependency_timestamps_passed": true,
+      "branch_overlap_ns": 864
+    }
+  ]
+}

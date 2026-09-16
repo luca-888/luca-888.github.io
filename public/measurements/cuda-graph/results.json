@@ -1,0 +1,86 @@
+{
+  "environment": {
+    "recorded_at_utc": "2026-09-16T07:38:20.771098+00:00",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "gpu_total_memory_bytes": 25262096384,
+    "compute_capability": [
+      8,
+      9
+    ],
+    "torch": "2.9.1+cu128",
+    "cuda_build": "12.8",
+    "python": "3.10.12 (main, Jul 15 2026, 23:40:17) [GCC 11.4.0]",
+    "cpu": "AMD EPYC 7543 32-Core Processor",
+    "platform": "Linux-5.15.0-113-generic-x86_64-with-glibc2.35",
+    "nvidia_smi": "name, driver_version, memory.total [MiB], clocks.current.sm [MHz], clocks.current.memory [MHz], pstate\nNVIDIA GeForce RTX 4090, 570.153.02, 24564 MiB, 210 MHz, 405 MHz, P8",
+    "torch_num_threads": 1
+  },
+  "method": {
+    "operation": "A:x=2*input; fork B:b=x+1 / C:c=x+2; join D:y=b+c; same buffers and dependencies",
+    "shape": [
+      4096
+    ],
+    "dtype": "torch.float32",
+    "iterations_per_round": 1000,
+    "rounds": 5,
+    "warmup_calls_per_measurement": 20,
+    "timer": "perf_counter_ns; synchronize before/after batch; median of round means",
+    "round_order": "Alternate ordinary->graph and graph->ordinary",
+    "timed_region": "Ordinary workload including stream contexts/event waits, or graph.replay; no copy, clone or per-call synchronization",
+    "capture_cost": "One CUDAGraph creation/capture/default instantiation/trailing sync, before first replay",
+    "cache_and_clocks": "No cache flush or clock locking",
+    "correctness": "Capture leaves y=0; ordinary and graph paths each produce y=31 from input=7"
+  },
+  "results": [
+    {
+      "kernel_count": 4,
+      "edge_count": 4,
+      "shape": [
+        4096
+      ],
+      "correctness_passed": true,
+      "capture_and_instantiate_ms": 0.505552,
+      "round_orders": [
+        [
+          "ordinary",
+          "graph"
+        ],
+        [
+          "graph",
+          "ordinary"
+        ],
+        [
+          "ordinary",
+          "graph"
+        ],
+        [
+          "graph",
+          "ordinary"
+        ],
+        [
+          "ordinary",
+          "graph"
+        ]
+      ],
+      "ordinary_us": 60.798877999999995,
+      "graph_us": 3.626734,
+      "speedup": 16.764085262387592,
+      "samples_us": {
+        "ordinary": [
+          60.890511,
+          60.798877999999995,
+          60.890480000000004,
+          60.067792999999995,
+          60.066129000000004
+        ],
+        "graph": [
+          3.627466,
+          3.6282979999999996,
+          3.620573,
+          3.626734,
+          3.616956
+        ]
+      }
+    }
+  ]
+}

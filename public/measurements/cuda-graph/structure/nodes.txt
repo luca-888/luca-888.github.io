@@ -1,0 +1,45 @@
+Dependencies: A -> B, A -> C, B -> D, C -> D
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ NODE 0: KERNEL — A                                                                             │
+│ Operation:   x = 2 * static_input                                                              │
+│ ID:          0 (topoId: 3)                                                                     │
+│ Kernel:      _ZN2at6native29vectorized_elementwise_kernelILi4ENS0_13AUnaryFunctorIfffNS0_15bin │
+│              ary_internal10MulFunctorIfEEEESt5arrayIPcLm2EEEEviT0_T1_                          │
+│ Launch:      <<<4,128,0>>>                                                                     │
+│ Node handle: 0x000055E7088233E0                                                                │
+│ Func handle: 0x000055E7077FE560                                                                │
+└────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ NODE 1: KERNEL — B                                                                             │
+│ Operation:   b = x + 1                                                                         │
+│ ID:          1 (topoId: 1)                                                                     │
+│ Kernel:      _ZN2at6native29vectorized_elementwise_kernelILi4ENS0_21CUDAFunctorOnSelf_addIfEES │
+│              t5arrayIPcLm2EEEEviT0_T1_                                                         │
+│ Launch:      <<<4,128,0>>>                                                                     │
+│ Node handle: 0x000055E708823AE8                                                                │
+│ Func handle: 0x000055E708396E40                                                                │
+└────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ NODE 2: KERNEL — C                                                                             │
+│ Operation:   c = x + 2                                                                         │
+│ ID:          2 (topoId: 2)                                                                     │
+│ Kernel:      _ZN2at6native29vectorized_elementwise_kernelILi4ENS0_21CUDAFunctorOnSelf_addIfEES │
+│              t5arrayIPcLm2EEEEviT0_T1_                                                         │
+│ Launch:      <<<4,128,0>>>                                                                     │
+│ Node handle: 0x000055E7088241F0                                                                │
+│ Func handle: 0x000055E708396E40                                                                │
+└────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ NODE 3: KERNEL — D                                                                             │
+│ Operation:   y = b + c                                                                         │
+│ ID:          3 (topoId: 0)                                                                     │
+│ Kernel:      _ZN2at6native29vectorized_elementwise_kernelILi4ENS0_15CUDAFunctor_addIfEESt5arra │
+│              yIPcLm3EEEEviT0_T1_                                                               │
+│ Launch:      <<<4,128,0>>>                                                                     │
+│ Node handle: 0x000055E7088248F8                                                                │
+│ Func handle: 0x000055E70835B620                                                                │
+└────────────────────────────────────────────────────────────────────────────────────────────────┘
