@@ -14,6 +14,9 @@ npm run dev
 打开 http://localhost:5173/。修改 `content/rmsnorm.md`、`src/App.tsx` 或 `src/styles.css` 后，页面会自动更新。
 
 - `content/rmsnorm.md`：文章正文，支持 Markdown、LaTeX 公式和 Python 代码高亮。
+- `content/cuda-graph.md`：CUDA Graph 文章；`posts/cuda-graph/index.html` 与 `src/cuda-graph.tsx` 为页面入口。
+- `src/ArticleMarkdown.tsx`：文章共用的 Markdown、公式、表格与 Python 高亮渲染。
+- `public/measurements/cuda-graph/`：CUDA Graph 四节点 diamond 示例、普通提交与图重放对照实验，以及真实 Nsight trace 和图结构记录。
 - `src/main.tsx` 与 `src/posts.ts`：首页文章目录、搜索和发布信息。
 - `posts/rmsnorm/index.html` 与 `src/rmsnorm.tsx`：首篇文章的页面入口。
 - `src/App.tsx`：文章渲染；`::rmsnorm-demo::` 插入 RMSNorm 交互示意。

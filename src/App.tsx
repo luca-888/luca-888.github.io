@@ -1,11 +1,5 @@
 import Markdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import remarkMath from 'remark-math'
-import rehypeKatex from 'rehype-katex'
-import { createHighlighterCoreSync } from 'shiki/core'
-import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
-import python from 'shiki/langs/python.mjs'
-import githubLight from 'shiki/themes/github-light.mjs'
+import { ArticleMarkdown, highlightPython } from './ArticleMarkdown'
 import article from '../content/rmsnorm.md?raw'
 import eagerKernels from '../content/rmsnorm-eager-kernels.md?raw'
 import compiledForward from '../public/measurements/rmsnorm-compile/4096x8192/forward.py?raw'
@@ -19,20 +13,6 @@ import { RmsNormCompileBenchmark } from './RmsNormCompileBenchmark'
 import { RmsNormTritonBenchmark } from './RmsNormTritonBenchmark'
 import { RmsNormTritonGraph } from './RmsNormTritonGraph'
 
-const highlighter = createHighlighterCoreSync({
-  themes: [githubLight],
-  langs: [python],
-  engine: createJavaScriptRegexEngine(),
-})
-
-function highlightPython(source: string) {
-  const { tokens } = highlighter.codeToTokens(source.replace(/\n$/, ''), { lang: 'python', theme: 'github-light' })
-  return tokens.map((line, lineIndex) => <span className="code-line" key={lineIndex}>
-    {line.map((token, tokenIndex) => <span key={tokenIndex} style={{ color: token.color }}>{token.content}</span>)}
-    {'\n'}
-  </span>)
-}
-
 const compiledSources = [
   { label: 'Forward 原始 Triton kernel', source: compiledForward,
     mapping: 'in_ptr0 → x，in_ptr1 → gamma，in_out_ptr0 → r，out_ptr0 → y。' },
@@ -40,22 +20,12 @@ const compiledSources = [
     mapping: 'dgamma kernel：in_ptr0 → g，in_ptr1 → x，in_ptr2 → r。dx kernel：in_ptr0 → g，in_ptr1 → gamma，in_ptr2 → x，in_ptr3 → r。各自的 out_ptr1 指向对应梯度输出。' },
 ].map(item => ({ ...item, code: highlightPython((item.source.match(/@triton\.jit\n[\s\S]*?(?=\n''', device_str=)/g) ?? []).join('\n\n')) }))
 
-// The article uses LaTeX delimiters; remark-math expects dollar delimiters.
-// Leave fenced code and inline code unchanged.
-const markdown = article
-  .split(/(```[\s\S]*?```|`[^`\n]*`)/g)
-  .map((part, index) => index % 2 ? part : part
-    .replace(/\\\[([\s\S]*?)\\\]/g, (_, math: string) => `\n$$\n${math.trim()}\n$$\n`)
-    .replace(/\\\((.*?)\\\)/g, (_, math: string) => `$${math}$`))
-  .join('')
-
 export function App() {
   return (
     <main>
       <article className="article" id="article-content">
-        <Markdown
-          remarkPlugins={[remarkGfm, remarkMath]}
-          rehypePlugins={[rehypeKatex]}
+        <ArticleMarkdown
+          source={article}
           components={{
             p({ children }) {
               if (children === '::rmsnorm-demo::') return <RmsNormDemo />
@@ -87,15 +57,8 @@ export function App() {
               </div>
               return <p>{children}</p>
             },
-            table({ children }) {
-              return <div className="table-scroll" tabIndex={0} role="region" aria-label="数据表"><table>{children}</table></div>
-            },
-            code({ children, className }) {
-              if (className !== 'language-python') return <code className={className}>{children}</code>
-              return <code className={className}>{highlightPython(String(children))}</code>
-            },
           }}
-        >{markdown}</Markdown>
+        />
       </article>
     </main>
   )
