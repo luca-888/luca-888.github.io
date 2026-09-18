@@ -1,0 +1,5 @@
+.article-essay { max-width: 840px; }
+.article-essay blockquote { margin: 20px 0; padding: 2px 20px; border-left: 2px solid var(--color-accent); color: var(--color-heading); }
+.compression-overview { margin: 28px 0; }
+.compression-overview img { display: block; width: 100%; height: auto; }
+.compression-overview figcaption { margin-top: 8px; color: var(--color-muted); font-size: 12px; line-height: 1.7; }
