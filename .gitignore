@@ -3,3 +3,11 @@ dist/
 *.local
 __pycache__/
 *.pyc
+
+# Local writing drafts and image exports
+/output/
+/.codex-build/
+/cuda-graph-images/
+/cuda-graph-images.zip
+/xhs
+/content/*-before-*.md

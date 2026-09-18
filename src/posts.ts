@@ -12,8 +12,17 @@ export type Post = {
 // 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。
 export const posts: Post[] = [
   {
+    slug: 'compression-harness',
+    title: '压缩即智能：从大模型到 Harness',
+    description: '从训练与能力涌现，到上下文、推理和 Harness，讨论模型能力如何转化为任务表现。',
+    category: '大模型',
+    tags: ['LLM', 'Scaling laws', '上下文', 'Agent', 'Harness'],
+    status: 'published',
+    publishedAt: '2026-09-18',
+  },
+  {
     slug: 'cuda-graph',
-    title: 'CUDA Graph：执行原理与优化实践',
+    title: 'CUDA Graph：计算与调度的解耦',
     description: '通过四节点 diamond 和真实 Nsight trace，理解 CUDA Graph 的执行原理、加速来源与应用边界。',
     category: 'GPU 编程',
     tags: ['CUDA Graph', 'CUDA', 'PyTorch', '性能优化', 'GPU'],

@@ -10,6 +10,7 @@ export default defineConfig({
         main: 'index.html',
         rmsnorm: 'posts/rmsnorm/index.html',
         cudaGraph: 'posts/cuda-graph/index.html',
+        compressionHarness: 'posts/compression-harness/index.html',
       },
     },
   },
