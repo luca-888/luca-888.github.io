@@ -5,6 +5,37 @@ import { SiteHeader } from './SiteLayout';
 import './styles.css';
 import './site.css';
 
+function ArticleMark({ slug }: { slug: string }) {
+  return <svg className="article-mark" viewBox="0 0 180 120" fill="none" aria-hidden="true">
+    {slug === 'compression-harness' ? <>
+      <path className="mark-line" d="M24 28h30l28 32-28 32H24M82 60h27m25 0h23M146 80v22H95V79" />
+      <rect className="mark-paper" x="15" y="16" width="25" height="24" rx="4" />
+      <rect className="mark-paper" x="15" y="48" width="25" height="24" rx="4" />
+      <rect className="mark-paper" x="15" y="80" width="25" height="24" rx="4" />
+      <rect className="mark-core" x="73" y="39" width="43" height="42" rx="10" />
+      <path className="mark-detail" d="m83 59 10-10 11 10-10 12-11-12Z" />
+      <circle className="mark-result" cx="148" cy="60" r="17" />
+      <path className="mark-detail" d="m141 60 5 5 9-11" />
+    </> : slug === 'cuda-graph' ? <>
+      <path className="mark-line" d="m90 22-49 38 49 38 49-38-49-38Z" />
+      <rect className="mark-core" x="76" y="8" width="28" height="28" rx="7" />
+      <rect className="mark-paper" x="27" y="46" width="28" height="28" rx="7" />
+      <rect className="mark-result" x="125" y="46" width="28" height="28" rx="7" />
+      <rect className="mark-core" x="76" y="84" width="28" height="28" rx="7" />
+      <path className="mark-detail" d="M41 58h0m98 0h0" />
+    </> : <>
+      <path className="mark-line" d="M23 91V27m27 64V44m27 47V18m27 73V51m27 40V34m27 57V58" />
+      <path className="mark-curve" d="M17 70c17-16 28 8 45-1s26-1 43 1 28-6 53-2" />
+      <circle className="mark-core" cx="23" cy="27" r="5" />
+      <circle className="mark-core" cx="50" cy="44" r="5" />
+      <circle className="mark-core" cx="77" cy="18" r="5" />
+      <circle className="mark-core" cx="104" cy="51" r="5" />
+      <circle className="mark-core" cx="131" cy="34" r="5" />
+      <circle className="mark-core" cx="158" cy="58" r="5" />
+    </>}
+  </svg>;
+}
+
 function App() {
   const [query, setQuery] = useState('');
   const search = query.trim().toLocaleLowerCase();
@@ -13,7 +44,7 @@ function App() {
   );
 
   return (
-    <div className="site-shell">
+    <div className="site-shell site-home">
       <a className="skip-link" href="#articles">跳到文章目录</a>
       <SiteHeader home />
 
@@ -31,7 +62,11 @@ function App() {
             {visiblePosts.map((post) => (
               <li key={post.slug}>
                 <a className="article-row" href={`${import.meta.env.BASE_URL}posts/${post.slug}/`}>
-                  <h2>{post.title}</h2>
+                  <ArticleMark slug={post.slug} />
+                  <div className="article-copy">
+                    <h2>{post.title}</h2>
+                    <p>{post.description}</p>
+                  </div>
                 </a>
               </li>
             ))}
