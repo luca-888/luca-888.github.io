@@ -1,0 +1,4 @@
+.rtx-reference { margin: 28px 0; }
+.rtx-reference > a { display: block; }
+.rtx-reference img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+.rtx-reference figcaption { margin-top: 12px; color: var(--color-muted); font-size: 12px; line-height: 1.7; }

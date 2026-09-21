@@ -1,0 +1,28 @@
+.rtx-communication { margin: 22px 0; padding: 14px 16px 12px; border: 1px solid var(--color-border); border-radius: 5px; background: var(--color-page, #fff); }
+.rtx-communication-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.rtx-communication-heading h4 { margin: 0; color: var(--color-heading); font-size: 14px; font-weight: 500; }
+.rtx-communication-heading h4 > span { margin-left: 6px; color: var(--color-muted); font: 12px "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+.rtx-communication-switch { display: flex; gap: 3px; }
+.rtx-communication-switch button { padding: 5px 9px; border: 0; border-radius: 3px; background: transparent; color: var(--color-muted); font: inherit; font-size: 12px; cursor: pointer; }
+.rtx-communication-switch button[aria-pressed="true"] { color: var(--color-accent); background: var(--color-surface-active, #edf1f4); }
+.rtx-communication .rtx-communication-note { margin: 8px 0 0; color: var(--color-muted); font-size: 12px; line-height: 1.6; }
+.rtx-communication-chart { width: 100%; margin: 10px auto 0; }
+.rtx-pair-chart { max-width: 650px; }
+.rtx-communication .rtx-communication-empty { margin: 18px 0; padding: 26px 16px; background: var(--color-surface); border-radius: 4px; color: var(--color-muted); font-size: 13px; text-align: center; }
+.rtx-communication-details { margin: 8px 0 0; color: var(--color-muted); font-size: 12px; }
+.rtx-communication-details summary { width: fit-content; margin: 0 auto; color: var(--color-accent); cursor: pointer; }
+.rtx-communication .table-scroll { margin: 12px 0; }
+.rtx-communication caption { padding: 0 0 8px; color: var(--color-muted); text-align: left; font-size: 12px; }
+.rtx-communication .rtx-matrix-table td, .rtx-communication .rtx-matrix-table thead th:not(:first-child), .rtx-communication .rtx-collective-table th, .rtx-communication .rtx-collective-table td { text-align: right; }
+.rtx-communication .rtx-matrix-table tbody td, .rtx-communication .rtx-collective-table tbody td, .rtx-communication .rtx-collective-table tbody th { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-variant-numeric: tabular-nums; }
+.rtx-matrix-table td small { display: block; margin-top: 2px; color: var(--color-muted); font-size: 11px; }
+.rtx-communication-missing { color: var(--color-muted); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif; font-size: 12px; }
+.rtx-device-mapping { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px; padding: 6px 0; font-size: 11px; }
+.rtx-device-mapping > span { display: inline-flex; gap: 7px; }
+.rtx-device-mapping code { padding: 0; background: transparent; color: var(--color-text); font-size: inherit; }
+.rtx-communication figcaption { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--color-border); color: var(--color-muted); font-size: 12px; line-height: 1.7; }
+
+.rtx-communication .rtx-matrix-table td.rtx-bandwidth-high { background: #24648d; color: #fff; border-color: #b6ccd9; }
+.rtx-communication .rtx-matrix-table td.rtx-bandwidth-low { background: #f3d4a4; color: #392810; border-color: #d5bd99; }
+.rtx-matrix-table td.rtx-bandwidth-high small { color: #e0edf5; }
+.rtx-matrix-table td.rtx-bandwidth-low small { color: #604721; }

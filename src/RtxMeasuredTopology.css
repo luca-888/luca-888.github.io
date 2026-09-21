@@ -1,0 +1,15 @@
+.rtx-measured-topology { margin: 28px 0; }
+.rtx-measured-topology svg { display: block; width: 100%; height: auto; }
+.rtx-measured-topology text { text-anchor: middle; fill: var(--color-text); }
+.rtx-measured-side { fill: var(--color-surface); stroke: var(--color-border); }
+.rtx-measured-pair { fill: var(--color-surface); stroke: var(--color-border); }
+.rtx-measured-label-bg { fill: var(--color-surface); }
+.rtx-measured-system, .rtx-measured-branch { fill: none; stroke: var(--color-accent); stroke-width: 2; }
+.rtx-measured-system { stroke: var(--color-secondary); stroke-width: 2.5; }
+.rtx-measured-heading { font-size: 20px; font-weight: 600; }
+.rtx-measured-path { font-size: 14px; font-weight: 600; }
+.rtx-measured-small { font-size: 12px; fill: var(--color-muted) !important; }
+.rtx-measured-bus { font: 12px 'SFMono-Regular', Consolas, monospace; }
+.rtx-measured-gpu { fill: color-mix(in srgb, var(--color-accent) 13%, var(--color-surface)); stroke: var(--color-accent); }
+.rtx-measured-gpu-name { font-size: 16px; font-weight: 600; }
+.rtx-measured-topology figcaption { color: var(--color-muted); font-size: 12px; line-height: 1.7; }
