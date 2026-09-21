@@ -2,7 +2,7 @@
 .compile-toolbar { display: flex; align-items: center; justify-content: center; gap: 16px; color: var(--color-muted); font-size: 12px; }
 .compile-switch { display: flex; gap: 2px; }
 .compile-switch button { padding: 5px 9px; border: 0; border-radius: 3px; background: transparent; color: var(--color-muted); font: inherit; cursor: pointer; }
-.compile-switch button[aria-pressed="true"] { background: #edf1f4; color: var(--color-text); }
+.compile-switch button[aria-pressed="true"] { background: var(--color-surface-active, #edf1f4); color: var(--color-text); }
 .compile-benchmark .compile-table tbody td:nth-child(5) { padding-left: 16px; }
 .compile-benchmark .compile-table tbody td:nth-child(6) { padding-left: 28px; }
 .compile-benchmark .compile-note { margin: 8px 0 0; text-align: center; color: var(--color-muted); font-size: 12px; }
@@ -18,7 +18,7 @@
 .compile-fusion figcaption a + a { margin-left: 12px; }
 .compile-source { margin: 16px 0; }
 .compile-source details { border-bottom: 1px solid var(--color-border); }
-.compile-source summary { padding: 9px 0; color: #567891; font-size: 13px; cursor: pointer; }
+.compile-source summary { padding: 9px 0; color: var(--color-accent, #567891); font-size: 13px; cursor: pointer; }
 .compile-source p { margin: 8px 0; color: var(--color-muted); font-size: 12px; }
 .compile-source-mapping { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
 .compile-source pre { max-height: 420px; margin: 12px 0; overflow: auto; }

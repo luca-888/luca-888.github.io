@@ -1,0 +1,15 @@
+.fa-execution { margin: 24px 0 28px; }
+.fa-execution svg { display: block; width: 100%; height: auto; color: var(--color-text); font: 16px system-ui, sans-serif; }
+.fa-execution-title { fill: var(--color-heading); font-size: 17px; font-weight: 600; }
+.fa-execution svg text { fill: currentColor; }
+.fa-execution-small { fill: var(--color-muted); font-size: 13px; }
+.fa-execution-active { fill: #476b85; font-weight: 650; }
+.fa-execution-tile { fill: var(--color-surface); stroke: var(--color-border); }
+.fa-execution-q-selected { fill: #eaf1f6; stroke: #8aa4b7; }
+.fa-execution-o-selected { fill: #edf3ef; stroke: #95af9e; }
+.fa-execution-state { fill: var(--color-surface); stroke: #b9c1c7; }
+.fa-execution-line { fill: none; stroke: #7c8992; stroke-width: 1.5; }
+.fa-execution-divider { fill: none; stroke: var(--color-border); }
+.fa-execution-math { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--color-heading); }
+.fa-execution-math .katex { font-size: 1.08em; }
+.fa-execution figcaption { margin-top: 10px; text-align: center; color: var(--color-muted); font-size: 13px; line-height: 1.7; }

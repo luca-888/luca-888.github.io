@@ -1,9 +1,12 @@
+import { ThemeToggle } from './ThemeToggle'
+
 export function SiteHeader({ home = false }: { home?: boolean }) {
   return <header className="site-header">
     <a className="wordmark" href={import.meta.env.BASE_URL}>luca’s blog</a>
     <nav aria-label="主导航">
       <a href={`${import.meta.env.BASE_URL}#articles`} aria-current={home ? 'page' : undefined}>文章</a>
       <a href="https://github.com/luca-888/luca-888.github.io">GitHub</a>
+      <ThemeToggle />
     </nav>
   </header>
 }

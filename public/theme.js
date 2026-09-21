@@ -1,10 +1,26 @@
-// Runs in the document head so a saved dark theme is applied before first paint.
+// Run before rendering so every entry page starts in the selected theme.
 (() => {
-  let saved;
-  try { saved = localStorage.getItem('luca-blog-theme'); } catch {}
-  const theme = saved === 'light' || saved === 'dark'
-    ? saved
-    : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  document.documentElement.dataset.theme = theme;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#1b1d1a' : '#f7f7f2');
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+  let preference;
+  try { preference = localStorage.getItem('luca-blog-theme'); } catch {}
+  const apply = () => {
+    const theme = preference === 'light' || preference === 'dark' ? preference : media.matches ? 'dark' : 'light';
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#181b1f' : '#ffffff');
+    window.dispatchEvent(new Event('themechange'));
+  };
+  window.addEventListener('theme-preference', event => {
+    preference = event.detail;
+    try { localStorage.setItem('luca-blog-theme', preference); } catch {}
+    apply();
+  });
+  window.addEventListener('storage', event => {
+    if (event.key === 'luca-blog-theme' || event.key === null) {
+      preference = event.newValue;
+      apply();
+    }
+  });
+  media.addEventListener('change', apply);
+  apply();
 })();

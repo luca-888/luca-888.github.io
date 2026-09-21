@@ -77,8 +77,8 @@ export function RmsNormGraph() {
             <title>{edge.derivative}</title>{edge.gradient}
           </text>
         }) : <>
-          <text className={`graph-edge-label${muted('direct') ? ' is-muted' : ''}`} fill="#567891" x={compact ? 64 : 222} y={compact ? 125 : 151}>直接路径</text>
-          <text className={`graph-edge-label${muted('scale') ? ' is-muted' : ''}`} fill="#587767" x={compact ? 244 : 490} y={compact ? 153 : 110}>广播 r</text>
+          <text className={`graph-edge-label${muted('direct') ? ' is-muted' : ''}`} fill="var(--color-accent, #567891)" x={compact ? 64 : 222} y={compact ? 125 : 151}>直接路径</text>
+          <text className={`graph-edge-label${muted('scale') ? ' is-muted' : ''}`} fill="var(--color-secondary, #587767)" x={compact ? 244 : 490} y={compact ? 153 : 110}>广播 r</text>
         </>}
       </svg>
     )

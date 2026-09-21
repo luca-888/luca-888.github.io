@@ -21,31 +21,31 @@ export function RmsNormCompileGraph() {
         <text x="18" y="19" className="fusion-heading">Forward · 1 kernel</text>
         <text x="749" y="19" className="fusion-detail fusion-code">M = 4096 · N = 8192</text>
         <g>
-          <rect x="18" y="42" width="130" height="64" rx="4" fill="#edf2f5" stroke="#a9bece" />
+          <rect x="18" y="42" width="130" height="64" rx="4" fill="var(--color-diagram-blue, #edf2f5)" stroke="var(--color-diagram-blue-border, #a9bece)" />
           <text x="83" y="69">x, gamma</text>
           <text x="83" y="90" className="fusion-detail">BF16 输入</text>
-          <rect x="180" y="42" width="516" height="64" rx="4" fill="#edf3ee" stroke="#a4bcac" />
+          <rect x="180" y="42" width="516" height="64" rx="4" fill="var(--color-diagram-green, #edf3ee)" stroke="var(--color-diagram-green-border, #a4bcac)" />
           <text x="438" y="69">K0 · s → r → x_hat → y</text>
           <text x="438" y="90" className="fusion-detail">类型转换、沿 N 归约与缩放融合 · FP32 中间计算</text>
-          <rect x="738" y="42" width="100" height="64" rx="4" fill="#edf3ee" stroke="#a4bcac" />
+          <rect x="738" y="42" width="100" height="64" rx="4" fill="var(--color-diagram-green, #edf3ee)" stroke="var(--color-diagram-green-border, #a4bcac)" />
           <text x="788" y="69">y, r</text>
           <text x="788" y="90" className="fusion-detail">BF16 / FP32</text>
         </g>
         <text x="18" y="139" className="fusion-heading">Backward · 2 kernels</text>
         <g>
-          <rect x="18" y="189" width="130" height="64" rx="4" fill="#edf2f5" stroke="#a9bece" />
+          <rect x="18" y="189" width="130" height="64" rx="4" fill="var(--color-diagram-blue, #edf2f5)" stroke="var(--color-diagram-blue-border, #a9bece)" />
           <text x="83" y="216">x, gamma, g</text>
           <text x="83" y="237">r</text>
-          <rect x="180" y="154" width="516" height="58" rx="4" fill="#f5ebed" stroke="#c8aaae" />
+          <rect x="180" y="154" width="516" height="58" rx="4" fill="var(--color-diagram-rose, #f5ebed)" stroke="var(--color-diagram-rose-border, #c8aaae)" />
           <text x="438" y="178">K0 · g * x_hat → dgamma</text>
           <text x="438" y="199" className="fusion-detail">沿 M 归约 · 汇总所有 token 的贡献</text>
-          <rect x="738" y="154" width="100" height="58" rx="4" fill="#f5ebed" stroke="#c8aaae" />
+          <rect x="738" y="154" width="100" height="58" rx="4" fill="var(--color-diagram-rose, #f5ebed)" stroke="var(--color-diagram-rose-border, #c8aaae)" />
           <text x="788" y="178">dgamma</text>
           <text x="788" y="199" className="fusion-detail">BF16 · [N]</text>
-          <rect x="180" y="230" width="516" height="58" rx="4" fill="#edf2f5" stroke="#a9bece" />
+          <rect x="180" y="230" width="516" height="58" rx="4" fill="var(--color-diagram-blue, #edf2f5)" stroke="var(--color-diagram-blue-border, #a9bece)" />
           <text x="438" y="254">K1 · dx_hat → dr → dx</text>
           <text x="438" y="275" className="fusion-detail">沿 N 归约 · 合并两条梯度路径</text>
-          <rect x="738" y="230" width="100" height="58" rx="4" fill="#edf2f5" stroke="#a9bece" />
+          <rect x="738" y="230" width="100" height="58" rx="4" fill="var(--color-diagram-blue, #edf2f5)" stroke="var(--color-diagram-blue-border, #a9bece)" />
           <text x="788" y="254">dx</text>
           <text x="788" y="275" className="fusion-detail">BF16 · [M,N]</text>
         </g>

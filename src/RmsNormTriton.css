@@ -4,10 +4,10 @@
 .triton-reduction .reduction-label { text-anchor: start; font-family: inherit; font-weight: 500; }
 .triton-reduction .reduction-detail { fill: var(--color-muted); font-size: 11px; }
 .triton-reduction rect { stroke-width: 1; }
-.reduction-input { fill: #edf1f4; stroke: #9eafbd; }
+.reduction-input { fill: var(--color-surface-active, #edf1f4); stroke: var(--color-diagram-blue-border, #9eafbd); }
 .reduction-main { fill: var(--color-surface); stroke: var(--color-border); }
 .reduction-partial { fill: var(--color-surface); stroke: var(--color-border); }
-.reduction-output { fill: #edf2ee; stroke: #9db2a5; }
+.reduction-output { fill: var(--color-diagram-green, #edf2ee); stroke: var(--color-diagram-green-border, #9db2a5); }
 .reduction-edge { fill: none; stroke: #98a2aa; stroke-width: 1.2; marker-end: url(#triton-reduction-arrow); }
 .triton-reduction figcaption { margin-top: 6px; text-align: center; color: var(--color-muted); font-size: 12px; }
 .triton-benchmark .table-scroll .triton-summary td,

@@ -4,12 +4,12 @@
 .kernel-timeline-header span { color: var(--color-muted); font-size: 12px; }
 .kernel-direction { display: flex; gap: 2px; }
 .kernel-direction button { padding: 4px 8px; border: 0; border-radius: 3px; background: transparent; color: var(--color-muted); font: inherit; font-size: 12px; cursor: pointer; }
-.kernel-direction button[aria-pressed="true"] { background: #edf1f4; color: var(--color-text); }
+.kernel-direction button[aria-pressed="true"] { background: var(--color-surface-active, #edf1f4); color: var(--color-text); }
 .kernel-legend { display: flex; justify-content: flex-end; gap: 16px; margin-top: 12px; color: var(--color-muted); font-size: 12px; }
 .kernel-legend span { display: inline-flex; align-items: center; gap: 5px; }
 .kernel-legend i { width: 8px; height: 8px; border-radius: 2px; }
 .kernel-chart { height: 132px; width: 100%; }
-.kernel-selection { display: flex; align-items: center; gap: 10px; min-height: 42px; margin-top: 8px; padding: 8px 10px; background: #edf1f4; border-radius: 3px; font-size: 12px; }
+.kernel-selection { display: flex; align-items: center; gap: 10px; min-height: 42px; margin-top: 8px; padding: 8px 10px; background: var(--color-surface-active, #edf1f4); border-radius: 3px; font-size: 12px; }
 .kernel-selection label { color: var(--color-muted); font-size: 12px; }
 .kernel-selection select { max-width: 118px; padding: 2px 4px; border: 1px solid var(--color-border); border-radius: 3px; color: var(--color-muted); background: var(--color-surface); font: inherit; cursor: pointer; }
 .kernel-selection code { flex: 1; padding: 0; background: transparent; font-size: 12px; }
