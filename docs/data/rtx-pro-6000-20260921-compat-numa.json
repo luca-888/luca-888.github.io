@@ -1,0 +1,1752 @@
+{
+  "schema_version": 1,
+  "status": "partial",
+  "scope": "NUMA first-touch and near/far collectives supplement",
+  "gpu_name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "devices": [
+    {
+      "id": 0,
+      "smi_index": 0,
+      "bus_id": "0000:3d:00.0",
+      "numa_node": 0,
+      "pci_ancestors": [
+        "0000:3a:02.0",
+        "0000:3b:00.0",
+        "0000:3c:00.0",
+        "0000:3d:00.0"
+      ]
+    },
+    {
+      "id": 1,
+      "smi_index": 1,
+      "bus_id": "0000:3e:00.0",
+      "numa_node": 0,
+      "pci_ancestors": [
+        "0000:3a:02.0",
+        "0000:3b:00.0",
+        "0000:3c:01.0",
+        "0000:3e:00.0"
+      ]
+    },
+    {
+      "id": 2,
+      "smi_index": 2,
+      "bus_id": "0000:4e:00.0",
+      "numa_node": 0,
+      "pci_ancestors": [
+        "0000:4b:02.0",
+        "0000:4c:00.0",
+        "0000:4d:00.0",
+        "0000:4e:00.0"
+      ]
+    },
+    {
+      "id": 3,
+      "smi_index": 3,
+      "bus_id": "0000:4f:00.0",
+      "numa_node": 0,
+      "pci_ancestors": [
+        "0000:4b:02.0",
+        "0000:4c:00.0",
+        "0000:4d:01.0",
+        "0000:4f:00.0"
+      ]
+    },
+    {
+      "id": 4,
+      "smi_index": 4,
+      "bus_id": "0000:ba:00.0",
+      "numa_node": 3,
+      "pci_ancestors": [
+        "0000:b7:02.0",
+        "0000:b8:00.0",
+        "0000:b9:00.0",
+        "0000:ba:00.0"
+      ]
+    },
+    {
+      "id": 5,
+      "smi_index": 5,
+      "bus_id": "0000:bb:00.0",
+      "numa_node": 3,
+      "pci_ancestors": [
+        "0000:b7:02.0",
+        "0000:b8:00.0",
+        "0000:b9:01.0",
+        "0000:bb:00.0"
+      ]
+    },
+    {
+      "id": 6,
+      "smi_index": 6,
+      "bus_id": "0000:cc:00.0",
+      "numa_node": 3,
+      "pci_ancestors": [
+        "0000:c8:02.0",
+        "0000:c9:00.0",
+        "0000:ca:01.0",
+        "0000:cc:00.0"
+      ]
+    },
+    {
+      "id": 7,
+      "smi_index": 7,
+      "bus_id": "0000:cd:00.0",
+      "numa_node": 3,
+      "pci_ancestors": [
+        "0000:c8:02.0",
+        "0000:c9:00.0",
+        "0000:ca:02.0",
+        "0000:cd:00.0"
+      ]
+    }
+  ],
+  "path_labels": [
+    [
+      "X",
+      "PIX",
+      "NODE",
+      "NODE",
+      "SYS",
+      "SYS",
+      "SYS",
+      "SYS"
+    ],
+    [
+      "PIX",
+      "X",
+      "NODE",
+      "NODE",
+      "SYS",
+      "SYS",
+      "SYS",
+      "SYS"
+    ],
+    [
+      "NODE",
+      "NODE",
+      "X",
+      "PIX",
+      "SYS",
+      "SYS",
+      "SYS",
+      "SYS"
+    ],
+    [
+      "NODE",
+      "NODE",
+      "PIX",
+      "X",
+      "SYS",
+      "SYS",
+      "SYS",
+      "SYS"
+    ],
+    [
+      "SYS",
+      "SYS",
+      "SYS",
+      "SYS",
+      "X",
+      "PIX",
+      "NODE",
+      "NODE"
+    ],
+    [
+      "SYS",
+      "SYS",
+      "SYS",
+      "SYS",
+      "PIX",
+      "X",
+      "NODE",
+      "NODE"
+    ],
+    [
+      "SYS",
+      "SYS",
+      "SYS",
+      "SYS",
+      "NODE",
+      "NODE",
+      "X",
+      "PIX"
+    ],
+    [
+      "SYS",
+      "SYS",
+      "SYS",
+      "SYS",
+      "NODE",
+      "NODE",
+      "PIX",
+      "X"
+    ]
+  ],
+  "can_access_peer": [
+    [
+      null,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    [
+      true,
+      null,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    [
+      true,
+      true,
+      null,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    [
+      true,
+      true,
+      true,
+      null,
+      true,
+      true,
+      true,
+      true
+    ],
+    [
+      true,
+      true,
+      true,
+      true,
+      null,
+      true,
+      true,
+      true
+    ],
+    [
+      true,
+      true,
+      true,
+      true,
+      true,
+      null,
+      true,
+      true
+    ],
+    [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      null,
+      true
+    ],
+    [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      null
+    ]
+  ],
+  "pci_devices": {
+    "0000:3a:02.0": {
+      "vendor": "0x8086",
+      "device": "0x0db0",
+      "class": "0x060400",
+      "numa_node": "0",
+      "local_cpulist": "0-31,192-223",
+      "current_link_speed": "32.0 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:3a/0000:3a:02.0"
+    },
+    "0000:3b:00.0": {
+      "vendor": "0x1000",
+      "device": "0xc030",
+      "class": "0x060400",
+      "numa_node": "0",
+      "local_cpulist": "0-31,192-223",
+      "current_link_speed": "32.0 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:3a/0000:3a:02.0/0000:3b:00.0"
+    },
+    "0000:3c:00.0": {
+      "vendor": "0x1000",
+      "device": "0xc030",
+      "class": "0x060400",
+      "numa_node": "0",
+      "local_cpulist": "0-31,192-223",
+      "current_link_speed": "2.5 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:3a/0000:3a:02.0/0000:3b:00.0/0000:3c:00.0"
+    },
+    "0000:3d:00.0": {
+      "vendor": "0x10de",
+      "device": "0x2bb5",
+      "class": "0x030200",
+      "numa_node": "0",
+      "local_cpulist": "0-31,192-223",
+      "current_link_speed": "2.5 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:3a/0000:3a:02.0/0000:3b:00.0/0000:3c:00.0/0000:3d:00.0"
+    },
+    "0000:3c:01.0": {
+      "vendor": "0x1000",
+      "device": "0xc030",
+      "class": "0x060400",
+      "numa_node": "0",
+      "local_cpulist": "0-31,192-223",
+      "current_link_speed": "2.5 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:3a/0000:3a:02.0/0000:3b:00.0/0000:3c:01.0"
+    },
+    "0000:3e:00.0": {
+      "vendor": "0x10de",
+      "device": "0x2bb5",
+      "class": "0x030200",
+      "numa_node": "0",
+      "local_cpulist": "0-31,192-223",
+      "current_link_speed": "2.5 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:3a/0000:3a:02.0/0000:3b:00.0/0000:3c:01.0/0000:3e:00.0"
+    },
+    "0000:4b:02.0": {
+      "vendor": "0x8086",
+      "device": "0x0db0",
+      "class": "0x060400",
+      "numa_node": "0",
+      "local_cpulist": "0-31,192-223",
+      "current_link_speed": "32.0 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:4b/0000:4b:02.0"
+    },
+    "0000:4c:00.0": {
+      "vendor": "0x1000",
+      "device": "0xc030",
+      "class": "0x060400",
+      "numa_node": "0",
+      "local_cpulist": "0-31,192-223",
+      "current_link_speed": "32.0 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:4b/0000:4b:02.0/0000:4c:00.0"
+    },
+    "0000:4d:00.0": {
+      "vendor": "0x1000",
+      "device": "0xc030",
+      "class": "0x060400",
+      "numa_node": "0",
+      "local_cpulist": "0-31,192-223",
+      "current_link_speed": "2.5 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:4b/0000:4b:02.0/0000:4c:00.0/0000:4d:00.0"
+    },
+    "0000:4e:00.0": {
+      "vendor": "0x10de",
+      "device": "0x2bb5",
+      "class": "0x030200",
+      "numa_node": "0",
+      "local_cpulist": "0-31,192-223",
+      "current_link_speed": "2.5 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:4b/0000:4b:02.0/0000:4c:00.0/0000:4d:00.0/0000:4e:00.0"
+    },
+    "0000:4d:01.0": {
+      "vendor": "0x1000",
+      "device": "0xc030",
+      "class": "0x060400",
+      "numa_node": "0",
+      "local_cpulist": "0-31,192-223",
+      "current_link_speed": "2.5 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:4b/0000:4b:02.0/0000:4c:00.0/0000:4d:01.0"
+    },
+    "0000:4f:00.0": {
+      "vendor": "0x10de",
+      "device": "0x2bb5",
+      "class": "0x030200",
+      "numa_node": "0",
+      "local_cpulist": "0-31,192-223",
+      "current_link_speed": "2.5 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:4b/0000:4b:02.0/0000:4c:00.0/0000:4d:01.0/0000:4f:00.0"
+    },
+    "0000:b7:02.0": {
+      "vendor": "0x8086",
+      "device": "0x0db0",
+      "class": "0x060400",
+      "numa_node": "3",
+      "local_cpulist": "96-127,288-319",
+      "current_link_speed": "32.0 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:b7/0000:b7:02.0"
+    },
+    "0000:b8:00.0": {
+      "vendor": "0x1000",
+      "device": "0xc030",
+      "class": "0x060400",
+      "numa_node": "3",
+      "local_cpulist": "96-127,288-319",
+      "current_link_speed": "32.0 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:b7/0000:b7:02.0/0000:b8:00.0"
+    },
+    "0000:b9:00.0": {
+      "vendor": "0x1000",
+      "device": "0xc030",
+      "class": "0x060400",
+      "numa_node": "3",
+      "local_cpulist": "96-127,288-319",
+      "current_link_speed": "2.5 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:b7/0000:b7:02.0/0000:b8:00.0/0000:b9:00.0"
+    },
+    "0000:ba:00.0": {
+      "vendor": "0x10de",
+      "device": "0x2bb5",
+      "class": "0x030200",
+      "numa_node": "3",
+      "local_cpulist": "96-127,288-319",
+      "current_link_speed": "2.5 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:b7/0000:b7:02.0/0000:b8:00.0/0000:b9:00.0/0000:ba:00.0"
+    },
+    "0000:b9:01.0": {
+      "vendor": "0x1000",
+      "device": "0xc030",
+      "class": "0x060400",
+      "numa_node": "3",
+      "local_cpulist": "96-127,288-319",
+      "current_link_speed": "2.5 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:b7/0000:b7:02.0/0000:b8:00.0/0000:b9:01.0"
+    },
+    "0000:bb:00.0": {
+      "vendor": "0x10de",
+      "device": "0x2bb5",
+      "class": "0x030200",
+      "numa_node": "3",
+      "local_cpulist": "96-127,288-319",
+      "current_link_speed": "2.5 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:b7/0000:b7:02.0/0000:b8:00.0/0000:b9:01.0/0000:bb:00.0"
+    },
+    "0000:c8:02.0": {
+      "vendor": "0x8086",
+      "device": "0x0db0",
+      "class": "0x060400",
+      "numa_node": "3",
+      "local_cpulist": "96-127,288-319",
+      "current_link_speed": "32.0 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:c8/0000:c8:02.0"
+    },
+    "0000:c9:00.0": {
+      "vendor": "0x1000",
+      "device": "0xc030",
+      "class": "0x060400",
+      "numa_node": "3",
+      "local_cpulist": "96-127,288-319",
+      "current_link_speed": "32.0 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:c8/0000:c8:02.0/0000:c9:00.0"
+    },
+    "0000:ca:01.0": {
+      "vendor": "0x1000",
+      "device": "0xc030",
+      "class": "0x060400",
+      "numa_node": "3",
+      "local_cpulist": "96-127,288-319",
+      "current_link_speed": "2.5 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:c8/0000:c8:02.0/0000:c9:00.0/0000:ca:01.0"
+    },
+    "0000:cc:00.0": {
+      "vendor": "0x10de",
+      "device": "0x2bb5",
+      "class": "0x030200",
+      "numa_node": "3",
+      "local_cpulist": "96-127,288-319",
+      "current_link_speed": "2.5 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:c8/0000:c8:02.0/0000:c9:00.0/0000:ca:01.0/0000:cc:00.0"
+    },
+    "0000:ca:02.0": {
+      "vendor": "0x1000",
+      "device": "0xc030",
+      "class": "0x060400",
+      "numa_node": "3",
+      "local_cpulist": "96-127,288-319",
+      "current_link_speed": "2.5 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:c8/0000:c8:02.0/0000:c9:00.0/0000:ca:02.0"
+    },
+    "0000:cd:00.0": {
+      "vendor": "0x10de",
+      "device": "0x2bb5",
+      "class": "0x030200",
+      "numa_node": "3",
+      "local_cpulist": "96-127,288-319",
+      "current_link_speed": "2.5 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "32.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:c8/0000:c8:02.0/0000:c9:00.0/0000:ca:02.0/0000:cd:00.0"
+    },
+    "0000:a7:00.1": {
+      "vendor": "0x15b3",
+      "device": "0x101f",
+      "class": "0x020000",
+      "numa_node": "3",
+      "local_cpulist": "96-127,288-319",
+      "current_link_speed": "16.0 GT/s PCIe",
+      "current_link_width": "8",
+      "max_link_speed": "16.0 GT/s PCIe",
+      "max_link_width": "8",
+      "resolved_path": "/sys/devices/pci0000:a6/0000:a6:02.0/0000:a7:00.1"
+    },
+    "0000:3f:00.0": {
+      "vendor": "0x15b3",
+      "device": "0x101d",
+      "class": "0x020000",
+      "numa_node": "0",
+      "local_cpulist": "0-31,192-223",
+      "current_link_speed": "16.0 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "16.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:3a/0000:3a:02.0/0000:3b:00.0/0000:3c:02.0/0000:3f:00.0"
+    },
+    "0000:18:00.0": {
+      "vendor": "0x8086",
+      "device": "0x15ff",
+      "class": "0x020000",
+      "numa_node": "0",
+      "local_cpulist": "0-31,192-223",
+      "current_link_speed": "8.0 GT/s PCIe",
+      "current_link_width": "4",
+      "max_link_speed": "8.0 GT/s PCIe",
+      "max_link_width": "4",
+      "resolved_path": "/sys/devices/pci0000:14/0000:14:04.0/0000:18:00.0"
+    },
+    "0000:a7:00.0": {
+      "vendor": "0x15b3",
+      "device": "0x101f",
+      "class": "0x020000",
+      "numa_node": "3",
+      "local_cpulist": "96-127,288-319",
+      "current_link_speed": "16.0 GT/s PCIe",
+      "current_link_width": "8",
+      "max_link_speed": "16.0 GT/s PCIe",
+      "max_link_width": "8",
+      "resolved_path": "/sys/devices/pci0000:a6/0000:a6:02.0/0000:a7:00.0"
+    },
+    "0000:3f:00.1": {
+      "vendor": "0x15b3",
+      "device": "0x101d",
+      "class": "0x020000",
+      "numa_node": "0",
+      "local_cpulist": "0-31,192-223",
+      "current_link_speed": "16.0 GT/s PCIe",
+      "current_link_width": "16",
+      "max_link_speed": "16.0 GT/s PCIe",
+      "max_link_width": "16",
+      "resolved_path": "/sys/devices/pci0000:3a/0000:3a:02.0/0000:3b:00.0/0000:3c:02.0/0000:3f:00.1"
+    },
+    "0000:18:00.1": {
+      "vendor": "0x8086",
+      "device": "0x15ff",
+      "class": "0x020000",
+      "numa_node": "0",
+      "local_cpulist": "0-31,192-223",
+      "current_link_speed": "8.0 GT/s PCIe",
+      "current_link_width": "4",
+      "max_link_speed": "8.0 GT/s PCIe",
+      "max_link_width": "4",
+      "resolved_path": "/sys/devices/pci0000:14/0000:14:04.0/0000:18:00.1"
+    }
+  },
+  "numa_nodes": {
+    "4": {
+      "cpulist": "128-159,320-351",
+      "distance": "23 26 23 15 10 15"
+    },
+    "2": {
+      "cpulist": "64-95,256-287",
+      "distance": "17 15 10 26 23 21"
+    },
+    "0": {
+      "cpulist": "0-31,192-223",
+      "distance": "10 15 17 21 28 26"
+    },
+    "5": {
+      "cpulist": "160-191,352-383",
+      "distance": "26 23 21 17 15 10"
+    },
+    "3": {
+      "cpulist": "96-127,288-319",
+      "distance": "21 28 26 10 15 17"
+    },
+    "1": {
+      "cpulist": "32-63,224-255",
+      "distance": "15 10 15 23 26 23"
+    }
+  },
+  "bandwidth_gbs": null,
+  "remote_latency_ns": null,
+  "host_to_device_gbs": null,
+  "device_to_host_gbs": null,
+  "host_to_all_gbs": null,
+  "all_to_host_gbs": null,
+  "fan_in_gbs": null,
+  "groups": [
+    {
+      "id": "all8",
+      "indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "reason": "all verified visible GPUs"
+    },
+    {
+      "id": "near2",
+      "indices": [
+        0,
+        1
+      ],
+      "path_score_sum": 1,
+      "path_score_max": 1,
+      "pair_paths": [
+        {
+          "a": 0,
+          "b": 1,
+          "path": "PIX"
+        }
+      ],
+      "reason": "observed path-label score; not an assertion of measured speed or physical switch identity"
+    },
+    {
+      "id": "far2",
+      "indices": [
+        0,
+        4
+      ],
+      "path_score_sum": 5,
+      "path_score_max": 5,
+      "pair_paths": [
+        {
+          "a": 0,
+          "b": 4,
+          "path": "SYS"
+        }
+      ],
+      "reason": "observed path-label score; not an assertion of measured speed or physical switch identity"
+    },
+    {
+      "id": "near4",
+      "indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "path_score_sum": 18,
+      "path_score_max": 4,
+      "pair_paths": [
+        {
+          "a": 0,
+          "b": 1,
+          "path": "PIX"
+        },
+        {
+          "a": 0,
+          "b": 2,
+          "path": "NODE"
+        },
+        {
+          "a": 0,
+          "b": 3,
+          "path": "NODE"
+        },
+        {
+          "a": 1,
+          "b": 2,
+          "path": "NODE"
+        },
+        {
+          "a": 1,
+          "b": 3,
+          "path": "NODE"
+        },
+        {
+          "a": 2,
+          "b": 3,
+          "path": "PIX"
+        }
+      ],
+      "reason": "observed path-label score; not an assertion of measured speed or physical switch identity"
+    },
+    {
+      "id": "far4",
+      "indices": [
+        0,
+        2,
+        4,
+        6
+      ],
+      "path_score_sum": 28,
+      "path_score_max": 5,
+      "pair_paths": [
+        {
+          "a": 0,
+          "b": 2,
+          "path": "NODE"
+        },
+        {
+          "a": 0,
+          "b": 4,
+          "path": "SYS"
+        },
+        {
+          "a": 0,
+          "b": 6,
+          "path": "SYS"
+        },
+        {
+          "a": 2,
+          "b": 4,
+          "path": "SYS"
+        },
+        {
+          "a": 2,
+          "b": 6,
+          "path": "SYS"
+        },
+        {
+          "a": 4,
+          "b": 6,
+          "path": "NODE"
+        }
+      ],
+      "reason": "observed path-label score; not an assertion of measured speed or physical switch identity"
+    }
+  ],
+  "collectives": [
+    {
+      "name": "nccl-far2-all_reduce",
+      "group": "far2",
+      "operation": "all_reduce",
+      "transport_env": {
+        "NCCL_CUMEM_HOST_ENABLE": "0"
+      },
+      "gpu_indices": [
+        0,
+        4
+      ],
+      "rows": [
+        {
+          "size_bytes": 1024,
+          "count": 256,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 10.21,
+            "algbw_gbs": 0.1,
+            "busbw_gbs": 0.1,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 10.78,
+            "algbw_gbs": 0.09,
+            "busbw_gbs": 0.09,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 4096,
+          "count": 1024,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 10.96,
+            "algbw_gbs": 0.37,
+            "busbw_gbs": 0.37,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 9.98,
+            "algbw_gbs": 0.41,
+            "busbw_gbs": 0.41,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 16384,
+          "count": 4096,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 12.6,
+            "algbw_gbs": 1.3,
+            "busbw_gbs": 1.3,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 10.98,
+            "algbw_gbs": 1.49,
+            "busbw_gbs": 1.49,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 65536,
+          "count": 16384,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 20.26,
+            "algbw_gbs": 3.23,
+            "busbw_gbs": 3.23,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 21.59,
+            "algbw_gbs": 3.04,
+            "busbw_gbs": 3.04,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 262144,
+          "count": 65536,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 42.41,
+            "algbw_gbs": 6.18,
+            "busbw_gbs": 6.18,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 47.69,
+            "algbw_gbs": 5.5,
+            "busbw_gbs": 5.5,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 1048576,
+          "count": 262144,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 92.19,
+            "algbw_gbs": 11.37,
+            "busbw_gbs": 11.37,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 93.03,
+            "algbw_gbs": 11.27,
+            "busbw_gbs": 11.27,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 4194304,
+          "count": 1048576,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 230.2,
+            "algbw_gbs": 18.22,
+            "busbw_gbs": 18.22,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 234.44,
+            "algbw_gbs": 17.89,
+            "busbw_gbs": 17.89,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 16777216,
+          "count": 4194304,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 853.22,
+            "algbw_gbs": 19.66,
+            "busbw_gbs": 19.66,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 856.87,
+            "algbw_gbs": 19.58,
+            "busbw_gbs": 19.58,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 67108864,
+          "count": 16777216,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 3367.19,
+            "algbw_gbs": 19.93,
+            "busbw_gbs": 19.93,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 3366.89,
+            "algbw_gbs": 19.93,
+            "busbw_gbs": 19.93,
+            "wrong": 0
+          }
+        }
+      ],
+      "topology_xml": "nccl-far2-all_reduce.topology.xml",
+      "xml_root": "system",
+      "xml_gpu_count": 2,
+      "xml_error": null
+    },
+    {
+      "name": "nccl-far2-all_gather",
+      "group": "far2",
+      "operation": "all_gather",
+      "transport_env": {
+        "NCCL_CUMEM_HOST_ENABLE": "0"
+      },
+      "gpu_indices": [
+        0,
+        4
+      ],
+      "rows": [
+        {
+          "size_bytes": 1024,
+          "count": 128,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 9.6,
+            "algbw_gbs": 0.11,
+            "busbw_gbs": 0.05,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 9.38,
+            "algbw_gbs": 0.11,
+            "busbw_gbs": 0.05,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 4096,
+          "count": 512,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 9.71,
+            "algbw_gbs": 0.42,
+            "busbw_gbs": 0.21,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 10.13,
+            "algbw_gbs": 0.4,
+            "busbw_gbs": 0.2,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 16384,
+          "count": 2048,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 10.58,
+            "algbw_gbs": 1.55,
+            "busbw_gbs": 0.77,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 11.1,
+            "algbw_gbs": 1.48,
+            "busbw_gbs": 0.74,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 65536,
+          "count": 8192,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 16.91,
+            "algbw_gbs": 3.88,
+            "busbw_gbs": 1.94,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 15.02,
+            "algbw_gbs": 4.36,
+            "busbw_gbs": 2.18,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 262144,
+          "count": 32768,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 28.26,
+            "algbw_gbs": 9.28,
+            "busbw_gbs": 4.64,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 33.3,
+            "algbw_gbs": 7.87,
+            "busbw_gbs": 3.94,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 1048576,
+          "count": 131072,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 57.07,
+            "algbw_gbs": 18.37,
+            "busbw_gbs": 9.19,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 53.46,
+            "algbw_gbs": 19.61,
+            "busbw_gbs": 9.81,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 4194304,
+          "count": 524288,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 132.77,
+            "algbw_gbs": 31.59,
+            "busbw_gbs": 15.79,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 117.11,
+            "algbw_gbs": 35.82,
+            "busbw_gbs": 17.91,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 16777216,
+          "count": 2097152,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 419.31,
+            "algbw_gbs": 40.01,
+            "busbw_gbs": 20.01,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 424.13,
+            "algbw_gbs": 39.56,
+            "busbw_gbs": 19.78,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 67108864,
+          "count": 8388608,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 1633.95,
+            "algbw_gbs": 41.07,
+            "busbw_gbs": 20.54,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 1626.73,
+            "algbw_gbs": 41.25,
+            "busbw_gbs": 20.63,
+            "wrong": 0
+          }
+        }
+      ],
+      "topology_xml": "nccl-far2-all_gather.topology.xml",
+      "xml_root": "system",
+      "xml_gpu_count": 2,
+      "xml_error": null
+    },
+    {
+      "name": "nccl-far4-all_reduce",
+      "group": "far4",
+      "operation": "all_reduce",
+      "transport_env": {
+        "NCCL_CUMEM_HOST_ENABLE": "0"
+      },
+      "gpu_indices": [
+        0,
+        2,
+        4,
+        6
+      ],
+      "rows": [
+        {
+          "size_bytes": 1024,
+          "count": 256,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 17.84,
+            "algbw_gbs": 0.06,
+            "busbw_gbs": 0.09,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 17.73,
+            "algbw_gbs": 0.06,
+            "busbw_gbs": 0.09,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 4096,
+          "count": 1024,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 19.07,
+            "algbw_gbs": 0.21,
+            "busbw_gbs": 0.32,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 20.41,
+            "algbw_gbs": 0.2,
+            "busbw_gbs": 0.3,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 16384,
+          "count": 4096,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 22.29,
+            "algbw_gbs": 0.74,
+            "busbw_gbs": 1.1,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 18.76,
+            "algbw_gbs": 0.87,
+            "busbw_gbs": 1.31,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 65536,
+          "count": 16384,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 29.39,
+            "algbw_gbs": 2.23,
+            "busbw_gbs": 3.35,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 38.03,
+            "algbw_gbs": 1.72,
+            "busbw_gbs": 2.59,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 262144,
+          "count": 65536,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 86.05,
+            "algbw_gbs": 3.05,
+            "busbw_gbs": 4.57,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 85.44,
+            "algbw_gbs": 3.07,
+            "busbw_gbs": 4.6,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 1048576,
+          "count": 262144,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 134.48,
+            "algbw_gbs": 7.8,
+            "busbw_gbs": 11.7,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 137.46,
+            "algbw_gbs": 7.63,
+            "busbw_gbs": 11.44,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 4194304,
+          "count": 1048576,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 320.46,
+            "algbw_gbs": 13.09,
+            "busbw_gbs": 19.63,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 314.82,
+            "algbw_gbs": 13.32,
+            "busbw_gbs": 19.98,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 16777216,
+          "count": 4194304,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 1056.52,
+            "algbw_gbs": 15.88,
+            "busbw_gbs": 23.82,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 1039.02,
+            "algbw_gbs": 16.15,
+            "busbw_gbs": 24.22,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 67108864,
+          "count": 16777216,
+          "dtype": "float",
+          "op": "sum",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 4176.15,
+            "algbw_gbs": 16.07,
+            "busbw_gbs": 24.1,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 4107.14,
+            "algbw_gbs": 16.34,
+            "busbw_gbs": 24.51,
+            "wrong": 0
+          }
+        }
+      ],
+      "topology_xml": "nccl-far4-all_reduce.topology.xml",
+      "xml_root": "system",
+      "xml_gpu_count": 4,
+      "xml_error": null
+    },
+    {
+      "name": "nccl-far4-all_gather",
+      "group": "far4",
+      "operation": "all_gather",
+      "transport_env": {
+        "NCCL_CUMEM_HOST_ENABLE": "0"
+      },
+      "gpu_indices": [
+        0,
+        2,
+        4,
+        6
+      ],
+      "rows": [
+        {
+          "size_bytes": 1024,
+          "count": 64,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 17.83,
+            "algbw_gbs": 0.06,
+            "busbw_gbs": 0.04,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 18.44,
+            "algbw_gbs": 0.06,
+            "busbw_gbs": 0.04,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 4096,
+          "count": 256,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 19.86,
+            "algbw_gbs": 0.21,
+            "busbw_gbs": 0.15,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 20.28,
+            "algbw_gbs": 0.2,
+            "busbw_gbs": 0.15,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 16384,
+          "count": 1024,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 20.64,
+            "algbw_gbs": 0.79,
+            "busbw_gbs": 0.6,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 19.65,
+            "algbw_gbs": 0.83,
+            "busbw_gbs": 0.63,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 65536,
+          "count": 4096,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 17.7,
+            "algbw_gbs": 3.7,
+            "busbw_gbs": 2.78,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 21.08,
+            "algbw_gbs": 3.11,
+            "busbw_gbs": 2.33,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 262144,
+          "count": 16384,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 52.78,
+            "algbw_gbs": 4.97,
+            "busbw_gbs": 3.73,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 51.34,
+            "algbw_gbs": 5.11,
+            "busbw_gbs": 3.83,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 1048576,
+          "count": 65536,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 76.3,
+            "algbw_gbs": 13.74,
+            "busbw_gbs": 10.31,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 71.8,
+            "algbw_gbs": 14.6,
+            "busbw_gbs": 10.95,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 4194304,
+          "count": 262144,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 171.35,
+            "algbw_gbs": 24.48,
+            "busbw_gbs": 18.36,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 170.91,
+            "algbw_gbs": 24.54,
+            "busbw_gbs": 18.41,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 16777216,
+          "count": 1048576,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 540.93,
+            "algbw_gbs": 31.02,
+            "busbw_gbs": 23.26,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 536.89,
+            "algbw_gbs": 31.25,
+            "busbw_gbs": 23.44,
+            "wrong": 0
+          }
+        },
+        {
+          "size_bytes": 67108864,
+          "count": 4194304,
+          "dtype": "float",
+          "op": "none",
+          "root": -1,
+          "out_of_place": {
+            "time_us": 2113.3,
+            "algbw_gbs": 31.76,
+            "busbw_gbs": 23.82,
+            "wrong": 0
+          },
+          "in_place": {
+            "time_us": 2108.34,
+            "algbw_gbs": 31.83,
+            "busbw_gbs": 23.87,
+            "wrong": 0
+          }
+        }
+      ],
+      "topology_xml": "nccl-far4-all_gather.topology.xml",
+      "xml_root": "system",
+      "xml_gpu_count": 4,
+      "xml_error": null
+    }
+  ],
+  "numa_first_touch": [
+    {
+      "label": "numa-first-touch-local",
+      "context": {
+        "memory_node": 0,
+        "gpu": 0,
+        "submission_node": 0,
+        "method": "verified first-touch, not strict membind"
+      },
+      "result": {
+        "status": "complete",
+        "method": "CPU first-touch + observed page residency + cudaHostRegister; not strict membind",
+        "bytes": 268435456,
+        "iterations": 16,
+        "samples": 3,
+        "correctness_passed": true,
+        "memory_node": 0,
+        "submission_node": 0,
+        "touch_cpu": [
+          0
+        ],
+        "submission_cpu": [
+          0
+        ],
+        "before_register": {
+          "node": 0,
+          "pages": {
+            "0": 65536
+          },
+          "kernel_page_kib": 4,
+          "numa_maps": "7221893cb000 default anon=65536 dirty=65536 active=4 N0=65536 kernelpagesize_kB=4"
+        },
+        "after_register": {
+          "node": 0,
+          "pages": {
+            "0": 65536
+          },
+          "kernel_page_kib": 4,
+          "numa_maps": "7221893cb000 default anon=65536 dirty=65536 active=0 N0=65536 kernelpagesize_kB=4"
+        },
+        "after_transfers": {
+          "node": 0,
+          "pages": {
+            "0": 65536
+          },
+          "kernel_page_kib": 4,
+          "numa_maps": "7221893cb000 default anon=65536 dirty=65536 active=0 N0=65536 kernelpagesize_kB=4"
+        },
+        "host_to_device_gbs": 55.61073307698543,
+        "host_to_device_samples_gbs": [
+          55.61073307698543,
+          55.591501567248145,
+          55.630901456000196
+        ],
+        "device_to_host_gbs": 57.39192139659213,
+        "device_to_host_samples_gbs": [
+          57.39192139659213,
+          57.392611825510535,
+          57.39049963343397
+        ]
+      }
+    },
+    {
+      "label": "numa-first-touch-remote",
+      "context": {
+        "memory_node": 1,
+        "gpu": 0,
+        "submission_node": 0,
+        "method": "verified first-touch, not strict membind"
+      },
+      "result": {
+        "status": "complete",
+        "method": "CPU first-touch + observed page residency + cudaHostRegister; not strict membind",
+        "bytes": 268435456,
+        "iterations": 16,
+        "samples": 3,
+        "correctness_passed": true,
+        "memory_node": 1,
+        "submission_node": 0,
+        "touch_cpu": [
+          32
+        ],
+        "submission_cpu": [
+          0
+        ],
+        "before_register": {
+          "node": 1,
+          "pages": {
+            "1": 65536
+          },
+          "kernel_page_kib": 4,
+          "numa_maps": "70b490953000 default anon=65536 dirty=65536 active=2 N1=65536 kernelpagesize_kB=4"
+        },
+        "after_register": {
+          "node": 1,
+          "pages": {
+            "1": 65536
+          },
+          "kernel_page_kib": 4,
+          "numa_maps": "70b490953000 default anon=65536 dirty=65536 active=2 N1=65536 kernelpagesize_kB=4"
+        },
+        "after_transfers": {
+          "node": 1,
+          "pages": {
+            "1": 65536
+          },
+          "kernel_page_kib": 4,
+          "numa_maps": "70b490953000 default anon=65536 dirty=65536 active=2 N1=65536 kernelpagesize_kB=4"
+        },
+        "host_to_device_gbs": 55.60463049179724,
+        "host_to_device_samples_gbs": [
+          55.60463049179724,
+          55.59847982625975,
+          55.605229156019526
+        ],
+        "device_to_host_gbs": 57.39435552503549,
+        "device_to_host_samples_gbs": [
+          57.39673133987319,
+          57.393910813078115,
+          57.39435552503549
+        ]
+      }
+    }
+  ],
+  "selected_transport": null,
+  "selected_transport_environment": null,
+  "collective_matrix_complete": null,
+  "limitations": [
+    {
+      "step": "nccl-near2-all_reduce",
+      "status": "failed",
+      "reason": null,
+      "incomplete_artifact": false,
+      "artifacts": [
+        "nccl-near2-all_reduce.topology.xml",
+        "nccl-near2-all_reduce.nccl.log"
+      ]
+    },
+    {
+      "step": "nccl-near2-all_gather",
+      "status": "failed",
+      "reason": null,
+      "incomplete_artifact": false,
+      "artifacts": [
+        "nccl-near2-all_gather.topology.xml",
+        "nccl-near2-all_gather.nccl.log"
+      ]
+    },
+    {
+      "step": "nccl-near4-all_reduce",
+      "status": "failed",
+      "reason": null,
+      "incomplete_artifact": false,
+      "artifacts": [
+        "nccl-near4-all_reduce.topology.xml",
+        "nccl-near4-all_reduce.nccl.log"
+      ]
+    },
+    {
+      "step": "nccl-near4-all_gather",
+      "status": "failed",
+      "reason": null,
+      "incomplete_artifact": false,
+      "artifacts": [
+        "nccl-near4-all_gather.topology.xml",
+        "nccl-near4-all_gather.nccl.log"
+      ]
+    },
+    {
+      "step": "nccl-all8-all_reduce",
+      "status": "failed",
+      "reason": null,
+      "incomplete_artifact": false,
+      "artifacts": [
+        "nccl-all8-all_reduce.topology.xml",
+        "nccl-all8-all_reduce.nccl.log"
+      ]
+    },
+    {
+      "step": "nccl-all8-all_gather",
+      "status": "failed",
+      "reason": null,
+      "incomplete_artifact": false,
+      "artifacts": [
+        "nccl-all8-all_gather.topology.xml",
+        "nccl-all8-all_gather.nccl.log"
+      ]
+    }
+  ]
+}

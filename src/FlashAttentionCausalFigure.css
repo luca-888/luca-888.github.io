@@ -1,0 +1,32 @@
+.fa-causal-figure { width: 100%; max-width: 600px; margin: 30px auto; }
+.fa-causal-header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.fa-causal-figure .fa-causal-title { margin: 0; color: var(--color-heading); font-size: 21px; font-weight: 600; line-height: 1.4; }
+.fa-causal-meta { flex-shrink: 0; color: var(--color-muted); font-size: 13px; }
+.fa-causal-figure svg { display: block; width: 100%; max-width: 600px; height: auto; font-family: inherit; font-size: 14px; }
+.fa-causal-figure text { fill: var(--color-text); }
+.fa-causal-meta, .fa-causal-tile-label, .fa-causal-range, .fa-causal-step-number, .fa-causal-start-number, .fa-causal-valid-label { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace; font-variant-numeric: tabular-nums; }
+.fa-causal-figure .fa-causal-tile-label { fill: var(--color-heading); font-size: 15px; font-weight: 500; }
+.fa-causal-figure .fa-causal-focus-label { fill: var(--color-accent, #435f7d); font-weight: 600; }
+.fa-causal-figure .fa-causal-muted-label { fill: var(--color-muted); }
+.fa-causal-figure .fa-causal-range { fill: var(--color-muted); font-size: 13px; }
+.fa-causal-visible-fill { fill: var(--color-surface-active, #eef1f2); }
+.fa-causal-visible-border { stroke: var(--color-border, #c3cbd0); stroke-width: 1; }
+.fa-causal-partial-fill { fill: var(--color-diagram-blue, #dfe8f1); }
+.fa-causal-partial-border { stroke: #71889f; stroke-width: 1.5; }
+.fa-causal-hidden-fill { fill: var(--color-surface); }
+.fa-causal-hidden-border { stroke: var(--color-border); stroke-width: 1; }
+.fa-causal-tile-border { fill: none; }
+.fa-causal-diagonal { fill: none; stroke: var(--color-accent, #435f7d); stroke-width: 2; }
+.fa-causal-figure .fa-causal-query { fill: var(--color-heading); font-size: 28px; font-weight: 500; }
+.fa-causal-figure .fa-causal-visible-label { fill: var(--color-text, #465159); font-size: 15px; font-weight: 500; }
+.fa-causal-figure .fa-causal-mask-label { fill: var(--color-accent, #435f7d); font-size: 14px; font-weight: 500; }
+.fa-causal-figure .fa-causal-valid-label { fill: var(--color-accent, #435f7d); font-size: 14px; }
+.fa-causal-skip-mark { fill: none; stroke: var(--color-border, #cdd2d6); stroke-width: 1.5; }
+.fa-causal-figure .fa-causal-skip-label { fill: var(--color-muted); font-size: 14px; }
+.fa-causal-arrow { fill: none; stroke: var(--color-accent, #435f7d); stroke-width: 1.5; }
+.fa-causal-figure .fa-causal-order-label { fill: var(--color-muted); font-size: 14px; }
+.fa-causal-figure .fa-causal-step-number { fill: var(--color-accent, #435f7d); font-size: 17px; font-weight: 500; }
+.fa-causal-start { fill: var(--color-accent, #435f7d); }
+.fa-causal-figure .fa-causal-start-number { fill: var(--color-page, #fff); font-size: 17px; font-weight: 600; }
+.fa-causal-figure .fa-causal-start-label { fill: var(--color-accent, #435f7d); font-size: 14px; font-weight: 500; }
+.fa-causal-figure figcaption { margin: 9px 0 0; color: var(--color-muted); font-size: 12px; line-height: 1.7; }

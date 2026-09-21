@@ -12,6 +12,15 @@ export type Post = {
 // 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。
 export const posts: Post[] = [
   {
+    slug: 'flash-attention',
+    title: 'FlashAttention-2：从 Online Softmax 到 GPU 并行实现',
+    description: '从 Online Softmax 到官方 FlashAttention-2 前向源码，理解分块计算、GPU 并行划分与 causal mask。',
+    category: '算子优化',
+    tags: ['FlashAttention', 'Attention', 'Online Softmax', 'CUDA', 'CUTLASS', '源码解读'],
+    status: 'published',
+    publishedAt: '2026-09-21',
+  },
+  {
     slug: 'rtx-pro-6000-topology',
     title: 'RTX PRO 6000 多卡拓扑：连接结构与通信路径',
     description: '以八卡参考设计为例，介绍 PCIe 连接、NUMA 内存组织、GPU 通信路径与任务分组。',

@@ -1,15 +1,12 @@
-import { useState } from 'react';
+import { useDarkTheme } from './theme';
 
 export function ThemeToggle() {
-  const [dark, setDark] = useState(() => document.documentElement.dataset.theme === 'dark');
+  const dark = useDarkTheme();
   const label = dark ? '切换到浅色模式' : '切换到深色模式';
 
   function toggle() {
     const next = dark ? 'light' : 'dark';
-    document.documentElement.dataset.theme = next;
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'dark' ? '#1b1d1a' : '#f7f7f2');
-    try { localStorage.setItem('luca-blog-theme', next); } catch {}
-    setDark(!dark);
+    window.dispatchEvent(new CustomEvent('theme-preference', { detail: next }));
   }
 
   return (

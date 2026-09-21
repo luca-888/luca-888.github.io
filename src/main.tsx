@@ -16,6 +16,13 @@ function ArticleMark({ slug }: { slug: string }) {
       <path className="mark-detail" d="m83 59 10-10 11 10-10 12-11-12Z" />
       <circle className="mark-result" cx="148" cy="60" r="17" />
       <path className="mark-detail" d="m141 60 5 5 9-11" />
+    </> : slug === 'flash-attention' ? <>
+      <rect className="mark-paper" x="20" y="18" width="72" height="84" rx="4" />
+      <path className="mark-line" d="M44 18v84m24-84v84M20 46h72M20 74h72" />
+      <rect className="mark-core" x="21" y="47" width="70" height="26" rx="2" />
+      <path className="mark-line" d="M101 60h24m-7-6 7 6-7 6" />
+      <rect className="mark-result" x="136" y="18" width="24" height="84" rx="4" />
+      <path className="mark-detail" d="M140 46h16m-16 28h16" />
     </> : slug === 'cuda-graph' ? <>
       <path className="mark-line" d="m90 22-49 38 49 38 49-38-49-38Z" />
       <rect className="mark-core" x="76" y="8" width="28" height="28" rx="7" />

@@ -1,0 +1,27 @@
+.fa-state-figure { max-width: 680px; margin: 32px auto; }
+.fa-state-heading { margin-bottom: 16px; }
+.fa-state-heading p { margin: 0 0 5px; color: var(--color-heading); font-size: 21px; font-weight: 600; line-height: 1.4; }
+.fa-state-heading span { color: var(--color-muted); font-size: 13px; }
+.fa-state-scroll { overflow-x: auto; }
+.fa-state-scroll > svg { display: block; margin: 0 auto; color: var(--color-text, #555e65); font-size: 13px; }
+.fa-state-scroll text { fill: var(--color-text); }
+.fa-state-math { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--color-heading, #20282d); }
+.fa-state-scroll .fa-state-operation { font-size: 36px; }
+.fa-state-scroll .fa-state-softmax { fill: var(--color-heading); font-size: 24px; font-weight: 500; }
+.fa-state-scroll .fa-state-result { font-size: 23px; }
+.fa-state-scroll .fa-state-code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 14px; }
+.fa-state-scroll .fa-state-step { font-size: 12px; }
+.fa-state-scroll .fa-state-label { fill: var(--color-heading); font-size: 14px; font-weight: 500; }
+.fa-state-scroll .fa-state-small { fill: var(--color-muted); font-size: 11px; }
+.fa-state-explanation { display: flex; align-items: center; justify-content: center; gap: 4px; height: 100%; color: var(--color-muted); font-size: 12px; }
+.fa-state-scroll .katex { font-size: 1em; }
+.fa-state-scroll .fa-state-persistent { fill: var(--color-secondary, #405e50); }
+.fa-state-dot-product, .fa-state-weighted-sum { fill: var(--color-surface, #f6f7f8); stroke: var(--color-border, #bcc3c8); stroke-width: 1; }
+.fa-state-carry { fill: var(--color-diagram-green, #edf3ef); stroke: var(--color-diagram-green-border, #cbd9cf); stroke-width: 1; }
+.fa-state-arrow { stroke: var(--color-text, #555e65); stroke-width: 1.5; }
+.fa-state-rule { fill: none; stroke: var(--color-border); }
+.fa-state-details { border-top: 1px solid var(--color-border); padding-top: 10px; }
+.fa-state-details p { margin: 0 0 7px; color: var(--color-muted); font-size: 12px; line-height: 1.7; }
+.fa-state-details strong { margin-right: 12px; color: var(--color-text); font-weight: 500; }
+.fa-state-details code { font-size: 12px; background: none; padding: 0; }
+.fa-state-figure figcaption { margin: 12px 0 0; color: var(--color-muted); font-size: 12px; line-height: 1.7; }

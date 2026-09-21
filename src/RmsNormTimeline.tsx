@@ -1,3 +1,4 @@
+import { useDarkTheme } from './theme'
 import { useEffect, useId, useRef, useState } from 'react'
 import { init, use, graphic, type EChartsType, type ComposeOption } from 'echarts/core'
 import { CustomChart, type CustomSeriesOption } from 'echarts/charts'
@@ -17,6 +18,7 @@ const categories = {
 }
 
 export function RmsNormTimeline() {
+  const dark = useDarkTheme()
   const id = useId()
   const container = useRef<HTMLDivElement>(null)
   const chart = useRef<EChartsType | null>(null)
@@ -42,7 +44,7 @@ export function RmsNormTimeline() {
         type: 'value', min: 0, max: spanUs, splitNumber: 5,
         axisLabel: { color: colors.muted, fontSize: 12, fontFamily: 'Consolas, "Liberation Mono", monospace', formatter: value => `${Math.round(value)} μs`, hideOverlap: true },
         axisLine: { show: true, lineStyle: { color: colors.border } },
-        axisTick: { show: false }, splitLine: { lineStyle: { color: '#edf0f2', type: 'dashed' } },
+        axisTick: { show: false }, splitLine: { lineStyle: { color: colors.border, type: 'dashed' } },
       },
       yAxis: {
         type: 'category', data: ['GPU'], axisLine: { show: false }, axisTick: { show: false },
@@ -50,7 +52,7 @@ export function RmsNormTimeline() {
       },
       tooltip: {
         trigger: 'item', confine: true, padding: 10, borderColor: colors.border,
-        backgroundColor: '#fff', borderRadius: 4, extraCssText: 'box-shadow: none;',
+        backgroundColor: colors.surface, borderRadius: 4, extraCssText: 'box-shadow: none;',
         formatter: params => {
           const item = kernels[(Array.isArray(params) ? params[0] : params).dataIndex]
           const tip = document.createElement('div')
@@ -93,7 +95,7 @@ export function RmsNormTimeline() {
               },
               ...(shape.width > 22 ? [{
                 type: 'text' as const, silent: true,
-                style: { x: shape.x + shape.width / 2, y: shape.y + 15, text: String(item.index), fill: colors.text, font: '12px Consolas, "Liberation Mono", monospace', align: 'center' as const, verticalAlign: 'middle' as const },
+                style: { x: shape.x + shape.width / 2, y: shape.y + 15, text: String(item.index), fill: '#24282b', font: '12px Consolas, "Liberation Mono", monospace', align: 'center' as const, verticalAlign: 'middle' as const },
               }] : []),
             ],
           }
@@ -109,12 +111,12 @@ export function RmsNormTimeline() {
       instance.dispose()
       chart.current = null
     }
-  }, [direction, kernels, spanUs])
+  }, [direction, kernels, spanUs, dark])
 
   useEffect(() => {
     chart.current?.dispatchAction({ type: 'downplay', seriesIndex: 0 })
     chart.current?.dispatchAction({ type: 'highlight', seriesIndex: 0, dataIndex: selected })
-  }, [selected, direction])
+  }, [selected, direction, dark])
 
   return (
     <figure className="kernel-timeline" aria-labelledby={`${id}-title`}>
