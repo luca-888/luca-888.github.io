@@ -12,6 +12,15 @@ export type Post = {
 // 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。
 export const posts: Post[] = [
   {
+    slug: 'rtx-pro-6000-topology',
+    title: 'RTX PRO 6000 多卡拓扑：连接结构与通信路径',
+    description: '以八卡参考设计为例，介绍 PCIe 连接、NUMA 内存组织、GPU 通信路径与任务分组。',
+    category: 'GPU 系统',
+    tags: ['RTX PRO 6000', 'PCIe', 'NUMA', 'P2P', 'NCCL', 'GPU 拓扑'],
+    status: 'published',
+    publishedAt: '2026-09-21',
+  },
+  {
     slug: 'compression-harness',
     title: '压缩即智能：从大模型到 Harness',
     description: '从训练与能力涌现，到上下文、推理和 Harness，讨论模型能力如何转化为任务表现。',
