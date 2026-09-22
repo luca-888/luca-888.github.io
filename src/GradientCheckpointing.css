@@ -1,0 +1,6 @@
+.gc-official { margin: 28px 0; }
+.gc-official img { display: block; width: 100%; height: auto; background: white; }
+.gc-official figcaption { font-size: 13px; color: var(--color-muted); line-height: 1.65; margin-top: 12px; }
+.gc-concept { margin: 28px auto; max-width: 760px; }
+.gc-concept img { display: block; width: 100%; height: auto; background: #fff; }
+.gc-concept figcaption { margin-top: 10px; font-size: 12px; color: var(--color-muted); line-height: 1.65; }
