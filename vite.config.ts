@@ -11,6 +11,7 @@ export default defineConfig({
         rmsnorm: 'posts/rmsnorm/index.html',
         cudaGraph: 'posts/cuda-graph/index.html',
         flashAttention: 'posts/flash-attention/index.html',
+        gradientCheckpointing: 'posts/gradient-checkpointing/index.html',
         compressionHarness: 'posts/compression-harness/index.html',
         rtxPro6000Topology: 'posts/rtx-pro-6000-topology/index.html',
       },

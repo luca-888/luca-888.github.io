@@ -12,6 +12,15 @@ export type Post = {
 // 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。
 export const posts: Post[] = [
   {
+    slug: 'gradient-checkpointing',
+    title: 'Gradient Checkpointing：原理、实现与自动重计算策略',
+    description: '从 activation 生命周期到 PyTorch 两种实现、SAC 与自动重计算策略，结合 PyTorch 官方结果理解速度与显存的取舍。',
+    category: '训练优化',
+    tags: ['Gradient Checkpointing', 'PyTorch', 'Autograd', 'SAC', 'torch.compile', '显存优化'],
+    status: 'published',
+    publishedAt: '2026-09-22',
+  },
+  {
     slug: 'flash-attention',
     title: 'FlashAttention-2：从 Online Softmax 到 GPU 并行实现',
     description: '从 Online Softmax 到官方 FlashAttention-2 前向源码，理解分块计算、GPU 并行划分与 causal mask。',

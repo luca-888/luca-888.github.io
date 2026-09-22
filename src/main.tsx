@@ -7,7 +7,13 @@ import './site.css';
 
 function ArticleMark({ slug }: { slug: string }) {
   return <svg className="article-mark" viewBox="0 0 180 120" fill="none" aria-hidden="true">
-    {slug === 'compression-harness' ? <>
+    {slug === 'gradient-checkpointing' ? <>
+      <path className="mark-line" d="M24 42h132M146 70v24H34V70m0 0-7 8m7-8 7 8" />
+      <rect className="mark-core" x="16" y="28" width="28" height="28" rx="5" />
+      <rect className="mark-paper" x="76" y="28" width="28" height="28" rx="5" />
+      <rect className="mark-result" x="136" y="28" width="28" height="28" rx="5" />
+      <path className="mark-detail" d="M84 42h12m-6-6v12" />
+    </> : slug === 'compression-harness' ? <>
       <path className="mark-line" d="M24 28h30l28 32-28 32H24M82 60h27m25 0h23M146 80v22H95V79" />
       <rect className="mark-paper" x="15" y="16" width="25" height="24" rx="4" />
       <rect className="mark-paper" x="15" y="48" width="25" height="24" rx="4" />
