@@ -12,6 +12,15 @@ export type Post = {
 // 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。
 export const posts: Post[] = [
   {
+    slug: 'kl-nll-ce',
+    title: '从 MLE 到 KL 散度：理解 NLL 与交叉熵',
+    description: '从分类器的 loss 与编码长度出发，理解 NLL、CE 和 KL 的联系，以及它们在 SFT、蒸馏与 GRPO 中的作用。',
+    category: '机器学习基础',
+    tags: ['KL', 'NLL', 'CE', '交叉熵', 'MLE', '信息论', 'SFT'],
+    status: 'published',
+    publishedAt: '2026-09-23',
+  },
+  {
     slug: 'gradient-checkpointing',
     title: 'Gradient Checkpointing：原理、实现与自动重计算策略',
     description: '从 activation 生命周期到 PyTorch 两种实现、SAC 与自动重计算策略，结合 PyTorch 官方结果理解速度与显存的取舍。',
