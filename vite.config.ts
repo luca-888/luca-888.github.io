@@ -8,6 +8,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: 'index.html',
+        klNllCe: 'posts/kl-nll-ce/index.html',
         rmsnorm: 'posts/rmsnorm/index.html',
         cudaGraph: 'posts/cuda-graph/index.html',
         flashAttention: 'posts/flash-attention/index.html',

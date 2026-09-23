@@ -1,0 +1,4 @@
+.information-source-figure { margin: 32px auto; }
+.information-source-figure img { display: block; width: 100%; height: auto; background: #fff; }
+.information-source-figure figcaption { margin-top: 12px; font-size: 13px; line-height: 1.7; color: var(--color-muted); }
+.information-source-figure figcaption p { display: inline; margin: 0; }

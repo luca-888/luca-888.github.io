@@ -7,7 +7,15 @@ import './site.css';
 
 function ArticleMark({ slug }: { slug: string }) {
   return <svg className="article-mark" viewBox="0 0 180 120" fill="none" aria-hidden="true">
-    {slug === 'gradient-checkpointing' ? <>
+    {slug === 'kl-nll-ce' ? <>
+      <rect className="mark-core" x="22" y="24" width="54" height="22" rx="3" />
+      <rect className="mark-paper" x="22" y="51" width="34" height="22" rx="3" />
+      <rect className="mark-result" x="22" y="78" width="22" height="22" rx="3" />
+      <rect className="mark-core" x="108" y="24" width="22" height="22" rx="3" />
+      <rect className="mark-paper" x="108" y="51" width="54" height="22" rx="3" />
+      <rect className="mark-result" x="108" y="78" width="34" height="22" rx="3" />
+      <path className="mark-line" d="M88 22v80" />
+    </> : slug === 'gradient-checkpointing' ? <>
       <path className="mark-line" d="M24 42h132M146 70v24H34V70m0 0-7 8m7-8 7 8" />
       <rect className="mark-core" x="16" y="28" width="28" height="28" rx="5" />
       <rect className="mark-paper" x="76" y="28" width="28" height="28" rx="5" />
