@@ -37,6 +37,22 @@ function ArticleMark({ slug }: { slug: string }) {
       <path className="mark-line" d="M101 60h24m-7-6 7 6-7 6" />
       <rect className="mark-result" x="136" y="18" width="24" height="84" rx="4" />
       <path className="mark-detail" d="M140 46h16m-16 28h16" />
+    </> : slug === 'vllm-scheduler' ? <>
+      <rect className="mark-core" x="16" y="70" width="18" height="30" rx="3" />
+      <rect className="mark-core" x="38" y="70" width="18" height="30" rx="3" />
+      <rect className="mark-result" x="60" y="40" width="60" height="60" rx="4" />
+      <rect className="mark-core" x="124" y="70" width="18" height="30" rx="3" />
+      <path className="mark-line" d="M16 112h126" />
+      <path className="mark-detail" d="M70 56h40m-40 16h40m-40 16h40" />
+    </> : slug === 'vllm-paged-attention' ? <>
+      <rect className="mark-paper" x="16" y="30" width="22" height="18" rx="3" />
+      <rect className="mark-paper" x="42" y="30" width="22" height="18" rx="3" />
+      <rect className="mark-paper" x="68" y="30" width="22" height="18" rx="3" />
+      <path className="mark-line" d="M27 52v10c0 10 30 6 30 20v8M53 52v4c0 12 64 4 64 22v12M79 52v14c0 10-40 6-40 18v6" />
+      <rect className="mark-core" x="28" y="92" width="22" height="18" rx="3" />
+      <rect className="mark-result" x="106" y="92" width="22" height="18" rx="3" />
+      <rect className="mark-core" x="132" y="92" width="22" height="18" rx="3" />
+      <path className="mark-detail" d="M54 101h48" />
     </> : slug === 'cuda-graph' ? <>
       <path className="mark-line" d="m90 22-49 38 49 38 49-38-49-38Z" />
       <rect className="mark-core" x="76" y="8" width="28" height="28" rx="7" />

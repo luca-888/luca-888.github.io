@@ -1,0 +1,87 @@
+:root {
+  --fk-blue: #4f7da8;
+  --fk-purple: #8b6bb1;
+  --fk-teal: #3f8f80;
+  --fk-green: #6ea57c;
+  --fk-amber: #e9b86a;
+  --fk-red: #dc6f73;
+  --fk-gray: #cdd1d6;
+  --fk-text-blue: var(--fk-blue);
+  --fk-text-purple: var(--fk-purple);
+  --fk-text-teal: var(--fk-teal);
+}
+:root[data-theme='dark'] {
+  --fk-blue: #4a7299;
+  --fk-purple: #7c62a0;
+  --fk-teal: #3b7f72;
+  --fk-green: #5d9169;
+  --fk-amber: #b58c4b;
+  --fk-red: #b25a5e;
+  --fk-gray: #444c55;
+  --fk-text-blue: #93b9d5;
+  --fk-text-purple: #b49bd3;
+  --fk-text-teal: #9abdac;
+}
+
+.fk-figure, .fk-paper { margin: 26px 0; }
+.fk-figure svg { display: block; width: 100%; max-width: 760px; height: auto; margin: 0 auto; color: var(--color-muted); overflow: visible; }
+.fk-figure svg text { fill: var(--color-text); font-size: 13px; dominant-baseline: central; }
+.fk-figure svg text:not([text-anchor]) { text-anchor: middle; }
+.fk-figure svg .fk-title { fill: var(--color-heading); font-size: 14px; font-weight: 600; }
+.fk-figure svg .fk-stat { fill: var(--color-heading); font-weight: 500; }
+.fk-figure svg .fk-strong { fill: var(--color-heading); font-weight: 600; }
+.fk-figure svg .fk-muted { fill: var(--color-muted); font-size: 12px; }
+.fk-figure svg .fk-small { font-size: 11px; }
+.fk-figure svg .fk-mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 12px; }
+.fk-figure svg .fk-cell-text { fill: #fff; font-size: 12px; font-weight: 500; }
+.fk-figure svg .fk-cell-small { font-size: 10px; font-weight: 600; }
+.fk-figure svg .fk-text-blue { fill: var(--fk-text-blue); }
+.fk-figure svg .fk-text-purple { fill: var(--fk-text-purple); }
+.fk-figure svg .fk-text-teal { fill: var(--fk-text-teal); }
+
+.fk-fill-blue { fill: var(--fk-blue); }
+.fk-fill-purple { fill: var(--fk-purple); }
+.fk-fill-teal { fill: var(--fk-teal); }
+.fk-fill-green { fill: var(--fk-green); }
+.fk-fill-amber { fill: var(--fk-amber); }
+.fk-fill-red { fill: var(--fk-red); }
+.fk-fill-gray { fill: var(--fk-gray); }
+.fk-fill-free { fill: var(--color-page); stroke: var(--color-border); }
+.fk-fill-empty { fill: none; stroke: var(--color-border); stroke-width: 1.2; stroke-dasharray: 3 2; }
+.fk-focus { fill: none; stroke: var(--color-heading); stroke-width: 2; }
+.fk-outline { fill: var(--color-page); stroke-width: 1.6; }
+.fk-outline-focus { stroke-width: 2.6; }
+
+.fk-link { fill: none; stroke-width: 1.6; }
+.fk-link-focus { stroke-width: 3; }
+.fk-line-blue { stroke: var(--fk-blue); }
+.fk-line-purple { stroke: var(--fk-purple); }
+.fk-line-teal { stroke: var(--fk-teal); }
+.fk-line-muted { stroke: var(--color-muted); }
+
+.fk-tex { display: flex; justify-content: center; align-items: center; height: 100%; color: var(--color-text); font-size: 15px; line-height: 1; }
+.fk-tex .katex { font-size: 1em; }
+div.fk-text-blue { color: var(--fk-text-blue); }
+div.fk-text-purple { color: var(--fk-text-purple); }
+div.fk-text-teal { color: var(--fk-text-teal); }
+
+.fk-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px; margin-top: 4px; color: var(--color-text); font-size: 12px; }
+.fk-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.fk-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
+.fk-swatch-blue { background: var(--fk-blue); }
+.fk-swatch-purple { background: var(--fk-purple); }
+.fk-swatch-teal { background: var(--fk-teal); }
+.fk-swatch-green { background: var(--fk-green); }
+.fk-swatch-amber { background: var(--fk-amber); }
+.fk-swatch-red { background: var(--fk-red); }
+.fk-swatch-gray { background: var(--fk-gray); }
+.fk-swatch-free, .fk-swatch-empty { background: var(--color-page); border: 1px solid var(--color-border); }
+
+.fk-steps { display: flex; justify-content: center; margin: 14px 0 0; padding: 0; list-style: none; font-size: 12px; }
+.fk-steps li { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 18px; }
+.fk-steps li + li { border-left: 1px solid var(--color-border); }
+.fk-steps span { color: var(--color-muted); }
+.fk-steps b { color: var(--color-heading); font-weight: 400; font-size: 14px; }
+
+.fk-figure figcaption, .fk-paper figcaption { max-width: 760px; margin: 12px auto 0; color: var(--color-muted); font-size: 12px; line-height: 1.6; text-align: center; }
+.fk-paper img { display: block; width: 100%; margin: 0 auto; padding: 8px; border-radius: 4px; background: #fff; }

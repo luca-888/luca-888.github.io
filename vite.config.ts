@@ -15,6 +15,8 @@ export default defineConfig({
         gradientCheckpointing: 'posts/gradient-checkpointing/index.html',
         compressionHarness: 'posts/compression-harness/index.html',
         rtxPro6000Topology: 'posts/rtx-pro-6000-topology/index.html',
+        vllmPagedAttention: 'posts/vllm-paged-attention/index.html',
+        vllmScheduler: 'posts/vllm-scheduler/index.html',
       },
     },
   },
