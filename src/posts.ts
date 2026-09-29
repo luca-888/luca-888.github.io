@@ -12,6 +12,23 @@ export type Post = {
 // 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。
 export const posts: Post[] = [
   {
+    slug: 'vllm-scheduler',
+    title: 'Vllm · Continuous Batching 与调度器',
+    description: '从 token 数与算力的关系出发，理解 iteration-level scheduling、chunked prefill 与 V1 的 token budget，并对照 vLLM v0.30.0 的实现。',
+    category: '推理系统',
+    tags: ['vLLM', 'Continuous batching', 'Chunked prefill', 'Scheduler', 'LLM serving'],
+    status: 'draft',
+  },
+  {
+    slug: 'vllm-paged-attention',
+    title: 'Vllm · PagedAttention：KV Cache 的分页管理',
+    description: '从 KV cache 的三种浪费出发，理解 block table、按需分配与前缀共享，并对照 vLLM v0.30.0 的实现。',
+    category: '推理系统',
+    tags: ['vLLM', 'PagedAttention', 'KV cache', 'Prefix caching', 'LLM serving'],
+    status: 'published',
+    publishedAt: '2026-09-29',
+  },
+  {
     slug: 'kl-nll-ce',
     title: '从 MLE 到 KL 散度：理解 NLL 与交叉熵',
     description: '从分类器的 loss 与编码长度出发，理解 NLL、CE 和 KL 的联系，以及它们在 SFT、蒸馏与 GRPO 中的作用。',

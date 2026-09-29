@@ -20,6 +20,11 @@
 | 首选写法 | 全称或含义 | 首次引入与适用范围 |
 | --- | --- | --- |
 | Vllm / vLLM | vLLM 推理框架 | 用户指定：十篇 vLLM 主题文章的主标题统一写作“Vllm”，方向单列为子标题；正文、技术图、源码标识符及外部资料名称继续使用官方写法 vLLM。 |
+| KV cache | attention 为已生成 token 保存的 key 与 value | 直接使用 KV cache，不写“键值缓存”；单个 token 的数据可说“K/V”。 |
+| block / block table | PagedAttention 中固定大小的 KV 存储单元 / 逻辑 block 到物理 block 的映射表 | 保留英文；区分“逻辑 block”与“物理 block”，不译作“块表”。block size 记为 $B$。 |
+| prefix caching | 按前缀 hash 复用已计算 KV block 的机制 | 直接使用 prefix caching；vLLM 官方名 Automatic Prefix Caching 仅在引用文档时使用。 |
+| copy-on-write | 写入共享 block 前先复制 | 保留英文，不缩写为 CoW。 |
+| prefill / decode | 处理 prompt 的阶段 / 逐 token 生成的阶段 | 保留英文，不写“预填充 / 解码阶段”。 |
 | MLE | Maximum Likelihood Estimation | 用户指定：首次引入写作“Maximum Likelihood Estimation（MLE）”，后文与标题使用 MLE；不再使用“最大似然”作为正文主称。 |
 | NLL | Negative Log-Likelihood | 基础介绍首次写作“negative log-likelihood（NLL）”，后文使用 NLL；明确使用求和或平均。 |
 | CE | Cross-Entropy | 基础介绍首次写作“cross-entropy（CE）”，标题可用“交叉熵”；正文数学记法 H(p,q) 的第一项为平均权重分布。 |
