@@ -40,6 +40,9 @@ export function ArticleMarkdown({ source, components }: { source: string; compon
     table({ children }) {
       return <div className="table-scroll" tabIndex={0} role="region" aria-label="数据表"><table>{children}</table></div>
     },
+    td({ node: _node, ...props }) {
+      return <td {...props} align={props.style?.textAlign === 'right' ? 'right' : props.align} />
+    },
     code({ children, className }) {
       if (className === 'language-cpp') return <code className={className}>{highlightCode(String(children), 'cpp')}</code>
       if (className !== 'language-python') return <code className={className}>{children}</code>
