@@ -15,7 +15,7 @@ const out = path.join('xhs', slug)
 fs.mkdirSync(out, { recursive: true })
 for (const file of fs.readdirSync(out)) if (/^\d{2}\.png$/.test(file)) fs.rmSync(path.join(out, file))
 
-const browser = await puppeteer.launch({ executablePath: chrome, defaultViewport: { width: 1200, height: 1500, deviceScaleFactor: 1 } })
+const browser = await puppeteer.launch({ executablePath: chrome, defaultViewport: { width: 1200, height: 2000, deviceScaleFactor: 1 } })
 try {
   const page = await browser.newPage()
   page.on('pageerror', error => console.error('页面错误：', error.message))

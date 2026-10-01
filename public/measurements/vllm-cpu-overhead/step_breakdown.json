@@ -1,0 +1,102 @@
+{
+ "default/c8": {
+  "steps": 37,
+  "period": 7065.6,
+  "gpu_span": 6439.7,
+  "gpu_busy": 6774.8,
+  "idle": 295.9,
+  "cpu_exec": 2151.5,
+  "launches": 6,
+  "kernels": 494
+ },
+ "default/c64": {
+  "steps": 40,
+  "period": 8163.9,
+  "gpu_span": 7332.0,
+  "gpu_busy": 7900.3,
+  "idle": 263.6,
+  "cpu_exec": 2209.5,
+  "launches": 6.0,
+  "kernels": 459.0
+ },
+ "mrv1/c8": {
+  "steps": 37,
+  "period": 7078.9,
+  "gpu_span": 6923.1,
+  "gpu_busy": 6763.4,
+  "idle": 312.9,
+  "cpu_exec": 2518.7,
+  "launches": 12,
+  "kernels": 489
+ },
+ "mrv1/c64": {
+  "steps": 37,
+  "period": 8194.1,
+  "gpu_span": 7858.8,
+  "gpu_busy": 7910.4,
+  "idle": 283.2,
+  "cpu_exec": 2841.6,
+  "launches": 12,
+  "kernels": 453
+ },
+ "no_async/c8": {
+  "steps": 37,
+  "period": 9690.4,
+  "gpu_span": 7736.7,
+  "gpu_busy": 6797.3,
+  "idle": 2885.6,
+  "cpu_exec": 2055.9,
+  "launches": 6,
+  "kernels": 494
+ },
+ "no_async/c64": {
+  "steps": 35,
+  "period": 12084.8,
+  "gpu_span": 8735.2,
+  "gpu_busy": 7891.0,
+  "idle": 4193.0,
+  "cpu_exec": 2346.3,
+  "launches": 6,
+  "kernels": 459
+ },
+ "graph_none/c8": {
+  "steps": 37,
+  "period": 42192.7,
+  "gpu_span": 40072.4,
+  "gpu_busy": 6810.9,
+  "idle": 35401.1,
+  "cpu_exec": 40564.7,
+  "launches": 184,
+  "kernels": 492
+ },
+ "graph_none/c64": {
+  "steps": 37,
+  "period": 50593.6,
+  "gpu_span": 46798.3,
+  "gpu_busy": 7861.8,
+  "idle": 42734.5,
+  "cpu_exec": 47669.0,
+  "launches": 148,
+  "kernels": 456
+ },
+ "piecewise/c8": {
+  "steps": 37,
+  "period": 12480.8,
+  "gpu_span": 10178.6,
+  "gpu_busy": 6811.4,
+  "idle": 5659.3,
+  "cpu_exec": 10577.4,
+  "launches": 149,
+  "kernels": 492
+ },
+ "piecewise/c64": {
+  "steps": 35,
+  "period": 12522.9,
+  "gpu_span": 9267.9,
+  "gpu_busy": 7871.3,
+  "idle": 4678.6,
+  "cpu_exec": 9927.6,
+  "launches": 149,
+  "kernels": 457
+ }
+}

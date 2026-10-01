@@ -1,0 +1,16 @@
+#!/bin/sh
+D=/root/blog-vllm-20260926/vllm-speculative-decoding/v030
+ROOT=$1; shift
+PY=$D/.venv/bin/python
+export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 VLLM_NO_USAGE_STATS=1
+unset ALL_PROXY all_proxy http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
+DEADLINE=$(( $(date +%s) + 1650 ))
+nvidia-smi --query-compute-apps=pid,name --format=csv,noheader > $ROOT/gpu-before.txt
+for cfg in "$@"; do
+  name=${cfg%%:*}; args=${cfg#*:}
+  [ -f $ROOT/$name/complete.json ] && { echo "skip $name (complete)"; continue; }
+  echo "== $name $(date -u +%T)"
+  $PY $D/scripts/worker.py --name $name --out $ROOT/$name --prompts $D/prompts.json --deadline $DEADLINE $args > $ROOT/$name.log 2>&1
+  rc=$?; echo "rc=$rc"; [ $rc -eq 3 ] && break
+done
+nvidia-smi --query-gpu=memory.used --format=csv,noheader

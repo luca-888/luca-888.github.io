@@ -40,8 +40,14 @@
 
 ## 成稿记录
 
+- 2026-09-30 封面后续反馈：用户喜欢复古印刷风格，但认为三步预算示例过于具体。沿用暖黄纸、蓝橙油墨、大字与颗粒，去掉 STEP、A/B/C、预算数字、图例和框格；用规律短色块与穿插的分段长色带抽象表现持续生成与分块混批。新样稿：`covers/vllm-scheduler/xhs-retro-abstract/cover-v1.png`，待用户评估。
+
+- 2026-09-30 封面方向确认：用户否定仅用轨道与方块补位的意象；确认以连续三个迭代 batch 的预算分配为主视觉。采用正文构造示例：budget = 8，A、B 每步各占 1 token，C 的 prefill 按 6、6、4 分块，第三步余 2 格空预算。输出六种 3:4 小红书竖版风格样稿；这是机制示意，不是实测数据。封面风格待用户选择。
+
 - 正文：`content/vllm-scheduler.md`；入口 `posts/vllm-scheduler/`；图 `src/VllmSchedulerFigures.tsx`。
-- 自绘图两张：三种调度的时间线（由代码模拟生成，迭代耗时 = max(1, tokens/4)，budget = 8，构造示例）、单步 token budget 分配与抢占。
+- 2026-09-29 按用户反馈调整结构：先讲 prefill/decode，再用静态 batch 槽位图引入 iteration-level，拐点曲线移到干扰一节前作依据。
+- 2026-09-30 按用户反馈：正文改为短段落为主、并列内容用列表或表格；删去“相关系统与分歧”一节（DistServe、FastGen 仅留在本笔记）；Orca 只在第二节作为 iteration-level 与 selective batching 的出处出现；补 TTFT / TBT / TPOT 定义，时间线图的间隔改称 TBT；selective batching 补 A/B/C 展平示例与 `cu_seqlens_q`；V1 两个计数改为 prompt 30 token 的具体示例表；budget 图图注说明 R / W。
+- 自绘图三张：静态 batch 与 iteration-level 的槽位占用（3 槽 × 8 步，构造示例）、三种调度的时间线（由代码模拟生成，迭代耗时 = max(1, tokens/4)，budget = 8，构造示例）、单步 token budget 分配与抢占。
 - 论文原图一张：Sarathi-Serve 线性层耗时与 token 数（来源与校验见 `src/assets/vllm-scheduler/SOURCES.md`）。
 - 已补读：Orca §3 S1/S2（iteration-level、selective batching）；默认值 `arg_utils.get_batch_defaults`（API server：≥160 GB 卡 16384/1024，H100/H200 8192/1024，其余 2048/256）。
 - 未通读：Sarathi eval 章节，仅引用其自报的 2.6× 与 28.3×；FastGen 数字为博客自报。

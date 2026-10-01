@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ArticleMarkdown } from '../ArticleMarkdown'
+import { CompactContext } from '../figure-kit'
 import { articles } from './articles'
 import { paginate, type XhsResult } from './paginate'
 import 'katex/dist/katex.min.css'
@@ -35,7 +36,9 @@ function App() {
     <div className="xhs-source xhs-body" ref={sourceRef}>
       <h1>{article.title}</h1>
       {article.subtitle && <p className="xhs-subtitle">{article.subtitle}</p>}
-      <ArticleMarkdown source={article.source} components={article.components} />
+      <CompactContext.Provider value={true}>
+        <ArticleMarkdown source={article.source} components={article.components} />
+      </CompactContext.Provider>
     </div>
   </>
 }

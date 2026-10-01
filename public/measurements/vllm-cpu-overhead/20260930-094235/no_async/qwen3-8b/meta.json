@@ -1,0 +1,19 @@
+{
+ "config": "no_async",
+ "model": "Qwen/Qwen3-8B",
+ "cmd": [
+  "vllm",
+  "serve",
+  "Qwen/Qwen3-8B",
+  "--port",
+  "8000",
+  "--max-model-len",
+  "2048",
+  "--profiler-config",
+  "{\"profiler\": \"torch\", \"torch_profiler_dir\": \"/results/20260930-094235/no_async/qwen3-8b/traces\", \"torch_profiler_with_stack\": false}",
+  "--no-async-scheduling"
+ ],
+ "env": {},
+ "status": "ok",
+ "startup_s": 132.06120538711548
+}

@@ -1,0 +1,20 @@
+{
+ "config": "piecewise",
+ "model": "Qwen/Qwen3-8B",
+ "cmd": [
+  "vllm",
+  "serve",
+  "Qwen/Qwen3-8B",
+  "--port",
+  "8000",
+  "--max-model-len",
+  "2048",
+  "--profiler-config",
+  "{\"profiler\": \"torch\", \"torch_profiler_dir\": \"/results/20260930-102519/piecewise/qwen3-8b/traces\", \"torch_profiler_with_stack\": false}",
+  "--compilation-config",
+  "{\"cudagraph_mode\": \"PIECEWISE\"}"
+ ],
+ "env": {},
+ "status": "ok",
+ "startup_s": 90.04792761802673
+}
