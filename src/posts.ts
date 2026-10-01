@@ -12,6 +12,30 @@ export type Post = {
 // 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。
 export const posts: Post[] = [
   {
+    slug: 'vllm-speculative-decoding',
+    title: 'Vllm · Speculative Decoding：猜多个，验一次',
+    description: '从拒绝采样出发，理解 speculative decoding 为什么不改变输出分布，以及 draft model、n-gram 与 EAGLE-3 在 vLLM 中的接受率与加速比。',
+    category: '推理系统',
+    tags: ['vLLM', 'Speculative decoding', 'EAGLE', 'Rejection sampling', 'LLM serving'],
+    status: 'draft',
+  },
+  {
+    slug: 'vllm-cpu-overhead',
+    title: 'Vllm · CPU Overhead：让 GPU 不等 CPU',
+    description: '从每步 decode 的 CPU overhead 出发，理解 vLLM V1 如何用进程拆分、async scheduling、Model Runner V2 与 CUDA Graph 让 GPU 不等 CPU。',
+    category: '推理系统',
+    tags: ['vLLM', 'Async scheduling', 'Model Runner V2', 'CUDA Graph', 'LLM serving'],
+    status: 'draft',
+  },
+  {
+    slug: 'vllm-prefix-caching',
+    title: 'Vllm · Prefix Caching：跨请求复用 KV Cache',
+    description: '从链式 hash、free queue 与 radix tree 出发，理解 vLLM 与 SGLang 如何跨请求复用 KV cache，以及路由、分层存储与侧信道带来的边界。',
+    category: '推理系统',
+    tags: ['vLLM', 'Prefix caching', 'KV cache', 'SGLang', 'RadixAttention', 'LLM serving'],
+    status: 'draft',
+  },
+  {
     slug: 'vllm-scheduler',
     title: 'Vllm · Continuous Batching 与调度器',
     description: '从 token 数与算力的关系出发，理解 iteration-level scheduling、chunked prefill 与 V1 的 token budget，并对照 vLLM v0.30.0 的实现。',

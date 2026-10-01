@@ -1,5 +1,5 @@
 import type { Components } from 'react-markdown'
-import { VllmSchedulingTimelines, VllmStepBudget } from './VllmSchedulerFigures'
+import { VllmBatchingSlots, VllmFlattenedBatch, VllmSchedulingTimelines, VllmStepBudget } from './VllmSchedulerFigures'
 import { PaperFigure } from './figure-kit'
 import source from '../content/vllm-scheduler.md?raw'
 import linearTime from './assets/vllm-scheduler/linear-time-vs-tokens.svg'
@@ -11,6 +11,8 @@ export const vllmScheduler = {
   source,
   components: {
     p({ children }) {
+      if (children === '::vllm-batching-slots::') return <VllmBatchingSlots />
+      if (children === '::vllm-flattened-batch::') return <VllmFlattenedBatch />
       if (children === '::vllm-timelines::') return <VllmSchedulingTimelines />
       if (children === '::vllm-step-budget::') return <VllmStepBudget />
       if (children === '::vllm-linear-time::') return <PaperFigure src={linearTime} maxWidth={520}

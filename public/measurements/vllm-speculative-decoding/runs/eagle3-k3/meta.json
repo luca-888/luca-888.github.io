@@ -1,0 +1,27 @@
+{
+ "name": "eagle3-k3",
+ "method": "eagle3",
+ "k": 3,
+ "spec": {
+  "method": "eagle3",
+  "model": "/root/.cache/huggingface/hub/models--AngelSlim--Qwen3-8B_eagle3/snapshots/9629dfce7a4a10564dd48d3e5485c3976095653c",
+  "num_speculative_tokens": 3
+ },
+ "engine_kwargs": {
+  "model": "/root/.cache/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/b968826d9c46dd6066d109eabc6255188de91218",
+  "dtype": "bfloat16",
+  "max_model_len": 2048,
+  "max_num_seqs": 32,
+  "gpu_memory_utilization": 0.92,
+  "enable_prefix_caching": false,
+  "seed": 0,
+  "disable_log_stats": false
+ },
+ "vllm": "0.30.0",
+ "torch": "2.13.0+cu129",
+ "cuda": "12.9",
+ "gpu": "NVIDIA GeForce RTX 4090",
+ "python": "3.12.14",
+ "load_s": 24.877201080322266,
+ "max_tokens": 256
+}

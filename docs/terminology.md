@@ -20,6 +20,7 @@
 | 首选写法 | 全称或含义 | 首次引入与适用范围 |
 | --- | --- | --- |
 | Vllm / vLLM | vLLM 推理框架 | 用户指定：十篇 vLLM 主题文章的主标题统一写作“Vllm”，方向单列为子标题；正文、技术图、源码标识符及外部资料名称继续使用官方写法 vLLM。 |
+| CPU overhead | 推理每步中 GPU 计算之外、由 CPU 完成的调度、输入准备与提交等工作的耗时 | 用户指定（2026-10-01）：标题写作“CPU Overhead”，摘要与术语性用法写 CPU overhead；正文描述具体耗时时可用“CPU 工作”“开销”等自然中文。 |
 | KV cache | attention 为已生成 token 保存的 key 与 value | 直接使用 KV cache，不写“键值缓存”；单个 token 的数据可说“K/V”。 |
 | block / block table | PagedAttention 中固定大小的 KV 存储单元 / 逻辑 block 到物理 block 的映射表 | 保留英文；区分“逻辑 block”与“物理 block”，不译作“块表”。block size 记为 $B$。 |
 | prefix caching | 按前缀 hash 复用已计算 KV block 的机制 | 直接使用 prefix caching；vLLM 官方名 Automatic Prefix Caching 仅在引用文档时使用。 |
@@ -33,6 +34,9 @@
 | policy gradient | 通过 reward 加权的 log-prob 梯度优化 policy 的方法 | 直接使用 policy gradient，不写“策略梯度”；涉及 advantage、概率比等具体形式时按对应公式解释。 |
 | reward | 对模型生成结果的评分或反馈信号 | 用户指定：RL 语境统一使用 reward，不与“奖励”交替使用；标题与句首可写 Reward。GRPO 中区分原始 reward 与由组内比较得到的 advantage，保留“组内比较”“组内均值”等自然中文。 |
 | advantage | 相对于 baseline 的表现，用作 policy 更新的权重 | 直接使用 advantage；GRPO 的 outcome reward 语境中按文中公式说明组内中心化与标准差归一化，不与原始 reward 混称。 |
+| speculative decoding | 由 drafter 先猜多个 token、target 一次验证的解码方法 | 直接使用 speculative decoding；不写“推测解码”。Leviathan 称 speculative decoding，Chen 称 speculative sampling，指该方法的采样规则时用“拒绝采样”。 |
+| drafter / draft model | 提出候选 token 的一方 / 独立的小模型 | 泛指用 drafter；特指独立小模型用 draft model；target 指被加速的原模型。 |
+| 平均接受长度 | 每次 target forward 平均产出的 token 数（含 bonus token） | 记为 $L$；acceptance rate 指单位置被接受的概率 $\alpha$，两者不混用。 |
 | GC | Gradient Checkpointing | 首次写作“Gradient Checkpointing（GC）”；用于训练中的 activation 重计算。在垃圾回收语境中重新定义，不能沿用此含义。 |
 | AC | Activation Checkpointing | 首次写作“Activation Checkpointing（AC）”；GC 文章以 GC 为主称，介绍 PyTorch 等资料中的 AC 命名时说明两者在该语境下指同类技术，不来回换称。 |
 | SAC | Selective Activation Checkpointing | 首次写作“Selective Activation Checkpointing（SAC）”；后文固定使用 SAC。Selective 表示选择性，不将 SAC 当作自动选择策略的简称。 |

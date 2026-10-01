@@ -1,0 +1,18 @@
+{
+ "config": "default",
+ "model": "Qwen/Qwen3-8B",
+ "cmd": [
+  "vllm",
+  "serve",
+  "Qwen/Qwen3-8B",
+  "--port",
+  "8000",
+  "--max-model-len",
+  "2048",
+  "--profiler-config",
+  "{\"profiler\": \"torch\", \"torch_profiler_dir\": \"/results/20260930-094235/default/qwen3-8b/traces\", \"torch_profiler_with_stack\": false}"
+ ],
+ "env": {},
+ "status": "ok",
+ "startup_s": 108.05403780937195
+}

@@ -1,0 +1,63 @@
+window 1 08:12:56
+== baseline 08:12:56
+rc=0
+== eagle3-k3 08:18:13
+rc=0
+== draft-k3 08:21:55
+rc=0
+== ngram-k3 08:25:37
+rc=0
+== eagle3-k5 08:30:30
+rc=0
+== draft-k5 08:35:28
+rc=3
+1 MiB
+complete configs: 5
+window 2 08:40:32
+skip baseline (complete)
+skip eagle3-k3 (complete)
+skip draft-k3 (complete)
+skip ngram-k3 (complete)
+skip eagle3-k5 (complete)
+== draft-k5 08:40:32
+rc=0
+== ngram-k5 08:43:57
+rc=0
+== eagle3-k1 08:50:59
+rc=0
+== draft-k1 08:55:41
+rc=0
+== ngram-k1 09:01:55
+rc=3
+1 MiB
+complete configs: 9
+window 3 09:08:14
+skip baseline (complete)
+skip eagle3-k3 (complete)
+skip draft-k3 (complete)
+skip ngram-k3 (complete)
+skip eagle3-k5 (complete)
+skip draft-k5 (complete)
+skip ngram-k5 (complete)
+skip eagle3-k1 (complete)
+skip draft-k1 (complete)
+== ngram-k1 09:08:14
+rc=0
+== draft-prob-k3 09:09:13
+rc=0
+1 MiB
+complete configs: 11
+DONE
+window2-1 09:13:04
+== baseline-mrv1 09:13:04
+rc=0
+== baseline-mrv1-noasync 09:19:29
+rc=0
+== ngram_gpu-k3 09:26:19
+rc=0
+== ngram_gpu-k5 09:33:48
+rc=3
+1 MiB
+window2-2 09:40:44
+DONE2
+DONE3
