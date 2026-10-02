@@ -21,6 +21,7 @@ export default defineConfig({
         vllmPrefixCaching: 'posts/vllm-prefix-caching/index.html',
         vllmSpeculativeDecoding: 'posts/vllm-speculative-decoding/index.html',
         vllmCpuOverhead: 'posts/vllm-cpu-overhead/index.html',
+        vllmDistributed: 'posts/vllm-distributed/index.html',
       },
     },
   },
