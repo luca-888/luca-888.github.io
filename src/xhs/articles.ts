@@ -1,5 +1,6 @@
 import type { Components } from 'react-markdown'
 import { vllmCpuOverhead } from '../vllm-cpu-overhead.blocks'
+import { vllmDistributed } from '../vllm-distributed.blocks'
 import { vllmPagedAttention } from '../vllm-paged-attention.blocks'
 import { vllmPrefixCaching } from '../vllm-prefix-caching.blocks'
 import { vllmScheduler } from '../vllm-scheduler.blocks'
@@ -14,4 +15,5 @@ export const articles: Record<string, XhsArticle> = {
   'vllm-prefix-caching': vllmPrefixCaching,
   'vllm-cpu-overhead': vllmCpuOverhead,
   'vllm-speculative-decoding': vllmSpeculativeDecoding,
+  'vllm-distributed': vllmDistributed,
 }
