@@ -79,6 +79,8 @@
 | state / question / branch | decision model 的输入内容 / 带类型的问题 / 一个问题自己的那段 token | 保留英文；question 在行文中可写“问题”。branch 为 Jev 文章引入的叫法，首次出现时定义。Choice、Score、Noul 三种类型名按官方大小写。 |
 | pointer head | 用 `<decide>` 与各选项末尾的 hidden state 做点积得到 logits 的读出层 | 保留英文；动作写“读出”，不写 readout。 |
 | calibration / ECE | 预测概率与实际正确率是否一致 / expected calibration error | 概率语境保留英文 calibration，与量化语境的“校准”区分；ECE 首次出现时给出一句定义。 |
+| FLCE | Fused Linear Cross Entropy：把 lm_head 与 cross-entropy 合并、按 token 分块计算的 loss 实现 | 首次写全称 Fused Linear Cross Entropy，后文用 FLCE；指 Liger 的实现时保留其类名 `LigerFusedLinearCrossEntropyLoss`。 |
+| logits / lm_head | 词表上每个词的分数 / 把 hidden state 映射到 logits 的最后一层线性层 | 保留英文，不写“对数几率”“输出头”；lm_head 保留下划线写法。 |
 
 ## 维护方式
 
