@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Vllm · 分布式推理 · 影片 v3（显存账本）</title>
+<style>html,body{margin:0;background:#f1ede4}canvas{display:block}</style>
+</head>
+<body>
+<canvas id="cv" width="1920" height="1080"></canvas>
+<script>
+// v3：开头先由浅入深解剖 DeepSeek-V4-Pro（6 幕），再按确认过的分镜讲怎么分。把 DeepSeek-V4-Pro 放到一台 8×B200 上，按“显存账本”讲；每幕只讲一件事，元素逐个出现。
+// 账目（GB）：checkpoint 865 = expert 836（61 层 × 384 个 × 35 MB = 822，另有 1 层 MTP 14）+ 其余 29（attention、shared expert、embedding 等）。
+//   一个 expert = 3 个 7168×3072 的矩阵，FP4 加 scale 约 35 MB。来源：Hugging Face 的 config.json 与 safetensors 元数据（2026-10-02 读取）。
+//   B200 单卡 180 GB（NVIDIA DGX B200：8 卡共 1440 GB）。两档配置取自 SGLang 的 DeepSeek-V4 cookbook（8×B200）。
+//   TP = 8：每卡 865/8 = 108 GB（expert 104 + 其余 4），余 72 GB。DP attention + EP：每卡 expert 104 + 其余完整一份 29 = 133 GB，余 47 GB。
+//   余下的显存按全部给 KV cache 估算，未扣中间结果；“其余完整一份”按全部复制估算。负载、时间轴为示意。
+const K = { paper: '#f1ede4', paper2: '#e6e0d3', ink: '#141414', ink2: '#3a3a3a', gray: '#8a8474', lg: '#b9b2a2',
+  red: '#e5322d', blue: '#2350d8', yel: '#f4c21b', yelD: '#9a7500', purple: '#7c3ff5', teal: '#0fa391', lilac: '#dcd0ef' };
+const ZH = '"PingFang SC", "Helvetica Neue", sans-serif', HN = '"Helvetica Neue", "PingFang SC", sans-serif';
+const font = (w, s, f = ZH) => `${w} ${s}px ${f}`;
+let X, T = 0;
+const clamp = (x) => Math.min(1, Math.max(0, x));
+const ease = (x) => 1 - Math.pow(1 - clamp(x), 3);
+const io = (x) => { x = clamp(x); return x < .5 ? 4 * x ** 3 : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const P = (t0, d = .7) => ease((T - t0) / d);                    // 缓出
+const S = (t0, d = 1) => io((T - t0) / d);                       // 缓入缓出
+const mix = (a, b, p) => a + (b - a) * p;
+const bump = (t0, d) => { const x = (T - t0) / d; return x <= 0 || x >= 1 ? 0 : Math.sin(Math.PI * x); };
+const R = (x, y, w, h, c) => { if (w > 0 && h > 0) { X.fillStyle = c; X.fillRect(x, y, w, h); } };
+function TX(s, x, y, f, c, a = 'left') { X.font = f; X.fillStyle = c; X.textAlign = a; X.textBaseline = 'alphabetic'; X.fillText(s, x, y); }
+function A(a, fn) { if (a <= .003) return; X.save(); X.globalAlpha *= Math.min(1, a); fn(); X.restore(); }
+function IN(t0, fn, d = .7, dy = 20) { const p = P(t0, d); if (p <= 0) return; X.save(); X.globalAlpha *= p; X.translate(0, (1 - p) * dy); fn(); X.restore(); }
+// 从小放大着出现（色块用）
+function POP(t0, x, y, w, h, fn, d = .5) { const p = P(t0, d); if (p <= 0) return; X.save(); X.globalAlpha *= Math.min(1, p * 1.5); X.translate(x + w / 2, y + h / 2); X.scale(.86 + .14 * p, .86 + .14 * p); X.translate(-x - w / 2, -y - h / 2); fn(); X.restore(); }
+function RICH(s, x, y, f, base, align = 'left') {
+  const ACC = { b: K.blue, r: K.red, y: K.yelD, p: K.purple, t: K.teal };
+  const parts = []; const re = /\{(\w):([^}]*)\}/g; let last = 0, m;
+  while ((m = re.exec(s))) { if (m.index > last) parts.push([s.slice(last, m.index), null]); parts.push([m[2], m[1]]); last = re.lastIndex; }
+  if (last < s.length) parts.push([s.slice(last), null]);
+  X.font = f; const w = parts.reduce((a, [t]) => a + X.measureText(t).width, 0); let cx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+  X.textAlign = 'left'; X.textBaseline = 'alphabetic';
+  for (const [t, k] of parts) { X.fillStyle = k ? ACC[k] : base; X.fillText(t, cx, y); cx += X.measureText(t).width; }
+}
+const PAT = {};
+function hatch(col, bg) { const k = col + bg; if (PAT[k]) return PAT[k]; const g = 14, c = document.createElement('canvas'); c.width = c.height = g; const q = c.getContext('2d');
+  q.fillStyle = bg; q.fillRect(0, 0, g, g); q.strokeStyle = col; q.lineWidth = 4; q.beginPath(); for (let o = -g; o <= g * 2; o += g) { q.moveTo(o, g); q.lineTo(o + g, 0); } q.stroke(); return (PAT[k] = X.createPattern(c, 'repeat')); }
+const HR = (x, y, w, h, col = K.red, bg = K.paper2) => { if (w > 0 && h > 0) { X.fillStyle = hatch(col, bg); X.fillRect(x, y, w, h); } };
+const box = (x, y, w, h, lw = 4, col = K.ink) => { X.strokeStyle = col; X.lineWidth = lw; X.strokeRect(x, y, w, h); };
+// 箭头按进度画出
+function arrow(x1, y, x2, p = 1) { if (p <= 0) return; const x = mix(x1 + 30, x2, p); R(x1, y - 4, x - x1 - 22, 8, K.ink); X.fillStyle = K.ink; X.beginPath(); X.moveTo(x, y); X.lineTo(x - 26, y - 16); X.lineTo(x - 26, y + 16); X.fill(); }
+const num = (v, p, d = 0) => (v * clamp(p)).toFixed(d);
+function frame(tag, col, head, src, t0 = .15) {
+  TX('分布式推理 · 以 DeepSeek-V4-Pro 为例', 96, 76, font(700, 28), K.ink2);
+  IN(t0, () => { X.font = font(700, 32); const w = X.measureText(tag).width + 36; R(96, 100, w, 50, col); TX(tag, 114, 136, font(700, 32), '#fff'); }, .5, 0);
+  IN(t0 + .15, () => RICH(head, 96, 226, font(700, 60), K.ink));
+  if (src) IN(t0 + .3, () => TX(src, 1824, 76, font(500, 26), K.gray, 'right'), .5, 0);
+}
+// 一张卡的账本：高度按显存画，180 GB 的外框；每段有自己的进度 p（0→1 时长出来）
+function ledger(x, y, w, segs, name, pxgb = 4, a = 1) {
+  A(a, () => { R(x, y, w, 180 * pxgb, K.paper2); let yy = y;
+    for (const s of segs) { const p = s.p ?? 1, h = s.gb * pxgb * p;
+      if (s.hatch) HR(x, yy, w, h, K.red, K.paper2); else if (s.col) R(x, yy, w, h - (h > 12 ? 3 : 0), s.col);
+      if (s.slots) for (let k = 0; k < s.slots; k++) { const sw = (w - 20) / 4, sh = 40, sx = x + 10 + (k % 4) * sw, sy = yy + 10 + Math.floor(k / 4) * sh; POP(s.t0 + k * .12, sx, sy, sw - 5, sh - 5, () => R(sx, sy, sw - 5, sh - 5, K.yel), .4); }
+      const la = s.la ?? p; if (s.label) A(la, () => { TX(s.label, x + w + 28, yy + Math.max(h / 2, 14) + 4, font(700, 36), s.tc || K.ink); if (s.sub) TX(s.sub, x + w + 28, yy + Math.max(h / 2, 14) + 46, font(600, 28), K.gray); });
+      if (s.gbText && h > 50) TX(num(s.gb, p), x + w - 14, yy + Math.min(h / 2 + 18, 58), font(700, 44, HN), s.gc || '#fff', 'right');
+      yy += h; }
+    box(x - 2, y - 2, w + 4, 180 * pxgb + 4, 4); TX(name, x, y - 18, font(700, 34), K.ink); });
+}
+const mx = (g) => 96 + g * 216, MW = 198;
+// 8 张小卡依次出现：2 px = 1 GB，高 360
+function minis(y, t0, fn) { for (let g = 0; g < 8; g++) POP(t0 + g * .09, mx(g), y, MW, 360, () => { R(mx(g), y, MW, 360, K.paper2); TX(`GPU ${g}`, mx(g), y - 14, font(700, 26, HN), K.gray); fn(g, mx(g), y); box(mx(g) - 1.5, y - 1.5, MW + 3, 363, 3); }); }
+
+// ====================== 解剖 DeepSeek-V4-Pro：一张结构图，被讲到的那一块就地拉开 ======================
+// 拓扑来自 vLLM 的 deepseek_v4 实现（DeepseekV4Model / DecoderLayer / MoE / Attention）、官方 model card 与 config：
+//   token → embedding → 61 层 → 输出；每层 = attention 与 MoE 两个子层，各带 norm 与残差（mHC）；
+//   MoE = router + 384 个 routed expert（每个 token 选 6 个）+ 1 个 shared expert，结果加权求和；一个 expert = 3 个 7168×3072 的矩阵（FP4 约 35 MB）；
+//   attention：Q 投影出 128 个 head，KV 投影出每个 token 1 份 KV（num_key_value_heads = 1）写入 KV cache，再读全部 KV 算注意力，最后输出投影。
+//   大小：attention 每层约 0.3 GB，expert 每层 13.5 GB；61 层 expert 合计 822 GB；embedding 与输出等约 5 GB。官方：总参数 1.6T，每个 token 激活 49B。
+const CV = 2.6, MORPH = 1.0;
+function swap(list, draw) { let i = -1; list.forEach(([t0], k) => { if (T >= t0) i = k; }); if (i < 0) return;
+  const p = P(list[i][0] + .12, .55); if (i > 0) { const q = 1 - clamp((T - list[i][0]) / .28); if (q > 0) { X.save(); X.globalAlpha *= q; X.translate(0, -18 * (1 - q)); draw(list[i - 1]); X.restore(); } }
+  if (p > 0) { X.save(); X.globalAlpha *= p; X.translate(0, 20 * (1 - p)); draw(list[i]); X.restore(); } }
+function ln(pts, col = K.ink, lw = 4, p = 1) { if (p <= 0) return; X.strokeStyle = col; X.lineWidth = lw; X.lineJoin = 'round'; X.beginPath(); let tot = 0; const seg = [];
+  for (let i = 1; i < pts.length; i++) { const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push(d); tot += d; }
+  let left = tot * clamp(p); X.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length && left > 0; i++) { const f = Math.min(1, left / seg[i - 1]); X.lineTo(mix(pts[i - 1][0], pts[i][0], f), mix(pts[i - 1][1], pts[i][1], f)); left -= seg[i - 1]; } X.stroke(); }
+function blk(x, y, w, h, col, s, sub, fs = 28, tc = '#fff') { R(x, y, w, h, col); if (s) TX(s, x + w / 2, y + h / 2 + (sub ? -4 : fs * .36), font(700, fs), tc, 'center'); if (sub) TX(sub, x + w / 2, y + h / 2 + 28, font(600, 22), tc, 'center'); }
+const HK = 4.8;   // 封面之后先用几秒抛出问题：865 GB 对 180 GB
+const A_T = Object.fromEntries(Object.entries({ open: 8.4, two: 11.0, moe: 15.0, exp: 20.0, att: 24.0, kv: 29.5, cmp: 32.6, sum: 36.6, end: 42.8 }).map(([k, v]) => [k, v + HK]));
+const APK = [70, 133, 201, 260, 318, 371];
+function anat() {
+  const m = S(CV, MORPH), t0 = CV + MORPH;
+  // 封面：主标题是模型名（纯文字，不用官方 logo），主题“分布式推理”作副标题
+  A(1 - clamp(m * 2.5), () => { const lh = 168, lw = lh * 195 / 41.36;
+    TX('DeepSeek V4-Pro', 88, 219, font(700, 150, HN), K.ink);   // 2026-10-02：去掉官方 logo，模型名改为纯文字
+    IN(.5, () => { const f = font(700, 60); X.font = f; const w = X.measureText('分布式推理').width + 48; R(96, 310, w, 84, K.ink); TX('分布式推理', 120, 373, f, '#fff'); TX('1.6T 参数，怎么放到 8 张卡上', 96 + w + 32, 373, f, K.ink); });
+    IN(.9, () => TX('TP　·　DP attention　·　EP　·　EPLB　·　PD 分离', 98, 462, font(600, 32, HN), K.gray)); });
+  A(clamp(m * 2 - 1), () => { TX('分布式推理 · 先看 DeepSeek-V4-Pro 的结构', 96, 76, font(700, 28), K.ink2);
+    IN(t0, () => { R(96, 100, 164, 50, K.ink2); TX('模型结构', 114, 136, font(700, 32), '#fff'); }, .5, 0);
+    IN(t0 + .3, () => TX('来源：官方 model card、config 与 vLLM 的实现', 1824, 76, font(500, 26), K.gray, 'right'), .5, 0);
+    swap([[t0, '权重 {b:865 GB}，一张卡只有 180 GB：{r:装不下}'], [t0 + HK, 'token 依次穿过 embedding、{b:61 个 Transformer 层}、输出'], [A_T.open, '61 个 Transformer 层结构都一样：拉开其中一层看'], [A_T.two, '每层两步：{b:attention} 看上下文，{t:MoE} 加工这个 token'],
+      [A_T.moe, 'MoE：router 从 {t:384 个 expert} 里给每个 token 选 {p:6 个}'], [A_T.exp, '一个 expert 是 3 个矩阵；这些 expert 占了 {t:97%} 的权重'],
+      [A_T.att, 'attention：每个 token 写下一份 {y:KV}，后面的 token 都来读'], [A_T.kv, 'V4 每个 token 只留 1 份 KV；它跟着请求走，不算在权重里'], [A_T.cmp, '旧的 KV 还会{y:压缩}：每 4 个或 128 个 token 并成一份'],
+      [A_T.sum, '合起来：权重 {b:865 GB}，几乎都在 expert 里']], ([, s]) => RICH(s, 96, 226, font(700, 60), K.ink));
+    A(1 - S(A_T.open, .6), () => IN(t0 + HK + .6, () => TX('1.6T 参数 · 865 GB · 上下文 1M token · 每个 token 只用到 49B', 96, 284, font(600, 30), K.gray))); });
+  const cvr = 1 - m;                                             // 封面权重：封面上展示拉开后的完整结构
+  const eL = Math.max(cvr, S(A_T.open + .2, 1.6)), eM = Math.max(cvr, S(A_T.moe + .2, 1.4) * (1 - S(A_T.att + .1, 1.2))), eA = S(A_T.att + .5, 1.4) * (1 - S(A_T.sum, 1.2)), eX = P(A_T.exp + .2, .6) * (1 - S(A_T.att - .5, .5)), eS = P(A_T.sum + .9, .7);
+  X.save(); if (T < 1.9) { X.beginPath(); X.rect(0, 0, 96 + 1760 * P(.15, 1.5), 1080); X.clip(); } X.translate(0, mix(200, 0, m));
+  // ---- 横向排布：token | embedding | 30 层 | 拉开的一层 | 30 层 | 输出 | 下一个 token ----
+  const Y0 = 330, H = 430, yb = 400, hb = 300, ym = 550, WF = 1000 + 120 * Math.max(eM, eA), Wm = eL * WF, pitch = (1728 - 526 - 32 * eL - Wm) / (60 + (1 - eL));
+  const shown = 61, sw = Math.max(1, pitch * .76); let x = 96;
+  R(x + 60, ym - 3, 1728 - 120, 6, K.ink);                                        // 主干
+  // token 走一遍全程：不画轨迹，走到哪一块，哪一块亮起再褪回去
+  const wa = T >= t0 + HK + .6 && T < A_T.open + .3 ? 1 - S(A_T.open - .5, .5) : 0, wp = mix(150, 1790, S(t0 + HK + .8, 3.0));
+  const wI = (bx, bw) => { const d = wp - bx; return wa * (d < 0 ? 0 : d < bw ? 1 : Math.max(0, 1 - (d - bw) / 170)); };
+  const wave = (bx, bw) => A(wI(bx, bw), () => R(bx, yb, bw, hb, K.purple));
+  const glow = (bx, bw) => { const I = wI(bx, bw); A(I * .3, () => R(bx, yb, bw, hb, '#fff')); A(I, () => box(bx + 4, yb + 4, bw - 8, hb - 8, 8, K.purple)); };
+  R(x, ym - 20, 90, 40, K.purple); TX('token', x + 45, ym + 9, font(700, 24), '#fff', 'center'); x += 106;
+  blk(x, yb, 130, hb, K.blue, 'embedding', '', 22); glow(x, 130); const xe = x; x += 146;
+  const xl = x; for (let k = 0; k < 30 && k < shown; k++) { R(x + k * pitch, yb, sw, hb, K.teal); wave(x + k * pitch, sw); } x += 30 * pitch + 16 * eL;
+  const xm = x, wmid = Wm + (1 - eL) * pitch; x += wmid + 16 * eL;
+  const xr = x; for (let k = 0; k < 30 && k + 31 < shown; k++) { R(x + k * pitch, yb, sw, hb, K.teal); wave(x + k * pitch, sw); } x += 30 * pitch + 16;
+  blk(x, yb, 120, hb, K.ink2, '输出', '', 28); glow(x, 120); x += 136; { const b = wa * bump(t0 + HK + 3.5, .7) * 5; R(x - b, ym - 20 - b, 90 + 2 * b, 40 + 2 * b, K.purple); } TX('下一个', x + 45, ym + 9, font(700, 22), '#fff', 'center');
+  A(eL * m * (1 - eA), () => { TX('30 层', xl, Y0 + H + 34, font(600, 26), K.gray); TX('30 层', xr, Y0 + H + 34, font(600, 26), K.gray); });
+  if (wa > 0 && wp >= xl && wp < xr + 30 * pitch + 60) { const n = wp < xm ? Math.floor((wp - xl) / pitch) + 1 : wp < xr ? 31 : Math.min(61, 32 + Math.floor((wp - xr) / pitch));
+    A(wa, () => RICH(`token 走到{p:第 ${n} 层}，共 61 层`, xl, yb - 22, font(700, 30), K.ink2)); }
+  // ---- 拉开的那一层 ----
+  if (eL < .04) { if (30 < shown) { R(xm, yb, sw, hb, K.teal); wave(xm, sw); } }
+  else { R(xm, Y0, wmid, H, K.paper2); box(xm, Y0, wmid, H, 4);
+    X.save(); X.beginPath(); X.rect(xm - 2, Y0 - 44, wmid + 4, H + 260); X.clip(); X.translate(xm, 0); X.scale(wmid / WF, 1);
+    const ai = clamp((eL - .45) * 2), a = 330 - 170 * eM + 370 * eA, mw = 550 + 290 * eM - 250 * eA, xa = 20, p1 = xa + a + 25, xmo = xa + a + 50, p2 = xmo + mw + 25;
+    A(ai, () => { A(m, () => TX('第 31 个 Transformer 层（每层都一样）', 4, Y0 - 14, font(700, 26), K.ink2));
+      R(0, ym - 3, WF, 6, K.ink);
+      [[xa - 12, p1], [xmo - 12, p2]].forEach(([s, e], i) => { ln([[s, ym], [s, 372], [e, 372], [e, ym - 15]], K.ink2, 3); if (!i) TX('残差', s + 16, 362, font(600, 22), K.gray); });
+      const tk = T >= A_T.two + .3 && T < A_T.moe ? 1 - S(A_T.moe - .5, .4) : 0, tp = mix(-30, WF + 30, S(A_T.two + .4, 3.0));
+      const hit = (bx, bw) => tk * clamp((tp - bx) / 40) * clamp((bx + bw - tp) / 40);
+      A(tk, () => { R(tp - 16, ym - 16, 32, 32, K.purple); box(tp - 16, ym - 16, 32, 32, 3, '#fff'); });
+      // attention
+      R(xa, yb, a, hb, K.paper2); A(1 - .86 * eA, () => R(xa, yb, a, hb, K.blue)); if (eA > .02) box(xa + 2, yb + 2, a - 4, hb - 4, 4, K.blue);
+      A((1 - eA) * (1 - eM * .0), () => { TX('attention', xa + a / 2, ym - 2, font(700, mix(40, 28, eM)), '#fff', 'center'); A(1 - eM, () => TX('看上下文', xa + a / 2, ym + 44, font(600, 26), '#fff', 'center')); });
+      // MoE
+      R(xmo, yb, mw, hb, K.paper2); A(1 - .86 * eM, () => R(xmo, yb, mw, hb, K.teal)); if (eM > .02) box(xmo + 2, yb + 2, mw - 4, hb - 4, 4, K.teal);
+      A((1 - eM), () => { TX('MoE', xmo + mw / 2, ym + 8, font(700, mix(64, 40, eA), HN), '#fff', 'center'); A(1 - eA, () => TX('加工这个 token', xmo + mw / 2, ym + 56, font(600, 26), '#fff', 'center')); });
+      [p1, p2].forEach((px) => { X.fillStyle = K.paper; X.beginPath(); X.arc(px, ym, 15, 0, 7); X.fill(); X.strokeStyle = K.ink; X.lineWidth = 4; X.stroke(); TX('+', px, ym + 10, font(700, 28, HN), K.ink, 'center'); });
+      [[xa, a], [xmo, mw]].forEach(([bx, bw]) => { const I = hit(bx, bw); A(I * .25, () => R(bx, yb, bw, hb, '#fff')); A(I, () => box(bx + 4, yb + 4, bw - 8, hb - 8, 8, K.purple)); });
+      // ---- MoE 内部 ----
+      A(eM, () => { TX('MoE', xmo + 20, yb + 40, font(700, 30, HN), K.teal);
+        const gx0 = xmo + 180, gy0 = 416, lit = Math.max(cvr, P(A_T.moe + 2.2, .5)), go = Math.max(cvr, S(A_T.moe + 2.6, 1.0)), back = Math.max(cvr, S(A_T.moe + 3.6, .9)), sx = xmo + 772;
+        blk(xmo + 20, 500, 120, 100, K.ink2, 'router', '打分', 26); A(bump(A_T.moe + 1.6, .9) * .45, () => R(xmo + 20, 500, 120, 100, '#fff'));
+        for (let k = 0; k < 384; k++) R(gx0 + (k % 32) * 16, gy0 + Math.floor(k / 32) * 16, 13, 13, K.teal);
+        blk(gx0, 628, 509, 48, K.teal, 'shared expert：每个 token 都用', '', 22); box(gx0 + 2, 630, 505, 44, 3, K.purple);
+        APK.forEach((k) => { const cx = gx0 + (k % 32) * 16 + 6.5, cy = gy0 + Math.floor(k / 32) * 16 + 6.5; ln([[xmo + 140, ym], [cx, cy]], K.purple, 2.5, go); ln([[cx, cy], [sx - 30, ym]], K.purple, 2.5, back);
+          A(lit, () => { R(cx - 8.5, cy - 8.5, 17, 17, K.purple); box(cx - 9, cy - 9, 18, 18, 2.5); }); });
+        ln([[gx0 + 509, 652], [sx - 12, 652], [sx - 12, ym + 28]], K.purple, 2.5, back);
+        X.fillStyle = K.paper; X.beginPath(); X.arc(sx, ym, 30, 0, 7); X.fill(); X.strokeStyle = K.ink; X.lineWidth = 4; X.stroke(); TX('Σ', sx, ym + 13, font(700, 36, HN), K.ink, 'center');
+      });
+      // ---- 一个 expert ----
+      A(eX, () => { const k = APK[4], cx = xmo + 180 + (k % 32) * 16 + 6.5, cy = 416 + Math.floor(k / 32) * 16 + 6.5; ln([[cx, cy], [cx, 800], [330, 800]], K.ink, 3);
+        ['gate', 'up', 'down'].forEach((s, i) => blk(40 + i * 170, 830, 150, 64, K.teal, s, '', 28)); TX('一个 expert：3 个 7168 × 3072 的矩阵', 560, 858, font(700, 32), K.ink); TX('FP4 存下来约 35 MB', 560, 900, font(700, 32), K.teal); });
+      // ---- attention 内部与 KV cache ----
+      A(eA, () => { TX('attention', xa + 20, yb + hb - 20, font(700, 30, HN), K.blue);
+        blk(xa + 20, 420, 200, 90, K.blue, 'Q 投影', '128 个 head', 28); blk(xa + 270, 420, 190, 260, K.blue, '算注意力', '拿 Q 去读 KV', 28); blk(xa + 510, 420, 170, 90, K.blue, '输出投影', '', 26); blk(xa + 510, 590, 170, 90, K.yel, 'KV 投影', '1 份 KV', 26, K.ink);
+        ln([[xa + 220, 465], [xa + 270, 465]], K.ink, 4); ln([[xa + 460, 465], [xa + 510, 465]], K.ink, 4);
+        TX('KV cache（这个请求的）', xa + 20, 796, font(700, 26), K.yelD);
+        const mg = S(A_T.cmp + .4, 1.1);
+        for (let i = 0; i < 9; i++) POP(A_T.att + 2.2 + i * .14, xa + 20 + i * 62, 822, 56, 50, () => { const head = i < 8 && i % 4 === 0, w = head ? mix(56, 56 + 3 * 62, mg) : 56; A(i < 8 && !head ? 1 - mg : 1, () => R(xa + 20 + i * 62, 822, w, 50, K.yel)); if (head && mg > .7) TX('4 个并成 1 份', xa + 20 + i * 62 + w / 2, 855, font(700, 22), K.ink, 'center'); }, .35);
+        const wr = S(A_T.att + 3.8, .7), rd = S(A_T.att + 4.6, .8); ln([[xa + 606, 680], [xa + 606, 822]], K.ink, 4, wr);
+        POP(A_T.att + 4.3, xa + 578, 822, 56, 50, () => { R(xa + 578, 822, 56, 50, K.yel); box(xa + 580, 824, 52, 46, 4, K.purple); }, .4);
+        ln([[xa + 300, 814], [xa + 634, 814]], K.purple, 4, rd); ln([[xa + 365, 814], [xa + 365, 680]], K.purple, 4, rd);
+        A(P(A_T.att + 3.8, .5), () => TX('写：新 token 的 KV', xa + 648, 856, font(600, 24), K.ink2)); A(P(A_T.att + 4.8, .5), () => TX('读：前面所有 token 的', xa + 20, 902, font(600, 24), K.purple)); });
+      // ---- 大小 ----
+      A(eS * (1 - eM) * (1 - eA), () => { TX('0.3 GB × 61 层', xa, 806, font(700, 34), K.blue); TX('≈ 19 GB', xa, 850, font(700, 34), K.blue);
+        TX('expert 13.5 GB × 61 层', xmo, 806, font(700, 34), K.teal); TX('≈ 822 GB', xmo, 850, font(700, 34), K.teal); TX('另有 1 层 MTP 的 expert 14 GB', xmo + 190, 850, font(600, 26), K.gray); });
+    });
+    X.restore(); }
+  A(eS, () => TX('约 5 GB', xe, Y0 + H + 76, font(700, 34), K.blue));
+  X.restore();
+  // 开头的问题：整条权重里，一张卡只框得住 180 GB
+  if (T >= t0 && T < t0 + HK + .2) A(1 - S(t0 + HK - .6, .5), () => { const g = S(t0 + .5, 1.0), u = 1.9;
+    IN(t0 + .3, () => TX('V4-Pro 的权重', 96, 800, font(700, 34), K.ink));
+    R(96, 820, 836 * u * g, 70, K.teal); R(96 + 836 * u * g, 820, 29 * u * g, 70, K.blue);
+    A(.82 * P(t0 + 2.4, .6), () => HR(96 + 180 * u, 820, 685 * u, 70, K.red, K.paper2));
+    A(P(t0 + 1.2, .4), () => TX('865 GB', 116, 870, font(700, 42, HN), '#fff'));
+    POP(t0 + 1.8, 96, 812, 180 * u, 86, () => box(96 - 3, 812, 180 * u + 6, 86, 7), .4);
+    IN(t0 + 1.9, () => TX('一张 B200：180 GB', 96, 944, font(700, 34), K.ink)); IN(t0 + 2.6, () => TX('放不进去的 685 GB', 96 + 180 * u + 24, 944, font(700, 34), K.red));
+    IN(t0 + 3.3, () => RICH('得切开放到多张卡上。{b:怎么切}，要先看它里面是什么', 96, 1028, font(700, 44), K.ink)); });
+  IN(A_T.sum + 2.6, () => RICH('expert 836 GB，其余 29 GB；{y:KV cache} 另算，随请求变化', 96, 1010, font(700, 44), K.ink));
+}
+
+// 6 显存里的两样东西
+function a6() {
+  // KV 的大小：ratio 4 的 30 层每 4 个 token 存 584 + 132 B，ratio 128 的 31 层每 128 个 token 存 584 B，合计约 5.5 KB/token；1M token 约 5.8 GB（估算）
+  frame('显存', K.ink2, '所以显存里要放两样东西：{b:权重}和 {y:KV cache}', 'KV 大小按 config 与 vLLM 的实现估算');
+  const X0 = 96, PK1 = 1.24, LK = [1048.576, 300, 800, 120, 1048.576, 550, 60, 700], KB = 5.5114;
+  IN(.6, () => TX('KV cache：一个请求一行，上下文越长，这一行越长', 96, 322, font(700, 36), K.ink));
+  A(P(.9, .5), () => [0, 250, 500, 750, 1048.576].forEach((v) => { const x = X0 + v * PK1; R(x - 1, 344, 2, 278, K.lg); TX(v ? (v > 1000 ? '1M token' : v + 'K') : '0', x + 8, 646, font(600, 22, HN), K.gray); }));
+  let tot = 0, n = 0;
+  LK.forEach((L, k) => { const t0 = k ? 3.6 + k * .28 : 1.2; if (T < t0) return; const len = L * (k ? S(t0, 1.6) : S(t0, 2.2)), y = 350 + k * 34, w = len * PK1; n++; tot += len;
+    R(X0, y, w, 26, K.yel); for (let i = 1; i * 124 < w; i++) R(X0 + i * 124 - 1.5, y, 3, 26, K.paper);
+    const lb = `${len > 1048 ? '1M' : Math.round(len) + 'K'} token · ${(len * KB / 1000).toFixed(1)} GB`; X.font = font(700, 24, HN); R(X0 + w + 8, y, X.measureText(lb).width + 12, 26, K.paper); TX(lb, X0 + w + 14, y + 22, font(700, 24, HN), K.yelD); });
+  if (n) A(P(1.2, .4), () => RICH(`${n} 个请求 · KV 合计 {y:${(tot * KB / 1000).toFixed(1)} GB}`, 1824, 322, font(700, 36), K.ink2, 'right'));
+  IN(6.6, () => RICH('每个 token 约 {y:5.5 KB}。请求越多、上下文越长，占得越多', 96, 712, font(700, 38), K.ink));
+  IN(7.6, () => TX('权重：装进去就不变 · 865 GB', 96, 800, font(700, 36), K.ink));
+  const g = S(7.8, 1.0); R(96, 818, 836 * 1.9 * g, 90, K.teal); R(96 + 836 * 1.9 * g, 818, 29 * 1.9 * g, 90, K.blue);
+  IN(8.8, () => { TX('expert　836 GB', 126, 880, font(700, 46), '#fff'); TX('其余　29 GB', 96 + 865 * 1.9, 950, font(700, 32), K.blue, 'right'); TX('attention、embedding 等', 96 + 865 * 1.9, 984, font(600, 26), K.gray, 'right'); });
+  IN(10.2, () => RICH('接下来的问题：这两样东西{b:怎么放}到多张卡上', 96, 1020, font(700, 44), K.ink));
+}
+
+// ---------- 2 问题：一张卡装不下，8 张卡的总账 ----------
+function s2() {
+  frame('问题', K.red, '回到开头的问题：865 GB，放进 {b:8 张} 180 GB 的卡', 'SGLang 的 V4 cookbook：一台 8 × B200');
+  const m = S(.2, 1.2), s = mix(1.9, 1.2, m), by = mix(786, 380, m), bh = mix(130, 120, m);
+  R(96, by, 836 * s, bh, K.teal); R(96 + 836 * s, by, 29 * s, bh, K.blue);
+  A(m, () => TX('模型权重 865 GB', 96, 356, font(700, 38), K.ink));
+  IN(2.0, () => TX('8 张 B200，共 1440 GB', 96, 626, font(700, 38), K.ink));
+  for (let g = 0; g < 8; g++) POP(2.3 + g * .14, 96 + g * 216, 650, 216, 160, () => { R(96 + g * 216, 650, 216, 160, K.paper2); box(96 + g * 216, 650, 216, 160, 4); TX(`GPU ${g}`, 96 + g * 216 + 108, 720, font(700, 34, HN), K.ink2, 'center'); TX('180 GB', 96 + g * 216 + 108, 764, font(600, 28, HN), K.gray, 'center'); });
+  const dl = S(4.2, .8); if (dl > 0) { X.setLineDash([12, 9]); X.strokeStyle = K.ink; X.lineWidth = 3; X.beginPath(); X.moveTo(96 + 865 * 1.2, 380); X.lineTo(96 + 865 * 1.2, 380 + 450 * dl); X.stroke(); X.setLineDash([]); }
+  IN(4.8, () => TX('权重占 865 GB', 96, 882, font(700, 36), K.ink));
+  HR(96 + 865 * 1.2, 830, 575 * 1.2 * S(5.6, 1.0), 60, K.yel, K.paper2);
+  IN(6.2, () => TX('剩 575 GB：留给 KV cache', 96 + 865 * 1.2 + 18, 944, font(700, 36), K.yelD));
+  IN(7.6, () => RICH('问题是：这 865 GB {b:怎么分}到 8 张卡上？', 96, 1030, font(700, 44), K.ink));
+}
+
+// ---------- 3 分法一 TP：一张卡里装了什么 ----------
+function s3() {
+  frame('分法一 · TP', K.blue, 'TP：{b:每个矩阵}都竖着切 8 条，一张卡拿一条', '高度按显存画：4 px = 1 GB');
+  IN(.6, () => TX('一个 expert 的一个矩阵', 96, 330, font(700, 38), K.ink));
+  const cut = S(1.6, .9), pick = P(3.0, .6), a0 = P(.8, .6);
+  A(a0, () => { for (let j = 0; j < 8; j++) { const x = 96 + j * 74, w = 74 - 4 * cut; R(x, 356, w, 250, K.lg); if (j === 2) A(pick, () => R(x, 356, w, 250, K.teal)); A(cut, () => TX(String(j), x + 35, 494, font(700, 34, HN), '#fff', 'center')); } });
+  A(pick, () => { box(96 + 2 * 74 - 5, 351, 80, 260, 5); TX('GPU 2 拿这一条', 96 + 2 * 74 - 5, 656, font(700, 34), K.teal); });
+  IN(4.4, () => { TX('384 × 61 个 expert 全都这样切，', 96, 760, font(600, 34), K.ink2); TX('attention 的大部分矩阵也一样。', 96, 808, font(600, 34), K.ink2); });
+  ledger(960, 300, 320, [{ gb: 104, col: K.teal, label: '每个 expert 的 ⅛', sub: '836 ÷ 8 = 104 GB', gbText: 1, p: S(6.2, 1.2) }, { gb: 4, col: K.blue, label: 'attention 等的 ⅛', sub: '29 ÷ 8 ≈ 4 GB', p: S(7.6, .6) },
+    { gb: 72, label: '空着 72 GB', sub: '放 KV cache', la: P(8.6, .6) }], '一张卡 · 180 GB', 4, P(5.6, .6));
+  IN(9.8, () => RICH('所以每张卡上是{b:整个模型的 ⅛}，8 张卡都一样。', 96, 880, font(700, 40), K.ink));
+}
+
+// ---------- 4 TP 下算一个 token：部分和，再逐元素相加 ----------
+function s4() {
+  frame('分法一 · TP', K.blue, '算一个 token：每张卡算出一个{b:部分和}，再{p:逐元素相加}', '每层 2 次：attention 与 MoE 各一次');
+  const q = S(8.0, .8), y = 400;
+  // 第一拍：只看 GPU 2 这一张卡
+  A(1 - q, () => { IN(.6, () => TX('先看一张卡：GPU 2 上，一个 expert 的计算', 96, 336, font(700, 38), K.ink));
+    const cap = (t0, s1, s2, x) => IN(t0, () => { TX(s1, x, y + 140, font(700, 30), K.ink); TX(s2, x, y + 178, font(600, 26), K.gray); }, .6, 10);
+    R(96, y + 20, 360 * S(1.0, .8), 60, K.ink2); cap(1.4, '输入：7168 维', '每张卡都有完整的一份', 96);
+    arrow(470, y + 50, 520, S(2.2, .4)); POP(2.5, 530, y, 190, 100, () => { R(530, y, 190, 100, K.teal); TX('up 的第 2 条', 625, y + 60, font(700, 25), '#fff', 'center'); }); cap(2.8, '不通信', '', 530);
+    arrow(734, y + 50, 784, S(3.4, .4));
+    A(P(3.7, .5), () => { for (let k = 0; k < 8; k++) { if (k === 2) R(794 + k * 23, y + 20, 21, 60, K.purple); else { X.setLineDash([4, 3]); box(794 + k * 23 + 1, y + 21, 19, 58, 2, K.lg); X.setLineDash([]); } } }); cap(4.0, '中间：384 维', '3072 维里自己的一段', 794);
+    arrow(992, y + 50, 1042, S(4.8, .4)); POP(5.1, 1052, y, 190, 100, () => { R(1052, y, 190, 100, K.teal); TX('down 的第 2 条', 1147, y + 60, font(700, 25), '#fff', 'center'); }); cap(5.4, '不通信', '', 1052);
+    arrow(1256, y + 50, 1306, S(6.0, .4)); cap(6.6, '输出：7168 维的部分和', '长度完整，值只是其中一项', 1316);
+    IN(6.9, () => RICH('整条路只用自己那一条权重，{b:不用和别的卡通信}', 96, 720, font(700, 44), K.ink)); });
+  // GPU 2 的输出：从流水线末端移到 8 个部分和里自己的位置
+  const og = S(6.2, .8); if (og > 0) { const bx = mix(1316, mx(2), q), by = mix(y + 20, 400, q), bw = mix(360 * og, MW, q), bh = mix(60, 70, q); R(bx, by, bw, bh, K.lilac); box(bx + 2, by + 2, bw - 4, bh - 4, 4, K.purple); }
+  // 第二拍：8 张卡的部分和相加
+  IN(8.3, () => TX('8 张卡各算出一个部分和', 96, 336, font(700, 38), K.ink));
+  const lit = bump(11.0, 1.0), ar = S(10.4, .7);
+  for (let g = 0; g < 8; g++) { const x = mx(g); if (g !== 2) POP(8.8 + g * .1, x, 400, MW, 70, () => { R(x, 400, MW, 70, K.lilac); box(x + 2, 402, MW - 4, 66, 4, K.purple); });
+    A(g === 2 ? q : P(8.9 + g * .1, .4), () => { TX(`GPU ${g}`, x + MW / 2, 446, font(700, 30, HN), K.purple, 'center'); if (g < 7) TX('+', x + MW + 9, 448, font(700, 36, HN), K.ink, 'center'); });
+    A(lit * .6, () => R(x, 400, MW, 70, K.purple)); R(x + MW / 2 - 3, 470, 6, 50 * ar, K.ink2); }
+  R(96, 520, 1710 * ar, 76, K.ink2); A(bump(11.0, 1.0) * .35, () => R(96, 520, 1710, 76, '#fff'));
+  A(P(10.7, .5), () => TX('all-reduce：对应位置相加（是 sum，不是 concat），每张卡都拿到结果', 951, 570, font(700, 36), '#fff', 'center'));
+  R(957, 596, 6, 44 * P(11.6, .4), K.ink2); POP(11.8, 740, 640, 440, 64, () => { R(740, 640, 440, 64, K.purple); TX('完整的输出 · 7168 维', 960, 683, font(700, 32), '#fff', 'center'); });
+  IN(12.9, () => RICH('只有末尾这一次相加要通信：每层 {r:2 次}，61 层共 {r:122 次}', 96, 810, font(700, 44), K.ink));
+  IN(14.3, () => RICH('好处：8 张卡合力算同一个 token，{b:单个请求最快}', 96, 890, font(700, 44), K.ink));
+  IN(15.4, () => TX('写法：SGLang 是 --tp 8，vLLM 是 --tensor-parallel-size 8', 96, 980, font(600, 32), K.ink2));
+}
+
+// ---------- 5 问题：KV cache 切不开 ----------
+function s5() {
+  frame('问题', K.red, '但 KV cache 切不开：8 张卡存的是{r:同一份}', 'V4 的 num_key_value_heads = 1');
+  minis(340, .5, (g, x, y) => { R(x, y, MW, 208, K.teal); R(x, y + 208, MW, 8, K.blue); TX('权重 108', x + MW / 2, y + 120, font(700, 34), '#fff', 'center');
+    if (g === 0) { const p = S(2.0, .8); R(x, y + 216, MW, 144 * p, K.yel); A(P(2.6, .4), () => TX('KV 72', x + MW / 2, y + 300, font(700, 34), K.ink, 'center')); }
+    else { const p = S(3.4 + g * .22, .6); HR(x, y + 216, MW, 144 * p, K.red, K.paper2); A(P(3.8 + g * .22, .4), () => { R(x + 20, y + 262, MW - 40, 52, K.paper2); TX('同一份', x + MW / 2, y + 300, font(700, 34), K.red, 'center'); }); } });
+  IN(6.0, () => TX('TP 靠“按 head 切”来分 KV。V4 只有 1 个 KV head，没法分，每张卡都得存完整的一份。', 96, 790, font(600, 34), K.ink2));
+  IN(7.4, () => RICH('8 张卡空着 {b:575 GB}，实际只存了 {r:72 GB} 的内容', 96, 880, font(700, 48), K.ink));
+  IN(8.8, () => RICH('能同时服务的请求数，和只有一张卡时一样', 96, 960, font(700, 44), K.ink));
+}
+
+// ---------- 5b 为什么 attention 要每张卡一份 ----------
+// 推理链：想让 KV 只存一份 → 一个请求只能待在一张卡上 → 这张卡要独自算完 attention → 需要完整的 attention 权重。
+// attention 等共 29 GB，每卡从 ⅛（约 4 GB）变成完整一份（29 GB），多 25 GB；expert 有 836 GB，没法每卡一份，只能分开放（EP）。
+function s5b() {
+  frame('分法二 · 为什么', K.teal, '想让 KV 只存一份，attention 就得{b:每张卡一份}', '只画 attention 与 KV，高度为示意');
+  const Y = 320, shrink = S(4.4, 1.2), own = S(7.4, 1.2), all = S(10.6, 1.2), others = P(11.4, .6);
+  for (let g = 0; g < 8; g++) POP(.5 + g * .08, mx(g), Y, MW, 400, () => { const x = mx(g), grow = g === 0 ? own : all, h = mix(22, 170, grow);
+    R(x, Y, MW, 400, K.paper2); TX(`GPU ${g}`, x, Y - 14, font(700, 26, HN), K.gray);
+    R(x + 10, Y + 70, MW - 20, h, K.blue); A(g === 0 ? bump(7.4, 1.4) * .5 : 0, () => R(x + 10, Y + 70, MW - 20, h, '#fff'));
+    if (grow > .6) { TX('attention', x + MW / 2, Y + 70 + h / 2 - 2, font(700, 28), '#fff', 'center'); TX('完整一份', x + MW / 2, Y + 70 + h / 2 + 32, font(600, 24), '#fff', 'center'); }
+    else A(1 - grow * 1.6, () => TX('attention 的 ⅛', x + MW / 2, Y + 122, font(600, 24), K.blue, 'center'));
+    // KV：TP 时每张卡都有 A 的一份；之后只留 GPU 0 的；最后各存各的
+    const ky = Y + 320;
+    if (g === 0) { R(x + 10, ky, MW - 20, 60, K.yel); TX('A 的 KV', x + MW / 2, ky + 40, font(700, 28), K.ink, 'center'); }
+    else { A(P(1.6 + g * .1, .4) * (1 - shrink), () => { HR(x + 10, ky, MW - 20, 60, K.red, K.paper2); TX('A 的 KV', x + MW / 2, ky + 40, font(700, 28), K.red, 'center'); });
+      A(others, () => { R(x + 10, ky, MW - 20, 60, K.yel); TX(`${'ABCDEFGH'[g]} 的 KV`, x + MW / 2, ky + 40, font(700, 28), K.ink, 'center'); });
+      A(others, () => { R(x + 10, Y + 14, MW - 20, 40, K.purple); TX(`请求 ${'ABCDEFGH'[g]}`, x + MW / 2, Y + 43, font(700, 26), '#fff', 'center'); }); }
+    box(x - 1.5, Y - 1.5, MW + 3, 403, 3); });
+  // 请求 A：先横跨 8 张卡，再收到 GPU 0 上
+  const ax = mx(0) + 10, aw = mix(mx(7) + MW - 10 - ax, MW - 20, shrink);
+  POP(1.2, ax, Y + 14, aw, 40, () => { R(ax, Y + 14, aw, 40, K.purple); TX(shrink < .5 ? '请求 A：8 张卡一起算' : '请求 A', ax + aw / 2, Y + 43, font(700, 26), '#fff', 'center'); });
+  // 图上的标号：① 请求 A 收到一张卡上；② GPU 0 的 attention 变完整；③ 其余每张卡也各放一份
+  const badge = (t0, cx, cy, n) => POP(t0, cx - 18, cy - 18, 36, 36, () => { X.fillStyle = '#fff'; X.beginPath(); X.arc(cx, cy, 18, 0, 7); X.fill(); X.strokeStyle = K.ink; X.lineWidth = 3; X.stroke(); TX(String(n), cx, cy + 9, font(700, 26, HN), K.ink, 'center'); }, .4);
+  badge(5.2, mx(0) + MW - 34, Y + 34, 1); badge(8.2, mx(0) + MW - 34, Y + 96, 2); for (let g = 1; g < 8; g++) badge(11.4 + g * .05, mx(g) + MW - 34, Y + 96, 3);
+  // 文字：说到哪一步，哪一步是全亮的，前面的变淡
+  const TS = [1.8, 4.4, 7.4, 10.6, 14.0], step = (i, fn) => IN(TS[i], () => A(i < 4 ? mix(1, .36, P(TS[i + 1], .5)) : 1, fn));
+  step(0, () => TX('TP：8 张卡合起来算请求 A，所以每张卡都要有 A 的 KV。', 96, 786, font(600, 36), K.ink2));
+  step(1, () => RICH('① 想让 KV 只存一份：请求 A 只能{b:待在一张卡上}', 96, 846, font(700, 38), K.ink));
+  step(2, () => RICH('② 这张卡要独自算完 attention：⅛ 不够，得有{b:完整的权重}', 96, 902, font(700, 38), K.ink));
+  step(3, () => RICH('③ 每张卡都放一份，各接各的请求：每卡 4 GB → 29 GB，{r:多 25 GB}', 96, 958, font(700, 38), K.ink));
+  step(4, () => RICH('expert 有 836 GB，没法每卡一份，只能{t:分开放}，这就是 EP', 96, 1034, font(700, 40), K.ink));
+}
+
+// ---------- 6 分法二：一张卡里装了什么 ----------
+function s6() {
+  frame('分法二 · DP attention + EP', K.teal, 'expert {t:整个}放，attention {b:每张卡一份}', '高度按显存画：4 px = 1 GB');
+  const dim = mix(1, .45, S(2.0, .6));
+  ledger(96, 320, 260, [{ gb: 104, col: K.teal, gbText: 1 }, { gb: 4, col: K.blue }, { gb: 72, hatch: true }], '分法一 · TP', 3.6, P(.5, .6) * dim);
+  A(P(.9, .6) * dim, () => { TX('expert ⅛ 条', 380, 500, font(600, 28), K.gray); TX('attention ⅛', 380, 706, font(600, 28), K.gray); TX('KV：同一份', 380, 850, font(600, 28), K.gray); });
+  arrow(640, 640, 760, S(2.4, .6));
+  ledger(820, 300, 320, [{ gb: 104, col: K.teal, label: '48 个完整的 expert', sub: '每层 384 ÷ 8 = 48 个，共 104 GB', gbText: 1, p: S(3.6, 1.2) }, { gb: 29, col: K.blue, label: 'attention 等，完整一份', sub: '29 GB，比 TP 多占 25 GB', gbText: 1, p: S(5.8, 1.2) },
+    { gb: 47, label: '空着 47 GB', sub: '只放自己这批请求的 KV', slots: 8, t0: 8.4, tc: K.yelD, la: P(8.0, .6) }], '分法二 · 一张卡', 4, P(3.0, .6));
+}
+
+// ---------- 7 KV 各存各的：约 5 倍 ----------
+function s7() {
+  frame('分法二 · DP attention + EP', K.teal, 'KV 各存各的：同样 8 张卡，能装的{y:多了约 5 倍}', '余下显存全按 KV 估算；每个 token 约 5.5 KB');
+  minis(330, .5, (g, x, y) => { R(x, y, MW, 208, K.teal); R(x, y + 208, MW, 58, K.blue); TX('expert 104', x + MW / 2, y + 116, font(700, 30), '#fff', 'center'); TX('attn 29', x + MW / 2, y + 248, font(700, 26), '#fff', 'center');
+    for (let k = 0; k < 8; k++) { const sx = x + 6 + (k % 4) * 47, sy = y + 274 + Math.floor(k / 4) * 42; POP(2.0 + g * .3 + k * .05, sx, sy, 43, 38, () => R(sx, sy, 43, 38, K.yel), .35); }
+    A(P(2.6 + g * .3, .4), () => TX(`请求 ${g * 8 + 1}–${g * 8 + 8}`, x + MW / 2, y + 398, font(600, 26), K.yelD, 'center')); });
+  const s = 3.2; IN(5.4, () => TX('8 张卡里不重复的 KV', 96, 800, font(700, 38), K.ink));
+  const g1 = S(6.0, .8), g2 = S(7.0, 1.4);
+  IN(5.9, () => TX('TP', 96, 872, font(700, 40, HN), K.ink), .5, 0); R(190, 836, 72 * s * g1, 52, K.ink2); if (g1 > 0) TX(`${num(72, g1)} GB`, 190 + 72 * s * g1 + 18, 876, font(700, 44, HN), K.ink);
+  IN(8.6, () => TX('约 12 个满 1M token 的请求', 190 + 72 * s + 190, 874, font(600, 34), K.ink2));
+  IN(6.9, () => TX('DP', 96, 952, font(700, 40, HN), K.yelD), .5, 0); R(190, 916, 372 * s * g2, 52, K.yel); if (g2 > 0) TX(g2 < 1 ? `${num(372, g2)} GB` : '8 × 47 = 372 GB', 190 + 372 * s * g2 + 18, 956, font(700, 44, HN), K.yelD);
+  IN(9.0, () => TX('约 64 个满 1M token 的请求', 214, 953, font(700, 34), K.ink));
+  IN(10.2, () => TX('用途：同时服务很多人。SGLang cookbook 的高吞吐配置：--tp 8 --dp 8 --enable-dp-attention', 96, 1040, font(600, 32), K.ink2));
+}
+
+// ---------- 8 代价一：token 要跨卡找 expert ----------
+const PK = [[0, 3, 1], [2, 2, 5], [2, 4, 2], [5, 1, 6], [6, 2, 3], [7, 3, 0]];
+function s8() {
+  frame('代价', K.red, '代价一：token 选中的 expert 在{r:别的卡上}', '示意：一个 token 选 6 个 expert');
+  minis(340, .5, (g, x, y) => { R(x, y, MW, 40, K.blue); for (let k = 0; k < 48; k++) R(x + 3 + (k % 6) * 32.5, y + 50 + Math.floor(k / 6) * 38, 29, 34, K.teal); });
+  POP(1.8, mx(0) + 96, 296, 102, 36, () => { R(mx(0) + 96, 296, 102, 36, K.purple); TX('token', mx(0) + 147, 323, font(700, 26), '#fff', 'center'); });
+  const sx = mx(0) + 147, sy = 332;
+  PK.forEach(([g, c, r], k) => { const tx = mx(g) + 3 + c * 32.5 + 14.5, ty = 390 + r * 38 + 17, go = S(4.2 + k * .08, 1.2), back = S(7.6 + k * .08, 1.2), p = go - back, px = mix(sx, tx, p), py = mix(sy, ty, p);
+    if (p > 0) { X.strokeStyle = K.purple; X.lineWidth = 5; X.lineCap = 'round'; X.beginPath(); X.moveTo(sx, sy); X.lineTo(px, py); X.stroke(); } });
+  PK.forEach(([g, c, r], k) => { const x = mx(g) + 3 + c * 32.5, y = 390 + r * 38, pulse = bump(6.4, 1.0);
+    POP(2.8 + k * .14, x, y, 29, 34, () => { R(x - 3 * pulse, y - 3 * pulse, 29 + 6 * pulse, 34 + 6 * pulse, K.purple); box(x - 2, y - 2, 33, 38, 4); }, .4);
+    const go = S(4.2 + k * .08, 1.2), back = S(7.6 + k * .08, 1.2), p = go - back; if (go > 0 && back < 1 && p < .995) { const px = mix(sx, x + 14.5, p), py = mix(sy, y + 17, p); R(px - 10, py - 10, 20, 20, K.purple); box(px - 10, py - 10, 20, 20, 3, '#fff'); } });
+  IN(4.2, () => RICH('{p:dispatch}：把 token 的中间结果发到这 6 个 expert 所在的卡', 96, 800, font(700, 44), K.ink));
+  IN(7.6, () => RICH('{p:combine}：算完再送回 GPU 0。每个 MoE 层各一次', 96, 880, font(700, 44), K.ink));
+  IN(9.8, () => TX('TP 下不用找：每张卡都有每个 expert 的 ⅛。', 96, 960, font(600, 34), K.ink2));
+}
+
+// ---------- 9 代价二：等最忙的卡，EPLB ----------
+function s9() {
+  frame('代价', K.red, '代价二：每一步都要{r:等最忙的那张卡}', '负载为示意');
+  const lb = [3, 2, 9, 3, 2, 3, 1, 1], la = [3, 3, 4, 3, 3, 3, 3, 3], e = S(7.6, 1.4), grow = S(.8, 1.0), wait = P(2.6, .7), U = 44, BASE = 756;
+  IN(.5, () => TX('这一步每张卡要算的 token', 1824, 336, font(700, 34), K.ink2, 'right'));
+  const load = lb.map((v, i) => mix(v, la[i], e)), mxl = Math.max(...load);
+  load.forEach((v, g) => { const x = mx(g), h = v * U * grow, top = BASE - mxl * U * grow;
+    A(wait, () => HR(x, top, MW, BASE - h - top, K.red, K.paper2)); R(x, BASE - h, MW, h, K.purple);
+    A(grow, () => { TX(String(Math.round(v)), x + MW / 2, BASE - 9, font(700, 34, HN), '#fff', 'center'); TX(`GPU ${g}`, x + MW / 2, BASE + 34, font(700, 26, HN), K.gray, 'center'); }); });
+  // 热门 expert 在 GPU 2；EPLB 给它在 GPU 7 上多放一份
+  const hy = BASE - load[2] * U * grow + 12, cy = BASE - load[7] * U * grow + 12, f = S(7.6, 1.2);
+  POP(2.0, mx(2) + 14, hy, MW - 28, 40, () => { R(mx(2) + 14, hy, MW - 28, 40, K.teal); TX('热门 expert', mx(2) + MW / 2, hy + 29, font(700, 24), '#fff', 'center'); });
+  if (f > 0) { const x = mix(mx(2), mx(7), f), yy = mix(hy, cy, f); R(x + 14, yy, MW - 28, 40, K.teal); box(x + 16, yy + 2, MW - 32, 36, 3, '#fff'); TX('副本', x + MW / 2, yy + 29, font(700, 24), '#fff', 'center'); }
+  IN(3.4, () => RICH('{p:紫色}：在算；{r:红色}：算完了在等', 96, 846, font(700, 36), K.ink));
+  IN(4.6, () => TX('热门 expert 在 GPU 2 上，token 都挤过去；其余的卡算完了也得等。', 96, 896, font(600, 32), K.ink2));
+  IN(6.8, () => RICH('{t:EPLB}：统计负载，给热门 expert 多放一份副本，重新分配', 96, 972, font(700, 42), K.ink));
+  IN(9.6, () => RICH('vLLM 的写法：{t:--enable-eplb}，默认每 3000 步重排一次', 96, 1038, font(700, 36), K.ink));
+}
+
+// ---------- 10 PD 分离：问题、做法、效果 ----------
+// 做法取自 vLLM 的 disaggregated prefilling 文档与 NixlConnector：router 先把请求以 max_tokens = 1 发给 P；P 算完 prompt，KV 留在显存里，
+// 响应里带回 KV 的位置（kv_transfer_params）；router 再把请求连同位置发给 D；D 从 P 的显存把 KV 读过来，接着生成；P 随后释放。
+// 1.6 → 3.3 请求/秒/卡 来自 DistServe（13B 模型，A100，同时满足 TTFT 与 ITL 要求）。时间轴与格子数为示意。
+const SAY = '一张卡装不下的模型，要切开放到多张卡上，再想办法让它们配合起来算出结果。';
+const steps = (x0, x1, y, h = 96) => { for (let x = x0; x + 40 <= x1 + 1; x += 50) R(x, y, 40, h, K.purple); };
+const says = (x0, x1, y, k0) => { let k = k0; for (let x = x0; x + 40 <= x1 + 1; x += 50) TX(SAY[k++ % SAY.length], x + 20, y, font(700, 40), K.ink, 'center'); return k; };
+function chip(cx, cy, w, s, col, tc = '#fff', a = 1) { A(a, () => { R(cx - w / 2, cy - 20, w, 40, col); TX(s, cx, cy + 9, font(700, 24), tc, 'center'); }); }
+function s10() {
+  frame('再往外 · PD 分离', K.blue, '一个实例里，长 prompt 一来，{r:生成全在等}', '时间轴为示意');
+  IN(.5, () => { R(96, 296, 220, 52, K.blue); TX('prefill', 206, 333, font(700, 32, HN), '#fff', 'center'); TX('一步读完整个 prompt，耗时长', 336, 334, font(600, 32), K.ink2); });
+  IN(.9, () => { for (let k = 0; k < 3; k++) R(980 + k * 50, 296, 40, 52, K.purple); TX('decode：一步出一个 token，很短', 1146, 334, font(600, 32), K.ink2); });
+  IN(1.6, () => TX('这张卡在算什么', 96, 436, font(700, 34), K.ink)); A(P(1.6, .6), () => R(96, 454, 1728, 96, K.paper2));
+  IN(1.8, () => TX('正在生成的用户看到的输出', 96, 630, font(700, 34), K.ink));
+  X.save(); X.beginPath(); X.rect(96, 440, 1728 * clamp((T - 2.0) / 3.4), 290); X.clip();
+  steps(96, 696, 454); R(696, 454, 480, 96, K.blue); TX('prefill · 新来的长 prompt', 936, 514, font(700, 36), '#fff', 'center'); steps(1186, 1824, 454);
+  const k = says(96, 696, 700, 0); HR(696, 652, 480, 64, K.red, K.paper); says(1186, 1824, 700, k); X.restore();
+  A(P(4.3, .4), () => { R(866, 660, 140, 48, K.paper); TX('卡住', 936, 696, font(700, 34), K.red, 'center'); });
+  R(686, 728, 500 * S(4.8, .6), 8, K.red); IN(5.2, () => TX('ITL 尖峰：两个 token 之间，隔了一整次 prefill', 936, 782, font(700, 34), K.red, 'center'));
+  IN(7.0, () => RICH('{b:prefill} 和 {p:decode} 抢同一张卡：生成被打断，新请求的首 token 也要排队', 96, 880, font(700, 40), K.ink));
+  IN(8.8, () => TX('prompt 越长越明显：V4 的上下文上限是 1M token。', 96, 946, font(600, 34), K.ink2));
+  IN(10.4, () => RICH('办法：这两件事{b:不在同一个实例里做}', 96, 1030, font(700, 44), K.ink));
+}
+function s10b() {
+  frame('再往外 · PD 分离', K.blue, 'PD 分离：prefill 和 decode 放到{b:两个实例}', 'vLLM 的做法：两个实例 + NixlConnector');
+  const BX = 520, BW = 640, PY = 330, DY = 640, BH = 230, cx = (k) => BX + 280 + k * 68;
+  POP(.5, 96, 400, 180, 400, () => { R(96, 400, 180, 400, K.ink2); TX('router', 186, 612, font(700, 34, HN), '#fff', 'center'); });
+  ln([[276, 445], [BX, 445]], K.ink, 4, P(.9, .5)); ln([[276, 755], [BX, 755]], K.ink, 4, P(1.0, .5));
+  const pf = S(3.7, 1.7), rel = P(12.6, .8);
+  POP(.6, BX, PY, BW, BH, () => { R(BX, PY, BW, BH, K.paper2); TX('P 实例 · 只做 prefill', BX, PY - 14, font(700, 32), K.blue);
+    R(BX + 20, PY + 20, 600, 70, K.paper); TX('prefill：一步读完整个 prompt', BX + 320, PY + 66, font(700, 30), K.lg, 'center');
+    X.save(); X.beginPath(); X.rect(BX + 20, PY + 20, 600 * pf, 70); X.clip(); R(BX + 20, PY + 20, 600, 70, K.blue); TX('prefill：一步读完整个 prompt', BX + 320, PY + 66, font(700, 30), '#fff', 'center'); X.restore();
+    R(BX + 20, PY + 110, 170, 100, K.ink2); TX('权重', BX + 105, PY + 172, font(700, 30), '#fff', 'center'); R(BX + 206, PY + 110, 414, 100, K.paper); TX('KV', BX + 243, PY + 170, font(700, 28, HN), K.gray, 'center');
+    box(BX - 2, PY - 2, BW + 4, BH + 4, 4); });
+  POP(.7, BX, DY, BW, BH, () => { R(BX, DY, BW, BH, K.paper2); TX('D 实例 · 只做 decode', BX, DY + BH + 40, font(700, 32), K.purple);
+    R(BX + 20, DY + 20, 170, 100, K.ink2); TX('权重', BX + 105, DY + 82, font(700, 30), '#fff', 'center'); R(BX + 206, DY + 20, 414, 100, K.paper); TX('KV', BX + 243, DY + 80, font(700, 28, HN), K.gray, 'center');
+    R(BX + 20, DY + 140, 600, 70, K.paper); box(BX - 2, DY - 2, BW + 4, BH + 4, 4); });
+  // P 里的 KV：prefill 时一格格写出来，D 读走后释放
+  for (let k = 0; k < 5; k++) { POP(4.0 + k * .3, cx(k), PY + 125, 60, 70, () => A(1 - rel, () => R(cx(k), PY + 125, 60, 70, K.yel)), .4); A(rel, () => box(cx(k) + 2, PY + 127, 56, 66, 3, K.lg)); }
+  A(rel, () => TX('已释放', BX + 243, PY + 200, font(600, 22), K.gray, 'center'));
+  // D 把 KV 读过来
+  A(.3 * (P(9.3, .4) - P(11.0, .5)), () => R(cx(0) - 6, PY + BH + 2, 68 * 5 + 4, DY - PY - BH - 4, K.yel));
+  IN(9.2, () => TX('NIXL：显存 → 显存', BX + 20, PY + BH + 52, font(700, 28), K.yelD), .5, 0);
+  for (let k = 0; k < 5; k++) { const f = S(9.4 + k * .12, 1.1); if (f > 0) R(cx(k), mix(PY + 125, DY + 35, f), 60, 70, K.yel); }
+  for (let k = 0; k < 12; k++) { const x = BX + 20 + k * 50, t0 = 11.6 + k * .22; POP(t0, x, DY + 140, 40, 70, () => R(x, DY + 140, 40, 70, K.purple), .3);
+    POP(t0 + .1, 1240 + k * 48, DY + 150, 40, 50, () => R(1240 + k * 48, DY + 150, 40, 50, K.purple), .3); }
+  arrow(1166, DY + 175, 1228, P(11.5, .4)); IN(11.5, () => TX('输出给用户', 1240, DY + 238, font(600, 26), K.gray), .5, 0);
+  // 请求：进 router → P；位置：P → router；请求 + 位置：router → D
+  if (T < 4.0) chip(mix(186, 440, S(2.7, .9)), mix(350, 445, S(1.4, .8)), 120, 'prompt', K.purple, '#fff', P(1.4, .4) * (1 - P(3.6, .3)));
+  if (T >= 5.6 && T < 9.0) { const x = mix(mix(440, 186, S(5.9, .9)), 400, S(7.6, .9)), y = mix(445, 755, S(6.9, .6)), a = P(5.6, .3) * (1 - P(8.6, .3)), j = P(7.0, .4);
+    chip(x - 55 * j, y, 110, 'prompt', K.purple, '#fff', a * j); chip(x + 55 * j, y, 110, 'KV 位置', K.yel, K.ink, a); }
+  const cap = [[2.6, K.blue, '#fff', 'router 先把请求发给 P', '只做 prefill：max_tokens = 1'], [5.6, K.blue, '#fff', 'P 算完，KV 留在显存里', '把 KV 的位置返回给 router'], [7.4, K.ink2, '#fff', 'router 再把请求发给 D', '带上 KV 的位置'],
+    [9.2, K.yel, K.ink, 'D 把 KV 读进自己的显存', '直接从 P 的显存读，不用重算'], [11.4, K.purple, '#fff', 'D 接着生成', 'P 释放这份 KV，去接下一个 prompt']];
+  cap.forEach(([t0, col, tc, a, b], i) => IN(t0, () => { const y = 362 + i * 88; R(1230, y - 31, 40, 40, col); TX(String(i + 1), 1250, y - 1, font(700, 28, HN), tc, 'center'); TX(a, 1288, y, font(700, 32), K.ink); TX(b, 1288, y + 38, font(600, 26), K.gray); }));
+  IN(14.6, () => RICH('多出来的成本：把 {y:KV 传一次}。prompt 越长，要传的越多', 96, 1016, font(700, 44), K.ink));
+}
+function s10c() {
+  frame('再往外 · PD 分离', K.blue, '分开以后：生成{p:不再被打断}', '时间轴为示意');
+  IN(.5, () => TX('P 实例', 96, 322, font(700, 34), K.blue)); IN(.7, () => TX('D 实例', 96, 478, font(700, 34), K.purple));
+  A(P(.5, .6), () => { R(96, 338, 1728, 80, K.paper2); R(96, 494, 1728, 80, K.paper2); });
+  X.save(); X.beginPath(); X.rect(96, 330, 1728 * clamp((T - 1.2) / 3.2), 340); X.clip();
+  [[96, 300], [696, 480], [1330, 360]].forEach(([x, w]) => { R(x, 338, w, 80, K.blue); TX('prefill', x + w / 2, 390, font(700, 32, HN), '#fff', 'center'); }); steps(96, 1824, 494, 80); says(96, 1824, 636, 0); X.restore();
+  [[396, 1.76], [1176, 3.2], [1690, 4.15]].forEach(([x, t0]) => { const p = S(t0, .8); if (p <= 0) return; R(x - 4, 418, 8, 76 * p, K.yel); A(Math.min(1, p * 3), () => { R(x - 44, mix(400, 434, p), 88, 44, K.yel); TX('KV', x, mix(400, 434, p) + 32, font(700, 30, HN), K.ink, 'center'); }); });
+  IN(4.6, () => TX('长 prompt 在 P 上算，D 上的输出一个接一个，没有停顿。', 96, 706, font(600, 34), K.ink2));
+  IN(6.0, () => RICH('延迟达标的前提下，每张卡能接的请求：{r:1.6} → {b:3.3} 个/秒', 96, 798, font(700, 44), K.ink));
+  IN(6.4, () => TX('DistServe 论文的测量：13B 模型，A100', 96, 842, font(600, 28), K.gray), .5, 0);
+  IN(8.4, () => TX('这几种情况不值得分', 96, 912, font(700, 34), K.ink));
+  [['卡很少', '总有一边闲着'], ['prompt 短，或缓存命中高', '本来就没多少 prefill 要算'], ['只看总吞吐，不看延迟', '分开不会更高（vLLM 文档）']].forEach(([a, b], i) => IN(8.8 + i * .5, () => { const x = 96 + i * 584; R(x, 932, 560, 108, K.paper2); R(x, 932, 8, 108, K.red); TX(a, x + 32, 978, font(700, 32), K.ink); TX(b, x + 32, 1018, font(600, 26), K.gray); }));
+}
+
+// ---------- 11 小结 ----------
+function s11() {
+  frame('小结', K.ink2, '实例之内两种切法，实例之间再加一层分工', '显存与请求数为估算；8 × B200');
+  const col = (x, t0, title, tc, segs, facts, cmds) => { ledger(x, 330, 150, segs, '', 2, P(t0, .6));
+    IN(t0 + .2, () => TX(title, x + 190, 364, font(700, 40), tc));
+    facts.forEach(([k, v], i) => IN(t0 + .6 + i * .4, () => { TX(k, x + 190, 420 + i * 74, font(600, 26), K.gray); TX(v, x + 190, 456 + i * 74, font(700, 34), K.ink); }, .6, 10));
+    IN(t0 + 2.3, () => cmds.forEach((c, i) => TX(c, x, 760 + i * 42, font(600, 28, HN), K.ink2)), .6, 10); };
+  col(96, .6, '分法一 · TP', K.blue, [{ gb: 104, col: K.teal, gbText: 1 }, { gb: 4, col: K.blue }, { gb: 72, hatch: true }],
+    [['每张卡', '权重 108 GB，余 72 GB'], ['8 张卡不重复的 KV', '72 GB，约 12 个 1M 请求'], ['卡间通信', '每层 2 次 all-reduce'], ['适合', '单个请求要快']], ['SGLang：--tp 8', 'vLLM：--tensor-parallel-size 8']);
+  col(984, 3.4, '分法二 · DP attention + EP', K.teal, [{ gb: 104, col: K.teal, gbText: 1 }, { gb: 29, col: K.blue, gbText: 1 }, { gb: 47, slots: 8, t0: 4.2 }],
+    [['每张卡', '权重 133 GB，余 47 GB'], ['8 张卡不重复的 KV', '372 GB，约 64 个 1M 请求'], ['卡间通信', '每层 dispatch + combine'], ['适合', '同时服务很多人']], ['SGLang：--tp 8 --dp 8 --enable-dp-attention', 'vLLM：--data-parallel-size 8 --enable-expert-parallel']);
+  IN(7.0, () => { R(96, 868, 1728, 150, K.paper2); R(96, 868, 10, 150, K.blue); TX('实例之间 · PD 分离', 134, 922, font(700, 38), K.blue);
+    TX('prefill 和 decode 各用一组实例，中间传一次 KV；换来更稳的 ITL，不是更高的吞吐', 134, 980, font(600, 32), K.ink2); });
+}
+
+// ====================== 运行时：场景之间交叉淡化，帧内多次采样做运动模糊 ======================
+const FILM = [[anat, A_T.end], [a6, 12.6], [s2, 10.4], [s3, 12.6], [s4, 18.0], [s5, 11.4], [s5b, 18.4], [s6, 11.6], [s7, 12.6], [s8, 12.4], [s9, 12.6], [s10, 13.2], [s10b, 17.8], [s10c, 13.4], [s11, 11.6]], XF = .7;
+let _t = 0; const SCENES = FILM.map(([fn, dur]) => { const sc = { fn, dur, at: _t }; _t += dur; return sc; });
+window.DURATION = _t;
+const EV = new Map([
+  [anat, [[.05, 'click'], [3.5, 'land'], [4.2, 'whoosh'], [5.5, 'tick'], [6.1, 'err'], [5.3 + HK, 'whoosh'], [A_T.open + .3, 'whoosh'], [A_T.two + .5, 'whoosh'], [A_T.moe + .3, 'whoosh'], [A_T.moe + 2.2, 'pop'], [A_T.moe + 3.7, 'tick'], [A_T.exp + .2, 'pop'], [A_T.att + .6, 'whoosh'], [A_T.att + 2.2, 'tick'], [A_T.att + 3.9, 'tick'], [A_T.att + 4.7, 'pop'], [A_T.kv, 'tick'], [A_T.cmp + .5, 'whoosh'], [A_T.sum + .1, 'whoosh'], [A_T.sum + 2.6, 'pop']]],
+  [a6, [[.1, 'click'], [1.3, 'whoosh'], ...Array.from({ length: 7 }, (_, k) => [3.9 + k * .28, 'tick']), [6.6, 'pop'], [7.9, 'whoosh'], [10.2, 'pop']]],
+  [s2, [[.2, 'whoosh'], ...Array.from({ length: 8 }, (_, g) => [2.3 + g * .14, 'tick']), [5.6, 'whoosh'], [7.6, 'pop']]],
+  [s3, [[.1, 'click'], [1.7, 'whoosh'], [3.0, 'pop'], [6.3, 'whoosh'], [7.6, 'tick'], [8.6, 'tick'], [9.8, 'pop']]],
+  [s4, [[.1, 'click'], [2.5, 'tick'], [3.7, 'tick'], [5.1, 'tick'], [6.3, 'tick'], [8.0, 'whoosh'], ...Array.from({ length: 8 }, (_, g) => [8.8 + g * .1, 'tick']), [10.4, 'whoosh'], [11.0, 'land'], [11.8, 'pop'], [14.3, 'pop']]],
+  [s5, [[.1, 'click'], [2.0, 'tick'], [3.6, 'err'], [7.4, 'pop']]],
+  [s5b, [[.1, 'click'], [1.2, 'tick'], [4.5, 'whoosh'], [7.5, 'whoosh'], [10.7, 'whoosh'], [11.4, 'tick'], [14.0, 'pop']]],
+  [s6, [[.1, 'click'], [3.6, 'whoosh'], [5.8, 'whoosh'], [8.4, 'tick'], [8.9, 'tick']]],
+  [s7, [[.1, 'click'], [2.0, 'tick'], [2.6, 'tick'], [3.2, 'tick'], [3.8, 'tick'], [6.0, 'tick'], [7.1, 'whoosh'], [8.4, 'land'], [9.0, 'pop']]],
+  [s8, [[.1, 'click'], [1.8, 'tick'], [2.8, 'pop'], [4.3, 'whoosh'], [6.4, 'pop'], [7.7, 'whoosh'], [8.9, 'land']]],
+  [s9, [[.1, 'click'], [2.0, 'pop'], [2.6, 'err'], [6.8, 'pop'], [7.7, 'whoosh'], [8.9, 'land']]],
+  [s10, [[.1, 'click'], [2.0, 'whoosh'], [3.2, 'err'], [5.2, 'tick'], [7.0, 'pop'], [10.4, 'pop']]],
+  [s10b, [[.1, 'click'], [1.4, 'tick'], [2.7, 'whoosh'], [4.0, 'tick'], [4.6, 'tick'], [5.2, 'tick'], [5.9, 'whoosh'], [7.6, 'whoosh'], [9.4, 'whoosh'], [10.6, 'land'], [11.6, 'tick'], [12.6, 'tick'], [14.6, 'pop']]],
+  [s10c, [[.1, 'click'], [1.76, 'tick'], [3.2, 'tick'], [4.15, 'tick'], [6.0, 'pop'], [8.8, 'tick'], [9.3, 'tick'], [9.8, 'tick']]],
+  [s11, [[.1, 'click'], [.8, 'whoosh'], ...Array.from({ length: 4 }, (_, i) => [1.2 + i * .4, 'tick']), [3.6, 'whoosh'], ...Array.from({ length: 4 }, (_, i) => [4.0 + i * .4, 'tick']), [7.0, 'pop']]],
+]);
+window.EVENTS = SCENES.flatMap((sc) => (EV.get(sc.fn) || []).map(([x, k]) => [sc.at + x, k]));
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const mk = () => { const c = document.createElement('canvas'); c.width = 1920; c.height = 1080; return c; };
+const o1 = mk(), o2 = mk(), c1 = o1.getContext('2d'), c2 = o2.getContext('2d');
+function paint(c, sc, tt) { X = c; T = Math.max(0, tt); X.setTransform(1, 0, 0, 1, 0, 0); X.globalAlpha = 1; X.setLineDash([]); X.lineCap = 'butt'; R(0, 0, 1920, 1080, K.paper); sc.fn(); }
+function drawFrame(t) { let i = SCENES.findIndex((s) => t < s.at + s.dur); if (i < 0) i = SCENES.length - 1; const sc = SCENES[i], local = t - sc.at;
+  paint(c1, sc, local);
+  if (i > 0 && local < XF) { const pv = SCENES[i - 1]; paint(c2, pv, pv.dur + local); c1.setTransform(1, 0, 0, 1, 0, 0); c1.globalAlpha = 1 - io(local / XF); c1.drawImage(o2, 0, 0); c1.globalAlpha = 1; } }
+window.renderAt = (t, fps = 60, samples = 5, shutter = .5) => {
+  for (let s = 0; s < samples; s++) { const ts = samples > 1 ? t - (shutter / Math.max(fps, 30)) * (1 - s / (samples - 1)) : t;
+    drawFrame(Math.max(0, ts)); ctx.globalAlpha = 1 / (s + 1); ctx.drawImage(o1, 0, 0); }
+  ctx.globalAlpha = 1; };
+window.sceneStarts = SCENES.map((s) => s.at);
+window.renderAt(0);
+</script>
+</body>
+</html>

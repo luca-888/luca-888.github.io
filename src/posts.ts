@@ -4,6 +4,8 @@ export type Post = {
   description: string;
   category: string;
   tags: string[];
+  // B 站 BV 号；成片不进仓库，上传后填写。源文件在 videos/<slug>/。
+  video?: string;
 } & (
   | { status: 'draft'; publishedAt?: never }
   | { status: 'published'; publishedAt: string }
@@ -12,6 +14,14 @@ export type Post = {
 // 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。
 export const posts: Post[] = [
   {
+    slug: 'dspark',
+    title: 'DSpark：DeepSeek V4 的 Speculative Decoding',
+    description: 'DeepSeek V4 线上的 speculative decoding：并行 backbone 加一个很小的 Markov head 生成 draft，confidence head 估计每个 token 的存活概率，调度器按负载决定每个请求验几个。',
+    category: '推理系统',
+    tags: ['DSpark', 'DeepSeek V4', 'Speculative decoding', 'DFlash', 'Adaptive verification', 'vLLM', 'LLM serving'],
+    status: 'draft',
+  },
+  {
     slug: 'vllm-distributed',
     title: '分布式推理：TP、DP + EP 与 PD 分离',
     description: '一张卡不够时怎么办：稠密模型用 TP，MoE 模型用 DP attention 加 EP，实例之间做 PD 分离。每种并行切的是什么、通信发生在哪、适用于什么模型。',
@@ -19,6 +29,22 @@ export const posts: Post[] = [
     tags: ['vLLM', 'Tensor parallelism', 'Expert parallelism', 'MoE', 'PD disaggregation', 'LLM serving'],
     status: 'published',
     publishedAt: '2026-10-03',
+  },
+  {
+    slug: 'jev',
+    title: 'Jev：不生成文本的模型怎么做决定',
+    description: '用一条工单和三个问题，拆解 decision model 怎样在一次 forward 里共享 state、隔离问题，并从 hidden state 直接读出概率。',
+    category: '推理系统',
+    tags: ['Jev', 'Kev', 'Decision model', 'Attention mask', 'Pointer head', 'Calibration', 'Prefix caching'],
+    status: 'draft',
+  },
+  {
+    slug: 'llm-quantization',
+    title: 'LLM 量化：FP8、INT4、NVFP4 与 Marlin Kernel',
+    description: '以 Qwen3.8-27B 为例，从一个数怎么用 4 bit 存讲起：16 个刻度放在哪（FP8、分组与 NVFP4），每个数落到哪个刻度（GPTQ），以及省下的字节换来的显存与速度。',
+    category: '推理系统',
+    tags: ['Quantization', 'FP8', 'INT4', 'NVFP4', 'Marlin', 'GPTQ', 'AWQ', 'vLLM', 'LLM serving'],
+    status: 'draft',
   },
   {
     slug: 'vllm-speculative-decoding',

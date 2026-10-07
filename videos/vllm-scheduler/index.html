@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Continuous Batching</title>
+<style>html,body{margin:0;background:#f1ede4}canvas{display:block}</style>
+</head>
+<body>
+<canvas id="cv" width="1920" height="1080"></canvas>
+<script>
+// ======================= palette & type =======================
+const K = {
+  paper: '#f1ede4', paper2: '#e6e0d3', ink: '#141414', ink2: '#3a3a3a', gray: '#8a8474',
+  red: '#e5322d', blue: '#2350d8', yel: '#f4c21b', yelD: '#9a7500',
+};
+const CUBE = {
+  blue: ['#5a7ff0', '#2350d8', '#1a3aa3'], yel: ['#f8d75a', '#f4c21b', '#c99a00'],
+  gray: ['#d8d2c4', '#c3bcac', '#aaa392'], ink: ['#4a4a4a', '#2c2c2c', '#161616'], red: ['#f06a5f', '#e5322d', '#b3211c'],
+};
+const ACC = { b: K.blue, r: K.red, y: K.yelD, k: K.ink, g: K.gray };
+const HN = '"Helvetica Neue", "PingFang SC", sans-serif';
+const ZH = '"PingFang SC", "Helvetica Neue", sans-serif';
+const font = (w, s, f = ZH) => `${w} ${s}px ${f}`;
+
+// ======================= math =======================
+const cl = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const L = (a, b, p) => a + (b - a) * p;
+const EO = (x) => { x = cl(x); return x === 1 ? 1 : 1 - Math.pow(2, -10 * x); };           // expo out
+const EI = (x) => { x = cl(x); return x === 0 ? 0 : Math.pow(2, 10 * x - 10); };            // expo in
+const EIO = (x) => { x = cl(x); return x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2; }; // quint in-out
+const O = (t, a, d = .5) => EO((t - a) / d);
+const IO = (t, a, d = .6) => EIO((t - a) / d);
+function SP(t, a, k = 1) { const x = (t - a) * k; if (x <= 0) return 0; const z = .5, w = 16, wd = w * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w * x) * (Math.cos(wd * x) + (z * w / wd) * Math.sin(wd * x)); }
+const bez = (p, t) => { const u = 1 - t; return [0, 1].map((j) => u * u * u * p[0][j] + 3 * u * u * t * p[1][j] + 3 * u * t * t * p[2][j] + t * t * t * p[3][j]); };
+function rng(seed) { return () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }; }
+const fmt = (v, d = 0) => v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+// ======================= drawing primitives =======================
+let X; // current ctx
+function poly(pts, fill, stroke, lw = 1) {
+  X.beginPath(); pts.forEach(([x, y], i) => i ? X.lineTo(x, y) : X.moveTo(x, y)); X.closePath();
+  if (fill) { X.fillStyle = fill; X.fill(); } if (stroke) { X.strokeStyle = stroke; X.lineWidth = lw; X.stroke(); }
+}
+function rect(x, y, w, h, fill, stroke, lw = 1) {
+  if (w <= 0 || h <= 0) return; X.beginPath(); X.rect(x, y, w, h);
+  if (fill) { X.fillStyle = fill; X.fill(); } if (stroke) { X.strokeStyle = stroke; X.lineWidth = lw; X.stroke(); }
+}
+function line(pts, col, lw = 2, dash) {
+  X.beginPath(); pts.forEach(([x, y], i) => i ? X.lineTo(x, y) : X.moveTo(x, y));
+  X.strokeStyle = col; X.lineWidth = lw; X.lineCap = 'butt'; X.lineJoin = 'miter'; if (dash) X.setLineDash(dash); X.stroke(); X.setLineDash([]);
+}
+function txt(s, x, y, f, fill, align = 'left', base = 'alphabetic') { X.font = f; X.fillStyle = fill; X.textAlign = align; X.textBaseline = base; X.fillText(s, x, y); }
+const tw = (s, f) => { X.font = f; return X.measureText(s).width; };
+function head(x, y, ang, size, fill) { poly([[x, y], [x - size * Math.cos(ang - .42), y - size * Math.sin(ang - .42)], [x - size * Math.cos(ang + .42), y - size * Math.sin(ang + .42)]], fill); }
+// partial polyline draw, returns end point
+function polyPart(pts, p, col, lw = 2, arrow = true) {
+  if (p <= 0) return;
+  const seg = []; let tot = 0;
+  for (let i = 1; i < pts.length; i++) { const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push(d); tot += d; }
+  let rem = tot * cl(p); const out = [pts[0]];
+  for (let i = 1; i < pts.length && rem > 0; i++) {
+    const d = seg[i - 1], q = Math.min(1, rem / d);
+    out.push([L(pts[i - 1][0], pts[i][0], q), L(pts[i - 1][1], pts[i][1], q)]); rem -= d;
+  }
+  const n = out.length, [ex, ey] = out[n - 1], [px, py] = out[n - 2] || out[0];
+  const ang = Math.atan2(ey - py, ex - px);
+  if (arrow && p >= .999) { line(out.slice(0, -1).concat([[ex - Math.cos(ang) * 8, ey - Math.sin(ang) * 8]]), col, lw); head(ex, ey, ang, 15, col); }
+  else line(out, col, lw);
+}
+// hatch pattern cache
+const PAT = {};
+function hatchPat(col, bg, gap = 11, w = 3.2) {
+  const key = col + bg + gap; if (PAT[key]) return PAT[key];
+  const c = document.createElement('canvas'); c.width = c.height = gap; const g = c.getContext('2d');
+  if (bg) { g.fillStyle = bg; g.fillRect(0, 0, gap, gap); }
+  g.strokeStyle = col; g.lineWidth = w; g.beginPath();
+  for (let o = -gap; o <= gap * 2; o += gap) { g.moveTo(o, gap); g.lineTo(o + gap, 0); }
+  g.stroke(); PAT[key] = X.createPattern(c, 'repeat'); return PAT[key];
+}
+// rich text: "{r:红字}"
+function runs(s) { const out = []; const re = /\{(\w):([^}]*)\}/g; let last = 0, m; while ((m = re.exec(s))) { if (m.index > last) out.push([s.slice(last, m.index), null]); out.push([m[2], m[1]]); last = re.lastIndex; } if (last < s.length) out.push([s.slice(last), null]); return out; }
+function rich(s, x, y, f, base, align = 'left') {
+  X.font = f; const r = runs(s); const w = r.reduce((a, [t]) => a + X.measureText(t).width, 0);
+  let cx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x; X.textAlign = 'left'; X.textBaseline = 'alphabetic';
+  for (const [t, k] of r) { X.fillStyle = k ? ACC[k] : base; X.fillText(t, cx, y); cx += X.measureText(t).width; }
+  return w;
+}
+// mask-reveal: draws fn inside a clip that rises from below
+function rise(p, x, y, w, h, fn) {
+  if (p <= 0) return; X.save(); X.beginPath(); X.rect(x, y, w, h); X.clip(); X.translate(0, (1 - p) * h); fn(); X.restore();
+}
+function wipe(p, x, y, w, h, fn) { if (p <= 0) return; X.save(); X.beginPath(); X.rect(x, y, w * p, h); X.clip(); fn(); X.restore(); }
+
+// ======================= isometric (flat print) =======================
+function Iso(ox, oy, s, H = 28, cols = 4, gap = 2.4) {
+  const I = { ox, oy, s, H, cols, gap };
+  I.pt = (u, v, z = 0) => [ox + (u - v) * s * .866, oy + (u + v) * s * .5 - z];
+  I.uv = (k, m) => [(k % cols) * gap + (m % 2), Math.floor(k / cols) * gap + Math.floor(m / 2)];
+  I.cc = (k, m, z = 0) => { const [u, v] = I.uv(k, m); return I.pt(u + .5, v + .5, z); };
+  I.bc = (k, z = 0) => { const [u, v] = I.uv(k, 0); return I.pt(u + 1, v + 1, z); };
+  I.ext = (rows) => rows * gap - (gap - 2);
+  return I;
+}
+function isoCube(I, u, v, h, col, z0 = 0, inset = .07, lw = 1.2) {
+  const a = inset, b = 1 - inset;
+  const T = [I.pt(u + a, v + a, z0 + h), I.pt(u + b, v + a, z0 + h), I.pt(u + b, v + b, z0 + h), I.pt(u + a, v + b, z0 + h)];
+  const B = [I.pt(u + b, v + a, z0), I.pt(u + b, v + b, z0), I.pt(u + a, v + b, z0)];
+  poly([T[3], T[2], B[1], B[2]], col[2], K.ink, lw);
+  poly([T[2], T[1], B[0], B[1]], col[1], K.ink, lw);
+  poly(T, col[0], K.ink, lw);
+}
+function isoTile(I, u, v, fill, lw = 1.1, stroke = K.ink) {
+  poly([I.pt(u + .06, v + .06), I.pt(u + .94, v + .06), I.pt(u + .94, v + .94), I.pt(u + .06, v + .94)], fill, stroke, lw);
+}
+// o: { t0, n, rows, cell(k,m)->{col, at, z0}|null, tile(k,m)->fill|null, label(k)->color|null }
+function drawSlab(I, t, o) {
+  const rows = o.rows || 4, n = o.n || 16, ext = I.ext(rows) + .4;
+  const ap = O(t, o.t0, .7);
+  if (ap <= 0) return;
+  X.save(); X.globalAlpha = cl(ap * 1.5); X.translate(0, (1 - ap) * 60);
+  const A = I.pt(-.4, -.4), B = I.pt(ext, -.4), C = I.pt(ext, ext), D = I.pt(-.4, ext), th = 22;
+  poly([D, C, [C[0], C[1] + th], [D[0], D[1] + th]], K.ink);
+  poly([C, B, [B[0], B[1] + th], [C[0], C[1] + th]], K.ink2);
+  poly([A, B, C, D], K.paper2, K.ink, 2);
+  X.restore();
+  const cells = [];
+  for (let k = 0; k < n; k++) for (let m = 0; m < 4; m++) { const [u, v] = I.uv(k, m); cells.push({ k, m, u, v }); }
+  cells.sort((p, q) => p.u + p.v - q.u - q.v);
+  for (const c of cells) {
+    const a = O(t, o.t0 + .25 + (c.u + c.v) * .018, .4);
+    if (a <= 0) continue;
+    X.save(); X.globalAlpha = a; X.translate(0, (1 - a) * 30);
+    isoTile(I, c.u, c.v, (o.tile && o.tile(c.k, c.m)) || K.paper);
+    const s = o.cell && o.cell(c.k, c.m);
+    if (s) {
+      const h = I.H * SP(t, s.at, 1.1);
+      if (h > .5) isoCube(I, c.u, c.v, h, s.col, s.z0 || 0);
+      const rp = (t - s.at) / .45;
+      if (s.ring && rp > 0 && rp < 1) { X.globalAlpha = 1 - rp; const g = .5 + rp * 1.1; poly([I.pt(c.u + .5 - g, c.v + .5 - g), I.pt(c.u + .5 + g, c.v + .5 - g), I.pt(c.u + .5 + g, c.v + .5 + g), I.pt(c.u + .5 - g, c.v + .5 + g)], null, K.ink, 2); }
+    }
+    X.restore();
+  }
+  if (o.label) for (let k = 0; k < n; k++) {
+    const col = o.label(k); if (!col) continue;
+    const a = O(t, o.t0 + .7 + k * .02, .3); if (a <= 0) continue;
+    const [u, v] = I.uv(k, 2), [x, y] = I.pt(u - .32, v + 1.32);
+    X.globalAlpha = a; txt('#' + k, x, y + 8, font(800, 17, HN), col, 'center'); X.globalAlpha = 1;
+  }
+}
+// flying token square with trailing dots
+function flyer(pts, q, col = K.red, size = 38) {
+  if (q <= 0 || q >= 1) return;
+  const e = EIO(q);
+  for (let j = 3; j >= 1; j--) { const [x, y] = bez(pts, cl(e - j * .05)); rect(x - 4, y - 4, 8, 8, K.ink); }
+  const [x, y] = bez(pts, e), s = L(size, size * .7, e);
+  rect(x - s / 2, y - s / 2, s, s, col, K.ink, 2);
+}
+
+// ======================= scheduler helpers =======================
+// 语义色：decode 蓝、prefill 黄、被 prefill 挡住红、排队灰、空转/padding 红斜线
+const DEC = K.blue, PRE = K.yel, STALL = K.red, WAIT = CUBE.gray[1];
+const WASTE = () => hatchPat(K.red, K.paper);
+const env = (t, a, b, d = .4) => O(t, a, d) * (1 - O(t, b, .3));
+function box(x, y, w, h, fill, label, lc = '#fff', f = font(800, 26, HN), lw = 2) {
+  rect(x, y, w, h, fill, K.ink, lw);
+  if (label) txt(label, x + w / 2, y + h / 2 + 1, f, lc, 'center', 'middle');
+}
+function popAt(t, at, cx, cy, fn) { const s = SP(t, at, 1.1); if (s <= 0) return; X.save(); X.translate(cx, cy); X.scale(s, s); fn(); X.restore(); }
+// 横向括号：dir=1 时竖边朝下（括号在物体上方）
+function brace(x1, x2, y, p = 1, col = K.ink, lw = 3, dir = 1) {
+  if (p <= 0) return; const xe = L(x1, x2, p);
+  line([[x1, y + 12 * dir], [x1, y], [xe, y]].concat(p >= 1 ? [[x2, y + 12 * dir]] : []), col, lw);
+}
+function fade(a, fn) { if (a <= 0) return; X.save(); X.globalAlpha *= cl(a); fn(); X.restore(); }
+
+// 构造示例（与正文时间线一致）：A、B 已在 decode，还需 6、3 个 token；C 在 t=1 到达，prompt 16 个 token，共生成 3 个。
+// 一次迭代耗时 = max(1, tokens / 4)。
+function simulate(policy) {
+  const left = { A: 6, B: 3, C: 3 }, ARR = 1, BUDGET = 8, cost = (n) => Math.max(1, n / 4);
+  const rows = { A: [], B: [], C: [] }, st = { A: [], B: [], C: [] };
+  const push = (r, s, e, k, lab) => rows[r].push({ s, e, k, lab });
+  const dec = (r, s, e) => { push(r, s, e, 'dec'); left[r]--; st[r].push(e); };
+  let t = 0, pl = 16;
+  while (left.A > 0 || left.B > 0 || left.C > 0 || pl > 0) {
+    const run = ['A', 'B'].filter((r) => left[r] > 0), ready = t >= ARR && pl > 0, cdec = pl === 0 && left.C > 0;
+    if (!ready) { const d = [...run, ...(cdec ? ['C'] : [])], dt = cost(d.length); d.forEach((r) => dec(r, t, t + dt)); t += dt; }
+    else if (policy === 'pf') { const dt = cost(pl); run.forEach((r) => push(r, t, t + dt, 'stall')); push('C', t, t + dt, 'pre', String(pl)); t += dt; pl = 0; left.C--; st.C.push(t); }
+    else { const ch = Math.min(pl, BUDGET - run.length), dt = cost(run.length + ch); run.forEach((r) => dec(r, t, t + dt)); push('C', t, t + dt, 'pre', String(ch)); t += dt; pl -= ch; if (!pl) { left.C--; st.C.push(t); } }
+  }
+  const gaps = st.A.slice(1).map((e, i) => [st.A[i], e]); const g = gaps.reduce((a, b) => (b[1] - b[0] > a[1] - a[0] ? b : a));
+  return { rows, end: t, gap: g, ttft: [ARR, st.C[0]] };
+}
+const TL_PF = simulate('pf'), TL_BG = simulate('budget');
+const KFILL = { dec: DEC, pre: PRE, stall: STALL, wait: WAIT };
+function drawTL(tl, x0, y0, sc, rh, pitch, tau, o = {}) {
+  ['A', 'B', 'C'].forEach((r, i) => {
+    const y = y0 + i * pitch;
+    txt(r, x0 - 22, y + rh / 2 + 1, font(900, o.fs || 30, HN), K.ink, 'right', 'middle');
+    rect(x0, y + rh / 2 - .5, sc * tl.end, 1, CUBE.gray[1]);
+    for (const s of tl.rows[r]) {
+      if (tau <= s.s) continue;
+      const e = Math.min(s.e, tau), x = x0 + s.s * sc, w = (e - s.s) * sc;
+      rect(x + 1.5, y, w - 3, rh, KFILL[s.k], K.ink, 1.5);
+      if (s.lab && tau >= s.e) txt(s.lab, x + w / 2, y + rh / 2 + 1, font(900, Math.min(26, rh * .55), HN), K.ink, 'center', 'middle');
+    }
+  });
+  if (tau > 0 && tau < tl.end) line([[x0 + tau * sc, y0 - 16], [x0 + tau * sc, y0 + 2 * pitch + rh + 16]], K.ink, 3);
+}
+
+// ======================= scenes =======================
+const SC = [];
+const EV = []; // [globalTime, type]
+
+// ---------- 00 hook ----------
+SC.push({
+  id: 'hook', dur: 9.5,
+  cam: [[0, 960, 540, 1], [9.5, 960, 540, 1.02]],
+  beats: [],
+  ev: (() => { const e = []; for (let i = 0; i < 12; i++) e.push([.2 + i * .08, 'tick']); e.push([1.4, 'whoosh'], [2.6, 'thud'], [3.0, 'pop'], [4.6, 'whoosh'], [5.05, 'thud'], [5.3, 'tick'], [5.5, 'tick'], [6.4, 'pop']); return e; })(),
+  draw(t) {
+    const out = EI((t - 4.6) / .5);
+    X.save(); X.translate(-2100 * out, 0);
+    const y = 730, h = 90, x0 = 96, u = 40;
+    for (let i = 0; i < 12; i++) rise(O(t, .2 + i * .08, .3), x0 + i * u, y, u, h, () => rect(x0 + i * u + 3, y, u - 6, h, DEC, K.ink, 1.5));
+    const gp = EIO((t - 1.4) / 1.3), bx = x0 + 12 * u + 6;
+    if (gp > 0) {
+      const w = (u * 28.3 - 6) * gp;
+      rect(bx, y, w * .9, h, PRE, K.ink, 1.5); rect(bx + w * .9, y, w * .1, h, DEC, K.ink, 1.5);
+    }
+    X.globalAlpha = O(t, 2.8, .4);
+    txt('纯 decode 迭代', x0, y + h + 36, font(700, 22), K.gray);
+    txt('prefill 与 decode 混在一次迭代里', bx, y + h + 36, font(700, 22), K.gray); X.globalAlpha = 1;
+    const v = 28.3 * EO((t - 1.4) / 1.4);
+    rise(O(t, 1.2, .5), 80, 180, 1800, 400, () => txt(fmt(v, 1) + '×', 88, 540, font(900, 330, HN), K.red));
+    rise(O(t, 2.6, .5), 96, 580, 1700, 110, () => rich('朴素地把 {y:prefill} 混进 {b:decode} batch，一次迭代就慢这么多', 100, 668, font(800, 60), K.ink));
+    X.globalAlpha = O(t, 3.2, .5); txt('最坏情况 · 数据：Sarathi-Serve（OSDI 2024）', 96, 900, font(600, 22), K.gray); X.globalAlpha = 1;
+    X.restore();
+    if (t > 4.8) {
+      const s = SP(t, 5.0, 1);
+      X.save(); X.translate(96 + 90, 250 + 90); X.scale(s, s); rect(-90, -90, 180, 180, K.red); X.restore();
+      rise(O(t, 5.25, .45), 320, 150, 1500, 230, () => txt('Continuous', 316, 350, font(900, 200, HN), K.ink));
+      rise(O(t, 5.45, .45), 90, 380, 1800, 230, () => txt('Batching', 86, 580, font(900, 200, HN), K.ink));
+      rect(96, 640, 1728 * EIO((t - 5.9) / .7), 4, K.ink);
+      rise(O(t, 6.4, .5), 96, 670, 1728, 90, () => rich('vLLM 调度器：用一个 {r:token budget}，决定每一步谁算、算多少', 96, 735, font(800, 48), K.ink));
+    }
+  },
+});
+
+// ---------- 01 prefill & decode ----------
+SC.push({
+  id: 'pd', dur: 19, num: '01', title: 'Prefill 与 decode', card: K.blue,
+  cam: [[0, 960, 540, 1], [19, 960, 540, 1.02]],
+  beats: [[1.4, '{y:Prefill}：整段 prompt 一次送进模型，算力用满'], [5.6, '{b:Decode}：每步只生成 1 个 token，却要读一遍全部权重'], [9.8, '多条请求拼进一个 batch：读一次权重，服务更多 token'], [14.6, '剩下的问题是：{r:怎么拼}']],
+  ev: (() => { const e = [[1.0, 'thud']]; for (let i = 0; i < 12; i++) e.push([1.6 + i * .04, 'tick']); e.push([2.2, 'whoosh'], [2.8, 'hit'], [3.8, 'pop'], [6.2, 'whoosh'], [6.6, 'hit'], [7.6, 'pop'], [8.0, 'err'], [10.4, 'whoosh'], [10.8, 'hit']); for (let i = 0; i < 4; i++) e.push([11.8 + i * .08, 'pop']); e.push([12.2, 'click'], [14.6, 'thud']); return e; })(),
+  draw(t) {
+    const WX = 760, WY = 290, WW = 400, WH = 300, IN = [WX + 12, WY + WH / 2];
+    const wa = O(t, 1.0, .5);
+    fade(wa, () => {
+      rect(WX, WY, WW, WH, CUBE.gray[0], K.ink, 3);
+      for (const a of [2.8, 6.6, 10.8]) {
+        const p = IO(t, a, .8), f = 1 - O(t, a + 1.4, .5);
+        if (p > 0 && f > 0) { fade(f, () => rect(WX, WY, WW * p, WH, CUBE.gray[1])); if (p < 1) line([[WX + WW * p, WY], [WX + WW * p, WY + WH]], K.red, 5); }
+      }
+      rect(WX, WY, WW, WH, null, K.ink, 3);
+      txt('模型权重', WX + WW / 2, WY + WH / 2 - 4, font(900, 46), K.ink, 'center');
+      txt('每次迭代读一遍', WX + WW / 2, WY + WH / 2 + 42, font(700, 24), K.ink2, 'center');
+    });
+    const fly = (sx, sy, at, draw) => { const q = (t - at) / .45; if (q >= 1) return; const e = q > 0 ? EIO(q) : 0; X.save(); X.translate(L(sx, IN[0], e), L(sy, IN[1], e)); const s = 1 - .6 * e; X.scale(s, s); draw(); X.restore(); };
+    const title = (a, b, s) => fade(env(t, a, b), () => rise(O(t, a, .45), 96, 190, 1700, 70, () => rich(s, 96, 240, font(900, 40), K.ink)));
+    // P1 prefill
+    const p1 = env(t, 1.4, 5.2);
+    title(1.4, 5.2, '{y:Prefill} · prompt 的 12 个 token 一次送入');
+    fade(p1, () => {
+      for (let i = 0; i < 12; i++) {
+        const c = i % 3, r = Math.floor(i / 3), sx = 360 + c * 72, sy = 330 + r * 72, a = O(t, 1.6 + i * .04, .35);
+        if (a > 0) fly(sx, sy, 2.2 + i * .03, () => { X.globalAlpha *= a; box(-30, -30, 60, 60, PRE); });
+      }
+      popAt(t, 3.8, 1300, 400, () => box(-32, -32, 64, 64, K.red, 'tok', '#fff', font(800, 20, HN)));
+      rise(O(t, 3.9, .4), 1350, 370, 500, 60, () => txt('1 个输出 token', 1356, 412, font(800, 30), K.ink));
+      for (let i = 0; i < 12; i++) rect(1270 + i * 12, 470, 8, 44 * IO(t, 4.0 + i * .03, .3), i % 2 ? PRE : DEC);
+      rise(O(t, 4.2, .4), 1420, 460, 500, 60, () => txt('+ 12 个 token 的 KV', 1426, 502, font(800, 30, HN), K.ink));
+    });
+    // P2 decode
+    title(5.6, 9.4, '{b:Decode} · 每步 1 个 token');
+    fade(env(t, 5.6, 9.4), () => {
+      const a = O(t, 5.8, .35); if (a > 0) fly(470, 440, 6.2, () => { X.globalAlpha *= a; box(-30, -30, 60, 60, DEC); });
+      popAt(t, 7.6, 1300, 440, () => box(-32, -32, 64, 64, K.red, 'tok', '#fff', font(800, 20, HN)));
+      rise(O(t, 8.0, .4), 1350, 410, 560, 60, () => rich('读一遍权重 → {r:1 个 token}', 1356, 452, font(800, 32), K.ink));
+    });
+    // P3 batch
+    title(9.8, 99, '{b:Batch} · 4 个请求，各 1 个 token');
+    fade(env(t, 9.8, 99), () => {
+      'ABCD'.split('').forEach((n, i) => {
+        const a = O(t, 10.0 + i * .06, .35), sy = 332 + i * 72;
+        if (a > 0) fly(470, sy, 10.4 + i * .04, () => { X.globalAlpha *= a; box(-30, -30, 60, 60, DEC, n); });
+        popAt(t, 11.8 + i * .08, 1300, sy, () => box(-30, -30, 60, 60, K.red, n));
+      });
+      rise(O(t, 12.2, .4), 1360, 410, 520, 60, () => rich('同样读一遍 → {b:4 个 token}', 1366, 452, font(800, 32), K.ink));
+    });
+    // meters
+    const mv = (segs) => segs.reduce((a, [s, e, v]) => a + v * IO(t, s, .8) * (1 - IO(t, e, .3)), 0);
+    const meters = [['计算量', mv([[2.8, 5.2, .95], [6.6, 9.4, .06], [10.8, 99, .25]]), K.red], ['权重读取', mv([[2.8, 5.2, 1], [6.6, 9.4, 1], [10.8, 99, 1]]), K.ink]];
+    meters.forEach(([lab, v, col], i) => {
+      const y = 650 + i * 76, a = O(t, 2.4 + i * .1, .4);
+      fade(a, () => { txt(lab, 540, y + 30, font(800, 28), K.ink, 'right'); rect(560, y, 800, 40, K.paper, K.ink, 2); rect(560, y, 800 * v, 40, col); });
+    });
+    const note = (a, b, s, col) => fade(env(t, a, b), () => txt(s, 1384, 680, font(800, 26), col));
+    note(3.6, 5.2, '用满', K.ink); note(7.4, 9.4, '几乎空闲', K.red); note(11.6, 99, '×4，耗时几乎不变', K.ink);
+  },
+});
+
+// ---------- 02 static vs iteration-level ----------
+const LEN = { A: 8, B: 2, C: 4, D: 3, E: 4, F: 3 };
+const SLOT = (() => {
+  const st = ['A', 'B', 'C'].map((n) => Array.from({ length: 8 }, (_, s) => (s < LEN[n] ? n : null)));
+  const ct = [[], [], []], q = ['D', 'E', 'F'], cur = ['A', 'B', 'C'].map((n) => [n, 0]), enter = {};
+  for (let s = 0; s < 8; s++) cur.forEach((c, i) => {
+    if (c[1] >= LEN[c[0]] && q.length) { cur[i] = [q.shift(), 0]; enter[cur[i][0]] = [i, s]; }
+    const [n, d] = cur[i]; ct[i].push(d < LEN[n] ? n : null); cur[i] = [n, d + 1];
+  });
+  return { st, ct, enter };
+})();
+SC.push({
+  id: 'slots', dur: 22, num: '02', title: '静态 batch 的空转', card: K.red,
+  cam: [[0, 960, 540, 1], [22, 960, 540, 1.02]],
+  beats: [[1.4, '静态 batch：凑齐一批，一起跑到全部结束'], [5.0, '先结束的请求{r:空转}，新请求只能排队'], [10.6, 'Orca：每一步重新挑请求 —— {b:iteration-level scheduling}'], [16.0, '空出的位置，下一步就补上：这就是 {b:continuous batching}']],
+  ev: (() => { const e = [[1.4, 'thud']]; for (let s = 0; s < 8; s++) e.push([2.0 + s * .8, 'click']); e.push([5.0, 'err'], [8.8, 'thud'], [10.6, 'whoosh']); for (let s = 0; s < 8; s++) e.push([11.4 + s * .8, 'click']); ['D', 'E', 'F'].forEach((n) => e.push([11.4 + SLOT.enter[n][1] * .8 - .45, 'whoosh'], [11.4 + SLOT.enter[n][1] * .8, 'land'])); e.push([18.2, 'thud']); return e; })(),
+  draw(t) {
+    const x0 = 400, cw = 112, ch = 60, px = 124, py = 70, qx = 1460;
+    const panels = [{ y: 250, plan: SLOT.st, t0: 2.0, at: 1.4, name: '静态 batch', sub: '{A, B, C} 跑完才接新请求' }, { y: 600, plan: SLOT.ct, t0: 11.4, at: 10.6, name: 'iteration-level', sub: '每一步都可以换人' }];
+    panels.forEach((P, pi) => {
+      fade(O(t, P.at, .4), () => {
+        rise(O(t, P.at, .45), 96, P.y - 10, 300, 60, () => txt(P.name, 96, P.y + 36, font(900, 36, HN), K.ink));
+        rise(O(t, P.at + .1, .45), 96, P.y + 50, 300, 40, () => txt(P.sub, 96, P.y + 78, font(700, 22), K.gray));
+        for (let s = 0; s < 8; s++) {
+          if (pi === 0) txt(String(s + 1), x0 + s * px + cw / 2, P.y - 16, font(800, 20, HN), K.gray, 'center');
+          for (let r = 0; r < 3; r++) rect(x0 + s * px, P.y + r * py, cw, ch, null, CUBE.gray[1], 1.5);
+        }
+      });
+      const tau = cl((t - P.t0) / .8, 0, 8);
+      for (let s = 0; s < 8; s++) for (let r = 0; r < 3; r++) {
+        const n = P.plan[r][s], x = x0 + s * px, y = P.y + r * py, ts = P.t0 + s * .8;
+        const ent = n && pi === 1 && SLOT.enter[n] && SLOT.enter[n][1] === s;
+        if (ent) continue;
+        rise(O(t, ts, .3), x, y, cw, ch, () => n ? box(x, y, cw, ch, 'ABC'.includes(n) ? DEC : K.ink, n, '#fff', font(900, 30, HN)) : rect(x, y, cw, ch, WASTE(), K.ink, 1.5));
+      }
+      if (tau > 0 && tau < 8) line([[x0 + tau * px - 6, P.y - 10], [x0 + tau * px - 6, P.y + 2 * py + ch + 10]], K.red, 3);
+      // queue
+      fade(O(t, P.at + .3, .4), () => txt('队列', qx, P.y - 16, font(800, 20), K.gray));
+      ['D', 'E', 'F'].forEach((n, j) => {
+        const qxj = qx + j * 96, a = O(t, P.at + .3 + j * .08, .35);
+        if (a <= 0) return;
+        if (pi === 0) { fade(a, () => box(qxj, P.y, 84, ch, K.ink, n, '#fff', font(900, 30, HN))); return; }
+        const [r, s] = SLOT.enter[n], ts = P.t0 + s * .8, q = (t - (ts - .45)) / .45, e = EIO(q);
+        const x = L(qxj, x0 + s * px, e), y = L(P.y, P.y + r * py, e), w = L(84, cw, e);
+        fade(a, () => box(x, y - Math.sin(Math.PI * cl(q)) * 60, w, ch, K.ink, n, '#fff', font(900, 30, HN)));
+      });
+    });
+    fade(O(t, 5.0, .4), () => rich('{r:D、E、F 要等到第 9 步}', qx, 408, font(800, 26), K.ink));
+    rise(O(t, 8.8, .45), qx, 420, 400, 70, () => rich('{r:14} / 24 格在生成', qx, 470, font(900, 34), K.ink));
+    rise(O(t, 18.2, .45), qx, 770, 400, 70, () => rich('{b:24} / 24 格在生成', qx, 820, font(900, 34), K.ink));
+    // legend
+    fade(O(t, 5.0, .4), () => { rect(qx, 318, 40, 28, WASTE(), K.ink, 1.5); txt('已结束，仍占着位置', qx + 54, 341, font(700, 22), K.ink); });
+  },
+});
+
+// ---------- 03 selective batching ----------
+SC.push({
+  id: 'flat', dur: 21, num: '03', title: '拼成一长条', card: K.ink,
+  cam: [[0, 960, 540, 1], [21, 960, 540, 1.02]],
+  beats: [[1.4, '同一步里：A 在 {y:prefill}（5 个 token），B、C 在 {b:decode}（各 1 个）'], [3.6, '按 [batch, seq_len, H] 排，B、C 各要 {r:pad 4 格}'], [6.2, 'Orca 的 selective batching：7 个 token 首尾相接，排成 [7, H]'], [8.6, 'Linear、LayerNorm、MLP 逐 token 独立，整条一起算'], [12.0, 'Attention 按请求边界分段：各算各的'], [16.8, '于是调度器只需决定：每个请求{r:分多少个 token}']],
+  ev: (() => { const e = []; for (let i = 0; i < 15; i++) e.push([1.4 + i * .05, 'tick']); e.push([3.6, 'err'], [6.0, 'whoosh']); for (let i = 0; i < 7; i++) e.push([7.0 + i * .08, 'land']); e.push([8.6, 'whoosh'], [12.0, 'pop'], [12.2, 'pop'], [12.8, 'whoosh']); for (let i = 0; i < 4; i++) e.push([13.2 + i * .12, 'tick']); e.push([13.9, 'thud'], [16.8, 'thud']); return e; })(),
+  draw(t) {
+    const cs = 76, p = 84, gx = 700, gy = [270, 354, 438];
+    const kinds = [PRE, PRE, PRE, PRE, PRE, DEC, DEC], names = ['A', 'A', 'A', 'A', 'A', 'B', 'C'];
+    const src = [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [1, 0], [2, 0]];
+    const gA = O(t, 1.2, .4) * (1 - .8 * O(t, 7.4, .5)) * (1 - O(t, 11.2, .4));
+    fade(gA, () => {
+      rise(O(t, 1.2, .4), gx, 200, 800, 60, () => txt('[batch, seq_len, H] = [3, 5, H]', gx, 240, font(800, 30, HN), K.ink));
+      ['A', 'B', 'C'].forEach((n, r) => txt(n, gx - 24, gy[r] + cs / 2 + 1, font(900, 30, HN), K.ink, 'right', 'middle'));
+      for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++) {
+        const x = gx + c * p, y = gy[r];
+        rect(x, y, cs, cs, null, CUBE.gray[1], 1.5);
+        if (r > 0 && c > 0) { const a = O(t, 3.6 + c * .05, .3) * (1 - O(t, 6.0, .3)); fade(a, () => rect(x, y + cs * (1 - a), cs, cs * a, WASTE(), K.ink, 1.5)); }
+      }
+      fade(O(t, 3.8, .4) * (1 - O(t, 6.0, .3)), () => { txt('8 格 padding', 1150, 450, font(900, 34), K.red); txt('也要算，白算', 1150, 494, font(800, 26), K.red); });
+    });
+    // tokens
+    const rowY = L(640, 400, IO(t, 11.4, .7)), g = 40 * IO(t, 12.0, .6);
+    const rx0 = 960 - (7 * p - (p - cs)) / 2 - g;
+    const rowX = (i) => rx0 + i * p + (i >= 5 ? g : 0) + (i >= 6 ? g : 0);
+    for (let i = 0; i < 7; i++) {
+      const [r, c] = src[i], sx = gx + c * p, sy = gy[r], a = O(t, 1.4 + i * .05, .3);
+      const q = (t - (6.4 + i * .08)) / .6, e = q > 0 ? EIO(q) : 0;
+      const x = L(sx, rowX(i), e), y = L(sy, rowY, e) - Math.sin(Math.PI * cl(q)) * 50;
+      rise(a, x, y, cs, cs, () => box(x, y, cs, cs, kinds[i], names[i], kinds[i] === PRE ? K.ink : '#fff', font(900, 30, HN)));
+    }
+    const rw = rowX(6) + cs - rowX(0);
+    fade(O(t, 7.4, .4), () => txt(t < 12 ? '[ΣL, H] = [7, H]' : '', rowX(0), rowY - 24, font(800, 30, HN), K.ink));
+    // sweep: linear layers
+    const sw = IO(t, 8.6, 1.2), sa = env(t, 8.6, 11.2);
+    fade(sa, () => {
+      if (sw > 0) { X.save(); X.globalAlpha *= .22; rect(rowX(0) - 8, rowY - 8, (rw + 16) * sw, cs + 16, K.ink); X.restore(); if (sw < 1) line([[rowX(0) - 8 + (rw + 16) * sw, rowY - 20], [rowX(0) - 8 + (rw + 16) * sw, rowY + cs + 20]], K.red, 5); }
+      rise(O(t, 8.8, .45), 400, rowY + cs + 40, 1120, 60, () => txt('Linear · LayerNorm · MLP', 960, rowY + cs + 86, font(900, 40, HN), K.ink, 'center'));
+      rise(O(t, 9.1, .45), 400, rowY + cs + 100, 1120, 50, () => txt('一次矩阵乘法覆盖所有请求，没有 padding', 960, rowY + cs + 136, font(700, 26), K.gray, 'center'));
+    });
+    // attention segments
+    if (t > 11.8) {
+      const segs = [[0, 5, 'prefill 5'], [5, 6, 'decode 1'], [6, 7, 'decode 1']];
+      // causal arcs inside A
+      const ax = rowX(4) + cs / 2;
+      for (let j = 0; j < 4; j++) {
+        const tx = rowX(j) + cs / 2, h = 30 + (4 - j) * 16, pp = IO(t, 12.6 + j * .08, .45);
+        if (pp <= 0) continue;
+        const pts = []; for (let s = 0; s <= 30; s++) pts.push(bez([[ax, rowY - 6], [ax, rowY - 6 - h], [tx, rowY - 6 - h], [tx, rowY - 6]], s / 30));
+        polyPart(pts, pp, K.ink, 2, true);
+      }
+      // B / C read their own KV cache
+      [5, 6].forEach((i, j) => {
+        const cx = rowX(i) + cs / 2, a = O(t, 12.8 + j * .15, .4);
+        fade(a, () => { for (let k = 0; k < 3; k++) rect(cx - 30, rowY - 150 + k * 16, 60, 11, k % 2 ? PRE : DEC, K.ink, 1); });
+        polyPart([[cx, rowY - 6], [cx, rowY - 96]], IO(t, 12.9 + j * .15, .3), K.ink, 2, true);
+      });
+      fade(O(t, 13.0, .4), () => txt('各自的 KV cache', (rowX(5) + rowX(6) + cs) / 2, rowY - 168, font(700, 22), K.gray, 'center'));
+      // boundaries
+      [0, 5, 6, 7].forEach((b, j) => {
+        const x = b === 7 ? rowX(6) + cs + 6 : b === 0 ? rowX(0) - 6 : rowX(b) - 6 - g / 2 + 4;
+        const a = O(t, 13.2 + j * .12, .35);
+        fade(a, () => { line([[x, rowY + cs + 12], [x, rowY + cs + 40]], K.red, 3); txt(String(b), x, rowY + cs + 76, font(900, 32, HN), K.red, 'center'); });
+      });
+      segs.forEach(([a, b, s], j) => {
+        const cx = (rowX(a) + rowX(b - 1) + cs) / 2;
+        rise(O(t, 12.2 + j * .12, .4), cx - 150, rowY + cs + 90, 300, 50, () => txt(s, cx, rowY + cs + 124, font(800, 20, HN), K.ink, 'center'));
+      });
+      rise(O(t, 13.9, .5), 400, rowY + cs + 160, 1120, 80, () => rich('cu_seqlens_q = {r:[0, 5, 6, 7]}', 960, rowY + cs + 222, font(900, 48, HN), K.ink, 'center'));
+    }
+  },
+});
+
+// ---------- 04 interference ----------
+SC.push({
+  id: 'stall', dur: 24, num: '04', title: 'Prefill 挡住 decode', card: K.yel,
+  cam: [[0, 960, 540, 1], [24, 960, 540, 1.02]],
+  beats: [[1.4, '一次迭代多慢？token 少时由{b:读权重}决定，多了随 token 线性增长'], [4.8, 'decode batch 在拐点左侧；一个长 prompt 的 {y:prefill} 单独就越过拐点'], [9.8, '早期做法：{y:prefill} 优先，请求一到就把整段 prompt 算完'], [13.4, '这一步很长，A、B 一个 token 也出不来：{r:generation stall}'], [18.4, 'A 的最大 TBT 升到 {r:5}；平均的 TPOT 会把这个尖峰摊薄']],
+  ev: (() => { const e = [[1.4, 'thud'], [1.8, 'whoosh'], [3.6, 'click']]; for (let i = 0; i < 4; i++) e.push([4.8 + i * .1, 'pop']); e.push([6.2, 'hit'], [9.4, 'whoosh'], [9.8, 'thud']); e.push([10.8, 'click'], [11.0, 'pop'], [13.4, 'err'], [14.3, 'thud'], [18.4, 'thud']); return e; })(),
+  draw(t) {
+    // chart
+    const ca = 1 - O(t, 9.2, .4);
+    fade(ca, () => {
+      X.save(); X.translate(0, -60 * O(t, 9.2, .4));
+      const ox = 260, oy = 740, sx = .9, yv = (n) => oy - Math.max(1, n / 200) * 72;
+      const ap = IO(t, 1.4, .6);
+      line([[ox, oy], [ox + 940 * ap, oy]], K.ink, 3); line([[ox, oy], [ox, oy - 460 * ap]], K.ink, 3);
+      fade(O(t, 1.6, .4), () => {
+        txt('本次迭代的 token 数', ox + 940, oy + 64, font(800, 24), K.ink, 'right'); txt('迭代耗时', ox + 14, oy - 440, font(800, 24), K.ink);
+        [0, 200, 500, 1000].forEach((n) => txt(String(n), ox + n * sx, oy + 32, font(700, 20, HN), K.gray, 'center'));
+      });
+      polyPart([[ox, yv(0)], [ox + 200 * sx, yv(200)], [ox + 1000 * sx, yv(1000)]], IO(t, 1.8, 1.4), K.ink, 5, false);
+      fade(O(t, 3.6, .4), () => { line([[ox + 200 * sx, oy], [ox + 200 * sx, yv(200) - 100]], K.red, 2, [8, 6]); txt('拐点 ≈ 200 token', ox + 200 * sx - 14, yv(200) - 70, font(900, 28), K.red, 'right'); });
+      [4, 16, 32, 64].forEach((n, i) => popAt(t, 4.8 + i * .1, ox + n * sx + 10, yv(n), () => rect(-12, -12, 24, 24, DEC, K.ink, 2)));
+      fade(O(t, 5.2, .4), () => txt('decode batch', ox + 10, yv(0) + 60, font(800, 26, HN), K.blue));
+      popAt(t, 6.2, ox + 900 * sx, yv(900), () => rect(-18, -18, 36, 36, PRE, K.ink, 2));
+      fade(O(t, 6.4, .4), () => txt('一个长 prompt 的 prefill', ox + 900 * sx - 30, yv(900) + 6, font(800, 26), K.yelD, 'right'));
+      fade(O(t, 7.4, .5), () => txt('LLaMA2-70B · A100 · 数据：Sarathi-Serve（OSDI 2024）；曲线为示意', ox, oy + 110, font(600, 20), K.gray));
+      X.restore();
+    });
+    // timeline: prefill-first
+    const x0 = 320, sc = 145, y0 = 370, rh = 60, pitch = 80, tau = cl((t - 10.4) * 1.3, 0, TL_PF.end + .01);
+    const ta = O(t, 9.8, .4);
+    fade(ta, () => {
+      rise(O(t, 9.8, .45), 96, 220, 1200, 70, () => rich('迭代级调度 · {y:prefill} 优先', 96, 270, font(900, 38), K.ink));
+      drawTL(TL_PF, x0, y0, sc, rh, pitch, tau);
+      const ay = y0 + 2 * pitch + rh + 64;
+      for (let i = 0; i <= 10; i++) txt(String(i), x0 + i * sc, ay, font(700, 20, HN), K.gray, 'center');
+      txt('时间（一次纯 decode 迭代 = 1）', x0 + 10 * sc, ay + 34, font(700, 20), K.gray, 'right');
+      if (tau >= 1) { const x = x0 + sc; poly([[x, ay - 30], [x - 10, ay - 46], [x + 10, ay - 46]], K.red); txt('C 到达', x - 16, ay + 34, font(800, 20), K.red); }
+      // TBT on A
+      const [g0, g1] = TL_PF.gap;
+      if (tau >= g1) { brace(x0 + g0 * sc, x0 + g1 * sc, y0 - 18, IO(t, 10.4 + g1 / 1.3, .5), K.red, 3, 1); rise(O(t, 10.6 + g1 / 1.3, .4), x0 + g0 * sc, y0 - 80, 600, 56, () => rich('A 的 TBT = {r:5}', x0 + g0 * sc, y0 - 32, font(900, 30), K.ink)); }
+      const [c0, c1] = TL_PF.ttft;
+      if (tau >= c1) { const yb = y0 + 2 * pitch + rh + 12; brace(x0 + c0 * sc, x0 + c1 * sc, yb, IO(t, 10.4 + c1 / 1.3, .5), K.gray, 2, -1); }
+      fade(O(t, 12.0, .4) * (tau >= c1 ? 1 : 0), () => txt('C 的 TTFT = 4', x0 + (c0 + c1) / 2 * sc, y0 + 2 * pitch + rh + 34, font(800, 20), K.gray, 'center'));
+      // legend
+      [[DEC, 'decode'], [PRE, 'prefill（数字为 token 数）'], [STALL, 'decode 被挡住']].forEach(([f, s], i) => {
+        const lx = [1080, 1260, 1600][i];
+        fade(O(t, 10.2 + i * .1, .4), () => { rect(lx, 234, 32, 26, f, K.ink, 1.5); txt(s, lx + 44, 256, font(700, 22), K.ink); });
+      });
+    });
+  },
+});
+
+// ---------- 05 token budget ----------
+SC.push({
+  id: 'budget', dur: 25, num: '05', title: '统一的 token budget', card: K.blue,
+  cam: [[0, 960, 540, 1], [25, 960, 540, 1.02]],
+  beats: [[1.4, 'Sarathi-Serve：每步设一个 {r:token 上限}，长 prompt {y:切成块}'], [4.0, '先放正在 {b:decode} 的请求，剩下的名额给 prefill 的块'], [7.8, 'C 的 16 个 token 分三步：6 + 6 + 4，和 A、B 的 decode 同批'], [15.4, 'A 的最大 TBT：{r:5} → {b:2}；代价是 C 的 TTFT：4 → 5.25']],
+  ev: (() => { const e = []; for (let i = 0; i < 16; i++) e.push([1.4 + i * .04, 'tick']); e.push([3.0, 'pop'], [3.1, 'pop'], [3.6, 'click'], [4.2, 'land'], [4.3, 'land']); for (let i = 0; i < 6; i++) e.push([5.3 + i * .06, 'land']); e.push([7.6, 'whoosh'], [8.4, 'click'], [15.4, 'thud'], [15.8, 'pop']); return e; })(),
+  draw(t) {
+    // stage 1: chunking
+    const s1 = 1 - O(t, 7.2, .4);
+    fade(s1, () => {
+      const g = 36 * IO(t, 3.0, .5), x0 = 480 - g, y = 300, cp = 60;
+      const tx = (i) => x0 + i * cp + (i >= 6 ? g : 0) + (i >= 12 ? g : 0);
+      rise(O(t, 1.3, .4), 96, 250, 380, 130, () => { txt('C 的 prompt', 96, 320, font(900, 32), K.ink); txt('16 个 token', 96, 356, font(700, 22), K.gray); });
+      // budget box
+      const bx = 656, by = 560, bp = 76;
+      fade(O(t, 3.6, .4), () => {
+        txt('一步的 token budget', 630, by + 32, font(900, 30), K.ink, 'right'); txt('最多 8 个', 630, by + 64, font(700, 22), K.gray, 'right');
+        for (let i = 0; i < 8; i++) rect(bx + i * bp, by, 68, 68, null, K.ink, 2);
+      });
+      ['A', 'B'].forEach((n, i) => { const q = EO((t - 4.2 - i * .1) / .4); if (q > 0) box(bx + i * bp, L(by - 200, by, q), 68, 68, DEC, n, '#fff', font(900, 28, HN)); });
+      for (let i = 0; i < 16; i++) {
+        const a = O(t, 1.4 + i * .04, .3), q = i < 6 ? (t - (4.8 + i * .06)) / .5 : 0, e = q > 0 ? EIO(q) : 0;
+        const x = L(tx(i), bx + (2 + i) * bp, e), yy = L(y, by, e) - Math.sin(Math.PI * cl(q)) * 60;
+        const w = L(52, 68, e);
+        rise(a, x, yy, w, w, () => rect(x, yy, w, w, PRE, K.ink, 1.5));
+      }
+      [[0, 6, '6'], [6, 12, '6'], [12, 16, '4']].forEach(([a, b, s], j) => {
+        const x1 = tx(a), x2 = tx(b - 1) + 52;
+        if (j === 0 && t > 4.8) return;
+        brace(x1, x2, y + 76, IO(t, 3.2 + j * .1, .4), K.ink, 3, -1);
+        rise(O(t, 3.3 + j * .1, .4), x1, y + 84, x2 - x1, 50, () => txt(s, (x1 + x2) / 2, y + 120, font(900, 32, HN), K.ink, 'center'));
+      });
+      rise(O(t, 5.9, .45), bx, by + 84, 900, 50, () => rich('{b:decode} 先放 · {y:prefill} 的块补满', bx, by + 120, font(800, 28), K.ink));
+      rise(O(t, 6.3, .45), tx(6), y - 74, 900, 56, () => txt('剩下 10 个，后面两步再算', tx(6), y - 30, font(800, 26), K.gray));
+    });
+    // stage 2: two timelines
+    const x0 = 420, sc = 136, rh = 40, pitch = 50, yA = 250, yB = 560;
+    fade(O(t, 7.6, .5), () => {
+      fade(.55 + .45 * (1 - O(t, 8.2, .4)), () => {
+        txt('prefill 优先', 96, yA + 36, font(900, 30), K.ink);
+        drawTL(TL_PF, x0, yA, sc, rh, pitch, 99, { fs: 24 });
+        const [g0, g1] = TL_PF.gap; brace(x0 + g0 * sc, x0 + g1 * sc, yA - 14, 1, K.red, 3, 1);
+      });
+      rich('TBT {r:5} · TTFT 4', 96, yA + 82, font(800, 26, HN), K.ink);
+      txt('token budget = 8', 96, yB + 36, font(900, 30, HN), K.ink);
+      const tau = cl((t - 8.4) * 1.2, 0, TL_BG.end + .01);
+      drawTL(TL_BG, x0, yB, sc, rh, pitch, tau, { fs: 24 });
+      const ay = yB + 2 * pitch + rh + 44;
+      for (let i = 0; i <= 10; i++) txt(String(i), x0 + i * sc, ay, font(700, 20, HN), K.gray, 'center');
+      const [g0, g1] = TL_BG.gap;
+      if (tau >= g1) brace(x0 + g0 * sc, x0 + g1 * sc, yB - 14, IO(t, 8.4 + g1 / 1.2, .4), K.blue, 3, 1);
+      fade(O(t, 15.4, .4), () => rich('TBT {b:2} · TTFT 5.25', 96, yB + 82, font(800, 26, HN), K.ink));
+      const [c0, c1] = TL_BG.ttft;
+      if (tau >= c1) { brace(x0 + c0 * sc, x0 + c1 * sc, yB + 2 * pitch + rh + 10, IO(t, 8.4 + c1 / 1.2, .4), K.gray, 2, -1); }
+      // highlight: each iteration ≤ 2
+      fade(env(t, 15.8, 99), () => rise(O(t, 15.8, .4), x0 + 5 * sc, 430, 900, 60, () => rich('每次迭代耗时 {b:≤ 2}', x0 + 5.2 * sc, 470, font(900, 34), K.ink)));
+    });
+  },
+});
+
+// ---------- 06 V1 ----------
+const V1C = [['新请求', 0, 30], ['prefix cache 命中 8 个', 8, 30], ['chunked prefill，已算 16 个', 16, 30], ['decode，已生成 5 个', 34, 35], ['另有 3 个 speculative token', 34, 38], ['被抢占后重新调度', 0, 35]];
+SC.push({
+  id: 'v1', dur: 26, num: '06', title: 'vLLM V1 的调度器', card: K.red,
+  cam: [[0, 960, 540, 1], [26, 960, 540, 1.02]],
+  beats: [[1.4, 'vLLM V1：调度器里{r:不再区分} prefill 和 decode'], [3.6, '每个请求只有两个数：{b:已经算到哪}，和{r:要算到哪}'], [8.1, 'decode 只差 1 个；speculative decoding 就多差几个'], [11.1, '调度结果就是一张表：{request_id: num_tokens}'], [13.8, '一步的分配：先给 {b:running}，剩下的才给 waiting'], [19.0, 'decode 总是先拿到名额，不会被新请求挤掉']],
+  ev: (() => { const e = [[1.4, 'thud']]; for (let k = 0; k < 6; k++) e.push([3.6 + k * 1.5, 'click']); e.push([13.2, 'whoosh'], [13.8, 'land'], [14.0, 'land']); for (let i = 0; i < 6; i++) e.push([14.5 + i * .05, 'tick']); for (let i = 0; i < 4; i++) e.push([16.6 + i * .06, 'tick']); e.push([18.2, 'err'], [19.0, 'thud']); return e; })(),
+  draw(t) {
+    const s1 = 1 - O(t, 12.8, .4);
+    fade(s1, () => {
+      rise(O(t, 1.4, .5), 96, 180, 1728, 80, () => txt('“There\'s no "decoding phase" nor "prefill phase" in the scheduler.”', 96, 240, font('italic 800', 40, HN), K.ink));
+      fade(O(t, 1.8, .4), () => txt('— vllm/v1/core/sched/scheduler.py', 96, 284, font(600, 22, HN), K.gray));
+      const bx = 260, bw = 1400, u = bw / 40, by = 470, bh = 80;
+      let k = -1; for (let j = 0; j < V1C.length; j++) if (t >= 3.6 + j * 1.5) k = j;
+      const pv = (j) => V1C[Math.max(0, j)];
+      const e = k >= 0 ? IO(t, 3.6 + k * 1.5, .5) : 0;
+      const c = k <= 0 ? 0 : L(pv(k - 1)[1], pv(k)[1], e), w = k < 0 ? 0 : k === 0 ? 30 * e : L(pv(k - 1)[2], pv(k)[2], e);
+      fade(O(t, 3.2, .4), () => {
+        rect(bx, by, bw, bh, K.paper, K.ink, 2);
+        for (let i = 1; i < 40; i++) line([[bx + i * u, by], [bx + i * u, by + bh]], CUBE.gray[0], 1);
+        rect(bx, by, c * u, bh, DEC); rect(bx + c * u, by, (w - c) * u, bh, K.red);
+        for (let i = 0; i < 40; i++) if (i * u < w * u) line([[bx + i * u, by], [bx + i * u, by + bh]], 'rgba(255,255,255,.35)', 1);
+        rect(bx, by, bw, bh, null, K.ink, 2);
+        [[30, 'prompt 30'], [35, '+ 已生成 5'], [38, '+ spec 3']].forEach(([n, s], j) => {
+          const a = j === 0 ? 1 : O(t, 3.6 + (j + 2) * 1.5, .4);
+          fade(a, () => { line([[bx + n * u, by + bh], [bx + n * u, by + bh + 20]], K.ink, 2); txt(s, bx + n * u, by + bh + 46, font(700, 20, HN), K.gray, j === 0 ? 'right' : j === 1 ? 'center' : 'left'); });
+        });
+        if (k >= 0) {
+          const name = V1C[k][0];
+          rise(O(t, 3.6 + k * 1.5, .4), 96, 350, 1200, 70, () => txt(name, bx, 410, font(900, 40), K.ink));
+          const n = Math.round(w) - Math.round(c);
+          txt('num_computed_tokens', bx, by + bh + 110, font(800, 26, HN), K.blue); txt(String(Math.round(c)), bx, by + bh + 180, font(900, 64, HN), K.blue);
+          txt('num_tokens_with_spec', bx + 560, by + bh + 110, font(800, 26, HN), K.ink); txt(String(Math.round(w)), bx + 560, by + bh + 180, font(900, 64, HN), K.ink);
+          txt('本步最多算', bx + bw, by + bh + 110, font(800, 26), K.red, 'right'); txt(String(n), bx + bw, by + bh + 180, font(900, 64, HN), K.red, 'right');
+        }
+      });
+    });
+    // stage 2: allocation
+    const cx0 = 360, cp = 100, cw = 92, cy = 480, ch = 80;
+    const grp = [['R1', 1, DEC, 0, 13.8, 'decode'], ['R2', 1, DEC, 1, 14.0, 'decode'], ['R3', 6, PRE, 2, 14.5, 'prefill 的后续块，还剩 6 个'], ['W1', 4, PRE, 8, 16.6, '新请求，分到 4 / 22']];
+    fade(O(t, 13.2, .4), () => {
+      rise(O(t, 13.2, .45), 96, 250, 1700, 70, () => rich('一步的 token budget = {r:12}', 96, 300, font(900, 40), K.ink));
+      fade(O(t, 13.4, .4), () => txt('每格 1 个 token', 96, 344, font(700, 22), K.gray));
+      for (let i = 0; i < 12; i++) rect(cx0 + i * cp, cy, cw, ch, null, K.ink, 2);
+      brace(cx0, cx0 + 8 * cp - 8, cy - 22, IO(t, 13.6, .5), K.blue, 3, 1);
+      rise(O(t, 13.7, .4), cx0, cy - 76, 800, 50, () => txt('① running：decode 与未完成的 prefill', cx0, cy - 38, font(800, 24), K.blue));
+      brace(cx0 + 8 * cp, cx0 + 12 * cp - 8, cy - 22, IO(t, 16.4, .4), K.ink, 3, 1);
+      rise(O(t, 16.5, .4), cx0 + 8 * cp, cy - 76, 400, 50, () => txt('② waiting', cx0 + 8 * cp, cy - 38, font(800, 24), K.ink));
+      grp.forEach(([n, len, f, from, at, note]) => {
+        for (let i = 0; i < len; i++) { const q = EO((t - at - i * .05) / .35); if (q > 0) { X.save(); X.globalAlpha *= cl(q * 2); box(cx0 + (from + i) * cp, L(cy - 120, cy, q), cw, ch, f, i === 0 ? n : '', f === PRE ? K.ink : '#fff', font(900, 28, HN)); X.restore(); } }
+        const mx = cx0 + (from + len / 2) * cp - 4;
+        rise(O(t, at + .3, .4), mx - 200, cy + ch + 10, 400, 80, () => txt(n === 'R1' || n === 'R2' ? '' : note, mx, cy + ch + 46, font(700, 22), K.ink, 'center'));
+      });
+      rise(O(t, 14.3, .4), cx0, cy + ch + 10, 200, 60, () => txt('decode × 2', cx0 + cp - 4, cy + ch + 46, font(700, 22, HN), K.ink, 'center'));
+      fade(O(t, 17.0, .4), () => txt('prefix cache 命中的部分不占 budget', cx0 + 10 * cp - 4, cy + ch + 80, font(600, 20), K.gray, 'center'));
+      // W2
+      const wq = SP(t, 18.2, 1);
+      if (wq > 0) {
+        const sh = t > 18.3 && t < 18.8 ? Math.sin((t - 18.3) * 60) * 8 * (1 - (t - 18.3) / .5) : 0;
+        box(cx0 + 12 * cp + 40 + sh, cy, 140, ch, WAIT, 'W2', K.ink, font(900, 28, HN));
+        rise(O(t, 18.4, .4), cx0 + 12 * cp - 60, cy + ch + 10, 360, 80, () => { txt('budget 耗尽', cx0 + 12 * cp + 110, cy + ch + 46, font(800, 22), K.red, 'center'); txt('等下一步', cx0 + 12 * cp + 110, cy + ch + 76, font(700, 20), K.gray, 'center'); });
+      }
+    });
+  },
+});
+
+// ---------- 07 preemption ----------
+const OWN = (() => { const o = []; [['R1', 10], ['R2', 9], ['R3', 11], ['R4', 8]].forEach(([n, c]) => { for (let i = 0; i < c; i++) o.push(n); }); o.push(null, null); return o; })();
+const RC = { R1: DEC, R2: K.ink, R3: PRE, R4: CUBE.blue[0] };
+SC.push({
+  id: 'preempt', dur: 20, num: '07', title: '显存不够：抢占', card: K.ink,
+  cam: [[0, 960, 540, 1], [20, 960, 540, 1.02]],
+  beats: [[1.4, 'budget 约束计算量；另一个约束是 {b:KV cache 显存}'], [5.0, 'block 用完，{r:allocate_slots 失败}'], [7.0, '抢占 running {r:队尾}：释放全部 block，回到 waiting 队首'], [11.2, '重新调度时，prompt 和已生成的 token {r:从头重算}'], [14.6, '这一步不再接新请求；V1 只保留 recompute，V0 的 swap 已移除']],
+  ev: (() => { const e = []; for (let i = 0; i < 40; i += 3) e.push([1.4 + i * .02, 'tick']); e.push([3.6, 'pop'], [3.9, 'pop'], [5.0, 'err'], [7.0, 'thud'], [8.4, 'whoosh'], [9.4, 'whoosh'], [9.9, 'land'], [11.2, 'pop'], [14.6, 'thud']); return e; })(),
+  draw(t) {
+    const px0 = 900, py0 = 300, bp = 72, bs = 64;
+    const chip = (x, y, n, fill, lc = '#fff') => box(x, y, 110, 64, fill, n, lc, font(900, 28, HN));
+    // pool
+    fade(O(t, 1.2, .4), () => txt('KV cache · 40 个 block', px0, py0 - 24, font(800, 26), K.ink));
+    const blink = t > 5.0 && t < 6.6 && Math.floor((t - 5.0) * 6) % 2 === 0;
+    for (let k = 0; k < 40; k++) {
+      const x = px0 + (k % 10) * bp, y = py0 + Math.floor(k / 10) * bp;
+      const a = O(t, 1.2 + k * .01, .3); if (a <= 0) continue;
+      fade(a, () => rect(x, y, bs, bs, K.paper, CUBE.gray[2], 1.5));
+      let n = OWN[k], at = 1.4 + k * .02;
+      if (k === 38) { n = 'R1'; at = 3.6; } if (k === 39) { n = 'R2'; at = 3.9; }
+      if (n === 'R4' && t > 8.4) { const r = O(t, 8.4 + (k - 30) * .04, .3); fade(1 - r, () => { X.save(); X.translate(x + bs / 2, y + bs / 2 - r * 40); rect(-bs / 2, -bs / 2, bs, bs, K.red, K.ink, 1.5); X.restore(); }); if (k === 30) popAt(t, 11.2, x + bs / 2, y + bs / 2, () => rect(-bs / 2, -bs / 2, bs, bs, RC.R3, K.ink, 1.5)); continue; }
+      if (!n) continue;
+      const col = n === 'R4' && t > 7.3 ? K.red : RC[n];
+      popAt(t, at, x + bs / 2, y + bs / 2, () => rect(-bs / 2, -bs / 2, bs, bs, col, K.ink, 1.5));
+    }
+    if (blink) rect(px0 - 12, py0 - 12, 10 * bp + 16, 4 * bp + 16, null, K.red, 5);
+    fade(env(t, 5.0, 7.2), () => txt('allocate_slots 失败：R3 要新 block', px0, py0 + 4 * bp + 50, font(800, 28, HN), K.red));
+    fade(O(t, 11.4, .4), () => txt('R3 拿到腾出的 block，继续', px0, py0 + 4 * bp + 50, font(800, 28), K.ink));
+    fade(O(t, 15.0, .4), () => txt('V1 只保留 recompute · V0 的 swap 已移除', px0, py0 + 4 * bp + 96, font(700, 22), K.gray));
+    // queues
+    const rx = (i) => 150 + i * 124, ry = 330, wy = 560;
+    fade(O(t, 1.2, .4), () => { txt('running', 150, ry - 20, font(800, 24, HN), K.ink); txt('waiting', 150, wy - 20, font(800, 24, HN), K.ink); });
+    ['R1', 'R2', 'R3'].forEach((n, i) => popAt(t, 1.3 + i * .08, rx(i) + 55, ry + 32, () => chip(-55, -32, n, RC[n], n === 'R3' ? K.ink : '#fff')));
+    const sh = EIO((t - 9.4) / .5);
+    ['W1', 'W2'].forEach((n, i) => popAt(t, 1.6 + i * .08, rx(i) + 55 + sh * 124, wy + 32, () => chip(-55, -32, n, WAIT, K.ink)));
+    const q = EIO((t - 9.4) / .6), r4x = L(rx(3), rx(0), q), r4y = L(ry, wy, q) - Math.sin(Math.PI * cl((t - 9.4) / .6)) * 60;
+    popAt(t, 1.54, r4x + 55, r4y + 32, () => chip(-55, -32, 'R4', t > 7.0 ? K.red : RC.R4));
+    fade(env(t, 7.0, 9.4), () => txt('队尾', rx(3) + 55, ry + 100, font(800, 24), K.red, 'center'));
+    if (t > 10.0) {
+      const v = Math.round(35 * (1 - EO((t - 10.2) / .8)));
+      rise(O(t, 10.0, .4), 150, wy + 80, 700, 60, () => rich('R4：num_computed_tokens {r:' + v + '}', 150, wy + 118, font(800, 26, HN), K.ink));
+    }
+    fade(O(t, 14.6, .4), () => { line([[140, wy + 170], [640, wy + 170]], K.red, 4); txt('本步发生抢占 → 不接新请求', 150, wy + 210, font(800, 26), K.red); });
+  },
+});
+
+// ---------- 08 summary ----------
+SC.push({
+  id: 'sum', dur: 20, num: '08', title: '小结', card: K.red, chromeUntil: 15.1,
+  cam: [[0, 960, 540, 1], [20, 960, 540, 1]],
+  beats: [[1.4, 'budget 的大小，是 TTFT、TBT 与吞吐之间的取舍'], [6.0, '默认值按硬件分档；大卡建议设得高于 8192'], [9.4, '']],
+  ev: (() => { const e = [[1.4, 'thud'], [2.4, 'whoosh'], [3.0, 'whoosh']]; for (let i = 0; i < 3; i++) e.push([6.0 + i * .25, 'pop']); e.push([9.4, 'whoosh']); for (let i = 0; i < 4; i++) e.push([9.8 + i * .35, 'pop']); e.push([15.2, 'whoosh'], [15.6, 'thud']); return e; })(),
+  draw(t) {
+    const up = IO(t, 9.4, .7);
+    X.save(); X.translate(0, -1100 * up);
+    const ax0 = 200, ax1 = 1720, ay = 560;
+    rise(O(t, 1.2, .45), 96, 190, 1700, 70, () => txt('max_num_batched_tokens', 96, 250, font(900, 44, HN), K.ink));
+    line([[ax0, ay], [L(ax0, ax1, IO(t, 1.4, .7)), ay]], K.ink, 4);
+    const lp = IO(t, 2.4, .6), rp = IO(t, 3.0, .6), mid = 960;
+    polyPart([[mid - 20, 420], [mid - 20 - 600 * lp, 420]], lp, K.blue, 4); polyPart([[mid + 20, 420], [mid + 20 + 600 * rp, 420]], rp, K.red, 4);
+    rise(O(t, 2.6, .4), 200, 300, 700, 200, () => { txt('小', mid - 60, 380, font(900, 44), K.blue, 'right'); txt('单步短，TBT 稳；长 prompt 分更多步', mid - 60, 480, font(800, 24), K.ink, 'right'); });
+    rise(O(t, 3.2, .4), 1000, 300, 800, 200, () => { txt('大', mid + 60, 380, font(900, 44), K.red); txt('TTFT 短、吞吐高；decode 的 TBT 变大', mid + 60, 480, font(800, 24), K.ink); });
+    [[2048, 'A100 · 消费级卡', 380], [8192, 'H100 · H200', 960], [16384, 'B200 等 ≥ 160 GB', 1540]].forEach(([v, s, x], i) => {
+      const at = 6.0 + i * .25;
+      popAt(t, at, x, ay, () => rect(-12, -12, 24, 24, i === 1 ? K.red : K.ink));
+      rise(O(t, at + .1, .4), x - 250, ay + 20, 500, 150, () => { txt(fmt(v), x, ay + 90, font(900, 64, HN), K.ink, 'center'); txt(s, x, ay + 134, font(700, 24, HN), K.gray, 'center'); });
+    });
+    fade(O(t, 6.8, .4), () => txt('默认值（OpenAI API server）· 数据：vLLM v0.30.0 arg_utils', 96, 800, font(600, 20), K.gray));
+    X.restore();
+    // four points
+    const pts = [['iteration-level', '每一步重新挑请求'], ['一长条', '无 padding，attention 分段'], ['token budget', 'decode 先，prefill 分块'], ['抢占 + 重算', 'KV block 不够时让出']];
+    pts.forEach(([h, d], i) => {
+      const at = 9.8 + i * .35, x = 96 + i * 440;
+      X.save(); X.translate(0, 1100 * (1 - up));
+      rect(x, 240, 400 * IO(t, at, .5), 6, K.ink);
+      rise(O(t, at + .1, .45), x, 260, 420, 170, () => txt(String(i + 1), x - 6, 410, font(900, 160, HN), K.red));
+      rise(O(t, at + .2, .45), x, 440, 420, 70, () => txt(h, x, 492, font(900, 40, HN), K.ink));
+      rise(O(t, at + .3, .45), x, 510, 420, 50, () => txt(d, x, 548, font(700, 26), K.ink));
+      X.restore();
+    });
+    const ep = IO(t, 15.2, .6);
+    if (ep > 0) {
+      const px = 1920 * (1 - ep);
+      rect(px, 0, 1920, 1080, K.ink);
+      X.save(); X.beginPath(); X.rect(px, 0, 1920, 1080); X.clip();
+      const s = SP(t, 15.6, 1); X.save(); X.translate(1734, 180); X.scale(s, s); rect(-90, -90, 180, 180, K.red); X.restore();
+      rise(O(t, 15.7, .5), 90, 330, 1700, 230, () => txt('Continuous Batching', 90, 520, font(900, 170, HN), K.paper));
+      rect(96, 580, 1728 * IO(t, 16.2, .7), 4, K.paper);
+      rise(O(t, 16.5, .5), 96, 610, 1728, 90, () => rich('每一步只回答：{r:谁算，算多少}', 96, 680, font(800, 56), K.paper));
+      X.globalAlpha = O(t, 17.0, .6); txt('Orca (OSDI 2022) · Sarathi-Serve (OSDI 2024) · vLLM v0.30.0 源码', 96, 980, font(600, 22, HN), '#9a9486'); X.globalAlpha = 1;
+      X.restore();
+    }
+  },
+});
+// ======================= timeline =======================
+let acc = 0; for (const s of SC) { s.start = acc; acc += s.dur; }
+const TOTAL = acc;
+for (const s of SC) {
+  for (const [lt, ty] of s.ev) EV.push([s.start + lt, ty]);
+  if (s.num) EV.push([s.start - .45, 'whoosh'], [s.start + .05, 'thud'], [s.start + 1.05, 'whoosh']);
+}
+EV.sort((a, b) => a[0] - b[0]);
+
+function camAt(s, lt) {
+  const k = s.cam; if (lt <= k[0][0]) return k[0];
+  for (let i = 0; i < k.length - 1; i++) if (lt < k[i + 1][0]) { const p = EIO((lt - k[i][0]) / (k[i + 1][0] - k[i][0])); return [0, L(k[i][1], k[i + 1][1], p), L(k[i][2], k[i + 1][2], p), L(k[i][3], k[i + 1][3], p)]; }
+  return k[k.length - 1];
+}
+function chapterCard(s, lc) {
+  if (!s.num || lc < -.45 || lc > 1.55) return;
+  const x = lc < 0 ? 1920 * (1 - EO((lc + .45) / .45)) : -1920 * EI((lc - 1.05) / .45);
+  X.setTransform(1, 0, 0, 1, 0, 0);
+  rect(x, 0, 1920, 1080, s.card);
+  X.save(); X.beginPath(); X.rect(x, 0, 1920, 1080); X.clip();
+  const nx = x * 1.25;
+  txt(s.num, nx + 70, 1010, font(900, 620, HN), 'rgba(255,255,255,.95)');
+  txt('Continuous Batching · ' + s.num + ' / 08', x + 1824, 120, font(800, 24, HN), 'rgba(255,255,255,.7)', 'right');
+  rise(O(lc, .05, .45), x + 90, 150, 1740, 150, () => txt(s.title, x + 96, 270, font(900, 100), '#fff'));
+  X.restore();
+}
+function chrome(s, lt) {
+  if (!s.num) return;
+  const a = O(lt, 1.3, .4) * (s.chromeUntil ? 1 - O(lt, s.chromeUntil, .2) : 1);
+  if (a <= 0) return;
+  X.setTransform(1, 0, 0, 1, 0, 0); X.globalAlpha = a;
+  rect(0, 0, 1920, 108, K.paper);
+  txt(s.num, 96, 78, font(900, 28, HN), K.red); txt(s.title, 148, 78, font(800, 26), K.ink);
+  txt('Continuous Batching', 1824, 78, font(800, 22, HN), K.gray, 'right');
+  rect(96, 104, 1728 * EIO((lt - 1.3) / .6), 2, K.ink);
+  X.globalAlpha = 1;
+}
+function caption(s, lt) {
+  const b = s.beats; if (!b.length) return;
+  let i = -1; for (let j = 0; j < b.length; j++) if (lt >= b[j][0]) i = j;
+  X.setTransform(1, 0, 0, 1, 0, 0);
+  const endA = 1 - O(lt, s.dur - .5, .3);
+  const draw = (str, p, out) => {
+    if (!str) return; const f = font(800, 38);
+    X.save(); X.globalAlpha = endA;
+    X.beginPath(); X.rect(96, 926, 1760, 72); X.clip();
+    const y = 972 + (1 - p) * 60 - out * 60;
+    rect(96, y - 30, 20, 20, K.red);
+    rich(str, 136, y - 6 + 10, f, K.ink);
+    X.restore();
+  };
+  if (i >= 0) {
+    const p = O(lt, b[i][0] + .14, .45);
+    draw(b[i][1], p, 0);
+    if (i > 0 && lt < b[i][0] + .2) draw(b[i - 1][1], 1, EI((lt - b[i][0]) / .18));
+  }
+}
+function drawFrame(ctx, T) {
+  X = ctx;
+  let idx = 0; for (let i = 0; i < SC.length; i++) if (T >= SC[i].start) idx = i;
+  const s = SC[idx], lt = T - s.start;
+  const [, cx, cy, z] = camAt(s, lt);
+  X.setTransform(1, 0, 0, 1, 0, 0); rect(0, 0, 1920, 1080, K.paper);
+  X.setTransform(z, 0, 0, z, 960 - cx * z, 540 - cy * z);
+  s.draw(lt);
+  X.setTransform(1, 0, 0, 1, 0, 0); X.globalAlpha = 1;
+  chrome(s, lt);
+  caption(s, lt);
+  chapterCard(s, lt);
+  const nx = SC[idx + 1]; if (nx) chapterCard(nx, T - nx.start);
+  const fe = O(T, TOTAL - 1.0, .9); if (fe > 0) { X.globalAlpha = fe; rect(0, 0, 1920, 1080, '#000'); X.globalAlpha = 1; }
+}
+
+// ======================= runtime (motion blur) =======================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const off = document.createElement('canvas'); off.width = 1920; off.height = 1080; const octx = off.getContext('2d');
+window.DURATION = TOTAL;
+window.EVENTS = EV;
+window.renderAt = (t, fps = 60, samples = 5, shutter = .5) => {
+  for (let s = 0; s < samples; s++) {
+    const ts = t - (shutter / fps) * (1 - s / (samples - 1));
+    octx.setTransform(1, 0, 0, 1, 0, 0); octx.globalAlpha = 1;
+    drawFrame(octx, Math.max(0, ts));
+    ctx.globalAlpha = 1 / (s + 1); ctx.drawImage(off, 0, 0);
+  }
+  ctx.globalAlpha = 1;
+};
+window.renderAt(3);
+</script>
+</body>
+</html>

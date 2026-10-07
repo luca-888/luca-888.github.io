@@ -47,7 +47,7 @@
 
 ## 成稿记录
 
-- 正文：`content/vllm-paged-attention.md`；入口 `posts/vllm-paged-attention/`；图 `src/VllmPagedFigures.tsx`。
+- 正文：`content/vllm-paged-attention.md`；入口 `posts/vllm-paged-attention/`；图 `src/articles/vllm-paged-attention/VllmPagedFigures.tsx`。
 - 自绘图三张：连续预留与分页对比（128 slot 构造示例，配色与论文 Figure 2 语义一致）、block table 与 slot 计算、prefix caching 共享。
 - 论文原图一张：Figure 2，来源与校验见 `src/assets/vllm-paged-attention/SOURCES.md`。
 - Orca 原文 §4.2 已读：调度器首次调度请求时按 max_tokens 预留 KV slot，结束时归还；与正文“按最大长度预留”一致。

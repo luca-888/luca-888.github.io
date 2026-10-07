@@ -11,3 +11,11 @@ __pycache__/
 /cuda-graph-images.zip
 /xhs
 /content/*-before-*.md
+
+.DS_Store
+
+# Video render output; films are published to Bilibili, sources stay tracked
+/videos/*/build/
+/videos/*/keyframes*/
+/videos/*/node_modules
+/videos/tts-samples/

@@ -5,74 +5,6 @@ import { SiteHeader } from './SiteLayout';
 import './styles.css';
 import './site.css';
 
-function ArticleMark({ slug }: { slug: string }) {
-  return <svg className="article-mark" viewBox="0 0 180 120" fill="none" aria-hidden="true">
-    {slug === 'kl-nll-ce' ? <>
-      <rect className="mark-core" x="22" y="24" width="54" height="22" rx="3" />
-      <rect className="mark-paper" x="22" y="51" width="34" height="22" rx="3" />
-      <rect className="mark-result" x="22" y="78" width="22" height="22" rx="3" />
-      <rect className="mark-core" x="108" y="24" width="22" height="22" rx="3" />
-      <rect className="mark-paper" x="108" y="51" width="54" height="22" rx="3" />
-      <rect className="mark-result" x="108" y="78" width="34" height="22" rx="3" />
-      <path className="mark-line" d="M88 22v80" />
-    </> : slug === 'gradient-checkpointing' ? <>
-      <path className="mark-line" d="M24 42h132M146 70v24H34V70m0 0-7 8m7-8 7 8" />
-      <rect className="mark-core" x="16" y="28" width="28" height="28" rx="5" />
-      <rect className="mark-paper" x="76" y="28" width="28" height="28" rx="5" />
-      <rect className="mark-result" x="136" y="28" width="28" height="28" rx="5" />
-      <path className="mark-detail" d="M84 42h12m-6-6v12" />
-    </> : slug === 'compression-harness' ? <>
-      <path className="mark-line" d="M24 28h30l28 32-28 32H24M82 60h27m25 0h23M146 80v22H95V79" />
-      <rect className="mark-paper" x="15" y="16" width="25" height="24" rx="4" />
-      <rect className="mark-paper" x="15" y="48" width="25" height="24" rx="4" />
-      <rect className="mark-paper" x="15" y="80" width="25" height="24" rx="4" />
-      <rect className="mark-core" x="73" y="39" width="43" height="42" rx="10" />
-      <path className="mark-detail" d="m83 59 10-10 11 10-10 12-11-12Z" />
-      <circle className="mark-result" cx="148" cy="60" r="17" />
-      <path className="mark-detail" d="m141 60 5 5 9-11" />
-    </> : slug === 'flash-attention' ? <>
-      <rect className="mark-paper" x="20" y="18" width="72" height="84" rx="4" />
-      <path className="mark-line" d="M44 18v84m24-84v84M20 46h72M20 74h72" />
-      <rect className="mark-core" x="21" y="47" width="70" height="26" rx="2" />
-      <path className="mark-line" d="M101 60h24m-7-6 7 6-7 6" />
-      <rect className="mark-result" x="136" y="18" width="24" height="84" rx="4" />
-      <path className="mark-detail" d="M140 46h16m-16 28h16" />
-    </> : slug === 'vllm-scheduler' ? <>
-      <rect className="mark-core" x="16" y="70" width="18" height="30" rx="3" />
-      <rect className="mark-core" x="38" y="70" width="18" height="30" rx="3" />
-      <rect className="mark-result" x="60" y="40" width="60" height="60" rx="4" />
-      <rect className="mark-core" x="124" y="70" width="18" height="30" rx="3" />
-      <path className="mark-line" d="M16 112h126" />
-      <path className="mark-detail" d="M70 56h40m-40 16h40m-40 16h40" />
-    </> : slug === 'vllm-paged-attention' ? <>
-      <rect className="mark-paper" x="16" y="30" width="22" height="18" rx="3" />
-      <rect className="mark-paper" x="42" y="30" width="22" height="18" rx="3" />
-      <rect className="mark-paper" x="68" y="30" width="22" height="18" rx="3" />
-      <path className="mark-line" d="M27 52v10c0 10 30 6 30 20v8M53 52v4c0 12 64 4 64 22v12M79 52v14c0 10-40 6-40 18v6" />
-      <rect className="mark-core" x="28" y="92" width="22" height="18" rx="3" />
-      <rect className="mark-result" x="106" y="92" width="22" height="18" rx="3" />
-      <rect className="mark-core" x="132" y="92" width="22" height="18" rx="3" />
-      <path className="mark-detail" d="M54 101h48" />
-    </> : slug === 'cuda-graph' ? <>
-      <path className="mark-line" d="m90 22-49 38 49 38 49-38-49-38Z" />
-      <rect className="mark-core" x="76" y="8" width="28" height="28" rx="7" />
-      <rect className="mark-paper" x="27" y="46" width="28" height="28" rx="7" />
-      <rect className="mark-result" x="125" y="46" width="28" height="28" rx="7" />
-      <rect className="mark-core" x="76" y="84" width="28" height="28" rx="7" />
-      <path className="mark-detail" d="M41 58h0m98 0h0" />
-    </> : <>
-      <path className="mark-line" d="M23 91V27m27 64V44m27 47V18m27 73V51m27 40V34m27 57V58" />
-      <path className="mark-curve" d="M17 70c17-16 28 8 45-1s26-1 43 1 28-6 53-2" />
-      <circle className="mark-core" cx="23" cy="27" r="5" />
-      <circle className="mark-core" cx="50" cy="44" r="5" />
-      <circle className="mark-core" cx="77" cy="18" r="5" />
-      <circle className="mark-core" cx="104" cy="51" r="5" />
-      <circle className="mark-core" cx="131" cy="34" r="5" />
-      <circle className="mark-core" cx="158" cy="58" r="5" />
-    </>}
-  </svg>;
-}
-
 function App() {
   const [query, setQuery] = useState('');
   const search = query.trim().toLocaleLowerCase();
@@ -99,11 +31,7 @@ function App() {
             {visiblePosts.map((post) => (
               <li key={post.slug}>
                 <a className="article-row" href={`${import.meta.env.BASE_URL}posts/${post.slug}/`}>
-                  <ArticleMark slug={post.slug} />
-                  <div className="article-copy">
-                    <h2>{post.title}</h2>
-                    <p>{post.description}</p>
-                  </div>
+                  <h2>{post.title}</h2>
                 </a>
               </li>
             ))}

@@ -1,3 +1,5 @@
+import { posts } from './posts'
+
 export function SiteHeader({ home = false }: { home?: boolean }) {
   return <header className="site-header">
     <a className="wordmark" href={import.meta.env.BASE_URL}>luca’s blog</a>
@@ -13,4 +15,12 @@ export function SiteFooter() {
     <span>luca’s blog</span>
     <a href="https://github.com/luca-888/luca-888.github.io">在 GitHub 查看源码</a>
   </footer>
+}
+
+export function ArticleVideo({ slug }: { slug: string }) {
+  const video = posts.find(post => post.slug === slug)?.video
+  if (!video) return null
+  return <div className="article-video">
+    <iframe src={`https://player.bilibili.com/player.html?bvid=${video}&autoplay=0`} title="文章视频" allowFullScreen />
+  </div>
 }
