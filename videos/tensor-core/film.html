@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Tensor Core</title>
+<style>
+  html, body { margin: 0; background: #111; color: #ccc; font: 14px -apple-system, sans-serif; }
+  #cv { display: block; width: 100vw; max-height: calc(100vh - 44px); aspect-ratio: 16 / 9; object-fit: contain; }
+  #bar { height: 44px; display: flex; align-items: center; gap: 12px; padding: 0 16px; }
+  #bar input { flex: 1; }
+</style>
+</head>
+<body>
+<canvas id="cv" width="1920" height="1080"></canvas>
+<div id="bar"><button>播放</button><input type="range" min="0"><span></span></div>
+<!-- Tensor Core 影片。当前只有关键帧：时间轴上每 1 秒是一幕的结束画面，?t=N 看第 N + 1 幕。 -->
+<script src="core.js"></script>
+<script src="keyframes.js"></script>
+<script>
+start((t) => {
+  const f = KF[Math.min(KF.length - 1, Math.floor(t))];
+  g.fillStyle = KC.paper; g.fillRect(0, 0, W, H);
+  header(f); f.draw();
+}, KF.length);
+</script>
+</body>
+</html>
