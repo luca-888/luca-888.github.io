@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Jev · 影片（竖版）</title>
+<style>html,body{margin:0;background:#f1ede4;overflow:hidden}canvas{display:block;width:100vw;height:100vh;object-fit:contain}</style>
+</head>
+<body>
+<canvas id="cv" width="1080" height="1920"></canvas>
+<script src="timing.js"></script>
+<script src="speed.js"></script>
+<script>
+// Jev：不生成文本的 decision model。竖版 1080x1920，一局连续的回合制对战（原创像素角色），机制讲解穿插在回合之间。
+// 版式：上方两行标题，中间战场，下方操作区（招式、问题、特写）；y > 1560 留给平台界面与后加的字幕。
+// 概率全部是 jev-1.13.0 的实际返回（public/measurements/jev/jev-probes.json 的 battle 字段，2026-10-03）；伤害与对手的出招是游戏规则，由脚本设定。
+// ?play 在浏览器里播放；node film.mjs 渲染（见该文件头部）。横版旧稿：film-h.html；纯方块旧稿：film-v1.html。
+const W = 1080, H = 1920;
+const K = { paper: '#f1ede4', paper2: '#e6e0d3', ink: '#141414', ink2: '#3a3a3a', gray: '#8a8474', lg: '#b9b2a2',
+  red: '#e5322d', blue: '#2350d8', yel: '#f4c21b', yelD: '#9a7500', purple: '#7c3ff5', teal: '#0fa391' };
+const ZH = '"PingFang SC", "Helvetica Neue", sans-serif', HN = '"Helvetica Neue", "PingFang SC", sans-serif';
+const font = (w, s, f = ZH) => `${w} ${s}px ${f}`;
+let X, T = 0;
+const clamp = (x) => Math.min(1, Math.max(0, x));
+const ease = (x) => 1 - Math.pow(1 - clamp(x), 3);
+const io = (x) => { x = clamp(x); return x < .5 ? 4 * x ** 3 : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const P = (t0, d = .7) => ease((T - t0) / d);                    // 缓出
+const S = (t0, d = 1) => io((T - t0) / d);                       // 缓入缓出
+const mix = (a, b, p) => a + (b - a) * p;
+const R = (x, y, w, h, c) => { if (w > 0 && h > 0) { X.fillStyle = c; X.fillRect(x, y, w, h); } };
+function TX(s, x, y, f, c, a = 'left') { X.font = f; X.fillStyle = c; X.textAlign = a; X.textBaseline = 'alphabetic'; const available = a === 'center' ? Math.min(x, W - x) * 2 - 32 : a === 'right' ? x - 40 : (W - 40) - x; X.fillText(s, x, y, Math.max(40, available)); }
+function A(a, fn) { if (a <= .003) return; X.save(); X.globalAlpha *= Math.min(1, a); fn(); X.restore(); }
+function IN(t0, fn, d = .7, dy = 20) { const p = P(t0, d); if (p <= 0) return; X.save(); X.globalAlpha *= p; X.translate(0, (1 - p) * dy); fn(); X.restore(); }
+function POP(t0, x, y, w, h, fn, d = .5) { const p = P(t0, d); if (p <= 0) return; X.save(); X.globalAlpha *= Math.min(1, p * 1.5); X.translate(x + w / 2, y + h / 2); X.scale(.86 + .14 * p, .86 + .14 * p); X.translate(-x - w / 2, -y - h / 2); fn(); X.restore(); }
+function RICH(s, x, y, f, base, align = 'left') {
+  const ACC = { b: K.blue, r: K.red, y: K.yelD, p: K.purple, t: K.teal };
+  const parts = []; const re = /\{(\w):([^}]*)\}/g; let last = 0, m;
+  while ((m = re.exec(s))) { if (m.index > last) parts.push([s.slice(last, m.index), null]); parts.push([m[2], m[1]]); last = re.lastIndex; }
+  if (last < s.length) parts.push([s.slice(last), null]);
+  X.font = f; const w = parts.reduce((a, [t]) => a + X.measureText(t).width, 0); let cx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+  X.textAlign = 'left'; X.textBaseline = 'alphabetic';
+  X.save(); const limit = align === 'center' ? Math.min(x, W - x) * 2 - 32 : align === 'right' ? x - 40 : (W - 40) - x; if (w > limit) { X.translate(cx, 0); X.scale(limit / w, 1); cx = 0; }
+  for (const [t, k] of parts) { X.fillStyle = k ? ACC[k] : base; X.fillText(t, cx, y); cx += X.measureText(t).width; } X.restore();
+}
+const PAT = {};
+function hatch(col, bg) { const k = col + bg; if (PAT[k]) return PAT[k]; const g = 14, c = document.createElement('canvas'); c.width = c.height = g; const q = c.getContext('2d');
+  q.fillStyle = bg; q.fillRect(0, 0, g, g); q.strokeStyle = col; q.lineWidth = 4; q.beginPath(); for (let o = -g; o <= g * 2; o += g) { q.moveTo(o, g); q.lineTo(o + g, 0); } q.stroke(); return (PAT[k] = X.createPattern(c, 'repeat')); }
+const HR = (x, y, w, h, col = K.lg, bg = K.paper2) => { if (w > 0 && h > 0) { X.fillStyle = hatch(col, bg); X.fillRect(x, y, w, h); } };
+const box = (x, y, w, h, lw = 4, col = K.ink) => { X.strokeStyle = col; X.lineWidth = lw; X.strokeRect(x, y, w, h); };
+function line(x1, y1, x2, y2, col = K.ink, lw = 3, dash) { X.strokeStyle = col; X.lineWidth = lw; X.setLineDash(dash || []); X.beginPath(); X.moveTo(x1, y1); X.lineTo(x2, y2); X.stroke(); X.setLineDash([]); }
+function poly(pts, col = K.ink, lw = 4) { X.strokeStyle = col; X.lineWidth = lw; X.lineJoin = 'miter'; X.beginPath(); pts.forEach(([x, y], i) => (i ? X.lineTo(x, y) : X.moveTo(x, y))); X.stroke(); }
+function arrow(x1, y1, x2, y2, col = K.ink, lw = 6) { const a = Math.atan2(y2 - y1, x2 - x1), hl = lw * 3.4, hw = lw * 2.2; if (Math.hypot(x2 - x1, y2 - y1) < hl) return;
+  line(x1, y1, x2 - Math.cos(a) * hl * .9, y2 - Math.sin(a) * hl * .9, col, lw);
+  X.fillStyle = col; X.beginPath(); X.moveTo(x2, y2); X.lineTo(x2 - Math.cos(a) * hl + Math.sin(a) * hw, y2 - Math.sin(a) * hl - Math.cos(a) * hw); X.lineTo(x2 - Math.cos(a) * hl - Math.sin(a) * hw, y2 - Math.sin(a) * hl + Math.cos(a) * hw); X.fill(); }
+function cell(x, y, w, h, col, label, size = 30, tc = '#fff', fam = HN) { R(x, y, w, h, col); if (label != null) TX(label, x + w / 2, y + h / 2 + size * .36, font(700, size, fam), tc, 'center'); }
+function span(x1, x2, y, col = K.ink, lw = 4) { line(x1, y, x2, y, col, lw); line(x1, y - 10, x1, y + 10, col, lw); line(x2, y - 10, x2, y + 10, col, lw); }
+const MONO = '"SF Mono", Menlo, Consolas, monospace';
+function bigcell(x, y, w, h, col, label, size = 30, tc = '#fff', fam = ZH) { R(x, y, w, h, col); if (label != null) TX(label, x + w / 2, y + h / 2 + size * .36, font(700, size, fam), tc, 'center'); }
+function ell(cx, cy, rx, ry, col) { X.fillStyle = col; X.beginPath(); X.ellipse(cx, cy, rx, ry, 0, 0, 7); X.fill(); }
+const win = (a, b, d = .35) => clamp((T - a) / d) * clamp((b - T) / d);      // 在 [a, b] 内可见，两端淡入淡出
+const seqv = (v0, steps) => steps.reduce((v, [t, v1, d = .5]) => mix(v, v1, S(t, d)), v0);   // 分段动画的当前值
+
+// ---------- 角色（原创像素画） ----------
+const FOX = ['..........F...F.', '.........FF..FF.', '.........FFFFFF.', '..Y......FKFFKF.', '.YRY.....FFFFFFK', '.YRRY....FWWWWF.', 'YRRRY..FFFFWWF..', 'YRRFFFFFFFFFF...', '.RFFFFFFFFFFF...', '..FFFFFFFFFFF...', '..FFFWWWWFFFF...', '..FF.FF..FF.FF..', '..FF.FF..FF.FF..', '..KK.KK..KK.KK..'];
+const TURTLE = ['......SSSSSS....', '....SSSSSSSSSS..', '...SSSWSSSSWSSS.', '..SSSSSSSSSSSSSS', '.BBSSSWSSSSWSSSS', 'BBBBSSSSSSSSSSSS', 'BKBBSSSSSSSSSSS.', 'BBBBBBBBBBBBBBB.', '.BBB.BBB..BBB.BB', '..BB..BB...BB...'];
+const TIDAL = ['....S...S...S...', ...TURTLE];
+const LEAF = ['.........GG...', '........GLLG..', '.......GGGGGG.', '.......GKGGKG.', '..G....GGGGGGG', '.GG...GGGGGG..', 'GGGGGGGGGGGG..', '.GGGGGGGGGGG..', '..GGGDDDDGGG..', '..GG.GG.GG.GG.', '..KK.KK.KK.KK.'];
+const BIRD = ['....CC......', '...CCCC.....', '..CCKCCY....', '..CCCCC.....', '.WCCCCCCC...', 'WWWCCCCCCC..', '.WWWCCCCCCCC', '..WWCCCCC...', '....C..C....', '....Y..Y....'];
+const PAL = { F: '#f0842a', W: '#f7ead0', K: K.ink, R: K.red, Y: K.yel, S: K.blue, B: '#8fb1f5' };
+const PALT = { ...PAL, S: '#16389f', B: '#6f93e6', W: '#bcd0ff' }, PALL = { G: '#2e9d57', L: '#a9d98f', D: '#d8f0c4', K: K.ink };
+const PALR = { ...PAL, F: '#9a917c', W: '#e6e0d3', R: '#9a917c', Y: '#7a735f' }, PALB = { C: '#7cc4ec', W: '#f7f3ea', K: K.ink, Y: K.yel };
+const GREEN = '#2e9d57';
+function sprite(grid, pal, cx, cy, px) { const w = grid[0].length, h = grid.length, x0 = cx - w * px / 2, y0 = cy - h * px / 2;
+  grid.forEach((row, j) => [...row].forEach((ch, i) => { if (ch !== '.') R(Math.round(x0 + i * px), Math.round(y0 + j * px), Math.ceil(px), Math.ceil(px), pal[ch]); })); }
+function hpbox(x, y, name, type, tcol, hp, max, status) { const w = 440, h = 104; R(x, y, w, h, K.paper); box(x, y, w, h, 5);
+  TX(name, x + 20, y + 44, font(700, 36), K.ink); X.font = font(700, 24); const tw = X.measureText(type).width + 22; R(x + w - 20 - tw, y + 14, tw, 36, tcol); TX(type, x + w - 9 - tw, y + 41, font(700, 24), '#fff');
+  if (status) { X.font = font(700, 24); const sw = X.measureText(status).width + 22; R(x + w - 30 - tw - sw, y + 14, sw, 36, K.red); TX(status, x + w - 19 - tw - sw, y + 41, font(700, 24), '#fff'); }
+  const f = clamp(hp / max); TX('HP', x + 20, y + 86, font(700, 24, HN), K.ink2); R(x + 68, y + 66, 240, 22, K.paper2); R(x + 68, y + 66, 240 * f, 22, f > .5 ? K.teal : f > .2 ? K.yel : K.red); box(x + 68, y + 66, 240, 22, 3);
+  TX(`${Math.round(hp)} / ${max}`, x + w - 20, y + 87, font(700, 26, HN), K.ink, 'right'); }
+
+// ---------- 时间轴（秒）。概率全部是 jev-1.13.0 对各回合局面的实际返回，见 public/measurements/jev/jev-probes.json 的 battle.story ----------
+const CUR0 = .5, T1 = 2.2, HIT1 = 3.6;                         // 光标在四个招式上扫 → 概率弹出（雷电牙 0.91）→ 出招
+const OPEN2 = 5.45, FOE1 = 5.9, TEASE = 7.3;                    // 水龟还手，火狐掉到 20 血；抛出算术题的悬念
+const B1 = 9.1, LLM0 = 9.5, LDT = .088, JEVB = 12.5, HIT2 = 13.3, FAINT1 = 13.9;   // LLM 31 次对 Jev 1 次；雷电牙 0.54 打倒水龟
+const B2 = 14.65, Q3 = 16.9, BAR3 = 17.8, WALL = 18.9, MX0 = 21.5, MX1 = 24.1;      // 潮龟上场，三个问题，墙，mask 特写
+const B2B = 24.15, SWT = 24.8, FOE3 = 26.4;                     // 超过 0.8 就换人：叶蜥上场，挨一下
+const B3 = 27.45, DEC = 28.3, RD = 29.2, HIT4 = 31.5, FOE4 = 32.5;   // 读出：叶刃 0.98
+const B4 = 33.4, FORM = 34.8, GA = 38.0, RULE = 39.1, HIT5 = 40.3, FOE5 = 42.3;   // 算术：0.64，实际 28 < 30
+const B5 = 46.2, HIT6 = 47.2, WIN = 48.1, ASK = 49.6, ABAR = 53.7, END = 57.6;
+const FX = 40, FY = 486, FW = 1000, FH = 580, PY = 1196, SUBY = 1108;
+const FOEP = [FX + 730, FY + 190], MEP = [FX + 290, FY + 400];
+
+function headline() {
+  TX('Jev', 32, 312, font(700, 150, HN), K.ink); TX('不生成文本的模型', 310, 260, font(700, 36), K.ink2); TX('decision model · jev-1.13.0', 310, 310, font(600, 28, HN), K.gray);
+  const H1 = (a, b, l1, l2) => { const v = win(a, b); if (v <= 0) return; A(v, () => { RICH(l1, 40, 394, font(700, 52), K.ink); if (l2) RICH(l2, 40, 458, font(700, 52), K.ink); }); };
+  H1(.2, OPEN2 - .1, '这个模型一个字都不会写', '它只给每个选项{p:一个概率}');
+  H1(OPEN2 + .1, B1 - .1, '但这一局，它差点输在', '{r:一道算术题}上');
+  H1(B1 + .1, B2 - .1, 'LLM 出一招，要写 31 个 token', '它只算 {p:1 次}');
+  H1(B2 + .1, B2B - .1, '同一个局面', '{p:三个问题}一起问');
+  H1(B2B + .1, B3 - .1, '概率超过 0.8', '代码就{p:换人}');
+  H1(B3 + .1, B4 - .1, '概率从哪来？', '从{p:最后一个位置}直接读出');
+  H1(B4 + .1, HIT5 + .2, '但它{r:不会算}', '这一击能打倒吗？');
+  H1(HIT5 + .4, B5 - .1, '{r:28 < 30}', '它却说 64% 能打倒');
+  H1(B5 + .1, WIN - .1, '还剩 2 点血', '这一击不用算');
+  H1(WIN + .1, ASK - .1, '赢了', '看懂局面，{p:一步}给出判断');
+  H1(ASK + .1, END + 2, '它算 AI，还是只是个分类器？', '我们{p:问了它自己}');
+}
+
+function proj(t0, from, to, kind, d = .5) { if (T < t0 || T > t0 + d + .25) return; for (let k = 0; k < 8; k++) { const f = clamp((T - t0) / d - k * .06); if (f <= 0 || f >= 1) continue;
+  const x = mix(from[0], to[0], f), y = mix(from[1], to[1], f) + Math.sin(k * 2.1 + T * 22) * 16;
+  if (kind === 'water') ell(x, y, 30 - k * 2, 30 - k * 2, k % 2 ? '#8fb1f5' : K.blue);
+  else if (kind === 'leaf') { X.save(); X.translate(x, y); X.rotate(T * 14 + k); ell(0, 0, 34, 13, k % 2 ? '#a9d98f' : GREEN); X.restore(); }
+  else ell(x, y, 30 - k * 2, 30 - k * 2, k % 2 ? K.yel : K.red); } }
+function bolt(t0) { if (T < t0 - .05 || T > t0 + .42 || Math.floor(T * 30) % 3 === 0) return; const seed = Math.floor(T * 20), pts = []; for (let i = 0; i <= 7; i++) { const f = i / 7, j = i === 0 || i === 7 ? 0 : Math.sin(seed * 13 + i * 7.3) * 34; pts.push([mix(MEP[0] + 150, FOEP[0] - 60, f) + j * .5, mix(MEP[1] - 80, FOEP[1], f) + j]); } X.lineJoin = 'miter'; poly(pts, K.ink, 22); poly(pts, K.yel, 12); }
+const shakeAt = (t0, d = .5) => (T > t0 && T < t0 + d ? Math.sin(T * 70) * 12 : 0);
+function dmg(t0, p, txt) { const v = win(t0, t0 + 1.3, .2); if (v > 0) A(v, () => TX(txt, p[0] + (p === FOEP ? -210 : 230), p[1] - 30 - (T - t0) * 30, font(700, 64, HN), K.red, 'center')); }
+
+const IMPACTS = [HIT1 + .2, FOE1 + .5, HIT2 + .2, FOE3 + .5, HIT4 + .3, FOE4 + .5, HIT5 + .3, FOE5 + .5, HIT6 + .3];
+function field() {
+  const jolt = IMPACTS.reduce((v, t) => v + (T > t && T < t + .35 ? (1 - (T - t) / .35) : 0), 0), big = T > FOE5 + .5 && T < FOE5 + .9 ? 2 : 1;
+  X.save(); X.translate(Math.sin(T * 90) * 7 * jolt * big, Math.cos(T * 77) * 5 * jolt * big);
+  fieldInner();
+  const fl = IMPACTS.reduce((v, t) => Math.max(v, T > t && T < t + .1 ? 1 - (T - t) / .1 : 0), 0); if (fl > 0) A(fl * .55, () => R(FX, FY, FW, FH, '#fff'));
+  X.restore();
+}
+function fieldInner() {
+  R(FX, FY, FW, FH, '#e9e3d4'); box(FX, FY, FW, FH, 5);
+  ell(FOEP[0], FOEP[1] + 96, 230, 40, '#d3c9b2'); ell(MEP[0], MEP[1] + 140, 250, 34, '#d3c9b2');
+  const bob = Math.sin(T * 2.4) * 5;
+  // 对手：水龟 → 潮龟
+  const second = T >= B2;
+  if (!second) { const hp = seqv(80, [[HIT1 + .25, 15], [HIT2 + .25, 0, .4]]), a = 1 - S(FAINT1, .6), sh = shakeAt(HIT1 + .2) + shakeAt(HIT2 + .2), lunge = Math.sin(clamp((T - FOE1) / .5) * Math.PI) * -40;
+    A(a, () => { sprite(TURTLE, PAL, FOEP[0] + sh + lunge, FOEP[1] + bob + (1 - a) * 40, 15); hpbox(FX + 24, FY + 24, '水龟', '水', K.blue, hp, 100); }); }
+  else { const hp = seqv(100, [[HIT4 + .35, 30], [HIT5 + .35, 2], [HIT6 + .35, 0, .4]]), inn = S(B2, .8), a = inn * (1 - S(WIN - .5, .6)), sh = shakeAt(HIT4 + .3) + shakeAt(HIT5 + .3) + shakeAt(HIT6 + .3);
+    const lunge = [FOE3, FOE4, FOE5].reduce((v, t) => v + Math.sin(clamp((T - t) / .5) * Math.PI) * -40, 0);
+    A(a, () => { sprite(TIDAL, PALT, FOEP[0] + sh + lunge + (1 - inn) * 500, FOEP[1] - 8 + bob, 16); hpbox(FX + 24, FY + 24, '潮龟', '水', '#16389f', hp, 100); }); }
+  // 己方：火狐 → 叶蜥
+  if (T < SWT + .7) { const hp = seqv(62, [[FOE1 + .55, 20]]), out = S(SWT, .6), sh = shakeAt(FOE1 + .5, .6);
+    A(1 - out, () => { sprite(FOX, PAL, MEP[0] + sh - out * 500, MEP[1] - bob * .5, 21); hpbox(FX + 536, FY + 456, '火狐', '火', K.red, hp, 100); }); }
+  else { const hp = seqv(100, [[FOE3 + .55, 80], [FOE4 + .55, 60], [FOE5 + .55, 25]]), inn = S(SWT + .7, .6), sh = shakeAt(FOE3 + .5) + shakeAt(FOE4 + .5) + shakeAt(FOE5 + .5, .8) * 1.6;
+    const hop = T > WIN ? Math.abs(Math.sin((T - WIN) * 5)) * 46 * (1 - S(WIN + 2.4, 1)) : 0;
+    if (T > WIN + .4) { const fi = S(WIN + .4, .6); A(fi, () => sprite(FOX, PAL, MEP[0] + 330 + (1 - fi) * 300, MEP[1] + 60 - Math.abs(Math.sin((T - WIN) * 5 + 1)) * 30 * (1 - S(WIN + 2.4, 1)), 13)); }
+    A(inn, () => { sprite(LEAF, PALL, MEP[0] + sh - (1 - inn) * 500, MEP[1] + 20 - bob * .5 - hop, 24); A(1 - S(WIN + .2, .4), () => hpbox(FX + 536, FY + 456, '叶蜥', '草', GREEN, hp, 100, T > FOE4 + .6 ? '虚弱' : null)); }); }
+  // 招式效果
+  // 潮龟登场的水花；叶蜥出手前的蓄力
+  if (T > B2 + .5 && T < B2 + 1.5) for (let k = 0; k < 12; k++) { const f = clamp((T - B2 - .5) / .9), an = Math.PI * (1 + k / 11); ell(FOEP[0] + Math.cos(an) * 260 * f, FOEP[1] + 90 + Math.sin(an) * 170 * f + f * f * 120, 16 * (1 - f) + 4, 16 * (1 - f) + 4, k % 2 ? '#8fb1f5' : '#16389f'); }
+  if (T > FORM - .2 && T < HIT5 - .1) { const f = clamp((T - FORM + .2) / (HIT5 - FORM)); for (let k = 0; k < 6; k++) { const an = T * (3 + f * 5) + k * Math.PI / 3, r = 190 - f * 70; X.save(); X.translate(MEP[0] + Math.cos(an) * r, MEP[1] + 20 + Math.sin(an) * r * .55); X.rotate(an); ell(0, 0, 26, 10, k % 2 ? '#a9d98f' : GREEN); X.restore(); } }
+  // 开场的悬念：一道还没解开的算术题
+  { const v = win(TEASE, B1 - .15, .25); if (v > 0) A(v, () => { X.save(); X.translate(FX + FW / 2, FY + 250); X.rotate(-.05 + Math.sin(T * 9) * .012); X.scale(.9 + .1 * P(TEASE, .3), .9 + .1 * P(TEASE, .3)); R(-330, -70, 660, 140, K.red); box(-330, -70, 660, 140, 6); X.font = font(700, 76, HN); X.fillStyle = '#fff'; X.textAlign = 'center'; X.textBaseline = 'alphabetic'; X.fillText('2 × 70 × 0.2 = ？', 0, 26); X.restore(); }); }
+  bolt(HIT1); bolt(HIT2);
+  proj(FOE1, FOEP, MEP, 'water'); proj(FOE3, FOEP, MEP, 'water'); proj(FOE4, FOEP, MEP, 'water'); proj(FOE5, FOEP, MEP, 'water');
+  proj(HIT4 - .15, [MEP[0] + 150, MEP[1] - 40], FOEP, 'leaf'); proj(HIT5 - .15, [MEP[0] + 150, MEP[1] - 40], FOEP, 'leaf'); proj(HIT6 - .15, [MEP[0] + 150, MEP[1] - 40], FOEP, 'leaf');
+  dmg(HIT1 + .2, FOEP, '−65'); dmg(FOE1 + .5, MEP, '−42'); dmg(HIT2 + .2, FOEP, '−15'); dmg(FOE3 + .5, MEP, '−20'); dmg(HIT4 + .3, FOEP, '−70'); dmg(FOE4 + .5, MEP, '−20'); dmg(HIT5 + .3, FOEP, '−28'); dmg(FOE5 + .5, MEP, '−35'); 
+  IN(WIN, () => TX('胜', FOEP[0], FOEP[1] + 40, font(700, 150), K.ink, 'center'), .4, 0);
+  if (T > WIN) { X.save(); X.beginPath(); X.rect(FX + 3, FY + 3, FW - 6, FH - 6); X.clip();
+    for (let k = 0; k < 46; k++) { const t = T - WIN - (k % 9) * .13, x = FX + 30 + (k * 97) % 940, y = FY - 30 + ((t * (150 + (k * 37) % 120)) % (FH + 60)); if (t > 0) R(x + Math.sin(t * 3 + k) * 14, y, 14, 14, [K.yel, K.red, K.blue, K.teal, K.purple][k % 5]); }
+    X.restore(); }
+}
+
+// 2×2 招式按钮；g 为概率条进度，sel 为选中项
+function moves4(list, probs, g, sel, y0 = PY, h = 150, a = 1, gap = 44, cur = -1) { A(a, () => list.forEach(([n, sub, col], i) => { const w = 490, x = 40 + (i % 2) * 510, y = y0 + Math.floor(i / 2) * (h + gap);
+  R(x, y, w, h, i === cur ? K.paper2 : K.paper); R(x, y, 16, h, col); box(x, y, w, h, i === sel ? 9 : i === cur ? 7 : 4, i === sel ? K.purple : K.ink);
+  TX(n, x + 40, y + h / 2 + 2, font(700, 46), K.ink); TX(sub, x + 40, y + h / 2 + 44, font(600, 26), K.gray);
+  if (probs) { R(x, y + h + 10, w, 18, K.paper2); R(x, y + h + 10, w * probs[i] * g, 18, K.purple); if (g > 0) A(g, () => TX((probs[i] * g).toFixed(2), x + w - 24, y + h / 2 + 22, font(700, 60, HN), K.purple, 'right')); } })); }
+const FOXM = [['烈焰爆', '火 · 威力 90', K.red], ['雷电牙', '电 · 威力 65', K.yel], ['快爪', '普通 · 威力 40', K.gray], ['防守', '下一击减半', K.ink2]];
+const LEAFM = [['叶刃', '草 · 威力 70', GREEN], ['撞击', '普通 · 威力 50', K.gray], ['光合', '回复 30 血', K.teal], ['防守', '下一击减半', K.ink2]];
+const tagJev = (a) => A(a, () => bigcell(40, PY - 62, 120, 46, K.purple, 'Jev', 28, '#fff', HN));
+
+function panel() {
+  const scan = (t0, t1, n) => (T > t0 && T < t1 ? Math.floor((T - t0) * 7) % n : -1);   // 光标在 n 个选项上来回扫
+  // 开场：光标扫过四个招式 → 概率同时弹出
+  { const a = win(.25, B1 - .2), g = S(T1, .35); if (a > 0) { tagJev(a); moves4(FOXM, T > T1 ? [.04, .91, .01, .04] : null, g, T > T1 + .6 ? 1 : -1, PY, 150, a, 44, scan(CUR0, T1, 4)); } }
+  // LLM 在对话框里逐 token 写推理（31 次 forward）→ 收成一行；Jev 的四个招式直接出概率（1 次）
+  { const a = win(B1, B2 - .2); if (a > 0) { const SAY = '水龟是水系，火系招式会被抵抗，烈焰爆不划算。电系克水，雷电牙效果加倍。水龟只剩 15 血……这一回合我选：雷电牙。';
+      const n = Math.floor(clamp((T - LLM0) / (31 * LDT)) * 31), fold = S(JEVB - .3, .4), bh = mix(300, 62, fold);
+      A(a, () => { R(40, PY, 1000, bh, K.paper); box(40, PY, 1000, bh, 5); bigcell(40, PY - 52, 120, 46, K.blue, 'LLM', 28, '#fff', HN);
+        A(1 - fold, () => { const txt = SAY.slice(0, Math.floor(SAY.length * n / 31)); X.font = font(700, 36); const lines = ['']; for (const ch of txt) { if (X.measureText(lines[lines.length - 1] + ch).width > 940 && !'，。、：…'.includes(ch)) lines.push(''); lines[lines.length - 1] += ch; }
+          lines.forEach((l, i) => TX(l, 66, PY + 62 + i * 56, font(700, 36), K.ink)); if (n < 31 && Math.floor(T * 4) % 2 === 0) { X.font = font(700, 36); R(70 + X.measureText(lines[lines.length - 1]).width, PY + 30 + (lines.length - 1) * 56, 5, 40, K.ink); } });
+        RICH(`{b:${n}} 个 token = {b:${n}} 次 forward`, 1016, mix(PY + 272, PY + 43, fold), font(700, 34), K.ink, 'right'); });
+      const j = P(JEVB, .3); if (j > 0) { const y0 = PY + 146, g = S(JEVB + .2, .35);
+        A(a * j, () => { bigcell(40, y0 - 56, 120, 46, K.purple, 'Jev', 28, '#fff', HN); RICH('{p:1} 次 forward', 1016, y0 - 20, font(700, 34), K.ink, 'right'); });
+        moves4(FOXM, [.13, .54, .17, .16], g, T > JEVB + .6 ? 1 : -1, y0, 120, a * j, 40); } } }
+  // 三个问题：依次弹出，各有一条看向战场的视线；墙落下；特写后回来，0.88 那张被框出
+  { const a = win(Q3, B3 - .2) * (1 - win(MX0, MX1)); if (a > 0) A(a, () => { const g = S(BAR3, .45), cw = 320, ch = 340;
+      const cards = [['换不换人？', [['换', .88]]], ['换谁上？', [['叶蜥', .99], ['岩犬', 0], ['冰鸟', .01]]], ['局面如何？', [['劣势', .88], ['均势', .05], ['优势', .07]]]];
+      cards.forEach(([q, rows], i) => { const x = 40 + i * 340, y = PY + 6, t0 = Q3 + i * .28, pop = P(t0, .35); if (pop <= 0) return;
+        const pulse = (T * 1.6 + i * .3) % 1; A(pop, () => { line(x + cw / 2, FY + FH + 4, x + cw / 2, y - 4, K.teal, 5, [10, 8]); { X.fillStyle = K.teal; X.beginPath(); X.arc(x + cw / 2, mix(FY + FH + 4, y - 4, 1 - pulse), 8, 0, 7); X.fill(); } });
+        POP(t0, x, y, cw, ch, () => { const hot = i < 2 && T > B2B + .2; R(x, y, cw, ch, K.paper); box(x, y, cw, ch, hot ? 9 : 5, hot ? K.purple : K.ink); R(x, y, cw, 14, K.purple); TX(q, x + 22, y + 66, font(700, 38), K.ink);
+          if (rows.length === 1) { R(x + 22, y + 226, cw - 44, 22, K.paper2); R(x + 22, y + 226, (cw - 44) * rows[0][1] * g, 22, K.purple); if (g > 0) A(g, () => TX((rows[0][1] * g).toFixed(2), x + 22, y + 196, font(700, 96, HN), K.purple)); }
+          else rows.forEach(([n, p], k) => { const ry = y + 112 + k * 72; TX(n, x + 22, ry + 22, font(700, 30), k === 0 ? K.ink : K.gray); if (g > 0) A(g, () => TX(p.toFixed(2), x + cw - 22, ry + 24, font(700, 36, HN), k === 0 ? K.purple : K.gray, 'right')); R(x + 22, ry + 36, cw - 44, 16, K.paper2); R(x + 22, ry + 36, (cw - 44) * p * g, 16, K.purple); }); }); });
+      const w = S(WALL, .35); if (w > 0) [1, 2].forEach((i) => { const x = 40 + i * 340 - 15; R(x, PY + 6, 10, 340 * w, K.red); }); }); }
+  // 特写：一条序列上的 attention mask
+  { const a = win(MX0, MX1); if (a > 0) A(a, () => { const SEQ = [0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2], HUE = [K.teal, K.blue, K.yel], C = 32, x0 = 60, y0 = PY + 10;
+      SEQ.forEach((si, i) => SEQ.forEach((sj, j) => { const p = P(MX0 + .15 + i * .07 + j * .01, .25); if (p <= 0) return; const ok = j <= i && (sj === 0 || sj === si);
+        A(p, () => { if (ok) R(x0 + j * C, y0 + i * C, C - 4, C - 4, HUE[sj]); else if (j < i) HR(x0 + j * C, y0 + i * C, C - 4, C - 4, K.red, K.paper2); else { X.strokeStyle = K.lg; X.lineWidth = 2; X.strokeRect(x0 + j * C + 1, y0 + i * C + 1, C - 6, C - 6); } }); }));
+      A(P(MX0 + 1.2, .4), () => box(x0 + 3 * C - 4, y0 + 7 * C - 4, 4 * C + 4, 4 * C + 4, 5, K.red));
+      RICH('{t:局面}只读一次', 470, y0 + 90, font(700, 46), K.ink); RICH('{b:问题 1} 与 {y:问题 2}', 470, y0 + 190, font(700, 46), K.ink); RICH('{r:互相看不见}', 470, y0 + 254, font(700, 46), K.ink); }); }
+  // 读出：<decide> 在四个招式中间，向每个选项连线
+  { const a = win(B3, B4 - .2); if (a > 0) { const g = S(RD + 1.1, .5), y0 = PY, h = 130, gap = 112, dx = 540, dy = y0 + h + 18 + gap / 2;
+      moves4(LEAFM, T > RD + 1.0 ? [.98, 0, 0, .02] : null, g, T > RD + 1.7 ? 0 : -1, y0, h, a, gap);
+      A(a, () => { const s = S(RD, .9); if (s > 0) [0, 1, 2, 3].forEach((i) => { const tx = i % 2 ? 790 : 290, ty = i < 2 ? y0 + h + 30 : y0 + h + gap + 6; line(dx, dy, mix(dx, tx, s), mix(dy, ty, s), K.purple, 6); if (s > 0 && s < 1) { X.fillStyle = K.purple; X.beginPath(); X.arc(mix(dx, tx, s), mix(dy, ty, s), 12, 0, 7); X.fill(); } });
+        POP(DEC, dx - 130, dy - 28, 260, 56, () => bigcell(dx - 130, dy - 28, 260, 56, K.purple, '<decide>', 30, '#fff', MONO)); }); } }
+  // 算术题：公式逐项亮起 → 读数 0.64 → 出手
+  { const a = win(B4 + .1, B5 - .2); if (a > 0) A(a, () => { const y = PY;
+      POP(B4 + .1, 40, y, 1000, 170, () => { R(40, y, 1000, 170, K.paper); box(40, y, 1000, 170, 5); TX('叶刃的伤害', 66, y + 62, font(700, 38), K.ink);
+        ['2', '×', '70', '×', '0.2'].forEach((t, i) => { const on = P(FORM + Math.floor(i / 2) * .8, .3); A(.25 + .75 * on, () => TX(t, 300 + i * 78, y + 70, font(700, 64, HN), K.blue, 'center')); });
+        RICH('潮龟还剩 {b:30} 血。能打倒吗？', 66, y + 138, font(700, 38), K.ink);
+        IN(HIT5 + .5, () => RICH('= {r:28}', 700, y + 70, font(700, 64, HN), K.ink), .3, 0); });
+      const g = S(GA, .8); if (T > GA - .4) IN(GA - .4, () => { bigcell(40, y + 204, 120, 54, K.purple, 'Jev', 30, '#fff', HN); R(180, y + 204, 600, 54, K.paper2); R(180, y + 204, 600 * .64 * g, 54, K.purple); line(180 + 300, y + 190, 180 + 300, y + 272, K.ink, 4, [8, 6]);
+        TX((.64 * g).toFixed(2), 1040, y + 262, font(700, 100, HN), K.purple, 'right'); TX('不能', 180, y + 296, font(600, 26), K.gray); TX('能', 780, y + 296, font(600, 26), K.gray, 'right'); }, .3, 0);
+      IN(RULE, () => RICH('超过 0.5，代码就出手', 40, y + 372, font(700, 40), K.ink2)); }); }
+  // 最后一击
+  { const a = win(B5, ASK - .2), g = S(B5 + .25, .3); if (a > 0) { tagJev(a); moves4(LEAFM, [.91, .06, .03, 0], g, T > B5 + .6 ? 0 : -1, PY, 150, a); } }
+  // 收尾：把“它算 AI 吗”丢给 Jev 自己（实际返回：分类器 0.67，AI 0.33）；出结果前光标在两个选项间扫
+  { const a = win(ASK + .2, END + 2); if (a > 0) { const g = S(ABAR, .5), opts = [['算 AI', .33, K.blue], ['只是个分类器', .67, K.gray]], cur = scan(ASK + .9, ABAR, 2);
+      A(a, () => { bigcell(40, PY - 52, 120, 46, K.purple, 'Jev', 28, '#fff', HN);
+        opts.forEach(([n, p, col], i) => { const y = PY + i * 176, sel = i === 1 && T > ABAR + .7; POP(ASK + .3 + i * .2, 40, y, 1000, 130, () => { R(40, y, 1000, 130, i === cur ? K.paper2 : K.paper); R(40, y, 16, 130, col); box(40, y, 1000, 130, sel ? 9 : i === cur ? 7 : 4, sel ? K.purple : K.ink); TX(n, 84, y + 84, font(700, 56), K.ink);
+          R(40, y + 140, 1000, 18, K.paper2); R(40, y + 140, 1000 * p * g, 18, K.purple); if (g > 0) A(g, () => TX((p * g).toFixed(2), 1012, y + 92, font(700, 76, HN), K.purple, 'right')); }); });
+        POP(ABAR + 2.2, 240, PY + 360, 600, 100, () => TX('你觉得呢？', 540, PY + 430, font(700, 68), K.ink, 'center')); }); } }
+}
+
+function main() { headline(); field(); panel(); }
+
+// 封面：1080x1920，主要内容都在中间 3:4 的范围内（y 240–1680），信息流按 3:4 裁切时不丢内容
+function cover() {
+  X = oc; T = 3.74; X.setTransform(1, 0, 0, 1, 0, 0); X.globalAlpha = 1; X.setLineDash([]); R(0, 0, W, H, K.paper);
+  TX('Jev', 56, 410, font(700, 190, HN), K.ink); TX('decision model', 420, 350, font(700, 44, HN), K.ink2); TX('jev-1.13.0', 420, 404, font(600, 36, HN), K.gray);
+  RICH('不会写字的 AI', 66, 560, font(700, 128), K.ink); RICH('却{p:打赢}了这一局', 66, 706, font(700, 128), K.ink);
+  TX('It cannot write a word. It only gives probabilities.', 68, 772, font(600, 34, HN), K.ink2);
+  X.save(); X.translate(0, 808 - FY); fieldInner(); X.restore();
+  moves4(FOXM, [.04, .91, .01, .04], 1, 1, 1410, 108, 1, 28);
+  ctx.globalAlpha = 1; ctx.drawImage(off, 0, 0);
+}
+window.renderCover = cover;
+// 配音时间轴：timing.js 由 vo.py 生成，把影片时间的每一段映射到配音的时长上；没有它时按原始时间播放
+const TM = window.TIMING;
+const warp = (t) => { if (!TM) return t; for (const g of TM.segs) if (t < g.out[1]) return g.film[0] + (t - g.out[0]) / (g.out[1] - g.out[0]) * (g.film[1] - g.film[0]); return END; };
+const unwarp = (f) => { if (!TM) return f; for (const g of TM.segs) if (f <= g.film[1]) return g.out[0] + (f - g.film[0]) / (g.film[1] - g.film[0]) * (g.out[1] - g.out[0]); return TM.duration; };
+const SPD = window.SPEED || 1;   // 整体倍速（speed.js，由 speeds.sh 写入）：画面按倍速重新渲染，音轨在混音后整体变速
+window.DURATION = (TM ? TM.duration + 1.0 : END) / SPD;
+const FILM_ENDS = [1.6, 4.4, 8.4, 11.8, 13.2, 18.4, 20.6, 23.2, 26.0, 31.2, 39.6, 43.2, 48.6, 53.2, 56.6];
+const seq = (n, t0, dt, k) => Array.from({ length: n }, (_, i) => [t0 + i * dt, k]);
+window.EVENTS = [[.3, 'click'], ...seq(11, CUR0, .143, 'tick'), [T1, 'land'], [HIT1, 'err'], [HIT1 + .3, 'land'], [FOE1, 'whoosh'], [FOE1 + .5, 'land'], [TEASE, 'pop'],
+  ...seq(31, LLM0, LDT, 'tick'), [JEVB, 'pop'], [JEVB + .2, 'land'], [HIT2, 'err'], [HIT2 + .3, 'land'], [FAINT1, 'whoosh'],
+  [B2, 'whoosh'], [B2 + .6, 'land'], ...seq(3, Q3, .28, 'click'), [BAR3, 'land'], [WALL, 'land'], [MX0, 'whoosh'], ...seq(11, MX0 + .15, .07, 'tick'), [MX1, 'whoosh'], [SWT, 'whoosh'], [SWT + .7, 'whoosh'], [FOE3, 'whoosh'], [FOE3 + .5, 'land'],
+  [DEC, 'pop'], [RD, 'whoosh'], [RD + 1.1, 'land'], [RD + 1.7, 'click'], [HIT4 - .15, 'whoosh'], [HIT4 + .3, 'land'], [FOE4, 'whoosh'], [FOE4 + .5, 'land'],
+  [B4 + .1, 'pop'], ...seq(3, FORM, .8, 'tick'), [GA, 'whoosh'], [GA + .8, 'pop'], [RULE, 'tick'], [HIT5 - .15, 'whoosh'], [HIT5 + .3, 'land'], [HIT5 + .5, 'err'], [FOE5, 'whoosh'], [FOE5 + .5, 'err'], [FOE5 + .6, 'land'],
+  [B5 + .25, 'land'], [B5 + .6, 'click'], [HIT6 - .15, 'whoosh'], [HIT6 + .3, 'land'], [WIN, 'pop'], [WIN + .4, 'whoosh'],
+  [ASK + .3, 'click'], [ASK + .5, 'click'], ...seq(20, ASK + .9, .143, 'tick'), [ABAR, 'land'], [ABAR + .7, 'pop'], [ABAR + 2.2, 'pop']].map(([t, k]) => [unwarp(t), k]);
+window.sceneEnds = FILM_ENDS.map(unwarp);
+
+// ====================== 运行时：帧内多次采样做运动模糊 ======================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const off = document.createElement('canvas'); off.width = W; off.height = H; const oc = off.getContext('2d');
+// 安全区：近几代手机屏幕约 9:19.5 到 9:20，小红书播放页把 9:16 的视频按高度铺满，左右各裁掉约 9–10%。
+// 全部内容按 SAFE 缩小并居中，落在中间 80% 的宽度内（x 108–972）；背景仍铺满整个画面。
+const SAFE = .8, SAFE_X = W * (1 - SAFE) / 2, SAFE_Y = 220;
+function drawFrame(t) { X = oc; T = Math.max(0, t); X.setTransform(1, 0, 0, 1, 0, 0); X.globalAlpha = 1; X.setLineDash([]); X.lineCap = 'butt'; R(0, 0, W, H, K.paper);
+  X.setTransform(SAFE, 0, 0, SAFE, SAFE_X, SAFE_Y); main(); X.setTransform(1, 0, 0, 1, 0, 0); }
+window.renderAt = (tOut, fps = 60, samples = 5, shutter = .25) => { const t = tOut * SPD;
+  for (let s = 0; s < samples; s++) { const ts = samples > 1 ? t - SPD * (shutter / Math.max(fps, 30)) * (1 - s / (samples - 1)) : t; drawFrame(warp(Math.max(0, ts))); ctx.globalAlpha = 1 / (s + 1); ctx.drawImage(off, 0, 0); }
+  ctx.globalAlpha = 1;
+  if (TM) for (const g of TM.segs) for (const [c0, c1, txt] of g.cues) if (t >= c0 && t < c1 + .06) {   // 字幕：战场下方一行
+    ctx.save(); ctx.setTransform(SAFE, 0, 0, SAFE, SAFE_X, SAFE_Y); ctx.font = font(700, 46); const w = ctx.measureText(txt).width; ctx.fillStyle = K.ink; ctx.fillRect(540 - w / 2 - 22, SUBY - 34, w + 44, 64);
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillText(txt, 540, SUBY + 14); ctx.restore(); }
+  if (tOut > window.DURATION - .6) { ctx.globalAlpha = io((tOut - window.DURATION + .6) / .6); ctx.fillStyle = K.paper; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
+};
+window.renderAt(0);
+if (new URLSearchParams(location.search).has('play')) { const start = performance.now(); const play = (now) => { window.renderAt(((now - start) / 1000) % window.DURATION, 60, 1); requestAnimationFrame(play); }; requestAnimationFrame(play); }
+
+</script>
+</body>
+</html>

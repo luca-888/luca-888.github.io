@@ -23,6 +23,7 @@
 .fk-figure svg .fk-mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 12px; }
 .fk-figure svg .fk-cell-text { fill: #fff; font-size: 12px; font-weight: 600; }
 .fk-figure svg .fk-cell-text.fk-on-gray { fill: #374151; }
+.fk-figure svg .fk-cell-text.fk-on-void { fill: var(--color-muted); }
 .fk-figure svg .fk-cell-text.fk-on-amber { fill: #3b2400; }
 .fk-figure svg .fk-cell-sub { font-size: 11px; font-weight: 400; }
 .fk-figure svg .fk-cell-small { font-size: 10px; font-weight: 600; }
@@ -41,6 +42,9 @@
 .fk-band-purple { fill: var(--fk-purple); fill-opacity: .07; }
 .fk-band-teal { fill: var(--fk-teal); fill-opacity: .07; }
 .fk-band-gray { fill: #6b7280; fill-opacity: .06; }
+.fk-fill-ink { fill: #141414; }
+.fk-fill-void { fill: #eceef2; }
+.fk-hatch-line { fill: #cdd2da; }
 .fk-fill-free { fill: var(--color-page); stroke: var(--color-border); }
 .fk-fill-empty { fill: none; stroke: var(--color-border); stroke-width: 1.2; stroke-dasharray: 3 2; }
 .fk-figure svg .fk-rule { stroke: var(--color-border); stroke-width: 1; }
@@ -75,6 +79,8 @@ div.fk-text-teal { color: var(--fk-text-teal); }
 .fk-swatch-amber { background: var(--fk-amber); }
 .fk-swatch-red { background: var(--fk-red); }
 .fk-swatch-gray { background: var(--fk-gray); }
+.fk-swatch-ink { background: #141414; }
+.fk-swatch-void { background: repeating-linear-gradient(45deg, #eceef2 0 2px, #cdd2da 2px 4px); }
 .fk-swatch-free, .fk-swatch-empty { background: var(--color-page); border: 1px solid var(--color-border); }
 
 .fk-steps { display: flex; justify-content: center; margin: 14px 0 0; padding: 0; list-style: none; font-size: 12px; }

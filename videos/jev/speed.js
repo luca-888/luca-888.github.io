@@ -1,0 +1,1 @@
+window.SPEED = 1;

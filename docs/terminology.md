@@ -36,7 +36,17 @@
 | advantage | 相对于 baseline 的表现，用作 policy 更新的权重 | 直接使用 advantage；GRPO 的 outcome reward 语境中按文中公式说明组内中心化与标准差归一化，不与原始 reward 混称。 |
 | speculative decoding | 由 drafter 先猜多个 token、target 一次验证的解码方法 | 直接使用 speculative decoding；不写“推测解码”。Leviathan 称 speculative decoding，Chen 称 speculative sampling，指该方法的采样规则时用“拒绝采样”。 |
 | drafter / draft model | 提出候选 token 的一方 / 独立的小模型 | 泛指用 drafter；特指独立小模型用 draft model；target 指被加速的原模型。 |
+| transition bias / Markov head | 按前文 token 加在后一位 base logits 上的偏置 B / 只依赖前一个 token 的 transition bias | 保留英文，不写“加分表”“加分 / 减分”这类自造名；分解方式写“低秩分解”（B = W₁W₂），不写 low-rank factorization；配音和正文直接陈述，不用“论文做……”“论文称为……”引出。视频与文章相同：有论文术语时用术语，不另起名字（2026-10-06 用户要求）。 |
 | 平均接受长度 | 每次 target forward 平均产出的 token 数（含 bonus token） | 记为 $L$；acceptance rate 指单位置被接受的概率 $\alpha$，两者不混用。 |
+| TP / PP / DP / EP | tensor / pipeline / data / expert parallelism | 直接使用缩写，不展开也不译作“张量并行”等；“DP attention”指 attention 按请求分到各卡、与 EP 搭配的用法，普通多副本直接说 DP 或“副本”。 |
+| PD 分离 | prefill 与 decode 放在不同实例上执行 | 用户指定（2026-10-01）：写作“PD 分离”；prefill 实例与 decode 实例可简称 P、D；引用外部资料时保留其原名 disaggregated prefilling / PD disaggregation。 |
+| all-reduce | 各卡的 tensor 相加并让每张卡都拿到结果的集合通信 | 保留英文；EP 的两步通信写 dispatch 与 combine。 |
+| expert / router | MoE 层中的一个子网络 / 为 token 选择 expert 的门控 | 保留英文，不写“专家”“路由器”；请求级的分发组件也叫 router，需要时就近说明。 |
+| TTFT / ITL | time to first token / inter-token latency | 直接使用缩写；论文中的 TPOT、TBT 在正文统一写 ITL。 |
+| structured output / constrained decoding | 用 token mask 保证输出符合 JSON schema、正则或 grammar | 功能名用 structured output（标题写作“Structured Output”），指“逐步屏蔽非法 token”这一机制时用 constrained decoding；不写“结构化输出”“约束解码”。vLLM 旧称 guided decoding 仅在引用旧资料时出现。 |
+| token mask / bitmask | 每步标记词表中哪些 token 合法的掩码 / 其按位压缩的存储形式 | 概念用 token mask 或 mask，指 vLLM、XGrammar 中每 token 一位的张量时用 bitmask；不写“掩码”。 |
+| grammar / CFG | 描述合法输出的规则集 / context-free grammar | 保留英文；首次写作“context-free grammar（CFG）”。JSON schema、正则在引擎内部都先转成 grammar。pushdown automaton 不缩写为 PDA。 |
+| context-independent / context-dependent token | XGrammar 中只看栈顶即可判定 / 需要完整栈才能判定的 token | 保留英文，不译；仅在 XGrammar 语境使用。 |
 | GC | Gradient Checkpointing | 首次写作“Gradient Checkpointing（GC）”；用于训练中的 activation 重计算。在垃圾回收语境中重新定义，不能沿用此含义。 |
 | AC | Activation Checkpointing | 首次写作“Activation Checkpointing（AC）”；GC 文章以 GC 为主称，介绍 PyTorch 等资料中的 AC 命名时说明两者在该语境下指同类技术，不来回换称。 |
 | SAC | Selective Activation Checkpointing | 首次写作“Selective Activation Checkpointing（SAC）”；后文固定使用 SAC。Selective 表示选择性，不将 SAC 当作自动选择策略的简称。 |
@@ -60,6 +70,15 @@
 | params | parameters，模型参数 | 在训练显存组成、表格与图例中直接使用 params，不附中文。描述“冻结参数”“可训练参数”等动作或属性时可保留中文。 |
 | grads | gradients，梯度 | 在训练显存组成中直接使用 grads，默认由上下文明确指参数梯度，不附中文；描述梯度传播、输入梯度与数学推导时保留准确的限定，不将所有梯度统称为参数梯度。 |
 | optimizer states | 优化器状态 | 讨论训练显存与状态存储时直接使用完整英文，不附中文；不自造 OS 等缩写。 |
+| FP8 / INT8 / INT4 | 8-bit 浮点 / 8-bit 整数 / 4-bit 整数 | 量化语境直接使用，不写“8 位浮点”；FP8 的具体格式写 E4M3、E5M2。未量化的基线写 BF16 或 FP16，按来源原文。 |
+| NVFP4 / FP4 | NVIDIA 的 4-bit 浮点格式（E2M1，每 16 个值一个 FP8 scale） | 格式名写 NVFP4；只指 4-bit 浮点这种数据类型时写 FP4。权重与 activation 都是 NVFP4 写“NVFP4 W4A4”。 |
+| W4A16 / W8A8 | 权重位宽与 activation 位宽的组合 | 直接使用，首次出现时就近说明 W、A 的含义；需要区分数据类型时写“FP8 W8A8”“INT8 W8A8”。 |
+| RTN | round-to-nearest，直接四舍五入的量化 | 首次写作“round-to-nearest（RTN）”，后文使用 RTN。 |
+| dequant | 把低比特权重还原为 FP16 / BF16 | kernel 语境保留 dequant；解释动作时可说“还原”。“校准”指用样本估计量化参数，不写 calibration。 |
+| decision model | 只返回选项上的概率、不生成文本的模型（Jev、Kev、Laya 一类） | 保留英文；TypeSafe 的叫法 System One model 仅在引用官方资料时出现。 |
+| state / question / branch | decision model 的输入内容 / 带类型的问题 / 一个问题自己的那段 token | 保留英文；question 在行文中可写“问题”。branch 为 Jev 文章引入的叫法，首次出现时定义。Choice、Score、Noul 三种类型名按官方大小写。 |
+| pointer head | 用 `<decide>` 与各选项末尾的 hidden state 做点积得到 logits 的读出层 | 保留英文；动作写“读出”，不写 readout。 |
+| calibration / ECE | 预测概率与实际正确率是否一致 / expected calibration error | 概率语境保留英文 calibration，与量化语境的“校准”区分；ECE 首次出现时给出一句定义。 |
 
 ## 维护方式
 
