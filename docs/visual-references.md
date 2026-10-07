@@ -11,7 +11,7 @@
 
 ## 本站范例
 
-[vLLM PagedAttention](../content/vllm-paged-attention.md) 的三张自绘图（`src/VllmPagedFigures.tsx`）是当前认可的风格：
+[vLLM PagedAttention](../content/vllm-paged-attention.md) 的三张自绘图（`src/articles/vllm-paged-attention/VllmPagedFigures.tsx`）是当前认可的风格：
 
 | 图 | 做法 |
 | --- | --- |

@@ -1,10 +1,10 @@
 import type { Components } from 'react-markdown'
-import { vllmCpuOverhead } from '../vllm-cpu-overhead.blocks'
-import { vllmDistributed } from '../vllm-distributed.blocks'
-import { vllmPagedAttention } from '../vllm-paged-attention.blocks'
-import { vllmPrefixCaching } from '../vllm-prefix-caching.blocks'
-import { vllmScheduler } from '../vllm-scheduler.blocks'
-import { vllmSpeculativeDecoding } from '../vllm-speculative-decoding.blocks'
+import { vllmCpuOverhead } from '../articles/vllm-cpu-overhead/vllm-cpu-overhead.blocks'
+import { vllmDistributed } from '../articles/vllm-distributed/vllm-distributed.blocks'
+import { vllmPagedAttention } from '../articles/vllm-paged-attention/vllm-paged-attention.blocks'
+import { vllmPrefixCaching } from '../articles/vllm-prefix-caching/vllm-prefix-caching.blocks'
+import { vllmScheduler } from '../articles/vllm-scheduler/vllm-scheduler.blocks'
+import { vllmSpeculativeDecoding } from '../articles/vllm-speculative-decoding/vllm-speculative-decoding.blocks'
 
 export type XhsArticle = { title: string; subtitle?: string; source: string; components?: Components }
 

@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Prefix Caching</title>
+<style>html,body{margin:0;background:#f1ede4}canvas{display:block}</style>
+</head>
+<body>
+<canvas id="cv" width="1920" height="1080"></canvas>
+<script>
+// ======================= palette & type =======================
+const K = {
+  paper: '#f1ede4', paper2: '#e6e0d3', ink: '#141414', ink2: '#3a3a3a', gray: '#8a8474',
+  red: '#e5322d', blue: '#2350d8', yel: '#f4c21b', yelD: '#9a7500',
+};
+const CUBE = {
+  blue: ['#5a7ff0', '#2350d8', '#1a3aa3'], yel: ['#f8d75a', '#f4c21b', '#c99a00'],
+  gray: ['#d8d2c4', '#c3bcac', '#aaa392'], ink: ['#4a4a4a', '#2c2c2c', '#161616'], red: ['#f06a5f', '#e5322d', '#b3211c'],
+};
+const ACC = { b: K.blue, r: K.red, y: K.yelD, k: K.ink, g: K.gray };
+const HN = '"Helvetica Neue", "PingFang SC", sans-serif';
+const ZH = '"PingFang SC", "Helvetica Neue", sans-serif';
+const font = (w, s, f = ZH) => `${w} ${s}px ${f}`;
+
+// ======================= math =======================
+const cl = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const L = (a, b, p) => a + (b - a) * p;
+const EO = (x) => { x = cl(x); return x === 1 ? 1 : 1 - Math.pow(2, -10 * x); };           // expo out
+const EI = (x) => { x = cl(x); return x === 0 ? 0 : Math.pow(2, 10 * x - 10); };            // expo in
+const EIO = (x) => { x = cl(x); return x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2; }; // quint in-out
+const O = (t, a, d = .5) => EO((t - a) / d);
+const IO = (t, a, d = .6) => EIO((t - a) / d);
+function SP(t, a, k = 1) { const x = (t - a) * k; if (x <= 0) return 0; const z = .5, w = 16, wd = w * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w * x) * (Math.cos(wd * x) + (z * w / wd) * Math.sin(wd * x)); }
+const bez = (p, t) => { const u = 1 - t; return [0, 1].map((j) => u * u * u * p[0][j] + 3 * u * u * t * p[1][j] + 3 * u * t * t * p[2][j] + t * t * t * p[3][j]); };
+function rng(seed) { return () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }; }
+const fmt = (v, d = 0) => v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+// ======================= drawing primitives =======================
+let X; // current ctx
+function poly(pts, fill, stroke, lw = 1) {
+  X.beginPath(); pts.forEach(([x, y], i) => i ? X.lineTo(x, y) : X.moveTo(x, y)); X.closePath();
+  if (fill) { X.fillStyle = fill; X.fill(); } if (stroke) { X.strokeStyle = stroke; X.lineWidth = lw; X.stroke(); }
+}
+function rect(x, y, w, h, fill, stroke, lw = 1) {
+  if (w <= 0 || h <= 0) return; X.beginPath(); X.rect(x, y, w, h);
+  if (fill) { X.fillStyle = fill; X.fill(); } if (stroke) { X.strokeStyle = stroke; X.lineWidth = lw; X.stroke(); }
+}
+function line(pts, col, lw = 2, dash) {
+  X.beginPath(); pts.forEach(([x, y], i) => i ? X.lineTo(x, y) : X.moveTo(x, y));
+  X.strokeStyle = col; X.lineWidth = lw; X.lineCap = 'butt'; X.lineJoin = 'miter'; if (dash) X.setLineDash(dash); X.stroke(); X.setLineDash([]);
+}
+function txt(s, x, y, f, fill, align = 'left', base = 'alphabetic') { X.font = f; X.fillStyle = fill; X.textAlign = align; X.textBaseline = base; X.fillText(s, x, y); }
+const tw = (s, f) => { X.font = f; return X.measureText(s).width; };
+function head(x, y, ang, size, fill) { poly([[x, y], [x - size * Math.cos(ang - .42), y - size * Math.sin(ang - .42)], [x - size * Math.cos(ang + .42), y - size * Math.sin(ang + .42)]], fill); }
+// partial polyline draw, returns end point
+function polyPart(pts, p, col, lw = 2, arrow = true) {
+  if (p <= 0) return;
+  const seg = []; let tot = 0;
+  for (let i = 1; i < pts.length; i++) { const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push(d); tot += d; }
+  let rem = tot * cl(p); const out = [pts[0]];
+  for (let i = 1; i < pts.length && rem > 0; i++) {
+    const d = seg[i - 1], q = Math.min(1, rem / d);
+    out.push([L(pts[i - 1][0], pts[i][0], q), L(pts[i - 1][1], pts[i][1], q)]); rem -= d;
+  }
+  const n = out.length, [ex, ey] = out[n - 1], [px, py] = out[n - 2] || out[0];
+  const ang = Math.atan2(ey - py, ex - px);
+  if (arrow && p >= .999) { line(out.slice(0, -1).concat([[ex - Math.cos(ang) * 8, ey - Math.sin(ang) * 8]]), col, lw); head(ex, ey, ang, 15, col); }
+  else line(out, col, lw);
+}
+// hatch pattern cache
+const PAT = {};
+function hatchPat(col, bg, gap = 11, w = 3.2) {
+  const key = col + bg + gap; if (PAT[key]) return PAT[key];
+  const c = document.createElement('canvas'); c.width = c.height = gap; const g = c.getContext('2d');
+  if (bg) { g.fillStyle = bg; g.fillRect(0, 0, gap, gap); }
+  g.strokeStyle = col; g.lineWidth = w; g.beginPath();
+  for (let o = -gap; o <= gap * 2; o += gap) { g.moveTo(o, gap); g.lineTo(o + gap, 0); }
+  g.stroke(); PAT[key] = X.createPattern(c, 'repeat'); return PAT[key];
+}
+// rich text: "{r:红字}"
+function runs(s) { const out = []; const re = /\{(\w):([^}]*)\}/g; let last = 0, m; while ((m = re.exec(s))) { if (m.index > last) out.push([s.slice(last, m.index), null]); out.push([m[2], m[1]]); last = re.lastIndex; } if (last < s.length) out.push([s.slice(last), null]); return out; }
+function rich(s, x, y, f, base, align = 'left') {
+  X.font = f; const r = runs(s); const w = r.reduce((a, [t]) => a + X.measureText(t).width, 0);
+  let cx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x; X.textAlign = 'left'; X.textBaseline = 'alphabetic';
+  for (const [t, k] of r) { X.fillStyle = k ? ACC[k] : base; X.fillText(t, cx, y); cx += X.measureText(t).width; }
+  return w;
+}
+// mask-reveal: draws fn inside a clip that rises from below
+function rise(p, x, y, w, h, fn) {
+  if (p <= 0) return; X.save(); X.beginPath(); X.rect(x, y, w, h); X.clip(); X.translate(0, (1 - p) * h); fn(); X.restore();
+}
+function wipe(p, x, y, w, h, fn) { if (p <= 0) return; X.save(); X.beginPath(); X.rect(x, y, w * p, h); X.clip(); fn(); X.restore(); }
+
+const env = (t, a, b, d = .4) => O(t, a, d) * (1 - O(t, b, .3));
+function box(x, y, w, h, fill, label, lc = '#fff', f = font(800, 26, HN), lw = 2) {
+  rect(x, y, w, h, fill, K.ink, lw);
+  if (label) txt(label, x + w / 2, y + h / 2 + 1, f, lc, 'center', 'middle');
+}
+function popAt(t, at, cx, cy, fn) { const s = SP(t, at, 1.1); if (s <= 0) return; X.save(); X.translate(cx, cy); X.scale(s, s); fn(); X.restore(); }
+// 横向括号：dir=1 时竖边朝下（括号在物体上方）
+function brace(x1, x2, y, p = 1, col = K.ink, lw = 3, dir = 1) {
+  if (p <= 0) return; const xe = L(x1, x2, p);
+  line([[x1, y + 12 * dir], [x1, y], [xe, y]].concat(p >= 1 ? [[x2, y + 12 * dir]] : []), col, lw);
+}
+function fade(a, fn) { if (a <= 0) return; X.save(); X.globalAlpha *= cl(a); fn(); X.restore(); }
+
+// ======================= generated assets =======================
+const RIBBON = new Image();
+const RIB = { x: 880, y: 150, s: 0.95, w: 1086, h: 936 };
+window.ASSETS = new Promise((res) => { RIBBON.onload = res; RIBBON.onerror = res; RIBBON.src = 'assets/ribbon.png'; });
+
+// ======================= prefix caching =======================
+// 语义色（与正文图一致）：蓝 = 命中 / 复用，黄 = 需要计算，红 = 未命中 / 淘汰，黑 = 运行中，蓝斜线 = 空闲但仍可命中。
+// 字号下限：正文标签 32px，关键数字 ≥ 96px；只有出处用 26px 灰字。
+const HIT = K.blue, CMP = K.yel, MISS = K.red, RUN = K.ink;
+const CACHED = () => hatchPat(K.blue, K.paper, 12, 3.4);
+const LBL = 32;
+const lcOf = (fill) => (fill === RUN || fill === HIT || fill === MISS ? '#fff' : K.ink);
+function cellBox(x, y, w, h, fill, label, fs = 40, lw = 2) { box(x, y, w, h, fill, label, lcOf(fill), font(900, fs, HN), lw); }
+const SC = [];
+const EV = [];
+
+// ---------- 00 hook ----------
+SC.push({
+  id: 'hook', dur: 9.5,
+  cam: [[0, 960, 540, 1], [9.5, 960, 540, 1.02]],
+  beats: [],
+  ev: [[0.3, 'tick'], [0.5, 'tick'], [0.7, 'tick'], [0.9, 'tick'], [1.2, 'whoosh'], [2.6, 'pop'], [3.0, 'thud'], [3.4, 'pop'], [4.6, 'whoosh'], [5.5, 'whoosh'], [5.05, 'thud'], [5.3, 'tick'], [5.5, 'tick'], [6.4, 'pop']],
+  draw(t) {
+    const out = EI((t - 4.6) / .5);
+    X.save(); X.translate(-2100 * out, 0);
+    // 五个请求的 prompt：开头相同的部分（蓝）连成一整块，其余（黄）是各自要算的部分
+    const NC = 20, CW = 82, PITCH = 86, RH = 84, RP = 102, gx = 96, gy = 150, pre = [15, 15, 14, 16, 15];
+    for (let r = 0; r < pre.length; r++) {
+      const y = gy + r * RP;
+      for (let c = 0; c < NC; c++) {
+        const x = gx + c * PITCH, a0 = .15 + r * .12 + c * .01;
+        const hit = c < pre[r], on = hit ? t > 1.2 + c * .06 : t > 2.6 + (c - pre[r]) * .04;
+        fade(O(t, a0, .25), () => rect(x, y, CW, RH, on ? (hit ? HIT : CMP) : K.paper2, K.ink, 1.5));
+      }
+      fade(O(t, 3.0 + r * .06, .3), () => rect(gx, y, pre[r] * PITCH - (PITCH - CW), RH, HIT, K.ink, 1.5));
+    }
+    const ly = gy + 5 * RP + 30;
+    rise(O(t, 3.2, .5), 96, ly, 1700, 120, () => rich('开头相同的部分，{b:只算一次}', 96, ly + 84, font(800, 76), K.ink));
+    X.restore();
+    if (t > 4.8) {
+      // 生成素材：一条蓝紫色半透明丝带分叉成四股，象征“共享前缀之后各自分开”；铺在标题下方
+      const rp = IO(t, 5.4, 1.1);
+      if (rp > 0) {
+        const w = RIB.w * RIB.s, h = RIB.h * RIB.s, x = RIB.x - 360 * (1 - rp);
+        X.save(); X.globalAlpha = cl(rp * 1.6); X.drawImage(RIBBON, x, RIB.y, w, h);
+        X.restore();
+      }
+      const s = SP(t, 5.0, 1);
+      X.save(); X.translate(96 + 90, 250 + 90); X.scale(s, s); rect(-90, -90, 180, 180, K.red); X.restore();
+      rise(O(t, 5.25, .45), 320, 150, 1500, 230, () => txt('Prefix', 316, 350, font(900, 200, HN), K.ink));
+      rise(O(t, 5.45, .45), 90, 380, 1800, 230, () => txt('Caching', 86, 580, font(900, 200, HN), K.ink));
+      rect(96, 640, 1728 * EIO((t - 5.9) / .7), 4, K.ink);
+      rise(O(t, 6.4, .5), 96, 670, 1728, 90, () => rich('vLLM：跨请求复用 KV cache，只算{r:不一样的部分}', 96, 735, font(800, 52), K.ink));
+    }
+  },
+});
+
+// ---------- 01 复用的是什么 ----------
+const SHARED = ['你是', '一个', '有用', '的', '助手', '。'], QA = ['今天', '天气', '怎么', '样'], QB = ['写', '一首', '短', '诗'];
+SC.push({
+  id: 'what', dur: 20, num: '01', title: '复用的是什么', card: K.blue,
+  cam: [[0, 960, 540, 1], [20, 960, 540, 1.02]],
+  beats: [[1.4, '第 i 个 token 的 KV，只取决于{b:它和它之前的 token}'], [6.0, 'B 与 A 的前 6 个 token 相同 → 这 6 个位置的 KV {b:逐位相同}'], [10.6, 'B 直接引用这部分 KV，只 {y:prefill} 后 4 个'], [15.0, '命中越长，TTFT 越短；{r:decode 不受益}']],
+  ev: (() => { const e = []; for (let i = 0; i < 10; i += 2) e.push([1.4 + i * .05, 'tick']); e.push([2.4, 'whoosh'], [3.2, 'click'], [6.0, 'pop'], [6.6, 'thud']); for (let i = 0; i < 6; i += 2) e.push([10.8 + i * .06, 'land']); e.push([11.8, 'pop'], [15.0, 'whoosh'], [15.6, 'thud']); return e; })(),
+  draw(t) {
+    const cw = 140, ch = 92, pitch = 156, x0 = 188, yA = 230, yB = 480;
+    const tx = (i) => x0 + i * pitch;
+    const row = (y, words, at, name) => {
+      rise(O(t, at, .4), 60, y, 120, ch, () => txt(name, x0 - 30, y + ch / 2 + 2, font(900, 48, HN), K.ink, 'right', 'middle'));
+      words.forEach((w, i) => rise(O(t, at + i * .05, .35), tx(i), y, cw, ch, () => box(tx(i), y, cw, ch, K.paper, w, K.ink, font(800, 38), 2)));
+    };
+    // KV：每个 token 下面两条（K、V）
+    const kv = (y, i, p, col) => { if (p <= 0) return; rect(tx(i), y + ch + 12, cw * p, 14, col, K.ink, 1.5); rect(tx(i), y + ch + 32, cw * p, 14, col, K.ink, 1.5); };
+    row(yA, [...SHARED, ...QA], 1.4, 'A');
+    for (let i = 0; i < 10; i++) kv(yA, i, IO(t, 2.4 + i * .05, .4), K.ink2);
+    // 因果：第 6 个 token 只看它左边
+    fade(env(t, 3.2, 6.0), () => {
+      const ax = tx(5) + cw / 2;
+      for (let j = 0; j < 5; j++) {
+        const bx = tx(j) + cw / 2, hh = 36 + (5 - j) * 16, pts = [];
+        for (let s = 0; s <= 30; s++) pts.push(bez([[ax, yA - 8], [ax, yA - 8 - hh], [bx, yA - 8 - hh], [bx, yA - 8]], s / 30));
+        polyPart(pts, IO(t, 3.2 + j * .06, .45), K.red, 3, true);
+      }
+      rise(O(t, 3.6, .4), tx(6), yA - 110, 700, 60, () => txt('“。”的 K、V 只看它左边', tx(6), yA - 66, font(800, LBL), K.red));
+    });
+    row(yB, [...SHARED, ...QB], 6.0, 'B');
+    // 相同前缀：两行前 6 列
+    fade(O(t, 6.6, .4), () => {
+      X.save(); X.globalAlpha *= .12; rect(tx(0) - 12, yA - 12, tx(5) + cw - tx(0) + 24, yB + ch + 60 - yA + 24, K.blue); X.restore();
+      brace(tx(0) - 12, tx(5) + cw + 12, yA - 30, IO(t, 6.6, .5), K.blue, 4, 1);
+      rise(O(t, 6.8, .4), tx(0), yA - 90, 900, 60, () => txt('相同前缀：6 个 token', tx(0), yA - 46, font(900, 36), K.blue));
+    });
+    for (let i = 0; i < 6; i++) kv(yB, i, IO(t, 10.8 + i * .06, .35), HIT);
+    for (let i = 6; i < 10; i++) kv(yB, i, IO(t, 11.8 + (i - 6) * .12, .45), CMP);
+    rise(O(t, 11.0, .4), tx(0), yB + ch + 60, 800, 60, () => txt('直接引用 A 的 KV', tx(0), yB + ch + 100, font(800, LBL), K.blue));
+    rise(O(t, 12.2, .4), tx(6), yB + ch + 60, 800, 60, () => txt('prefill 4 个 token', tx(6), yB + ch + 100, font(800, LBL), K.yelD));
+    // 15s：对比 prefill 工作量
+    fade(O(t, 15.0, .4), () => {
+      X.save(); X.translate(0, 40 * (1 - O(t, 15.0, .5)));
+      const bx = 420, u = 110, by = 760;
+      txt('不复用', bx - 24, by + 30, font(900, 36), K.ink, 'right', 'middle');
+      rect(bx, by, 10 * u * IO(t, 15.1, .6), 60, CMP, K.ink, 2);
+      txt('复用', bx - 24, by + 110, font(900, 36), K.ink, 'right', 'middle');
+      rect(bx, by + 80, 4 * u * IO(t, 15.4, .5), 60, CMP, K.ink, 2);
+      fade(O(t, 15.6, .4), () => { txt('prefill 10 个', bx + 10 * u + 24, by + 30, font(800, LBL), K.ink, 'left', 'middle'); txt('prefill 4 个 → TTFT 更短', bx + 4 * u + 24, by + 110, font(800, LBL), K.blue, 'left', 'middle'); });
+      X.restore();
+    });
+  },
+});
+
+// ---------- 02 hash 链 ----------
+const TA = 'abcdefghijklmn'.split(''), TB = 'abcdefghijxyz'.split('');
+SC.push({
+  id: 'hash', dur: 26, num: '02', title: '用 hash 链找缓存', card: K.red,
+  cam: [[0, 960, 540, 1], [26, 960, 540, 1.02]],
+  beats: [[1.4, '每个{r:写满}的 block 算一个 hash，输入里带着{b:前一块的 hash}'], [6.4, '所以 hash 相同 = {b:整个前缀}相同；已缓存的 block 登记在 hash 表里'], [11.0, '新请求 B：逐块算 hash、逐块查表'], [13.0, '前两块命中：直接引用物理 block {b:#3、#7}'], [16.6, '第三块只差两个 token，hash 就不同：{r:查找停在这里}'], [20.4, 'i、j 虽然相同，也要重算：B 命中 {b:8} / 13 个 token']],
+  ev: (() => { const e = []; for (let i = 0; i < 14; i += 2) e.push([1.4 + i * .04, 'tick']); e.push([2.4, 'click'], [3.0, 'click'], [3.6, 'click'], [4.2, 'pop'], [6.8, 'land'], [7.0, 'land'], [7.2, 'land']); for (let i = 0; i < 13; i += 2) e.push([11.0 + i * .04, 'tick']); e.push([13.2, 'whoosh'], [13.6, 'hit'], [14.2, 'whoosh'], [14.6, 'hit'], [16.8, 'err'], [20.4, 'pop'], [21.0, 'thud']); return e; })(),
+  draw(t) {
+    const tc = 72, tg = 8, BW = 4 * tc + 3 * tg, BG = 44, x0 = 300, yA = 300, yT = 470, yB = 680;
+    const bx = (b) => x0 + b * (BW + BG), tx = (i) => bx(Math.floor(i / 4)) + (i % 4) * (tc + tg), bm = (b) => bx(b) + BW / 2;
+    const tok = (i, y, fill, ch, at) => rise(O(t, at, .35), tx(i), y, tc, tc, () => { if (fill === 'empty') { rect(tx(i), y, tc, tc, K.paper, CUBE.gray[2], 2); X.setLineDash([]); txt(ch, tx(i) + tc / 2, y + tc / 2 + 2, font(900, 38, HN), K.gray, 'center', 'middle'); } else cellBox(tx(i), y, tc, tc, fill, ch, 38); });
+    // A 行
+    rise(O(t, 1.4, .4), 100, yA, 180, tc, () => txt('A', x0 - 40, yA + tc / 2 + 2, font(900, 48, HN), K.ink, 'right', 'middle'));
+    TA.forEach((ch, i) => tok(i, yA, i < 12 ? RUN : 'empty', ch, 1.4 + i * .04));
+    fade(O(t, 2.0, .4), () => txt('未写满，不缓存', bx(3), yA + tc + 44, font(700, 28), K.gray));
+    // hash 链
+    ['h₀', 'h₁', 'h₂'].forEach((h, b) => rise(O(t, 2.4 + b * .6, .4), bm(b) - 80, yA - 80, 160, 70, () => txt(h, bm(b), yA - 26, font(900, 48, HN), K.red, 'center')));
+    [0, 1].forEach((b) => polyPart([[bm(b) + 48, yA - 40], [bm(b + 1) - 48, yA - 40]], IO(t, 2.7 + b * .6, .4), K.red, 4, true));
+    fade(env(t, 4.2, 6.2), () => rise(O(t, 4.2, .45), 96, 130, 1728, 70, () => rich('h{r:ᵢ} = hash( {r:hᵢ₋₁} , 本块 token , LoRA / 图片 / salt )', 96, 186, font(900, 44, HN), K.ink)));
+    // hash 表
+    const PHYS = [3, 7, 1];
+    fade(O(t, 6.4, .4), () => txt('hash 表', x0 - 40, yT + 36, font(900, 36), K.ink, 'right', 'middle'));
+    PHYS.forEach((id, b) => {
+      polyPart([[bm(b), yA + tc + 10], [bm(b), yT - 8]], IO(t, 6.6 + b * .2, .35), K.ink, 3, true);
+      popAt(t, 6.8 + b * .2, bm(b), yT + 36, () => box(-120, -36, 240, 72, K.paper, `h${['₀', '₁', '₂'][b]} → #${id}`, K.ink, font(900, 38, HN), 2));
+    });
+    // B 行
+    rise(O(t, 11.0, .4), 100, yB, 180, tc, () => txt('B', x0 - 40, yB + tc / 2 + 2, font(900, 48, HN), K.ink, 'right', 'middle'));
+    TB.forEach((ch, i) => {
+      const hit = i < 8, at = hit ? 13.6 + Math.floor(i / 4) * 1.0 : 17.0;
+      const fill = t >= at ? (hit ? HIT : CMP) : K.paper;
+      tok(i, yB, fill, ch, 11.0 + i * .04);
+    });
+    // 查找：B → 表
+    [0, 1].forEach((b) => {
+      const at = 13.2 + b * 1.0;
+      polyPart([[bm(b), yB - 10], [bm(b), yT + 80]], IO(t, at, .35), K.blue, 5, true);
+      fade(O(t, at + .4, .3), () => txt('命中', bm(b) + 20, (yT + 72 + yB) / 2 + 12, font(900, LBL), K.blue, 'left', 'middle'));
+    });
+    polyPart([[bm(2), yB - 10], [bm(2), yT + 80]], IO(t, 16.6, .35), K.red, 5, true);
+    popAt(t, 16.9, bm(2), (yT + 72 + yB) / 2, () => { line([[-22, -22], [22, 22]], K.red, 8); line([[22, -22], [-22, 22]], K.red, 8); });
+    fade(O(t, 17.1, .4), () => txt('h₂′ ≠ h₂，停', bm(2) + 44, (yT + 72 + yB) / 2 + 2, font(900, 36, HN), K.red, 'left', 'middle'));
+    // i、j 也要重算
+    fade(O(t, 20.4, .4), () => {
+      rect(tx(8) - 10, yB - 10, 2 * tc + tg + 20, tc + 20, null, K.red, 5);
+      txt('相同，也重算', tx(8) - 10, yB + tc + 56, font(900, 34), K.red);
+    });
+    rise(O(t, 21.0, .5), 1560, 560, 360, 260, () => { txt('8 / 13', 1580, 720, font(900, 104, HN), K.blue); txt('命中 token', 1584, 772, font(800, LBL), K.ink); });
+  },
+});
+
+// ---------- 03 空闲即缓存 ----------
+// 构造示例：block 大小 4，共 8 块。按 v0.30.0 free_blocks：无 hash 的放队首，有 hash 的放队尾；请求内逆序归还。
+const SX = (i) => 360 + i * 150, CW3 = 124, CH3 = 96;
+const POS = { A: (i) => [SX(i), 250], B: (i) => [SX(i), 380], C: (i) => [SX(i), 300], Q: (i) => [SX(i), 640] };
+// 每个 chip：[时间, 位置, 状态]；位置 null 表示淡出（只是引用消失）
+const CHIPS = [
+  [0, [[1.4, 'A0', 'run'], [5.0, null]]],
+  [1, [[1.45, 'A1', 'run'], [5.0, null]]],
+  [2, [[1.5, 'A2', 'run'], [5.3, 'Q3', 'cache'], [10.0, 'Q4'], [15.2, 'C2', 'hit']]],
+  [3, [[1.55, 'A3', 'run'], [5.0, 'Q0', 'free'], [10.0, 'Q1'], [19.75, 'C4', 'new']]],
+  [6, [[1.4, 'Q0', 'free'], [5.0, 'Q1'], [10.0, 'Q2'], [20.0, 'C5', 'new']]],
+  [7, [[1.45, 'Q1', 'free'], [5.0, 'Q2'], [10.0, 'Q3'], [20.25, 'C6', 'new']]],
+  [0, [[1.6, 'B0', 'run'], [10.45, 'Q7', 'cache'], [15.0, 'C0', 'hit']]],
+  [1, [[1.65, 'B1', 'run'], [10.3, 'Q6', 'cache'], [15.1, 'C1', 'hit']]],
+  [4, [[1.7, 'B2', 'run'], [10.15, 'Q5', 'cache'], [15.6, 'Q4'], [20.5, 'C7', 'evict']]],
+  [5, [[1.75, 'B3', 'run'], [10.0, 'Q0', 'free'], [19.5, 'C3', 'new']]],
+];
+const posOf = (s) => POS[s[0]](Number(s.slice(1)));
+function chipAt(keys, t) {
+  if (t < keys[0][0]) return null;
+  let i = 0; while (i < keys.length - 1 && t >= keys[i + 1][0]) i++;
+  let st = keys[0][2]; for (let j = 1; j <= i; j++) if (keys[j][2] && t >= keys[j][0] + .55) st = keys[j][2];
+  const k = keys[i];
+  if (i === 0) return { p: posOf(k[1]), st, a: O(t, k[0], .35), lift: 0 };
+  const prev = keys[i - 1][1] ? posOf(keys[i - 1][1]) : null;
+  if (!k[1]) return { p: posOf(keys[i - 1][1]), st, a: 1 - O(t, k[0], .4), lift: 0 };
+  const q = cl((t - k[0]) / .6), e = EIO(q), p1 = posOf(k[1]);
+  return { p: [L(prev[0], p1[0], e), L(prev[1], p1[1], e)], st, a: 1, lift: Math.sin(Math.PI * q) * 70, moving: q > 0 && q < 1 };
+}
+const STF = { run: RUN, free: K.paper, cache: null, hit: HIT, new: CMP, evict: MISS };
+SC.push({
+  id: 'free', dur: 28, num: '03', title: '空闲 block 就是缓存', card: K.ink,
+  cam: [[0, 960, 540, 1], [28, 960, 540, 1.02]],
+  beats: [[1.4, '请求结束，block {b:不清空}，回到 free queue；A、B 共享 block 0、1'], [5.0, 'A 结束：没写满的 3 放{r:队首}；写满的 2 带着 hash 放{b:队尾}'], [10.0, 'B 结束：逆序归还，{r:越靠后的 block 越先被淘汰}'], [15.0, '新请求 C 命中 0、1、2：直接从队列中间{b:摘出来}'], [19.5, '再从队首取 5 块；取到带 hash 的 4，{r:才真正淘汰}'], [23.6, '缓存不额外占显存：命中率为 0 时，吞吐只降 {b:< 1%}']],
+  ev: (() => { const e = [[1.4, 'thud']]; for (let i = 0; i < 8; i += 2) e.push([1.4 + i * .05, 'tick']); e.push([5.0, 'whoosh'], [5.6, 'land'], [5.9, 'land'], [10.0, 'whoosh'], [10.6, 'land'], [10.75, 'land'], [10.9, 'land'], [11.05, 'land'], [15.0, 'whoosh'], [15.6, 'pop'], [15.7, 'pop'], [15.8, 'pop']); for (let i = 0; i < 5; i++) e.push([20.05 + i * .25, 'land']); e.push([21.1, 'err'], [23.6, 'thud']); return e; })(),
+  draw(t) {
+    const rowLabel = (name, y, a0, a1) => fade(env(t, a0, a1), () => txt(name, SX(0) - 36, y + CH3 / 2 + 2, font(900, 48, HN), K.ink, 'right', 'middle'));
+    rowLabel('A', 250, 1.4, 5.0); rowLabel('B', 380, 1.6, 10.0); rowLabel('C', 300, 14.6, 99);
+    fade(env(t, 5.2, 10.0), () => txt('0、1 仍被 B 引用', SX(4) + 20, 380 - 30, font(800, LBL), K.ink));
+    // C 的 8 个空位
+    fade(O(t, 14.6, .4), () => { for (let i = 0; i < 8; i++) { X.setLineDash([10, 8]); rect(SX(i), 300, CW3, CH3, null, CUBE.gray[2], 2); X.setLineDash([]); } });
+    // 队列
+    fade(O(t, 1.2, .4), () => {
+      txt('free queue', 96, 640 - 28, font(900, 36, HN), K.ink);
+      for (let i = 0; i < 8; i++) { X.setLineDash([10, 8]); rect(SX(i), 640, CW3, CH3, null, CUBE.gray[1], 2); X.setLineDash([]); }
+      line([[SX(0), 770], [SX(7) + CW3, 770]], K.ink, 3); head(SX(0) - 4, 770, Math.PI, 18, K.ink);
+      txt('队首 · 先被分配', SX(0), 818, font(800, LBL), K.ink);
+      txt('队尾', SX(7) + CW3, 818, font(800, LBL), K.ink, 'right');
+    });
+    // chips：静止的先画，移动中的后画
+    const list = CHIPS.map(([id, keys]) => ({ id, s: chipAt(keys, t) })).filter((c) => c.s);
+    list.sort((a, b) => (a.s.moving ? 1 : 0) - (b.s.moving ? 1 : 0));
+    for (const { id, s } of list) fade(s.a, () => {
+      const [x, y] = s.p, fill = s.st === 'cache' ? CACHED() : STF[s.st];
+      cellBox(x, y - s.lift, CW3, CH3, fill, String(id), 44);
+    });
+    // 4 被淘汰：闪一下
+    const rp = (t - 21.1) / .5;
+    if (rp > 0 && rp < 1) { X.save(); X.globalAlpha = 1 - rp; const g = 10 + rp * 40; rect(SX(7) - g, 300 - g, CW3 + 2 * g, CH3 + 2 * g, null, K.red, 5); X.restore(); }
+    fade(O(t, 21.2, .4), () => txt('4 被淘汰', SX(7) + CW3 / 2, 300 - 30, font(900, LBL), K.red, 'center'));
+    // 图例
+    fade(O(t, 5.4, .4), () => {
+      rect(96, 860, 44, 36, K.paper, K.ink, 2); txt('空闲，无 hash', 156, 890, font(800, 30), K.ink);
+      rect(420, 860, 44, 36, CACHED(), K.ink, 2); txt('空闲，仍可命中', 480, 890, font(800, 30), K.ink);
+    });
+    rise(O(t, 23.8, .5), 1580, 520, 340, 280, () => { txt('< 1%', 1596, 660, font(900, 104, HN), K.blue); txt('命中率 0 时', 1600, 710, font(800, 30), K.ink); txt('的吞吐下降', 1600, 750, font(800, 30), K.ink); txt('数据：vLLM V1 blog', 1600, 792, font(600, 24), K.gray); });
+  },
+});
+
+// ---------- 04 SGLang radix tree ----------
+const R1 = 'SSSSSSaaa'.split(''), R2 = 'SSSSSSbbbb'.split('');
+SC.push({
+  id: 'radix', dur: 22, num: '04', title: 'SGLang：radix tree', card: K.yel,
+  cam: [[0, 960, 540, 1], [22, 960, 540, 1.02]],
+  beats: [[1.4, 'R1、R2 共享 6 个 token 的 system prompt（S），后面各不相同'], [4.6, 'vLLM 按 block 匹配：第二块 SSaa ≠ SSbb，只命中 {r:4} 个'], [9.4, 'SGLang 把缓存放进一棵 {b:radix tree}，按 token 匹配最长前缀：命中 {b:6} 个'], [15.0, '它还能按命中长度重排队列（{b:LPM}）；当前默认仍是 {r:FCFS}']],
+  ev: (() => { const e = [[1.4, 'thud']]; for (let i = 0; i < 9; i += 2) e.push([1.6 + i * .04, 'tick']); e.push([3.0, 'pop'], [4.6, 'err'], [5.2, 'thud'], [9.4, 'whoosh'], [10.0, 'click'], [10.9, 'pop'], [11.4, 'land'], [12.0, 'thud'], [15.0, 'thud']); return e; })(),
+  draw(t) {
+    const c = 62, p = 68, gx = (i) => 130 + i * p + Math.floor(i / 4) * 26, y1 = 330, y2 = 480;
+    fade(O(t, 1.2, .4), () => { txt('vLLM：按 block', 96, 230, font(900, 44), K.ink); line([[960, 190], [960, 840]], CUBE.gray[1], 2); txt('SGLang：radix tree', 1010, 230, font(900, 44), K.ink); });
+    const tok = (x, y, fill, ch, a) => rise(a, x, y, c, c, () => { if (fill === 'empty') { rect(x, y, c, c, K.paper, CUBE.gray[2], 2); txt(ch, x + c / 2, y + c / 2 + 2, font(900, 34, HN), K.gray, 'center', 'middle'); } else cellBox(x, y, c, c, fill, ch, 34); });
+    // 左：block 匹配
+    fade(O(t, 1.4, .4), () => { txt('R1', 96, y1 + c / 2 + 2, font(900, 34, HN), K.ink, 'left', 'middle'); });
+    R1.forEach((ch, i) => tok(gx(i) + 40, y1, i < 8 ? RUN : 'empty', ch, O(t, 1.6 + i * .04, .3)));
+    fade(O(t, 3.0, .4), () => txt('R2', 96, y2 + c / 2 + 2, font(900, 34, HN), K.ink, 'left', 'middle'));
+    R2.forEach((ch, i) => tok(gx(i) + 40, y2, t < 4.6 ? K.paper : i < 4 ? HIT : CMP, ch, O(t, 3.0 + i * .04, .3)));
+    fade(O(t, 4.6, .4), () => { rect(gx(4) + 40 - 6, y2 - 6, 2 * p + 12 - 6, c + 12, null, K.red, 5); txt('SSaa ≠ SSbb', gx(4) + 40, y1 + c + 58, font(900, LBL, HN), K.red); });
+    rise(O(t, 5.2, .5), 96, 600, 820, 200, () => { txt('4 / 10', 96, 740, font(900, 120, HN), K.red); txt('R2 命中 token', 100, 792, font(800, LBL), K.ink); });
+    // 右：radix tree
+    const rx = 1030, ry = 420, ex = (i) => rx + 34 + i * p, nx = ex(6) + 18, bxp = (i) => nx + 50 + i * p;
+    fade(O(t, 1.4, .4), () => { poly([[rx - 12, ry], [rx, ry - 12], [rx + 12, ry], [rx, ry + 12]], K.ink); });
+    for (let i = 0; i < 6; i++) tok(ex(i), ry - c / 2, t < 10.0 + i * .1 ? RUN : HIT, 'S', O(t, 1.6 + i * .04, .3));
+    fade(O(t, 1.9, .3), () => { poly([[nx - 12, ry], [nx, ry - 12], [nx + 12, ry], [nx, ry + 12]], K.ink); });
+    polyPart([[nx + 8, ry - 8], [bxp(0) - 8, ry - 90 + c / 2]], IO(t, 2.0, .3), K.ink, 3, false);
+    for (let i = 0; i < 3; i++) tok(bxp(i), ry - 90, RUN, 'a', O(t, 2.2 + i * .05, .3));
+    fade(O(t, 2.4, .3), () => txt('R1', bxp(3) + 10, ry - 90 + c / 2 + 2, font(900, 30, HN), K.ink, 'left', 'middle'));
+    polyPart([[nx + 8, ry + 8], [bxp(0) - 8, ry + 90 - c / 2 + c]], IO(t, 10.9, .3), K.yelD, 4, false);
+    for (let i = 0; i < 4; i++) tok(bxp(i), ry + 90 - c / 2 + c / 2, CMP, 'b', O(t, 11.1 + i * .06, .3));
+    fade(O(t, 11.4, .3), () => txt('R2', bxp(4) + 10, ry + 90 + c / 2 + 2, font(900, 30, HN), K.ink, 'left', 'middle'));
+    fade(env(t, 10.9, 14.6), () => txt('在第 6 个 token 后分叉', nx - 40, ry + 190, font(800, LBL), K.ink));
+    rise(O(t, 12.0, .5), 1010, 600, 820, 200, () => { txt('6 / 10', 1010, 740, font(900, 120, HN), K.blue); txt('R2 命中 token', 1014, 792, font(800, LBL), K.ink); });
+    fade(O(t, 15.0, .4), () => { rect(1010, 820, 800, 64, K.paper, K.ink, 2); txt('--schedule-policy lpm（默认 fcfs）', 1030, 862, font(800, 30, HN), K.ink); });
+  },
+});
+
+// ---------- 05 多副本路由 ----------
+// 构造示例：3 个副本，两段会话（黄 / 黑）交替到达。
+const REP_Y = [210, 430, 650], RX = 1180, RW = 540, RH = 170, ROUTER = [760, 560];
+const REQS = (() => {
+  const r = [];
+  for (let k = 0; k < 6; k++) r.push({ at: 3.9 + k * .7, col: k % 2 ? 'k' : 'y', rep: k % 3, phase: 1 });
+  for (let k = 0; k < 6; k++) r.push({ at: 9.3 + k * .7, col: k % 2 ? 'k' : 'y', rep: k % 2, phase: 2 });
+  // 命中与否：该副本在本阶段是否已经算过这段会话
+  const seen = {};
+  for (const q of r) { const key = q.phase + q.col + q.rep; q.hit = !!seen[key]; seen[key] = q.at + .75; }
+  return r;
+})();
+const CONV = { y: K.yel, k: K.ink };
+SC.push({
+  id: 'route', dur: 22, num: '05', title: '多副本：路由', card: K.blue,
+  cam: [[0, 960, 540, 1], [22, 960, 540, 1.02]],
+  beats: [[1.4, '缓存只在{b:算过它的那张卡}上'], [3.6, '轮询分发：同一会话落到不同副本，{r:每次都要重算}'], [9.0, '按前缀路由：副本上报 block hash，同一前缀送回{b:同一副本}'], [14.6, 'llm-d 自报：P90 TTFT 从 {r:92.6 s} 降到 {b:0.54 s}']],
+  ev: (() => { const e = [[1.4, 'thud']]; for (const q of REQS) e.push([q.at, 'tick'], [q.at + .75, q.hit ? 'pop' : 'err']); e.push([9.0, 'whoosh'], [14.6, 'whoosh'], [15.0, 'thud'], [15.6, 'thud']); return e; })(),
+  draw(t) {
+    const dim = 1 - O(t, 14.6, .5);
+    fade(dim, () => {
+      REP_Y.forEach((y, i) => fade(O(t, 1.2 + i * .1, .4), () => {
+        rect(RX, y, RW, RH, K.paper, K.ink, 3); txt(`副本 ${i + 1}`, RX + 28, y + 56, font(900, 36), K.ink);
+        txt('已缓存：', RX + 28, y + 118, font(800, 30), K.gray);
+        // 本阶段已缓存的会话
+        const ph = t < 9.0 ? 1 : 2;
+        const have = ['y', 'k'].filter((c) => REQS.some((q) => q.phase === ph && q.rep === i && q.col === c && t >= q.at + .75));
+        have.forEach((c, j) => rect(RX + 160 + j * 110, y + 94, 90, 40, CONV[c], K.ink, 2));
+      }));
+      fade(O(t, 1.4, .4), () => { X.beginPath(); X.arc(ROUTER[0], ROUTER[1], 74, 0, 7); X.fillStyle = K.paper; X.fill(); X.lineWidth = 3; X.strokeStyle = K.ink; X.stroke(); txt('router', ROUTER[0], ROUTER[1] + 2, font(900, 34, HN), K.ink, 'center', 'middle'); });
+      rise(O(t, 3.6, .4), 96, 180, 600, 70, () => txt(t < 9.0 ? '轮询' : '按前缀路由', 96, 236, font(900, 48), t < 9.0 ? K.red : K.blue));
+      for (const q of REQS) {
+        const q1 = (t - q.at) / .35, q2 = (t - q.at - .35) / .4;
+        if (q1 < 0 || (q.phase === 1 && t > 8.8) || t > q.at + 1.6) continue;
+        const tgt = [RX - 40, REP_Y[q.rep] + RH / 2];
+        let x, y;
+        if (q1 < 1) { const e = EIO(q1); x = L(140, ROUTER[0], e); y = L(560, ROUTER[1], e); }
+        else { const e = EIO(cl(q2)); x = L(ROUTER[0], tgt[0], e); y = L(ROUTER[1], tgt[1], e); }
+        fade(1 - O(t, q.at + 1.2, .3), () => rect(x - 30, y - 30, 60, 60, CONV[q.col], K.ink, 2));
+        if (q2 >= 1) fade(1 - O(t, q.at + 1.3, .3), () => txt(q.hit ? '命中' : '重算', RX - 80, tgt[1] - 46, font(900, LBL), q.hit ? K.blue : K.red, 'right'));
+      }
+      const tally = (ph, a0) => { const n = REQS.filter((q) => q.phase === ph && q.hit && t >= q.at + .75).length; fade(O(t, a0, .4) * (ph === 1 ? 1 - O(t, 8.8, .3) : 1), () => rich(`命中 {${ph === 1 ? 'r' : 'b'}:${n}} / 6`, 96, 820, font(900, 64), K.ink)); };
+      tally(1, 3.9); tally(2, 9.3);
+    });
+    // 数字
+    fade(O(t, 14.8, .4), () => {
+      rise(O(t, 15.0, .5), 96, 260, 800, 360, () => { txt('随机分发', 100, 330, font(900, 44), K.ink); txt('92.6 s', 96, 520, font(900, 180, HN), K.red); });
+      rise(O(t, 15.6, .5), 1000, 260, 900, 360, () => { txt('精确前缀路由', 1004, 330, font(900, 44), K.ink); txt('0.54 s', 1000, 520, font(900, 180, HN), K.blue); });
+      fade(O(t, 16.2, .4), () => { txt('P90 TTFT · Qwen-32B · 8 个副本 × 2 张 H100', 100, 640, font(800, 34), K.ink); txt('数据：llm-d 博客（自报，构造的多租户负载）', 100, 694, font(600, 26), K.gray); });
+    });
+  },
+});
+
+// ---------- 06 小结 ----------
+SC.push({
+  id: 'sum', dur: 17, num: '06', title: '小结', card: K.red, chromeUntil: 11.6,
+  cam: [[0, 960, 540, 1], [17, 960, 540, 1]],
+  beats: [[1.4, '效果取决于三件事：{b:找得到}、{b:留得住}、{b:落得准}'], [11.5, '']],
+  ev: (() => { const e = [[1.4, 'thud']]; for (let i = 0; i < 4; i++) e.push([2.0 + i * .4, 'pop']); e.push([11.7, 'whoosh'], [12.1, 'thud']); return e; })(),
+  draw(t) {
+    const pts = [['链式 hash', '写满的 block', '按整个前缀编号'], ['空闲即缓存', '按请求 LRU', '从尾部开始淘汰'], ['radix tree', 'SGLang 按 token', '匹配、可按命中调度'], ['路由', '把请求送回', '缓存所在的副本']];
+    pts.forEach(([h, d1, d2], i) => {
+      const at = 2.0 + i * .4, x = 96 + i * 440;
+      rect(x, 220, 400 * IO(t, at, .5), 6, K.ink);
+      rise(O(t, at + .1, .45), x, 240, 420, 180, () => txt(String(i + 1), x - 6, 400, font(900, 160, HN), K.red));
+      rise(O(t, at + .2, .45), x, 430, 420, 70, () => txt(h, x, 484, font(900, 44, HN), K.ink));
+      rise(O(t, at + .3, .45), x, 500, 420, 100, () => { txt(d1, x, 546, font(800, LBL), K.ink); txt(d2, x, 590, font(800, LBL), K.ink); });
+    });
+    const ep = IO(t, 11.7, .6);
+    if (ep > 0) {
+      const px = 1920 * (1 - ep);
+      rect(px, 0, 1920, 1080, K.ink);
+      X.save(); X.beginPath(); X.rect(px, 0, 1920, 1080); X.clip();
+      const s = SP(t, 12.1, 1); X.save(); X.translate(1734, 180); X.scale(s, s); rect(-90, -90, 180, 180, K.red); X.restore();
+      rise(O(t, 12.2, .5), 90, 330, 1700, 230, () => txt('Prefix Caching', 90, 520, font(900, 190, HN), K.paper));
+      rect(96, 580, 1728 * IO(t, 12.7, .7), 4, K.paper);
+      rise(O(t, 13.0, .5), 96, 610, 1728, 90, () => rich('算过的，{r:不再算第二次}', 96, 680, font(800, 60), K.paper));
+      X.globalAlpha = O(t, 13.5, .6); txt('vLLM v0.30.0 源码与设计文档 · SGLang (NeurIPS 2024) · llm-d · vLLM V1 blog', 96, 980, font(600, 26, HN), '#9a9486'); X.globalAlpha = 1;
+      X.restore();
+    }
+  },
+});
+// ======================= timeline =======================
+let acc = 0; for (const s of SC) { s.start = acc; acc += s.dur; }
+const TOTAL = acc;
+const NCH = SC.filter((s) => s.num).length;
+for (const s of SC) {
+  for (const [lt, ty] of s.ev) EV.push([s.start + lt, ty]);
+  if (s.num) EV.push([s.start - .45, 'whoosh'], [s.start + .05, 'thud'], [s.start + 1.05, 'whoosh']);
+}
+EV.sort((a, b) => a[0] - b[0]);
+
+function camAt(s, lt) {
+  const k = s.cam; if (lt <= k[0][0]) return k[0];
+  for (let i = 0; i < k.length - 1; i++) if (lt < k[i + 1][0]) { const p = EIO((lt - k[i][0]) / (k[i + 1][0] - k[i][0])); return [0, L(k[i][1], k[i + 1][1], p), L(k[i][2], k[i + 1][2], p), L(k[i][3], k[i + 1][3], p)]; }
+  return k[k.length - 1];
+}
+function chapterCard(s, lc) {
+  if (!s.num || lc < -.45 || lc > 1.55) return;
+  const x = lc < 0 ? 1920 * (1 - EO((lc + .45) / .45)) : -1920 * EI((lc - 1.05) / .45);
+  const onYel = s.card === K.yel, fg = onYel ? K.ink : '#fff';
+  X.setTransform(1, 0, 0, 1, 0, 0);
+  rect(x, 0, 1920, 1080, s.card);
+  X.save(); X.beginPath(); X.rect(x, 0, 1920, 1080); X.clip();
+  X.globalAlpha = .95; txt(s.num, x * 1.25 + 70, 1010, font(900, 620, HN), fg); X.globalAlpha = 1;
+  X.globalAlpha = .7; txt('Prefix Caching · ' + s.num + ' / 0' + NCH, x + 1824, 120, font(800, 28, HN), fg, 'right'); X.globalAlpha = 1;
+  rise(O(lc, .05, .45), x + 90, 150, 1740, 150, () => txt(s.title, x + 96, 270, font(900, 100), fg));
+  X.restore();
+}
+// 顶栏只留章节号与标题，底线表示本章进度
+function chrome(s, lt) {
+  if (!s.num) return;
+  const a = O(lt, 1.3, .4) * (s.chromeUntil ? 1 - O(lt, s.chromeUntil, .2) : 1);
+  if (a <= 0) return;
+  X.setTransform(1, 0, 0, 1, 0, 0); X.globalAlpha = a;
+  rect(0, 0, 1920, 110, K.paper);
+  txt(s.num, 96, 80, font(900, 34, HN), K.red); txt(s.title, 160, 80, font(800, 32), K.ink);
+  rect(96, 104, 1728, 2, CUBE.gray[0]); rect(96, 104, 1728 * cl(lt / s.dur), 2, K.ink);
+  X.globalAlpha = 1;
+}
+function caption(s, lt) {
+  const b = s.beats; if (!b.length) return;
+  let i = -1; for (let j = 0; j < b.length; j++) if (lt >= b[j][0]) i = j;
+  X.setTransform(1, 0, 0, 1, 0, 0);
+  const endA = 1 - O(lt, s.dur - .5, .3);
+  const draw = (str, p, out) => {
+    if (!str) return; const f = font(800, 42);
+    X.save(); X.globalAlpha = endA;
+    X.beginPath(); X.rect(96, 930, 1760, 80); X.clip();
+    const y = 978 + (1 - p) * 64 - out * 64;
+    rect(96, y - 32, 22, 22, K.red);
+    rich(str, 138, y - 6 + 10, f, K.ink);
+    X.restore();
+  };
+  if (i >= 0) {
+    const p = O(lt, b[i][0] + .14, .45);
+    draw(b[i][1], p, 0);
+    if (i > 0 && lt < b[i][0] + .2) draw(b[i - 1][1], 1, EI((lt - b[i][0]) / .18));
+  }
+}
+function drawFrame(ctx, T) {
+  X = ctx;
+  let idx = 0; for (let i = 0; i < SC.length; i++) if (T >= SC[i].start) idx = i;
+  const s = SC[idx], lt = T - s.start;
+  const [, cx, cy, z] = camAt(s, lt);
+  X.setTransform(1, 0, 0, 1, 0, 0); rect(0, 0, 1920, 1080, K.paper);
+  X.setTransform(z, 0, 0, z, 960 - cx * z, 540 - cy * z);
+  s.draw(lt);
+  X.setTransform(1, 0, 0, 1, 0, 0); X.globalAlpha = 1;
+  chrome(s, lt);
+  caption(s, lt);
+  chapterCard(s, lt);
+  const nx = SC[idx + 1]; if (nx) chapterCard(nx, T - nx.start);
+  const fe = O(T, TOTAL - 1.0, .9); if (fe > 0) { X.globalAlpha = fe; rect(0, 0, 1920, 1080, '#000'); X.globalAlpha = 1; }
+}
+
+// ======================= runtime (motion blur) =======================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const off = document.createElement('canvas'); off.width = 1920; off.height = 1080; const octx = off.getContext('2d');
+window.DURATION = TOTAL;
+window.EVENTS = EV;
+window.SCENES = SC.map((s) => [s.id, s.start, s.dur]);
+window.renderAt = (t, fps = 60, samples = 5, shutter = .5) => {
+  for (let s = 0; s < samples; s++) {
+    const ts = t - (shutter / fps) * (1 - s / (samples - 1));
+    octx.setTransform(1, 0, 0, 1, 0, 0); octx.globalAlpha = 1;
+    drawFrame(octx, Math.max(0, ts));
+    ctx.globalAlpha = 1 / (s + 1); ctx.drawImage(off, 0, 0);
+  }
+  ctx.globalAlpha = 1;
+};
+window.renderAt(3);
+</script>
+</body>
+</html>

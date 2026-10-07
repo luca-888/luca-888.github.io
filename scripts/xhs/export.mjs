@@ -1,5 +1,5 @@
 // 用法：先 npm run dev，再 npm run xhs -- <slug>
-// 输出到 xhs/<slug>/：01.png… 正文页、outline.json 标题清单、<slug>-xhs.zip（仅含正文页）。
+// 输出到 xhs/<slug>/：01.png… 正文页、outline.json 标题清单、<slug>-xhs.zip（仅含正文页）；末尾列出该主题的定稿封面与成片路径。
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -40,6 +40,12 @@ try {
   for (const h of result.headings.filter(h => h.level === 2)) console.log(`  p${String(h.page).padStart(2)}  ${h.text}`)
   if (result.shrunk.length) console.log('缩小过的块：', result.shrunk.map(s => `p${s.page} ×${s.scale}`).join('，'))
   console.log(`ZIP：${zip}`)
+
+  // 发布用的其余文件：定稿封面在 covers/<slug>/，成片在 videos/<slug>/build/<slug>.mp4
+  const coverDir = path.join('covers', slug), video = path.join('videos', slug, 'build', `${slug}.mp4`)
+  const covers = fs.existsSync(coverDir) ? fs.readdirSync(coverDir).filter(f => /\.(png|jpe?g)$/.test(f)).map(f => path.join(coverDir, f)) : []
+  console.log(`封面：${covers.join('，') || `未找到（${coverDir}/）`}`)
+  console.log(`视频：${fs.existsSync(video) ? video : '无'}`)
 } finally {
   await browser.close()
 }

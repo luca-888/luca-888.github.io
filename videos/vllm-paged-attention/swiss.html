@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>PagedAttention · Swiss</title>
+<style>html,body{margin:0;background:#f1ede4}canvas{display:block}</style>
+</head>
+<body>
+<canvas id="cv" width="1920" height="1080"></canvas>
+<script>
+// ======================= palette & type =======================
+const K = {
+  paper: '#f1ede4', paper2: '#e6e0d3', ink: '#141414', ink2: '#3a3a3a', gray: '#8a8474',
+  red: '#e5322d', blue: '#2350d8', yel: '#f4c21b', yelD: '#9a7500',
+};
+const CUBE = {
+  blue: ['#5a7ff0', '#2350d8', '#1a3aa3'], yel: ['#f8d75a', '#f4c21b', '#c99a00'],
+  gray: ['#d8d2c4', '#c3bcac', '#aaa392'], ink: ['#4a4a4a', '#2c2c2c', '#161616'], red: ['#f06a5f', '#e5322d', '#b3211c'],
+};
+const ACC = { b: K.blue, r: K.red, y: K.yelD, k: K.ink, g: K.gray };
+const HN = '"Helvetica Neue", "PingFang SC", sans-serif';
+const ZH = '"PingFang SC", "Helvetica Neue", sans-serif';
+const font = (w, s, f = ZH) => `${w} ${s}px ${f}`;
+
+// ======================= math =======================
+const cl = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const L = (a, b, p) => a + (b - a) * p;
+const EO = (x) => { x = cl(x); return x === 1 ? 1 : 1 - Math.pow(2, -10 * x); };           // expo out
+const EI = (x) => { x = cl(x); return x === 0 ? 0 : Math.pow(2, 10 * x - 10); };            // expo in
+const EIO = (x) => { x = cl(x); return x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2; }; // quint in-out
+const O = (t, a, d = .5) => EO((t - a) / d);
+const IO = (t, a, d = .6) => EIO((t - a) / d);
+function SP(t, a, k = 1) { const x = (t - a) * k; if (x <= 0) return 0; const z = .5, w = 16, wd = w * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w * x) * (Math.cos(wd * x) + (z * w / wd) * Math.sin(wd * x)); }
+const bez = (p, t) => { const u = 1 - t; return [0, 1].map((j) => u * u * u * p[0][j] + 3 * u * u * t * p[1][j] + 3 * u * t * t * p[2][j] + t * t * t * p[3][j]); };
+function rng(seed) { return () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }; }
+const fmt = (v, d = 0) => v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+// ======================= drawing primitives =======================
+let X; // current ctx
+function poly(pts, fill, stroke, lw = 1) {
+  X.beginPath(); pts.forEach(([x, y], i) => i ? X.lineTo(x, y) : X.moveTo(x, y)); X.closePath();
+  if (fill) { X.fillStyle = fill; X.fill(); } if (stroke) { X.strokeStyle = stroke; X.lineWidth = lw; X.stroke(); }
+}
+function rect(x, y, w, h, fill, stroke, lw = 1) {
+  if (w <= 0 || h <= 0) return; X.beginPath(); X.rect(x, y, w, h);
+  if (fill) { X.fillStyle = fill; X.fill(); } if (stroke) { X.strokeStyle = stroke; X.lineWidth = lw; X.stroke(); }
+}
+function line(pts, col, lw = 2, dash) {
+  X.beginPath(); pts.forEach(([x, y], i) => i ? X.lineTo(x, y) : X.moveTo(x, y));
+  X.strokeStyle = col; X.lineWidth = lw; X.lineCap = 'butt'; X.lineJoin = 'miter'; if (dash) X.setLineDash(dash); X.stroke(); X.setLineDash([]);
+}
+function txt(s, x, y, f, fill, align = 'left', base = 'alphabetic') { X.font = f; X.fillStyle = fill; X.textAlign = align; X.textBaseline = base; X.fillText(s, x, y); }
+const tw = (s, f) => { X.font = f; return X.measureText(s).width; };
+function head(x, y, ang, size, fill) { poly([[x, y], [x - size * Math.cos(ang - .42), y - size * Math.sin(ang - .42)], [x - size * Math.cos(ang + .42), y - size * Math.sin(ang + .42)]], fill); }
+// partial polyline draw, returns end point
+function polyPart(pts, p, col, lw = 2, arrow = true) {
+  if (p <= 0) return;
+  const seg = []; let tot = 0;
+  for (let i = 1; i < pts.length; i++) { const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push(d); tot += d; }
+  let rem = tot * cl(p); const out = [pts[0]];
+  for (let i = 1; i < pts.length && rem > 0; i++) {
+    const d = seg[i - 1], q = Math.min(1, rem / d);
+    out.push([L(pts[i - 1][0], pts[i][0], q), L(pts[i - 1][1], pts[i][1], q)]); rem -= d;
+  }
+  const n = out.length, [ex, ey] = out[n - 1], [px, py] = out[n - 2] || out[0];
+  const ang = Math.atan2(ey - py, ex - px);
+  if (arrow && p >= .999) { line(out.slice(0, -1).concat([[ex - Math.cos(ang) * 8, ey - Math.sin(ang) * 8]]), col, lw); head(ex, ey, ang, 15, col); }
+  else line(out, col, lw);
+}
+// hatch pattern cache
+const PAT = {};
+function hatchPat(col, bg, gap = 11, w = 3.2) {
+  const key = col + bg + gap; if (PAT[key]) return PAT[key];
+  const c = document.createElement('canvas'); c.width = c.height = gap; const g = c.getContext('2d');
+  if (bg) { g.fillStyle = bg; g.fillRect(0, 0, gap, gap); }
+  g.strokeStyle = col; g.lineWidth = w; g.beginPath();
+  for (let o = -gap; o <= gap * 2; o += gap) { g.moveTo(o, gap); g.lineTo(o + gap, 0); }
+  g.stroke(); PAT[key] = X.createPattern(c, 'repeat'); return PAT[key];
+}
+// rich text: "{r:红字}"
+function runs(s) { const out = []; const re = /\{(\w):([^}]*)\}/g; let last = 0, m; while ((m = re.exec(s))) { if (m.index > last) out.push([s.slice(last, m.index), null]); out.push([m[2], m[1]]); last = re.lastIndex; } if (last < s.length) out.push([s.slice(last), null]); return out; }
+function rich(s, x, y, f, base, align = 'left') {
+  X.font = f; const r = runs(s); const w = r.reduce((a, [t]) => a + X.measureText(t).width, 0);
+  let cx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x; X.textAlign = 'left'; X.textBaseline = 'alphabetic';
+  for (const [t, k] of r) { X.fillStyle = k ? ACC[k] : base; X.fillText(t, cx, y); cx += X.measureText(t).width; }
+  return w;
+}
+// mask-reveal: draws fn inside a clip that rises from below
+function rise(p, x, y, w, h, fn) {
+  if (p <= 0) return; X.save(); X.beginPath(); X.rect(x, y, w, h); X.clip(); X.translate(0, (1 - p) * h); fn(); X.restore();
+}
+function wipe(p, x, y, w, h, fn) { if (p <= 0) return; X.save(); X.beginPath(); X.rect(x, y, w * p, h); X.clip(); fn(); X.restore(); }
+
+// ======================= isometric (flat print) =======================
+function Iso(ox, oy, s, H = 28, cols = 4, gap = 2.4) {
+  const I = { ox, oy, s, H, cols, gap };
+  I.pt = (u, v, z = 0) => [ox + (u - v) * s * .866, oy + (u + v) * s * .5 - z];
+  I.uv = (k, m) => [(k % cols) * gap + (m % 2), Math.floor(k / cols) * gap + Math.floor(m / 2)];
+  I.cc = (k, m, z = 0) => { const [u, v] = I.uv(k, m); return I.pt(u + .5, v + .5, z); };
+  I.bc = (k, z = 0) => { const [u, v] = I.uv(k, 0); return I.pt(u + 1, v + 1, z); };
+  I.ext = (rows) => rows * gap - (gap - 2);
+  return I;
+}
+function isoCube(I, u, v, h, col, z0 = 0, inset = .07, lw = 1.2) {
+  const a = inset, b = 1 - inset;
+  const T = [I.pt(u + a, v + a, z0 + h), I.pt(u + b, v + a, z0 + h), I.pt(u + b, v + b, z0 + h), I.pt(u + a, v + b, z0 + h)];
+  const B = [I.pt(u + b, v + a, z0), I.pt(u + b, v + b, z0), I.pt(u + a, v + b, z0)];
+  poly([T[3], T[2], B[1], B[2]], col[2], K.ink, lw);
+  poly([T[2], T[1], B[0], B[1]], col[1], K.ink, lw);
+  poly(T, col[0], K.ink, lw);
+}
+function isoTile(I, u, v, fill, lw = 1.1, stroke = K.ink) {
+  poly([I.pt(u + .06, v + .06), I.pt(u + .94, v + .06), I.pt(u + .94, v + .94), I.pt(u + .06, v + .94)], fill, stroke, lw);
+}
+// o: { t0, n, rows, cell(k,m)->{col, at, z0}|null, tile(k,m)->fill|null, label(k)->color|null }
+function drawSlab(I, t, o) {
+  const rows = o.rows || 4, n = o.n || 16, ext = I.ext(rows) + .4;
+  const ap = O(t, o.t0, .7);
+  if (ap <= 0) return;
+  X.save(); X.globalAlpha = cl(ap * 1.5); X.translate(0, (1 - ap) * 60);
+  const A = I.pt(-.4, -.4), B = I.pt(ext, -.4), C = I.pt(ext, ext), D = I.pt(-.4, ext), th = 22;
+  poly([D, C, [C[0], C[1] + th], [D[0], D[1] + th]], K.ink);
+  poly([C, B, [B[0], B[1] + th], [C[0], C[1] + th]], K.ink2);
+  poly([A, B, C, D], K.paper2, K.ink, 2);
+  X.restore();
+  const cells = [];
+  for (let k = 0; k < n; k++) for (let m = 0; m < 4; m++) { const [u, v] = I.uv(k, m); cells.push({ k, m, u, v }); }
+  cells.sort((p, q) => p.u + p.v - q.u - q.v);
+  for (const c of cells) {
+    const a = O(t, o.t0 + .25 + (c.u + c.v) * .018, .4);
+    if (a <= 0) continue;
+    X.save(); X.globalAlpha = a; X.translate(0, (1 - a) * 30);
+    isoTile(I, c.u, c.v, (o.tile && o.tile(c.k, c.m)) || K.paper);
+    const s = o.cell && o.cell(c.k, c.m);
+    if (s) {
+      const h = I.H * SP(t, s.at, 1.1);
+      if (h > .5) isoCube(I, c.u, c.v, h, s.col, s.z0 || 0);
+      const rp = (t - s.at) / .45;
+      if (s.ring && rp > 0 && rp < 1) { X.globalAlpha = 1 - rp; const g = .5 + rp * 1.1; poly([I.pt(c.u + .5 - g, c.v + .5 - g), I.pt(c.u + .5 + g, c.v + .5 - g), I.pt(c.u + .5 + g, c.v + .5 + g), I.pt(c.u + .5 - g, c.v + .5 + g)], null, K.ink, 2); }
+    }
+    X.restore();
+  }
+  if (o.label) for (let k = 0; k < n; k++) {
+    const col = o.label(k); if (!col) continue;
+    const a = O(t, o.t0 + .7 + k * .02, .3); if (a <= 0) continue;
+    const [u, v] = I.uv(k, 2), [x, y] = I.pt(u - .32, v + 1.32);
+    X.globalAlpha = a; txt('#' + k, x, y + 8, font(800, 17, HN), col, 'center'); X.globalAlpha = 1;
+  }
+}
+// flying token square with trailing dots
+function flyer(pts, q, col = K.red, size = 38) {
+  if (q <= 0 || q >= 1) return;
+  const e = EIO(q);
+  for (let j = 3; j >= 1; j--) { const [x, y] = bez(pts, cl(e - j * .05)); rect(x - 4, y - 4, 8, 8, K.ink); }
+  const [x, y] = bez(pts, e), s = L(size, size * .7, e);
+  rect(x - s / 2, y - s / 2, s, s, col, K.ink, 2);
+}
+
+// ======================= shared data =======================
+const TOK = ['我', '今天', '去', '公园', '散步', '，', '天气', '很', '好', '，', '风', '也', '很', '舒服'];
+const TABLE = [7, 2, 11, 5];
+const OTHER = { 0: 4, 3: 4, 4: 3, 8: 4, 13: 2, 14: 4 };
+
+// ======================= scenes =======================
+const SC = [];
+const EV = []; // [globalTime, type]
+
+// ---------- 00 hook ----------
+SC.push({
+  id: 'hook', dur: 9,
+  cam: [[0, 960, 540, 1], [9, 960, 540, 1.02]],
+  beats: [],
+  ev: (() => { const e = []; for (let i = 0; i < 12; i++) e.push([.7 + i * .1, 'tick']); e.push([2.0, 'thud'], [4.2, 'whoosh'], [4.65, 'thud'], [4.9, 'tick'], [5.1, 'tick'], [6.0, 'pop']); return e; })(),
+  draw(t) {
+    const out = EI((t - 4.2) / .5);
+    X.save(); X.translate(-2100 * out, 0);
+    // strip texture
+    const r = rng(11), n = 48, x0 = 96, cw = 1728 / n, y = 740, h = 96;
+    for (let i = 0; i < n; i++) {
+      const v = r(), a = O(t, .15 + i * .012, .35);
+      const x = x0 + i * cw;
+      X.save(); X.beginPath(); X.rect(x, y, cw, h); X.clip(); X.translate(0, (1 - a) * h);
+      rect(x + 1, y, cw - 2, h, v < .22 ? K.blue : v < .62 ? hatchPat(K.ink, K.paper) : v < .82 ? hatchPat(K.red, K.paper) : K.paper2, K.ink, 1.5);
+      X.restore();
+    }
+    const v = 79.6 * EO((t - .7) / 1.3);
+    rise(O(t, .5, .5), 80, 180, 1800, 400, () => txt(fmt(v, 1) + '%', 88, 540, font(900, 330, HN), K.red));
+    rise(O(t, 2.0, .5), 96, 580, 1700, 110, () => rich('的 {b:KV cache} 显存，被白白浪费', 100, 668, font(800, 72), K.ink));
+    X.globalAlpha = O(t, 2.6, .5); txt('现有 LLM 推理系统的最坏情况 · 数据：vLLM 论文（SOSP 2023）', 96, 880, font(600, 22), K.gray); X.globalAlpha = 1;
+    X.restore();
+    // title
+    if (t > 4.4) {
+      const s = SP(t, 4.6, 1);
+      X.save(); X.translate(96 + 90, 250 + 90); X.scale(s, s); rect(-90, -90, 180, 180, K.red); X.restore();
+      rise(O(t, 4.85, .45), 320, 150, 1500, 230, () => txt('Paged', 316, 350, font(900, 210, HN), K.ink));
+      rise(O(t, 5.05, .45), 90, 380, 1800, 230, () => txt('Attention', 86, 580, font(900, 210, HN), K.ink));
+      rect(96, 640, 1728 * EIO((t - 5.5) / .7), 4, K.ink);
+      rise(O(t, 6.0, .5), 96, 670, 1728, 90, () => rich('vLLM 用操作系统的{r:分页}，把 KV cache 浪费压到 {r:4% 以下}', 96, 735, font(800, 48), K.ink));
+    }
+  },
+});
+
+// ---------- 01 KV cache ----------
+SC.push({
+  id: 'kv', dur: 19, num: '01', title: 'KV cache 决定并发', card: K.blue,
+  cam: [[0, 960, 540, 1], [11.6, 960, 540, 1], [12.6, 960, 1240, 1], [19, 960, 1240, 1.02]],
+  beats: [[1.4, '每生成一个 token，都要回看之前所有 token 的 {b:K} 和 {y:V}'], [5.6, '把它们存在显存里，就是 {b:KV cache}'], [8.2, '13B 模型：每个 token 约 {r:800 KB}'], [12.6, 'A100 40 GB：放完 26 GB 权重，只剩约 {b:12 GB}'], [16.2, '一种颜色一个请求：放得越紧，能同时服务的请求越多']],
+  ev: (() => { const e = []; for (let i = 0; i < 7; i++) e.push([1.4 + i * .08, 'tick']); e.push([3.6, 'pop']); for (let i = 0; i < 7; i++) e.push([4.2 + i * .1, 'tick']); e.push([5.6, 'thud'], [6.4, 'click']);
+    for (let i = 0; i < 9; i++) e.push([8.2 + i * .12, 'tick']); e.push([10.4, 'thud'], [11.6, 'whoosh'], [12.7, 'click'], [13.4, 'click'], [14.1, 'tick'], [14.4, 'thud'], [16.2, 'whoosh']); return e; })(),
+  draw(t) {
+    const toks = ['今天', '天气', '真', '不错', '，', '我们', '去', '公园'];
+    const w = 176, step = 204, x0 = 960 - (8 * step - 28) / 2, y = 300;
+    toks.forEach((s, i) => {
+      const isNew = i === 7, at = isNew ? 3.6 : 1.4 + i * .08, a = O(t, at, .45);
+      if (a > 0) {
+        X.save(); X.globalAlpha = cl(a * 2); X.translate(0, (1 - a) * -40);
+        rect(x0 + i * step, y, w, 80, isNew ? K.red : K.paper, K.ink, 2);
+        txt(s, x0 + i * step + w / 2, y + 41, font(800, 34), isNew ? '#fff' : K.ink, 'center', 'middle');
+        X.restore();
+      }
+      const kvA = isNew ? 6.4 : 2.0 + i * .08;
+      rect(x0 + i * step, y + 104, w * EIO((t - kvA) / .45), 30, K.blue);
+      rect(x0 + i * step, y + 142, w * EIO((t - kvA - .1) / .45), 30, K.yel);
+    });
+    X.globalAlpha = O(t, 2.0, .4); txt('K', x0 - 20, y + 128, font(900, 26, HN), K.blue, 'right'); txt('V', x0 - 20, y + 166, font(900, 26, HN), K.yelD, 'right'); X.globalAlpha = 1;
+    // attention arcs (q·K)
+    const nx = x0 + 7 * step + w / 2;
+    for (let i = 0; i < 7; i++) {
+      const tx = x0 + i * step + w / 2, h = 36 + (7 - i) * 13, p = IO(t, 4.2 + i * .1, .45);
+      if (p <= 0) continue;
+      const pts = []; for (let s = 0; s <= 30; s++) { const q = s / 30; pts.push(bez([[nx, y - 6], [nx, y - 6 - h], [tx, y - 6 - h], [tx, y - 6]], q)); }
+      polyPart(pts, p, K.ink, 2, true);
+    }
+    X.globalAlpha = O(t, 4.5, .4); txt('q · K', nx + 90, y - 60, font(800, 26, HN), K.red, 'left'); X.globalAlpha = 1;
+    // KV cache bracket
+    const bw = L(7 * step - 28, 8 * step - 28, IO(t, 6.4, .5)), bp = IO(t, 5.6, .6);
+    if (bp > 0) {
+      line([[x0, y + 186], [x0, y + 198], [x0 + bw * bp, y + 198], [x0 + bw * bp, y + 186]], K.ink, 3);
+      rise(O(t, 5.8, .45), x0, y + 210, 1200, 60, () => { txt('KV cache', x0, y + 254, font(900, 38, HN), K.blue); txt('存在 GPU 显存里，随生成不断变长', x0 + 200, y + 252, font(600, 26), K.gray); });
+    }
+    // formula
+    const parts = [['2', 'K 和 V'], ['×'], ['40', '层'], ['×'], ['5120', 'hidden'], ['×'], ['2 B', 'FP16'], ['='], ['800 KB', '每个 token']];
+    const fN = font(900, 84, HN), fL = font(700, 22);
+    const widths = parts.map((p) => tw(p[0] === '800 KB' ? '800 KB' : p[0], fN) + (p.length === 1 ? 40 : 44));
+    let fx = 960 - widths.reduce((a, b) => a + b, 0) / 2;
+    parts.forEach((p, i) => {
+      const a = O(t, 8.2 + i * .12, .45), last = i === parts.length - 1;
+      const s = last ? fmt(Math.round(800 * EO((t - 9.3) / 1.1))) + ' KB' : p[0];
+      rise(a, fx - 10, 660, widths[i] + 20, 150, () => {
+        txt(s, fx, 760, fN, last ? K.red : p.length === 1 ? K.gray : K.ink);
+        if (p[1]) txt(p[1], fx + 2, 798, fL, K.gray);
+      });
+      fx += widths[i];
+    });
+    // ---- memory ----
+    if (t > 11.4) {
+      const by = 1040, bh = 130, W = 1728;
+      rise(O(t, 12.2, .4), 96, 970, 1000, 60, () => txt('A100 · 40 GB 显存', 96, 1012, font(900, 32), K.ink));
+      rect(96, by, W, bh, null, K.ink, 3);
+      const w1 = W * 26 / 40, w2 = W * 12 / 40, w3 = W * 2 / 40;
+      rect(96, by, w1 * IO(t, 12.6, .8), bh, CUBE.gray[1]);
+      rect(96 + w1, by, w2 * IO(t, 13.3, .6), bh, K.blue);
+      rect(96 + w1 + w2, by, w3 * IO(t, 13.8, .3), bh, hatchPat(K.ink, K.paper));
+      line([[96 + w1, by], [96 + w1, by + bh]], K.ink, 2); line([[96 + w1 + w2, by], [96 + w1 + w2, by + bh]], K.ink, 2);
+      rise(O(t, 13.0, .4), 96, by, w1, bh, () => txt('模型权重 26 GB', 130, by + 78, font(800, 36), K.ink));
+      rise(O(t, 13.6, .4), 96 + w1, by, w2, bh, () => txt('KV cache ≈ 12 GB', 96 + w1 + 28, by + 78, font(800, 34, HN), '#fff'));
+      // zoom lines + grid
+      const gx = 744, gy = 1260, cs = 14, gp = 18, cols = 60, rowsN = 7;
+      const zl = IO(t, 13.9, .5);
+      if (zl > 0) { line([[96 + w1, by + bh], [L(96 + w1, gx, zl), L(by + bh, gy - 10, zl)]], K.ink, 1.5); line([[96 + w1 + w2, by + bh], [L(96 + w1 + w2, gx + cols * gp - 4, zl), L(by + bh, gy - 10, zl)]], K.ink, 1.5); }
+      const runsR = [70, 44, 96, 58, 30, 82, 60, 50], cc = [K.blue, K.yel, K.ink, CUBE.gray[2], K.red];
+      const req = []; runsR.forEach((n, k) => { for (let j = 0; j < n; j++) req.push(k); });
+      for (let k = 0; k < cols * rowsN; k++) {
+        const i = k % cols, j = Math.floor(k / cols);
+        const a = O(t, 14.1 + i * .012, .25); if (a <= 0) continue;
+        const rc = t > 16.2 + (req[k] ?? 9) * .08 ? cc[(req[k] ?? 0) % 5] : K.blue;
+        const s = cs * a;
+        rect(gx + i * gp + (cs - s) / 2, gy + j * gp + (cs - s) / 2, s, s, rc);
+      }
+      rise(O(t, 14.3, .5), 90, 1240, 640, 170, () => txt('≈ ' + fmt(Math.round(15000 * EO((t - 14.3) / 1.2))), 96, 1380, font(900, 130, HN), K.red));
+      rise(O(t, 14.6, .4), 96, 1400, 640, 60, () => txt('个 token', 100, 1440, font(800, 36), K.ink));
+      X.globalAlpha = O(t, 15, .5); txt('按 13B 模型估算：40 层，hidden 5120，FP16', 96, 1500, font(600, 20), K.gray); X.globalAlpha = 1;
+    }
+  },
+});
+
+// ---------- 02 waste ----------
+SC.push({
+  id: 'waste', dur: 22, num: '02', title: '连续分配的浪费', card: K.red,
+  cam: [[0, 960, 540, 1], [14, 960, 540, 1], [14.6, 1060, 500, 1.06], [17.4, 1060, 500, 1.06], [18.2, 960, 540, 1], [22, 960, 540, 1]],
+  beats: [[1.4, '传统做法：每个请求按{r:最大长度}，预留一段连续显存'], [4.2, '但最终会生成多长，事先并不知道'], [7.6, '① 预留：留给之后的 token，此刻空着'], [10.6, '② 内部碎片：请求提前结束，剩下的永远用不上'], [14.0, '③ 外部碎片：空闲加起来够，却凑不出连续的一段'], [18.2, '显存的大部分，都浪费掉了']],
+  ev: (() => { const e = [[1.4, 'thud'], [1.8, 'tick'], [2.2, 'tick']]; for (let i = 0; i < 21; i++) e.push([4.3 + i * .12, 'tick']); e.push([7.6, 'whoosh'], [10.6, 'pop'], [11.2, 'whoosh'], [14.0, 'pop'], [14.4, 'whoosh'], [15.6, 'err'], [18.2, 'thud']); return e; })(),
+  draw(t) {
+    const x0 = 192, y = 380, s = 24, h = 120, N = 64;
+    const reqs = [{ n: 'A', a: 0, len: 20, gen: 7, col: K.blue, tc: K.blue }, { n: 'B', a: 22, len: 18, gen: 5, col: K.yel, tc: K.yelD, eos: true }, { n: 'C', a: 43, len: 16, gen: 9, col: K.ink, tc: K.ink }];
+    const gaps = [[20, 22], [40, 43], [59, 64]];
+    const dim = 1 - .75 * O(t, 18.2, .5);
+    X.save(); X.globalAlpha = dim;
+    X.globalAlpha = dim * O(t, 1.0, .4); txt('GPU 显存 · KV cache 区域（每格 = 1 个 token）', x0, 250, font(700, 24), K.gray); X.globalAlpha = dim;
+    for (let i = 0; i < N; i++) { const a = O(t, 1.0 + i * .008, .3); X.globalAlpha = dim * a; rect(x0 + i * s, y, s, h, K.paper, K.ink, 1.2); }
+    X.globalAlpha = dim;
+    const fillT = {}; let k = 0;
+    for (let st = 0; st < 9; st++) reqs.forEach((r) => { if (st < r.gen) fillT[r.a + st] = 4.3 + (k++) * .12; });
+    reqs.forEach((r, ri) => {
+      const bp = IO(t, 1.4 + ri * .4, .5), bx = x0 + r.a * s, bw = r.len * s;
+      if (bp > 0) {
+        line([[bx + 2, y - 14], [bx + 2, y - 26], [bx + 2 + (bw - 4) * bp, y - 26], [bx + 2 + (bw - 4) * bp, y - 14]], K.ink, 3);
+        rise(O(t, 1.6 + ri * .4, .4), bx, y - 80, bw + 80, 48, () => txt(`请求 ${r.n} · 预留 ${r.len} 格`, bx + 2, y - 42, font(800, 22), r.tc));
+      }
+      for (let j = 0; j < r.len; j++) {
+        const idx = r.a + j, x = x0 + idx * s;
+        if (j < r.gen) {
+          const p = O(t, fillT[idx], .3); if (p <= 0) continue;
+          X.save(); X.beginPath(); X.rect(x, y, s, h); X.clip(); rect(x, y - (1 - p) * h, s, h, r.col, K.ink, 1.2); X.restore();
+        } else if (r.eos && j === r.gen) {
+          const p = O(t, 10.6, .3); if (p <= 0) continue;
+          rect(x, y, s, h * p, K.ink, K.ink, 1.2);
+          X.save(); X.translate(x + s / 2, y + h / 2); X.rotate(-Math.PI / 2); X.globalAlpha = dim * p; txt('EOS', 0, 1, font(900, 15, HN), '#fff', 'center', 'middle'); X.restore();
+        } else {
+          const after = r.eos && j > r.gen;
+          const pa = O(t, 7.6 + (j - r.gen) * .025, .3), pr = after ? O(t, 11.2 + (j - r.gen) * .04, .3) : 0;
+          if (pa > 0 && pr < 1) rect(x, y + h * (1 - pa), s, h * pa, hatchPat(K.ink, K.paper), K.ink, 1.2);
+          if (pr > 0) rect(x, y + h * (1 - pr), s, h * pr, hatchPat(K.red, K.paper), K.ink, 1.2);
+        }
+      }
+    });
+    const blink = t > 14 && t < 17.6 ? (Math.floor((t - 14) * 4) % 2 ? .55 : 1) : 1;
+    gaps.forEach(([a, b]) => { for (let i = a; i < b; i++) { const p = O(t, 14.0, .3); X.globalAlpha = dim * blink; rect(x0 + i * s, y + h * (1 - p), s, h * p, CUBE.gray[1], K.ink, 1.2); } });
+    X.globalAlpha = dim;
+    // request D
+    if (t > 14.3) {
+      const dW = 8 * s, tx = x0 + 57 * s;
+      const sl = IO(t, 14.4, .8), dr = EI((t - 15.3) / .3), bk = EO((t - 15.6) / .5);
+      const dx = L(2000, tx, sl), dy = L(170, 300, dr) - 70 * bk;
+      const sh = t > 15.6 && t < 16.1 ? Math.sin((t - 15.6) * 70) * 10 * (1 - (t - 15.6) / .5) : 0;
+      rect(dx + sh, dy, dW, 70, K.paper, K.red, 4);
+      txt('请求 D · 8 格', dx + sh + dW / 2, dy + 36, font(800, 24), K.red, 'center', 'middle');
+      const xp = SP(t, 15.65, 1);
+      if (xp > 0) { X.save(); X.translate(dx + dW + 60, dy + 35); X.scale(xp, xp); line([[-26, -26], [26, 26]], K.red, 9); line([[26, -26], [-26, 26]], K.red, 9); X.restore(); rise(O(t, 15.8, .4), dx - 420, dy, 400, 70, () => txt('空闲 10 格，却不连续', dx - 24, dy + 46, font(800, 28), K.red, 'right')); }
+    }
+    // legend
+    [[7.6, hatchPat(K.ink, K.paper), '① 预留：留给之后的 token，此刻空着'], [11.2, hatchPat(K.red, K.paper), '② 内部碎片：请求提前结束，永远用不上'], [14.0, CUBE.gray[1], '③ 外部碎片：空隙零碎，放不下新请求']].forEach(([at, f, s2], i) => {
+      rise(O(t, at, .45), x0, 560 + i * 60, 1400, 56, () => { rect(x0, 572 + i * 60, 48, 32, f, K.ink, 1.5); txt(s2, x0 + 68, 598 + i * 60, font(800, 28), K.ink); });
+    });
+    X.restore();
+    // result
+    const rp = IO(t, 18.2, .6);
+    if (rp > 0) {
+      X.save(); X.translate(0, (1 - rp) * 60); X.globalAlpha = rp;
+      rect(240, 380, 1440, 420, K.paper, K.ink, 3);
+      txt('真正存放 token 的比例', 300, 470, font(800, 32), K.ink);
+      const a = 20.4 * EO((t - 18.4) / 1), b = 38.2 * EO((t - 18.6) / 1);
+      txt(fmt(a, 1) + '% – ' + fmt(b, 1) + '%', 290, 660, font(900, 170, HN), K.red);
+      rect(300, 690, 1320 * IO(t, 18.9, .6), 6, K.ink);
+      txt('现有 LLM 推理系统中的 KV cache 显存 · 数据：vLLM 论文', 300, 750, font(600, 24), K.gray);
+      X.restore();
+    }
+  },
+});
+
+// ---------- 03 paging + on-demand ----------
+const PG = { lx: 150, ly: 320, ls: 70, row: 100, tx: 520, I: Iso(1300, 300, 44, 28) };
+SC.push({
+  id: 'paging', dur: 27, num: '03', title: '分页与按需分配', card: K.ink,
+  cam: [[0, 960, 540, 1], [2.4, 1180, 520, 1.08], [5.2, 780, 520, 1.06], [10.8, 960, 540, 1], [13.2, 1000, 520, 1.04], [19.8, 960, 540, 1], [27, 960, 540, 1]],
+  beats: [[1.4, '借鉴操作系统的{r:虚拟内存分页}'], [3.8, 'KV cache 切成固定大小的 block：图中每块 4 个 token（vLLM 默认 16）'], [6.2, '{r:block table} 把逻辑 block 映射到任意位置的物理 block'], [11.4, '逻辑上连续，物理上分散'], [13.4, '最后一个 block 写满了，才从空闲池取下一个'], [17.6, '每个请求最多浪费最后一个 block 的尾部'], [20.6, 'KV cache 显存利用率：{r:20–38%} → {b:96%}']],
+  ev: (() => { const e = [[1.4, 'tick'], [1.6, 'tick'], [1.8, 'tick'], [2.6, 'whoosh'], [3.8, 'pop'], [5.6, 'tick'], [5.75, 'tick'], [5.9, 'tick']];
+    for (let i = 0; i < 12; i++) e.push([6.2 + i * .4 + .7, 'click']);
+    e.push([13.4, 'pop'], [13.9, 'tick'], [14.2, 'thud'], [14.4, 'tick'], [15.1 + .7, 'click'], [15.6 + .7, 'click'], [17.6, 'pop'], [20.4, 'whoosh'], [21.0, 'thud'], [21.6, 'thud']); return e; })(),
+  draw(t) {
+    const { lx, ly, ls, row, tx, I } = PG;
+    const tA = TOK.map((_, i) => i < 12 ? 6.2 + i * .4 : [15.1, 15.6][i - 12]);
+    const FLY = .7, rowT = [5.6, 5.75, 5.9, 14.4];
+    // analogy words
+    const words = [['虚拟页', '逻辑 block'], ['页表', 'block table'], ['物理页', '物理 block']];
+    const sw = IO(t, 3.8, .5);
+    [560, 960, 1360].forEach((x, i) => {
+      const a = O(t, 1.4 + i * .2, .45), f = font(800, 40);
+      X.save(); X.beginPath(); X.rect(x - 220, 140, 440, 70); X.clip();
+      X.globalAlpha = 1;
+      if (a > 0) { txt(words[i][0], x, 196 + (1 - a) * 70 - sw * 70, f, K.ink, 'center'); txt(words[i][1], x, 196 + 70 - sw * 70, f, i === 1 ? K.red : K.ink, 'center'); }
+      X.restore();
+      if (i < 2) { X.globalAlpha = O(t, 1.6 + i * .2, .3); txt('→', x + 200, 192, font(700, 38, HN), K.ink, 'center'); X.globalAlpha = 1; }
+    });
+    // slab
+    const alloc = new Set(TABLE.filter((_, i) => t > rowT[i] + .1));
+    const blink = t > 13.4 && t < 14.3 ? Math.floor((t - 13.4) * 6) % 2 === 0 : false;
+    drawSlab(I, t, {
+      t0: 2.6,
+      tile: (k, m) => {
+        const isFree = !OTHER[k] && !alloc.has(k);
+        if (k === 5 && t > 14.2) {
+          if (t > 17.6 && m >= 2) return hatchPat(K.red, K.paper, 9, 2.5);
+          return t < 14.8 ? K.yel : K.paper;
+        }
+        if (isFree && blink) return K.yel;
+        return null;
+      },
+      cell: (k, m) => {
+        if (OTHER[k] && m < OTHER[k]) return { col: CUBE.gray, at: 3.2 + k * .02 };
+        const li = TABLE.indexOf(k); if (li < 0) return null;
+        const i = li * 4 + m; if (i >= TOK.length) return null;
+        return { col: CUBE.blue, at: tA[i] + FLY, ring: true };
+      },
+      label: (k) => alloc.has(k) ? K.red : K.ink,
+    });
+    rise(O(t, 2.8, .4), 1100, 225, 600, 50, () => txt('GPU 显存 · 物理 block', 1110, 262, font(700, 24), K.gray));
+    // logical + table
+    rise(O(t, 5.3, .4), lx, 255, 700, 50, () => { txt('逻辑 block', lx, 292, font(700, 22), K.gray); txt('block table', tx, 292, font(700, 22), K.gray); });
+    for (let i = 0; i < 4; i++) {
+      const a = O(t, rowT[i], .45); if (a <= 0) continue;
+      const y = ly + i * row;
+      X.save(); X.globalAlpha = a; X.translate((1 - a) * -60, 0);
+      txt('L' + i, lx - 20, y + 46, font(900, 26, HN), K.ink, 'right');
+      for (let m = 0; m < 4; m++) {
+        const ti = i * 4 + m, x = lx + m * ls;
+        rect(x, y, ls, ls, K.paper, K.ink, 2);
+        if (ti < TOK.length) {
+          const p = O(t, tA[ti], .25);
+          if (p > 0) { rect(x + 1, y + ls * (1 - p) + 1, ls - 2, ls * p - 2, K.blue); txt(TOK[ti], x + ls / 2, y + ls / 2 + 1, font(800, 22), `rgba(255,255,255,${p})`, 'center', 'middle'); }
+        }
+        if (i === 3 && m >= 2 && t > 17.6) rect(x + 1, y + 1, ls - 2, ls - 2, hatchPat(K.red, K.paper, 9, 2.5));
+      }
+      txt('L' + i, tx, y + 46, font(800, 28, HN), K.ink);
+      rect(tx + 50, y + 34, 90, 2, K.ink);
+      txt('#' + TABLE[i], tx + 160, y + 47, font(900, 32, HN), K.red);
+      rect(tx, y + 72, 220, 1, K.ink);
+      X.restore();
+      // connector
+      const [u, v] = I.uv(TABLE[i], 0), [ex, ey] = I.pt(u + 1, v + 1, I.H);
+      const mx = 790 + i * 24, ry = y + 35;
+      const pts = [[tx + 225, ry], [mx, ry], [mx, ey], [ex - 10, ey]];
+      polyPart(pts, IO(t, rowT[i] + .3, .7), K.ink, 2);
+    }
+    if (t > 17.6) rise(O(t, 17.7, .4), lx, ly + 3 * row + ls + 8, 600, 50, () => txt('浪费 ≤ block size − 1', lx, ly + 3 * row + ls + 42, font(800, 24), K.red));
+    // flying tokens
+    TOK.forEach((_, i) => {
+      const li = Math.floor(i / 4), m = i % 4;
+      const sx = lx + m * ls + ls / 2, sy = ly + li * row + ls / 2;
+      const [ex, ey] = I.cc(TABLE[li], m, I.H);
+      flyer([[sx, sy], [L(sx, ex, .3), sy - 240], [L(sx, ex, .75), ey - 220], [ex, ey]], (t - tA[i] - .05) / (FLY - .05));
+    });
+    // block-size brace on #1
+    const bsp = O(t, 3.8, .4) * (1 - O(t, 6.0, .3));
+    if (bsp > 0) {
+      X.globalAlpha = bsp;
+      const [u, v] = I.uv(1, 0), p0 = I.pt(u, v + 2.25), p1 = I.pt(u + 2, v + 2.25);
+      line([[p0[0], p0[1]], [p0[0] - 6, p0[1] + 10], [p1[0] - 6, p1[1] + 10], [p1[0], p1[1]]], K.red, 3);
+      txt('1 block = 4 token', p1[0] + 4, p1[1] + 40, font(800, 24, HN), K.red);
+      X.globalAlpha = 1;
+    }
+    // alloc callout
+    if (t > 13.9 && t < 17.4) {
+      rise(O(t, 14.0, .4), 1480, 222, 500, 56, () => txt('写满了 → 取新 block #5', 1480, 262, font(900, 28), K.red));
+    }
+    // utilization panel
+    const pp = IO(t, 20.4, .6);
+    if (pp > 0) {
+      X.save(); X.translate(0, (1 - pp) * 900);
+      rect(0, 130, 1920, 1000, K.paper); rect(96, 130, 1728, 3, K.ink);
+      txt('KV cache 显存中，真正存放 token 的比例', 96, 230, font(800, 36), K.ink);
+      const rowsB = [['连续预分配', 20.4, 38.2, K.ink], ['PagedAttention', 96.3, 96.3, K.blue]];
+      rowsB.forEach(([lab, lo, hi, col], i) => {
+        const y = 330 + i * 220, p = IO(t, 21.0 + i * .6, 1), bx = 96, bw = 1728;
+        txt(lab, bx, y, font(900, 40, HN), K.ink);
+        rect(bx, y + 30, bw, 70, K.paper, K.ink, 2);
+        rect(bx, y + 30, bw * lo / 100 * p, 70, col);
+        if (hi > lo) rect(bx + bw * lo / 100 * p, y + 30, bw * (hi - lo) / 100 * p, 70, hatchPat(K.ink, K.paper));
+        const v = hi > lo ? `${fmt(lo * p, 1)}–${fmt(hi * p, 1)}%` : `${fmt(hi * p, 1)}%`;
+        txt(v, bx + bw, y, font(900, 64, HN), i ? K.blue : K.red, 'right');
+      });
+      txt('数据：vLLM 论文（SOSP 2023）', 96, 790, font(600, 22), K.gray);
+      X.restore();
+    }
+  },
+});
+
+// ---------- 04 attention ----------
+SC.push({
+  id: 'attn', dur: 20, num: '04', title: '分页之后的 attention', card: K.blue,
+  cam: [[0, 960, 540, 1], [3.4, 920, 530, 1.03], [12.6, 1000, 530, 1.03], [13.2, 1160, 520, 1.05], [16, 940, 540, 1.02], [20, 960, 540, 1]],
+  beats: [[1.4, '显存不连续了，attention 怎么算？'], [3.8, 'query 按 block table，逐块读取 {b:K} 和 {y:V}'], [8.4, '每读一块，就算出这一块的分数和加权和'], [13.0, '按 softmax 的归一化项，合并各块结果'], [16.4, '结果与连续存储完全相同 —— {r:只多了一次查表}']],
+  ev: (() => { const e = [[1.4, 'thud'], [2.2, 'whoosh']]; for (let i = 0; i < 4; i++) { const st = 3.8 + i * 2.2; e.push([st, 'tick'], [st + .3, 'whoosh'], [st + .5, 'click'], [st + 1.0, 'pop']); } e.push([13.0, 'whoosh'], [13.6, 'thud'], [14.2, 'pop'], [16.4, 'thud']); return e; })(),
+  draw(t) {
+    const I = Iso(1000, 330, 40, 26);
+    const tx = 110, ty = 330, rh = 64, rs = 90;
+    const steps = [0, 1, 2, 3].map((i) => 3.8 + i * 2.2);
+    const active = steps.findIndex((s, i) => t >= s && t < (steps[i + 1] ?? 12.8));
+    const hotK = active >= 0 && t - steps[active] > .5 && t - steps[active] < 1.3 ? TABLE[active] : -1;
+    drawSlab(I, t, {
+      t0: 1.4,
+      cell: (k, m) => {
+        if (OTHER[k] && m < OTHER[k]) return { col: CUBE.gray, at: 1.8 };
+        const li = TABLE.indexOf(k); if (li < 0 || li * 4 + m >= TOK.length) return null;
+        return { col: k === hotK ? CUBE.red : CUBE.blue, at: 1.9 + li * .1 };
+      },
+      label: (k) => TABLE.includes(k) ? K.red : K.ink,
+    });
+    // query
+    const qa = SP(t, 2.2, 1);
+    if (qa > 0) { X.save(); X.translate(1002, 172); X.scale(qa, qa); rect(-32, -32, 64, 64, K.red, K.ink, 2); txt('q', 0, 2, font(900, 40, HN), '#fff', 'center', 'middle'); X.restore(); }
+    rise(O(t, 2.5, .4), 1050, 150, 600, 50, () => txt('当前 token「舒服」', 1056, 186, font(800, 26), K.ink));
+    // table
+    rise(O(t, 1.8, .4), tx, 270, 400, 50, () => txt('block table', tx, 306, font(700, 22), K.gray));
+    for (let i = 0; i < 4; i++) {
+      const a = O(t, 2.0 + i * .1, .4); if (a <= 0) continue;
+      const y = ty + i * rs, on = i === active;
+      X.save(); X.globalAlpha = a; X.translate((1 - a) * -40, 0);
+      if (on) rect(tx - 22, y, 8, rh, K.red);
+      txt('L' + i, tx, y + 44, font(800, 30, HN), K.ink); rect(tx + 56, y + 32, 80, 2, K.ink);
+      txt('#' + TABLE[i], tx + 152, y + 45, font(900, 32, HN), on ? K.red : K.ink);
+      rect(tx, y + rh + 8, 240, 1, K.ink);
+      X.restore();
+    }
+    // lookups
+    for (let i = 0; i < 4; i++) {
+      const st = steps[i], k = TABLE[i]; if (t < st) continue;
+      const y = ty + i * rs + 32, [ex, ey] = I.bc(k, I.H);
+      const mx = 400 + i * 22;
+      polyPart([[tx + 245, y], [mx, y], [mx, ey + 10], [ex - 12, ey + 10]], IO(t, st, .5), i === active ? K.red : K.ink, i === active ? 3 : 1.5);
+      if (i === active) polyPart([[1002, 206], [ex, ey - 6]], IO(t, st + .3, .3), K.red, 3);
+      // K,V squares to card
+      const q = (t - st - .6) / .5;
+      if (q > 0 && q < 1) { const e = EIO(q); const cy = 170 + i * 96 + 40; rect(L(ex, 1420, e) - 14, L(ey, cy, e) - 14, 28, 28, K.blue, K.ink, 1.5); rect(L(ex, 1420, e) + 18, L(ey, cy, e) - 14, 28, 28, K.yel, K.ink, 1.5); }
+      // card
+      const ca = O(t, st + 1.0, .45), mg = IO(t, 13.0 + i * .1, .5);
+      if (ca > 0 && mg < 1) {
+        const cy = L(170 + i * 96, 580, mg);
+        X.save(); X.globalAlpha = 1 - mg; X.translate((1 - ca) * 300, 0);
+        rect(1420, cy, 404, 80 * (1 - mg * .8), K.paper, K.ink, 2);
+        if (mg < .3) {
+          txt('块 ' + i, 1440, cy + 50, font(900, 28), K.ink);
+          [[.3, .55, .2, .4], [.7, .25, .5, .35], [.45, .9, .3, .6], [.5, .8]][i].forEach((v, j) => { const bh = 50 * v * O(t, st + 1.2 + j * .06, .3); rect(1520 + j * 26, cy + 64 - bh, 18, bh, K.ink); });
+          txt('max · sum · Σp·v', 1640, cy + 48, font(700, 20, HN), K.gray);
+        }
+        X.restore();
+      }
+    }
+    // merge + output
+    const mp = SP(t, 13.5, 1);
+    if (mp > 0) {
+      X.save(); X.translate(1622, 620); X.scale(1, mp); rect(-202, -60, 404, 120, K.ink); X.restore();
+      rise(O(t, 13.6, .4), 1420, 560, 404, 120, () => { txt('合并', 1622, 612, font(900, 40), '#fff', 'center'); txt('按 softmax 归一化项重新缩放', 1622, 652, font(700, 22), '#cfc9bb', 'center'); });
+      polyPart([[1622, 682], [1622, 730]], IO(t, 14.0, .3), K.ink, 3);
+    }
+    const op = SP(t, 14.2, 1);
+    if (op > 0) { X.save(); X.translate(1622, 776); X.scale(op, op); rect(-150, -40, 300, 80, K.red); txt('输出 o', 0, 2, font(900, 34, HN), '#fff', 'center', 'middle'); X.restore(); }
+    // lookup emphasis
+    const lp = IO(t, 16.4, .5);
+    if (lp > 0) { rect(tx - 36, ty - 20, (300) * lp, 3, K.red); rect(tx - 36, ty + 4 * rs - 4, 300 * lp, 3, K.red); rise(O(t, 16.6, .4), tx - 36, ty + 4 * rs + 6, 500, 50, () => txt('唯一多出的一步：查表', tx - 36, ty + 4 * rs + 44, font(900, 30), K.red)); }
+  },
+});
+
+// ---------- 05 sharing ----------
+SC.push({
+  id: 'share', dur: 21, num: '05', title: '共享与 copy-on-write', card: K.red,
+  cam: [[0, 960, 540, 1], [2.8, 1140, 500, 1.05], [6.4, 960, 530, 1], [10.4, 1000, 500, 1.05], [16, 960, 540, 1], [21, 960, 540, 1]],
+  beats: [[1.4, '同一个 prompt，采样两个回答'], [6.8, '两张 block table 指向同一批物理 block —— {r:引用计数 2}'], [10.6, '要往共享 block 写入时，才复制一份：{r:copy-on-write}'], [16.4, '并行采样、beam search、共享前缀，都靠它省显存']],
+  ev: (() => { const e = []; for (let i = 0; i < 6; i++) e.push([1.4 + i * .08, 'tick'], [3.2 + i * .22 + .7, 'click']); e.push([2.0, 'whoosh'], [5.0, 'tick'], [5.2, 'tick'], [6.8, 'tick'], [7.0, 'tick'], [7.6, 'pop'], [7.7, 'pop'], [10.6, 'pop'], [11.2, 'whoosh'], [12.6, 'thud'], [12.8, 'tick'], [12.9, 'pop'], [14.3, 'click'], [15.1, 'click'], [16.4, 'tick'], [16.6, 'tick'], [16.8, 'tick']); return e; })(),
+  draw(t) {
+    const I = Iso(1260, 290, 44, 28);
+    const prompt = ['写', '一首', '关于', '秋天', '的', '诗'], home = [3, 3, 3, 3, 9, 9];
+    const other = { 0: 4, 5: 3, 6: 4, 10: 2, 15: 4 };
+    const land = (i) => 3.2 + i * .22 + .7;
+    const lift = 11.2, move = 11.6, down = 12.3, landC = 12.6, retarget = 12.8, bW = 14.0, aW = 14.8;
+    drawSlab(I, t, {
+      t0: 2.0,
+      tile: (k) => k === 12 && t > 11.4 && t < landC ? (Math.floor(t * 6) % 2 ? K.paper : '#f6c9c6') : null,
+      cell: (k, m) => {
+        if (other[k] && m < other[k]) return { col: CUBE.gray, at: 2.5 + k * .02 };
+        if (k === 3) return { col: CUBE.ink, at: land(m), ring: true };
+        if (k === 9 && m < 2) return { col: CUBE.ink, at: land(4 + m), ring: true };
+        if (k === 9 && m === 2 && t > aW) return { col: CUBE.blue, at: aW + .3, ring: true };
+        if (k === 12 && m < 2 && t > landC) return { col: CUBE.ink, at: landC - .3, ring: true };
+        if (k === 12 && m === 2 && t > bW) return { col: CUBE.yel, at: bW + .3, ring: true };
+        return null;
+      },
+      label: (k) => [3, 9].includes(k) || (k === 12 && t > lift) ? K.red : K.ink,
+    });
+    // prompt chips
+    const cw = 104, px0 = 960 - (6 * (cw + 10) - 10) / 2;
+    rise(O(t, 1.3, .4), px0 - 150, 140, 150, 60, () => txt('prompt', px0 - 20, 186, font(800, 24, HN), K.gray, 'right'));
+    prompt.forEach((s, i) => {
+      const a = O(t, 1.4 + i * .08, .4);
+      rise(a, px0 + i * (cw + 10), 148, cw, 60, () => { rect(px0 + i * (cw + 10), 150, cw, 56, K.ink); txt(s, px0 + i * (cw + 10) + cw / 2, 179, font(800, 26), '#fff', 'center', 'middle'); });
+      const [ex, ey] = I.cc(home[i], i % 4, I.H);
+      const sx = px0 + i * (cw + 10) + cw / 2;
+      flyer([[sx, 206], [sx, 320], [ex, ey - 200], [ex, ey]], (t - 3.2 - i * .22) / .7, K.ink, 36);
+    });
+    // copy ghost
+    if (t > lift && t < landC) {
+      const zl = EIO((t - lift) / .4) * 130, mv = EIO((t - move) / .7), dn = EIO((t - down) / .3);
+      const [u9, v9] = I.uv(9, 0), [u12, v12] = I.uv(12, 0);
+      const u = L(u9, u12, mv), v = L(v9, v12, mv), z = zl * (1 - dn);
+      isoCube(I, u + 1, v, I.H, CUBE.ink, z); isoCube(I, u, v, I.H, CUBE.ink, z);
+      if (t > move) { const [x, y] = I.pt(u + 1, v + 1, z + 80); txt('复制', x, y, font(900, 26), K.red, 'center'); }
+    }
+    // ref tags
+    const tag = (k, n, a, hot) => {
+      if (a <= 0) return; const [x, y] = I.bc(k, I.H), ty = y - 92;
+      X.save(); X.globalAlpha = cl(a * 2); line([[x, y - 4], [x, ty + 34]], K.ink, 1.5);
+      X.translate(x, ty + 17); X.scale(1, cl(a)); rect(-50, -17, 100, 34, hot ? K.red : K.ink); txt('ref ' + n, 0, 1, font(800, 20, HN), '#fff', 'center', 'middle'); X.restore();
+    };
+    tag(3, 2, SP(t, 7.6, 1), true);
+    tag(9, t > retarget ? 1 : 2, t > retarget ? SP(t, retarget, 1) : SP(t, 7.7, 1), t <= retarget);
+    tag(12, 1, SP(t, retarget + .1, 1), false);
+    // tables
+    const seqs = [{ n: '序列 A', col: K.blue, y0: 330, at: 5.0 }, { n: '序列 B', col: K.yelD, y0: 570, at: 6.8 }];
+    seqs.forEach((sq, si) => {
+      rise(O(t, sq.at, .4), 110, sq.y0 - 60, 400, 50, () => txt(sq.n + ' 的 block table', 110, sq.y0 - 22, font(900, 24), sq.col));
+      [0, 1].forEach((i) => {
+        const a = O(t, sq.at + .1 + i * .1, .4); if (a <= 0) return;
+        const y = sq.y0 + i * 72, hot = si === 1 && i === 1 && t > 10.6 && t < retarget + .5;
+        X.save(); X.globalAlpha = a; X.translate((1 - a) * -40, 0);
+        rect(110, y, 260, 58, hot ? '#fbe3e1' : K.paper, hot ? K.red : K.ink, hot ? 3 : 2);
+        txt('L' + i, 134, y + 40, font(800, 28, HN), K.ink); txt('→', 200, y + 40, font(700, 28, HN), K.ink);
+        let k = i === 0 ? 3 : 9;
+        if (si === 1 && i === 1) {
+          const sw = IO(t, retarget, .4);
+          X.save(); X.beginPath(); X.rect(250, y + 4, 115, 50); X.clip();
+          txt('#9', 262, y + 41 - sw * 50, font(900, 30, HN), K.red); txt('#12', 262, y + 91 - sw * 50, font(900, 30, HN), K.red); X.restore();
+        } else txt('#' + k, 262, y + 41, font(900, 30, HN), K.red);
+        X.restore();
+        // connector
+        let target = k; if (si === 1 && i === 1 && t > retarget) target = 12;
+        const [u, v] = I.uv(target, 0), [ex, ey] = I.pt(u, v + 1, 4);
+        const mx = 420 + si * 30 + i * 14, ry = y + 29;
+        const p = si === 1 && i === 1 && t > retarget ? IO(t, retarget, .6) : IO(t, sq.at + .3 + i * .1, .7);
+        polyPart([[372, ry], [mx, ry], [mx, ey], [ex - 12, ey]], p, sq.col === K.yelD ? K.yelD : K.blue, 2.5);
+      });
+    });
+    // write labels
+    [[bW, 12, '枫叶', K.yelD], [aW, 9, '落叶', K.blue]].forEach(([at, k, s, c]) => {
+      if (t < at || t > at + 2.2) return; const [x, y] = I.cc(k, 2, I.H + 40);
+      rise(O(t, at, .3), x - 80, y - 40, 160, 50, () => txt('+ ' + s, x, y, font(900, 26), c, 'center'));
+    });
+    if (t > move) { const [x, y] = I.bc(12); rise(O(t, move, .4), x - 360, y + 40, 420, 60, () => txt('copy-on-write', x - 60, y + 86, font(900, 34, HN), K.red, 'right')); }
+    // use cases
+    ['并行采样', 'beam search', '共享前缀'].forEach((s, i) => {
+      rise(O(t, 16.4 + i * .2, .4), 110 + i * 330, 760, 310, 90, () => { rect(110 + i * 330, 770, 300, 70, K.ink); txt(s, 110 + i * 330 + 150, 806, font(800, 30), '#fff', 'center', 'middle'); });
+    });
+  },
+});
+
+// ---------- 06 summary ----------
+SC.push({
+  id: 'sum', dur: 17, num: '06', title: '小结', card: K.ink, chromeUntil: 13.1,
+  cam: [[0, 960, 540, 1], [17, 960, 540, 1]],
+  beats: [[1.4, '同样的显存，能同时容纳更多请求'], [4.6, '吞吐量提升 {r:2–4×}'], [8.8, '']],
+  ev: (() => { const e = [[1.4, 'thud']]; for (let i = 0; i < 12; i++) e.push([1.8 + i * .12, 'tick']); e.push([4.6, 'thud'], [8.8, 'whoosh']); for (let i = 0; i < 4; i++) e.push([9.2 + i * .35, 'pop']); e.push([13.2, 'whoosh'], [13.6, 'thud']); return e; })(),
+  draw(t) {
+    const up = IO(t, 8.8, .7);
+    X.save(); X.translate(0, -1100 * up);
+    const bx = 520, bw = 1304, sc = bw / 1300;
+    const bars = [
+      { lab: '连续预分配', y: 230, n: '3 个请求', segs: [[80, 300, K.blue], [0, 30], [120, 280, K.yel], [0, 50], [60, 360, K.ink]] },
+      { lab: 'PagedAttention', y: 400, n: '9 个请求', segs: [[140, 10, K.blue], [110, 10, K.yel], [200, 10, K.ink], [80, 10, CUBE.gray[2]], [160, 10, K.blue], [130, 10, K.yel], [190, 10, K.ink], [100, 10, CUBE.gray[2]], [90, 10, K.blue]] },
+    ];
+    bars.forEach((b, bi) => {
+      const at = 1.4 + bi * .9;
+      rise(O(t, at, .4), 96, b.y, 420, 90, () => txt(b.lab, 96, b.y + 56, font(900, 36, HN), K.ink));
+      rect(bx, b.y, bw * IO(t, at, .5), 84, K.paper, K.ink, 2);
+      let x = bx, si = 0;
+      b.segs.forEach((s) => {
+        if (s.length === 2) { x += s[1] * sc; return; }
+        const p = O(t, at + .4 + (si++) * .12, .3), u = s[0] * sc, r = s[1] * sc;
+        rect(x, b.y + 84 * (1 - p), u, 84 * p, s[2], K.ink, 1.5);
+        rect(x + u, b.y + 84 * (1 - p), r, 84 * p, hatchPat(K.ink, K.paper), K.ink, 1.5);
+        x += u + r;
+      });
+      rise(O(t, at + 1.2, .4), bx + bw - 300, b.y - 44, 300, 44, () => txt(b.n, bx + bw, b.y - 12, font(800, 26), K.ink, 'right'));
+    });
+    const v = L(1, 2, EO((t - 4.6) / .6)), v2 = L(1, 4, EO((t - 4.9) / .9));
+    rise(O(t, 4.6, .4), 80, 560, 900, 290, () => txt(`${fmt(v, 0)}–${fmt(v2, 0)}×`, 88, 820, font(900, 280, HN), K.red));
+    rise(O(t, 5.2, .4), 900, 620, 900, 200, () => { txt('吞吐量', 920, 690, font(900, 48), K.ink); txt('相同延迟下，对比 FasterTransformer / Orca', 920, 740, font(700, 26), K.ink); txt('数据：vLLM 论文（SOSP 2023）', 920, 780, font(600, 22), K.gray); });
+    X.restore();
+    // four points
+    const pts = [['固定大小的 block', 'KV cache 按 block 切分'], ['按需分配', '写满一个，才申请下一个'], ['block table', '逻辑连续，物理分散'], ['引用计数', '共享 + copy-on-write']];
+    pts.forEach(([h, d], i) => {
+      const at = 9.2 + i * .35, x = 96 + i * 440;
+      X.save(); X.translate(0, 1100 * (1 - up));
+      rect(x, 240, 400 * IO(t, at, .5), 6, K.ink);
+      rise(O(t, at + .1, .45), x, 260, 420, 170, () => txt(String(i + 1), x - 6, 410, font(900, 160, HN), K.red));
+      rise(O(t, at + .2, .45), x, 440, 420, 70, () => txt(h, x, 492, font(900, 40, HN), K.ink));
+      rise(O(t, at + .3, .45), x, 510, 420, 50, () => txt(d, x, 548, font(700, 26), K.ink));
+      X.restore();
+    });
+    // end card
+    const ep = IO(t, 13.2, .6);
+    if (ep > 0) {
+      const px = 1920 * (1 - ep);
+      rect(px, 0, 1920, 1080, K.ink);
+      X.save(); X.beginPath(); X.rect(px, 0, 1920, 1080); X.clip();
+      const s = SP(t, 13.6, 1); X.save(); X.translate(1734, 180); X.scale(s, s); rect(-90, -90, 180, 180, K.red); X.restore();
+      rise(O(t, 13.7, .5), 90, 330, 1700, 230, () => txt('PagedAttention', 90, 520, font(900, 190, HN), K.paper));
+      rect(96, 580, 1728 * IO(t, 14.2, .7), 4, K.paper);
+      rise(O(t, 14.5, .5), 96, 610, 1728, 90, () => rich('把操作系统的{r:分页}，用在 KV cache 上', 96, 680, font(800, 56), K.paper));
+      X.globalAlpha = O(t, 15.0, .6); txt('Kwon et al. Efficient Memory Management for Large Language Model Serving with PagedAttention. SOSP 2023', 96, 980, font(600, 22, HN), '#9a9486'); X.globalAlpha = 1;
+      X.restore();
+    }
+  },
+});
+
+// ======================= timeline =======================
+let acc = 0; for (const s of SC) { s.start = acc; acc += s.dur; }
+const TOTAL = acc;
+for (const s of SC) {
+  for (const [lt, ty] of s.ev) EV.push([s.start + lt, ty]);
+  if (s.num) EV.push([s.start - .45, 'whoosh'], [s.start + .05, 'thud'], [s.start + 1.05, 'whoosh']);
+}
+EV.sort((a, b) => a[0] - b[0]);
+
+function camAt(s, lt) {
+  const k = s.cam; if (lt <= k[0][0]) return k[0];
+  for (let i = 0; i < k.length - 1; i++) if (lt < k[i + 1][0]) { const p = EIO((lt - k[i][0]) / (k[i + 1][0] - k[i][0])); return [0, L(k[i][1], k[i + 1][1], p), L(k[i][2], k[i + 1][2], p), L(k[i][3], k[i + 1][3], p)]; }
+  return k[k.length - 1];
+}
+function chapterCard(s, lc) {
+  if (!s.num || lc < -.45 || lc > 1.55) return;
+  const x = lc < 0 ? 1920 * (1 - EO((lc + .45) / .45)) : -1920 * EI((lc - 1.05) / .45);
+  X.setTransform(1, 0, 0, 1, 0, 0);
+  rect(x, 0, 1920, 1080, s.card);
+  X.save(); X.beginPath(); X.rect(x, 0, 1920, 1080); X.clip();
+  const nx = x * 1.25;
+  txt(s.num, nx + 70, 1010, font(900, 620, HN), 'rgba(255,255,255,.95)');
+  txt('PagedAttention · ' + s.num + ' / 06', x + 1824, 120, font(800, 24, HN), 'rgba(255,255,255,.7)', 'right');
+  rise(O(lc, .05, .45), x + 90, 150, 1740, 150, () => txt(s.title, x + 96, 270, font(900, 100), '#fff'));
+  X.restore();
+}
+function chrome(s, lt) {
+  if (!s.num) return;
+  const a = O(lt, 1.3, .4) * (s.chromeUntil ? 1 - O(lt, s.chromeUntil, .2) : 1);
+  if (a <= 0) return;
+  X.setTransform(1, 0, 0, 1, 0, 0); X.globalAlpha = a;
+  rect(0, 0, 1920, 108, K.paper);
+  txt(s.num, 96, 78, font(900, 28, HN), K.red); txt(s.title, 148, 78, font(800, 26), K.ink);
+  txt('PagedAttention', 1824, 78, font(800, 22, HN), K.gray, 'right');
+  rect(96, 104, 1728 * EIO((lt - 1.3) / .6), 2, K.ink);
+  X.globalAlpha = 1;
+}
+function caption(s, lt) {
+  const b = s.beats; if (!b.length) return;
+  let i = -1; for (let j = 0; j < b.length; j++) if (lt >= b[j][0]) i = j;
+  X.setTransform(1, 0, 0, 1, 0, 0);
+  const endA = 1 - O(lt, s.dur - .5, .3);
+  const draw = (str, p, out) => {
+    if (!str) return; const f = font(800, 38);
+    X.save(); X.globalAlpha = endA;
+    X.beginPath(); X.rect(96, 926, 1760, 72); X.clip();
+    const y = 972 + (1 - p) * 60 - out * 60;
+    rect(96, y - 30, 20, 20, K.red);
+    rich(str, 136, y - 6 + 10, f, K.ink);
+    X.restore();
+  };
+  if (i >= 0) {
+    const p = O(lt, b[i][0] + .14, .45);
+    draw(b[i][1], p, 0);
+    if (i > 0 && lt < b[i][0] + .2) draw(b[i - 1][1], 1, EI((lt - b[i][0]) / .18));
+  }
+}
+function drawFrame(ctx, T) {
+  X = ctx;
+  let idx = 0; for (let i = 0; i < SC.length; i++) if (T >= SC[i].start) idx = i;
+  const s = SC[idx], lt = T - s.start;
+  const [, cx, cy, z] = camAt(s, lt);
+  X.setTransform(1, 0, 0, 1, 0, 0); rect(0, 0, 1920, 1080, K.paper);
+  X.setTransform(z, 0, 0, z, 960 - cx * z, 540 - cy * z);
+  s.draw(lt);
+  X.setTransform(1, 0, 0, 1, 0, 0); X.globalAlpha = 1;
+  chrome(s, lt);
+  caption(s, lt);
+  chapterCard(s, lt);
+  const nx = SC[idx + 1]; if (nx) chapterCard(nx, T - nx.start);
+  const fe = O(T, TOTAL - 1.0, .9); if (fe > 0) { X.globalAlpha = fe; rect(0, 0, 1920, 1080, '#000'); X.globalAlpha = 1; }
+}
+
+// ======================= runtime (motion blur) =======================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const off = document.createElement('canvas'); off.width = 1920; off.height = 1080; const octx = off.getContext('2d');
+window.DURATION = TOTAL;
+window.EVENTS = EV;
+window.renderAt = (t, fps = 60, samples = 5, shutter = .5) => {
+  for (let s = 0; s < samples; s++) {
+    const ts = t - (shutter / fps) * (1 - s / (samples - 1));
+    octx.setTransform(1, 0, 0, 1, 0, 0); octx.globalAlpha = 1;
+    drawFrame(octx, Math.max(0, ts));
+    ctx.globalAlpha = 1 / (s + 1); ctx.drawImage(off, 0, 0);
+  }
+  ctx.globalAlpha = 1;
+};
+window.renderAt(3);
+</script>
+</body>
+</html>

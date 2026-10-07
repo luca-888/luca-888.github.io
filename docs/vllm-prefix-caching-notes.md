@@ -82,7 +82,7 @@ Prefix caching 把 KV cache 从“每个请求的私有工作内存”变成“�
 
 ## 成稿记录
 
-- 正文：`content/vllm-prefix-caching.md`；入口 `posts/vllm-prefix-caching/`；图 `src/VllmPrefixFigures.tsx`；映射 `src/vllm-prefix-caching.blocks.tsx`。未加入小红书导出列表。
+- 正文：`content/vllm-prefix-caching.md`；入口 `posts/vllm-prefix-caching/`；图 `src/articles/vllm-prefix-caching/VllmPrefixFigures.tsx`；映射 `src/articles/vllm-prefix-caching/vllm-prefix-caching.blocks.tsx`。未加入小红书导出列表。
 - 引用位置按 v0.30.0 tag 复核：`max_cache_hit_length = num_tokens - 1`、默认 `sha256`、`enable_prefix_caching=True`、`free` 逆序、`free_blocks` 无 hash 放队首 / 有 hash 放队尾、`touch`、`num_tokens_to_cache`、`prefix_match_unit` 均存在。
 - 已核实并写入正文：SGLang 默认 `schedule_policy="fcfs"`（调参文档建议共享前缀多时用 `lpm`），CUDA 默认 `page_size=1`，默认淘汰 `lru`；Qwen3 chat template 删除最近一条用户消息之前各轮回答的 thinking。
 - 现状变化写入正文：设计文档 Time 4–6 的队列顺序与 v0.30.0 不符（无 hash 的 block 现在放队首）；SGLang 默认调度从论文的 LPM 变为 FCFS。

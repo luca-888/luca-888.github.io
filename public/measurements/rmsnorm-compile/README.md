@@ -4,8 +4,8 @@
 
 ## 文件
 
-- 仓库 `content/data/rmsnorm-compile.json`：五组 BF16 shape 的稳态耗时、峰值显存增量、首次调用墙钟时间、数值误差及 profiler 样本。
-- 仓库 `content/data/rmsnorm-eager.json`：第二章基线及完整 reference；两章 reference 的 SHA-256 相同。
+- 仓库 `src/data/rmsnorm-compile.json`：五组 BF16 shape 的稳态耗时、峰值显存增量、首次调用墙钟时间、数值误差及 profiler 样本。
+- 仓库 `src/data/rmsnorm-eager.json`：第二章基线及完整 reference；两章 reference 的 SHA-256 相同。
 - 各 shape 文件夹的 `forward.py`、`backward.py`：TorchInductor 原样导出的完整模块，包含 Triton 源码和分配、释放、启动 kernel 的 wrapper。
 - `*-trace.json.gz`：压缩后的 Chrome trace。解压后可用 Perfetto 查看；`measured_0` 至 `measured_2` 是独立调用。
 - `kernel-details.json`：执行生成模块后取得的最终 launch 配置、寄存器数量、spill 数量、shared memory 和 PTX 哈希。

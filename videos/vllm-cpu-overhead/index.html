@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>vLLM CPU Overhead</title>
+<style>html,body{margin:0;background:#f1ede4}canvas{display:block}</style>
+<script src="data.js"></script>
+</head>
+<body>
+<canvas id="cv" width="1920" height="1080"></canvas>
+<script>
+// 样片：真实 trace 驱动的 GPU 时间线。所有条块的位置与长度来自 torch profiler 实测（data.js，由 extract.py 生成）。
+// ======================= palette & type =======================
+const K = {
+  paper: '#f1ede4', paper2: '#e6e0d3', ink: '#141414', ink2: '#3a3a3a', gray: '#8a8474',
+  red: '#e5322d', blue: '#2350d8', yel: '#f4c21b', yelD: '#9a7500', lg: '#b9b2a2',
+};
+const PC = { layer: K.blue, layer2: '#3d66e6', lm: '#0e2a86', samp: K.yel, prep: K.ink };   // 36 层 / lm_head / sampling / 输入准备
+const ACC = { b: K.blue, r: K.red, y: K.yelD, k: K.ink, g: K.gray };
+const HN = '"Helvetica Neue", "PingFang SC", sans-serif';
+const ZH = '"PingFang SC", "Helvetica Neue", sans-serif';
+const font = (w, s, f = ZH) => `${w} ${s}px ${f}`;
+
+// ======================= math =======================
+const cl = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const L = (a, b, p) => a + (b - a) * p;
+const EO = (x) => { x = cl(x); return x === 1 ? 1 : 1 - Math.pow(2, -10 * x); };
+const EI = (x) => { x = cl(x); return x === 0 ? 0 : Math.pow(2, 10 * x - 10); };
+const EIO = (x) => { x = cl(x); return x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2; };
+const O = (t, a, d = .5) => EO((t - a) / d);
+function SP(t, a, k = 1) { const x = (t - a) * k; if (x <= 0) return 0; const z = .5, w = 16, wd = w * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w * x) * (Math.cos(wd * x) + (z * w / wd) * Math.sin(wd * x)); }
+const fmt = (v, d = 0) => v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+// ======================= drawing primitives =======================
+let X;
+function rect(x, y, w, h, fill, stroke, lw = 1) {
+  if (w <= 0 || h <= 0) return; X.beginPath(); X.rect(x, y, w, h);
+  if (fill) { X.fillStyle = fill; X.fill(); } if (stroke) { X.strokeStyle = stroke; X.lineWidth = lw; X.stroke(); }
+}
+function line(pts, col, lw = 2, dash) {
+  X.beginPath(); pts.forEach(([x, y], i) => i ? X.lineTo(x, y) : X.moveTo(x, y));
+  X.strokeStyle = col; X.lineWidth = lw; X.lineCap = 'butt'; if (dash) X.setLineDash(dash); X.stroke(); X.setLineDash([]);
+}
+function txt(s, x, y, f, fill, align = 'left', base = 'alphabetic') { X.font = f; X.fillStyle = fill; X.textAlign = align; X.textBaseline = base; X.fillText(s, x, y); }
+function runs(s) { const out = []; const re = /\{(\w):([^}]*)\}/g; let last = 0, m; while ((m = re.exec(s))) { if (m.index > last) out.push([s.slice(last, m.index), null]); out.push([m[2], m[1]]); last = re.lastIndex; } if (last < s.length) out.push([s.slice(last), null]); return out; }
+function rich(s, x, y, f, base, align = 'left') {
+  X.font = f; const r = runs(s); const w = r.reduce((a, [t]) => a + X.measureText(t).width, 0);
+  let cx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x; X.textAlign = 'left'; X.textBaseline = 'alphabetic';
+  for (const [t, k] of r) { X.fillStyle = k ? ACC[k] : base; X.fillText(t, cx, y); cx += X.measureText(t).width; }
+  return w;
+}
+function rise(p, x, y, w, h, fn) { if (p <= 0) return; X.save(); X.beginPath(); X.rect(x, y, w, h); X.clip(); X.translate(0, (1 - p) * h); fn(); X.restore(); }
+const PATS = {};
+function hatch(col, bg) {
+  const key = col + bg; if (PATS[key]) return PATS[key];
+  const gap = 10, c = document.createElement('canvas'); c.width = c.height = gap; const g = c.getContext('2d');
+  g.fillStyle = bg; g.fillRect(0, 0, gap, gap); g.strokeStyle = col; g.lineWidth = 3; g.beginPath();
+  for (let o = -gap; o <= gap * 2; o += gap) { g.moveTo(o, gap); g.lineTo(o + gap, 0); } g.stroke();
+  return (PATS[key] = X.createPattern(c, 'repeat'));
+}
+
+// ======================= data =======================
+const TR = window.TRACE;
+// 放大的那一步（同步执行的第 1 步，其后的 CPU 三段最接近稳态中位数）与它之后、下一步开始计算之前的空转
+const ZS = TR.no_async.steps[0], ZN = TR.no_async.steps[1];
+const ZIDLE = TR.no_async.gaps.filter(([s, e]) => s >= ZS.samp[1] - 1 && e <= ZN.layers[0] + 1).reduce((a, [s, e]) => a + e - s, 0);
+// 空转里 CPU 的三段：sampling 结束 → execute_model 开始（处理输出、调度）→ cudaGraphLaunch 开始（准备输入）→ launch 结束（提交）
+const ZCI = TR.no_async.cpu.findIndex(([s0]) => s0 > ZS.samp[1]);
+const ZC = TR.no_async.cpu[ZCI], ZG = TR.no_async.graph[ZCI];
+const PARTS = [['处理输出、调度', ZS.samp[1], ZC[0], 'out'], ['准备输入', ZC[0], ZG[0], 'prep'], ['提交', ZG[0], ZG[1], 'launch']];
+const CP = { out: '#0fa38f', prep: '#7a3ff2', launch: '#e07b00' };
+// 并发 8 全部稳态 step 的中位数（同口径：GPU 上没有任何 kernel 的时间），以及无 profiler 的 ITL
+const MED = { idleSync: 2.9, idleAsync: 0.3, itlSync: 9.02, itlAsync: 7.03 };
+
+// ======================= layout & camera =======================
+const X0 = 120, W = 1680, SPAN = 40000;           // 时间轴：40 ms 对应 1680 px
+const ROWS = {
+  no_async: { y: 300, label: '同步执行', sub: '--no-async-scheduling' },
+  default: { y: 610, label: 'Async scheduling', sub: '默认' },
+};
+const SLOW = 140;                                   // 慢放倍数：真实 1 ms = 视频 0.14 s
+const TL = {                                        // 场景时间点（秒）
+  title: 0, frame: 5.0, sweepA: -100, zoomIn: 11.4, split: 15.2, zoomOut: 21.6, cpu: 22.8, proc: 38.8, back: 61.0, sweepB: 61.8, compare: 66.2,
+  mrv2: 72.0, graph: 90.0, limits: 122.0, final: 131.0, end: 143,
+};
+const sweepDur = (k) => TR[k].window / 1e6 * SLOW;
+const ZX0 = ZS.layers[0] - 500, ZX1 = ZN.layers[0] + 700;   // 放大后画面覆盖的真实时间
+const ZZ = 1720 / ((ZX1 - ZX0) / SPAN * W);
+const CAM = [                                       // [t, 世界 x(µs), 世界 y, zoom]
+  [0, 20000, 540, 1], [TL.zoomIn, 20000, 540, 1], [TL.zoomIn + 1.1, (ZX0 + ZX1) / 2, 420, ZZ],
+  [TL.zoomOut, (ZX0 + ZX1) / 2, 420, ZZ], [TL.zoomOut + 1.0, 20000, 540, 1],
+];
+let cam = [20000, 540, 1];
+function camAt(t) {
+  if (t <= CAM[0][0]) return CAM[0].slice(1);
+  for (let i = 0; i < CAM.length - 1; i++) if (t < CAM[i + 1][0]) {
+    const p = EIO((t - CAM[i][0]) / (CAM[i + 1][0] - CAM[i][0]));
+    return [1, 2, 3].map((j) => L(CAM[i][j], CAM[i + 1][j], p));
+  }
+  return CAM[CAM.length - 1].slice(1);
+}
+const sx = (us) => 960 + (X0 + us / SPAN * W - (X0 + cam[0] / SPAN * W)) * cam[2];
+const zy = () => 1 + (cam[2] - 1) * .4;                 // 纵向只放大一部分，避免条块过高
+const sy = (y) => 540 + (y - cam[1]) * zy();
+const sw = (us) => us / SPAN * W * cam[2];
+
+// ======================= timeline row =======================
+function drawRow(k, t, t0, alpha) {
+  const d = TR[k], r = ROWS[k], z = cam[2];
+  const ph = cl((t - t0) / sweepDur(k)) * d.window;   // 播放头（真实 µs）
+  if (alpha <= 0) return ph;
+  X.globalAlpha = alpha;
+  const yc = r.y, cpuY = sy(yc), cpuH = 22 * zy(), gY = sy(yc + 40), gH = 96 * zy();
+  // 行标题（屏幕空间，不随镜头缩放）
+  if (z < 1.2) {
+    txt(r.label, X0, sy(yc - 30), font(900, 34), K.ink);
+    X.font = font(900, 34); const lw = X.measureText(r.label).width;
+    txt(r.sub, X0 + lw + 16, sy(yc - 30), font(600, 22, HN), K.gray);
+    txt('CPU', X0 - 18, cpuY + cpuH - 4, font(800, 16, HN), K.gray, 'right');
+    txt('GPU', X0 - 18, gY + gH / 2 + 6, font(800, 16, HN), K.gray, 'right');
+  }
+  X.save(); X.beginPath(); X.rect(0, 0, 1920, 1080); X.clip();
+  rect(sx(0), gY, sw(d.window), gH, K.paper2);
+  // CPU：execute_model 区间
+  for (const [s, e] of d.cpu) { const a = Math.max(s, 0), b = Math.min(e, ph); if (b > a) rect(sx(a), cpuY, sw(b - a), cpuH, K.ink2); }
+  // 空转：GPU 上没有任何 kernel 的区间
+  for (const [s, e] of d.gaps) { const b = Math.min(e, ph); if (b > s) rect(sx(s), gY, sw(b - s), gH, hatch(K.red, '#f6d3cf')); }
+  // 每一步：36 层 / lm_head / sampling，输入准备的小 kernel 画成细线
+  X.save(); X.beginPath(); X.rect(0, gY - 2, sx(ph), gH + 4); X.clip();
+  for (const st of d.steps) {
+    for (const [a, b] of st.prep) rect(sx(a), gY, Math.max(sw(b - a), 1.5), gH, PC.prep);
+    const L0 = st.layers;
+    const split = sw(L0[1] - L0[0]) > 12;                   // 放大后才逐层区分
+    for (let i = 0; i < 36; i++) rect(sx(L0[i]), gY, sw(L0[i + 1] - L0[i]) + .5, gH, split && i % 2 ? PC.layer2 : PC.layer);
+    if (sw(L0[1] - L0[0]) > 18) for (let i = 0; i < 36; i++)
+      txt(String(i + 1), sx((L0[i] + L0[i + 1]) / 2), gY + gH / 2, font(800, 15, HN), 'rgba(255,255,255,.9)', 'center', 'middle');
+    rect(sx(st.lm[0]), gY, sw(st.lm[1] - st.lm[0]), gH, PC.lm);
+    rect(sx(st.samp[0]), gY, Math.max(sw(st.samp[1] - st.samp[0]), 2), gH, PC.samp);
+  }
+  X.restore();
+  // 播放头
+  if (ph > 0 && ph < d.window) {
+    const x = sx(ph); line([[x, cpuY - 14], [x, gY + gH + 14]], K.ink, 3);
+    txt(fmt(ph / 1000, 1) + ' ms', x + 8, gY + gH + 34, font(800, 20, HN), K.ink);
+  }
+  X.restore(); X.globalAlpha = 1;
+  return ph;
+}
+
+function axis(a) {
+  if (a <= 0) return; X.globalAlpha = a;
+  const y = sy(480);
+  for (let ms = 0; ms <= 40; ms += 5) {
+    const x = sx(ms * 1000); line([[x, y - 8], [x, y]], K.gray, 1.5);
+    txt(ms + (ms === 40 ? ' ms' : ''), x, y + 22, font(700, 18, HN), K.gray, 'center');
+  }
+  line([[sx(0), y - 8], [sx(40000), y - 8]], K.gray, 1.5);
+  X.globalAlpha = 1;
+}
+
+function legend(a) {
+  if (a <= 0) return; X.globalAlpha = a;
+  const items = [['36 层 Transformer', PC.layer], ['lm_head', PC.lm], ['sampling', PC.samp], ['输入准备 kernel', PC.prep], ['GPU 空转', 'hatch'], ['CPU execute_model', K.ink2]];
+  let x = 1824; X.font = font(700, 18);
+  for (let i = items.length - 1; i >= 0; i--) {
+    const [s, c] = items[i], w = X.measureText(s).width;
+    x -= w; txt(s, x, 150, font(700, 18), K.ink2); x -= 26;
+    rect(x, 135, 18, 18, c === 'hatch' ? hatch(K.red, '#f6d3cf') : c); x -= 28;
+  }
+  X.globalAlpha = 1;
+}
+
+// ======================= 实测常量 =======================
+// H100 · Qwen3-8B · 并发 8。ITL 取无 profiler 的 benchmark；其余取 trace 稳态中位数（见 docs/vllm-cpu-overhead-notes.md）
+const BENCH = { default: 7.03, no_async: 9.02, mrv1: 7.03, piecewise: 7.57, graph_none: 13.95 };
+const CPU_EXEC = { mrv1: 2.52, mrv2: 2.15 }, GPU_STEP = 6.8, KPS = TR.no_async.kernels_per_step;
+const MEDP = { out: 0.66, prep: 1.55, launch: 0.44 };                 // 同步执行时空转里 CPU 的三段
+const PREP_SUB = [['更新请求状态、拷贝变化', 0.94], ['发起 4 个 GPU 输入 kernel', 0.21], ['构造 attention metadata', 0.30]];
+const LAUNCH = { none: 492, piecewise: 168, full: 25 };               // 每步 CPU 发起的 launch 次数
+const TE = '#0fa38f', GR = '#8a8474';
+const sceneAlpha = (s, dur) => O(s, 0, .5) * (1 - O(s, dur - .5, .4));
+const header = (s, str, y = 210) => rise(O(s, .2, .5), 90, y - 80, 1760, 110, () => rich(str, 96, y, font(900, 54), K.ink));
+const note = (s, t0, str, y = 995) => { const a = X.globalAlpha; X.globalAlpha = a * O(s, t0, .4); txt(str, 96, y, font(700, 22), K.gray); X.globalAlpha = a; };
+const say = (s, t0, str, y = 945) => rise(O(s, t0, .4), 96, y - 55, 1760, 72, () => rich(str, 96, y, font(800, 38), K.ink));
+function bars(s, t0, rows, y0, max, unit) {                 // 横向柱状图，长度按数值
+  const bx = 560, bw = 1200, rh = 64, gap = 30;
+  rows.forEach(([label, v, col], i) => {
+    const p = EIO((s - t0 - i * .35) / .9), y = y0 + i * (rh + gap);
+    if (s < t0 + i * .35) return;
+    txt(label, bx - 24, y + rh / 2 + 10, font(800, 32, HN), K.ink, 'right');
+    rect(bx, y, bw * v / max * p, rh, col);
+    txt(fmt(v * p, 2) + ' ' + unit, bx + bw * v / max * p + 16, y + rh / 2 + 12, font(900, 34, HN), col === K.red ? K.red : K.ink);
+  });
+}
+
+// ---- 开头：CPU overhead 的定义。视觉：浅灰底、超大黑字、一叠倾斜错开的深灰板与半透明薄板 ----
+function slab(cx, cy, w, h, ang, kind, a, q = 0, flat = null) {
+  // q：变形进度（0 = 立体板块，1 = 时间线上的平色块 flat）
+  if (a <= 0) return;
+  X.save(); X.globalAlpha = a; X.translate(cx, cy); X.rotate(ang);
+  const r = 10 * (1 - q) + 2 * q, k = 1 - q;
+  const rr = (x, y, ww, hh) => { X.beginPath(); X.roundRect(x, y, ww, hh, r); };
+  if (kind === 'pale') {                                    // 毛玻璃薄板：半透明、上亮下暗、白色描边
+    X.globalAlpha = a * k;
+    rr(-w / 2, -h / 2, w, h); X.fillStyle = 'rgba(214,214,214,.62)'; X.fill();
+    const g = X.createLinearGradient(0, -h / 2, 0, h / 2); g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(.35, 'rgba(255,255,255,.08)'); g.addColorStop(1, 'rgba(0,0,0,.10)');
+    X.fillStyle = g; X.fill(); X.strokeStyle = 'rgba(255,255,255,.95)'; X.lineWidth = 2; X.stroke();
+  } else if (k > 0) {                                       // 深色玻璃厚板：厚度与阴影、半透明正面、顶部高光带、右端反光
+    X.globalAlpha = a * k;
+    X.shadowColor = 'rgba(0,0,0,.30)'; X.shadowBlur = 50; X.shadowOffsetY = 26;
+    rr(-w / 2, -h / 2 + 16, w, h); X.fillStyle = '#222'; X.fill();
+    X.shadowColor = 'transparent';
+    rr(-w / 2, -h / 2, w, h);
+    const g = X.createLinearGradient(0, -h / 2, 0, h / 2); g.addColorStop(0, 'rgba(120,120,120,.92)'); g.addColorStop(.5, 'rgba(70,70,70,.9)'); g.addColorStop(1, 'rgba(40,40,40,.94)');
+    X.fillStyle = g; X.fill();
+    const g2 = X.createLinearGradient(-w / 2, 0, w / 2, 0); g2.addColorStop(0, 'rgba(255,255,255,0)'); g2.addColorStop(.75, 'rgba(255,255,255,.08)'); g2.addColorStop(1, 'rgba(255,255,255,.26)');
+    X.fillStyle = g2; X.fill();
+    X.save(); X.clip();
+    const g3 = X.createLinearGradient(0, -h / 2, 0, -h / 2 + h * .28); g3.addColorStop(0, 'rgba(255,255,255,.32)'); g3.addColorStop(1, 'rgba(255,255,255,0)');
+    X.fillStyle = g3; X.fillRect(-w / 2, -h / 2, w, h * .28); X.restore();
+    line([[-w / 2 + r, -h / 2 + 1], [w / 2 - r, -h / 2 + 1]], 'rgba(255,255,255,.7)', 2);
+  }
+  if (q > 0 && flat) { X.globalAlpha = a * q; rr(-w / 2, -h / 2, w, h); X.fillStyle = flat; X.fill(); }
+  X.restore();
+}
+function sceneTitle(t) {
+  const M = EIO((t - 3.6) / 1.5);                          // 变形：板块落到同步执行那一行
+  const out = EI((t - 3.3) / .7);                           // 文字先上移离场
+  const bg = X.createLinearGradient(0, 0, 1920, 1080); bg.addColorStop(0, '#f4f4f4'); bg.addColorStop(1, '#d6d6d6');
+  X.globalAlpha = 1 - M; rect(0, 0, 1920, 1080, bg); X.globalAlpha = 1;
+  const fadeAll = 1 - O(t, TL.frame + .1, .4);             // 真实时间线淡入后，变形层退场
+  const ang = -0.2, drift = t * 8 * (1 - M);
+  const d = TR.no_async, gY = sy(ROWS.no_async.y + 40), cY = sy(ROWS.no_async.y);
+  const rows = [[1290, 370], [1390, 585], [1320, 800], [1410, 1015]].map(([cx, cy], i) => ({ i, cx, cy }));
+  const lerp = (a, b) => L(a, b, M);
+  for (const { i, cx, cy } of rows) {
+    const p = EO((t - .35 - i * .16) / 1.0), dx = (1 - p) * 900 - drift;
+    const c = d.cpu[i], x0 = sx(Math.max(0, c[0])), x1 = sx(c[1]);  // 薄板 → CPU 行上的 execute_model 条
+    slab(lerp(cx + 400 + dx * 1.15, (x0 + x1) / 2), lerp(cy - 30, cY + 11), lerp(720, x1 - x0), lerp(120, 22), lerp(ang, 0), 'pale', p * fadeAll, M, K.ink2);
+    slab(cx + 250 + dx * 1.22, cy + 70, 620, 70, ang, 'pale', p * .85 * (1 - M));
+  }
+  for (const { i, cx, cy } of rows) {
+    const p = EO((t - .35 - i * .16) / 1.0), dx = (1 - p) * 900 - drift;
+    const st = d.steps[i], x0 = sx(st.layers[0]), x1 = sx(st.samp[1]);   // 深色板 → 这一步 GPU 在算的区间
+    slab(lerp(cx + dx, (x0 + x1) / 2), lerp(cy, gY + 48), lerp(860 + (i % 2) * 120, x1 - x0), lerp(128, 96), lerp(ang, 0), 'dark', p * .96 * fadeAll, M, K.blue);
+  }
+  X.save(); X.translate(0, -700 * out); X.globalAlpha = 1 - out;
+  rise(O(t, .15, .55), 80, 110, 1800, 250, () => txt('CPU', 84, 330, font(900, 250, HN), '#0d0d0d'));
+  rise(O(t, .4, .55), 80, 330, 1800, 250, () => txt('Overhead', 84, 550, font(900, 250, HN), '#0d0d0d'));
+  rise(O(t, .9, .45), 90, 580, 600, 100, () => txt('vLLM', 96, 660, font(900, 78, HN), '#0d0d0d'));
+  X.globalAlpha = (1 - out) * O(t, 1.6, .5); txt('让 GPU 不等 CPU', 96, 800, font(800, 46), '#1a1a1a');
+  X.globalAlpha = (1 - out) * O(t, 2.1, .5); txt('GPU 计算之外，CPU 为每一步做的调度、准备输入、提交', 96, 856, font(700, 28), '#3a3a3a');
+  X.restore(); X.globalAlpha = 1;
+}
+
+// ---- 01b：CPU 到底在干啥 ----
+function sceneCpu(s, dur) {
+  const A = sceneAlpha(s, dur); X.globalAlpha = A;
+  header(s, '空转的 2.65 ms 里，{r:CPU 在做什么}', 200);
+  // 按比例的三段条
+  const tot = MEDP.out + MEDP.prep + MEDP.launch, x0 = 96, W0 = 1728, y0 = 250;
+  let x = x0;
+  [['out', '处理输出、调度'], ['prep', '准备输入'], ['launch', '提交']].forEach(([k, n], i) => {
+    const w = MEDP[k] / tot * W0, p = EIO((s - .8 - i * .3) / .6);
+    rect(x, y0, (w - 4) * p, 64, CP[k]);
+    if (p > .9) txt(n + '  ' + fmt(MEDP[k], 2) + ' ms', x + 16, y0 + 42, font(800, 26), '#fff');
+    x += w;
+  });
+  // 三栏：具体操作
+  const cols = [
+    ['out', '处理输出、调度', ['① 采样出的 token 从 GPU 拷回 CPU', '② 每个请求追加新 token，检查是否结束', '③ 释放已结束请求的 KV block', '④ 选出下一步的请求，按需分配 block']],
+    ['prep', '准备输入', null],
+    ['launch', '提交', ['一次 cudaGraphLaunch', '把约 480 个 kernel 一次交给 GPU', '（第 05 段细讲）']],
+  ];
+  cols.forEach(([k, title, lines], i) => {
+    const p = O(s, 2.0 + i * 1.6, .5); if (p <= 0) return;
+    const cx = 96 + i * 584, cy = 360 + (1 - p) * 40;
+    X.globalAlpha = A * p;
+    rect(cx, cy, 552, 470, K.paper2); rect(cx, cy, 552, 10, CP[k]);
+    txt(title, cx + 28, cy + 64, font(900, 36), CP[k]);
+    if (lines) lines.forEach((l, j) => { if (s > 2.3 + i * 1.6 + j * .35) txt(l, cx + 28, cy + 130 + j * 58, font(700, 26), K.ink2); });
+    else {                                                  // 准备输入：再拆三小段，长度按比例
+      const sub = PREP_SUB, st = sub.reduce((a, b) => a + b[1], 0);
+      sub.forEach(([n, v], j) => {
+        if (s < 2.3 + i * 1.6 + j * .35) return;
+        const by = cy + 110 + j * 110;
+        rect(cx + 28, by, 496 * v / st, 40, CP.prep);
+        txt(fmt(v, 2) + ' ms', cx + 28 + 496 * v / st + 12, by + 29, font(900, 24, HN), K.ink);
+        txt(n, cx + 28, by + 76, font(700, 24), K.ink2);
+      });
+    }
+    X.globalAlpha = A;
+  });
+  say(s, 7.4, '全是 Python 与小 tensor 操作：{r:不随模型变大而变慢}，模型越小、GPU 越快，占比越大', 900);
+  X.globalAlpha = 1;
+}
+
+// ---- 02：挪走 ----
+function sceneProc(s, dur) {
+  const A = sceneAlpha(s, dur); X.globalAlpha = A;
+  const partA = 1 - O(s, 9.4, .4);
+  if (partA > 0) {                                          // A：一个进程 vs 两个进程（示意）
+    X.globalAlpha = A * partA;
+    header(s, '为什么要把 tokenize、detokenize {b:拆到另一个进程}？');
+    X.save(); { const [fx, fy] = [860, 560], z = 1 + .06 * EIO(s / 9); X.translate(fx, fy); X.scale(z, z); X.translate(-fx, -fy); }
+    const lane = (y, label) => { txt(label, 330, y + 38, font(800, 26), K.ink2, 'right'); };
+    const blk2 = (x, y, w, col, label, p) => { if (p <= 0) return; rect(x, y, w * p, 56, col); if (p > .9) txt(label, x + w / 2, y + 36, font(800, 20), '#fff', 'center'); };
+    const u = 110;                                           // 示意单位宽度
+    txt('一个进程', 96, 320, font(900, 34), K.ink);
+    lane(340, '主线程'); lane(410, 'GPU');
+    const r1 = [['tokenize 新请求', TE, 2], ['detokenize', TE, 2], ['输出、调度', CP.out, 1.5], ['准备输入', CP.prep, 3], ['提交', CP.launch, 1]];
+    let x = 360; r1.forEach(([n, c, w], i) => { blk2(x, 340, w * u - 4, c, n, EIO((s - .8 - i * .25) / .4)); x += w * u; });
+    const gA = EIO((s - 2.2) / .4); rect(360, 410, (x - 360) * gA, 56, hatch(K.red, '#f6d3cf')); if (gA > .9) { rect(x, 410, 200, 56, K.blue); txt('forward', x + 100, 447, font(800, 22), '#fff', 'center'); }
+    txt('两个进程', 96, 560, font(900, 34), K.ink);
+    lane(580, 'API server'); lane(650, '主线程'); lane(720, 'GPU');
+    const q = EIO((s - 3.2) / .4);
+    if (q > 0) {
+      X.globalAlpha = A * partA * q;
+      blk2(360, 580, 2 * u - 4, TE, 'tokenize 新请求', 1); blk2(360 + 2 * u, 580, 2 * u - 4, TE, 'detokenize', 1);
+      let x2 = 360; [['输出、调度', CP.out, 1.5], ['准备输入', CP.prep, 3], ['提交', CP.launch, 1]].forEach(([n, c, w]) => { blk2(x2, 650, w * u - 4, c, n, 1); x2 += w * u; });
+      rect(360, 720, x2 - 360, 56, hatch(K.red, '#f6d3cf')); rect(x2, 720, 200, 56, K.blue); txt('forward', x2 + 100, 757, font(800, 22), '#fff', 'center');
+      line([[x2, 700], [x, 700]], K.red, 3); txt('GPU 早开始', x2 + 20, 690, font(800, 24), K.red);
+      X.globalAlpha = A * partA;
+    }
+    X.restore();
+    say(s, 4.6, 'Python 有 GIL：同一进程里同一时刻只有一个线程在跑 Python 代码', 890);
+    say(s, 5.8, '放在一起就要抢 CPU；{b:拆成两个进程}，才能真正并行', 950);
+    X.globalAlpha = A * partA * O(s, 1.0, .4); txt('示意', 1824, 300, font(700, 22), K.gray, 'right'); X.globalAlpha = A * partA;
+    X.globalAlpha = A;
+  }
+  if (s < 9.4) { X.globalAlpha = 1; return; }
+  const sb = s - 9.4, B = O(sb, 0, .5); X.globalAlpha = A * B;   // B：请求的路径
+  txt('一个请求走过的路', 96, 210, font(900, 54), K.ink);
+  const STOPC = [[356, 380], [356, 490], [1060, 375], [1057, 525], [1662, 525], [1057, 525], [1060, 760], [356, 640], [356, 750]];
+  const qq = Math.max(0, (sb - 1.0) / 1.2), nn = Math.min(STOPC.length - 1, Math.floor(qq)), ff = EIO(qq - Math.floor(qq));
+  const nx = STOPC[Math.min(nn + 1, STOPC.length - 1)], cc = STOPC[nn], ramp = O(sb, 1.0, .8) * (1 - O(sb, 12.4, .6));
+  const focus = [L(960, L(cc[0], nx[0], ff), ramp), L(550, L(cc[1], nx[1], ff), ramp)];
+  X.save(); { const [fx, fy] = focus, z = 1 + .08 * ramp; X.translate(fx, fy); X.scale(z, z); X.translate(-fx, -fy); }
+  const box = (x, y, w, h, title) => { rect(x, y, w, h, K.paper2); txt(title, x + 20, y + 40, font(800, 26), K.ink2); };
+  box(96, 270, 520, 560, '进程 1 · API server'); box(680, 270, 760, 560, '进程 2 · EngineCore'); box(1500, 270, 324, 560, 'GPU');
+  const blk = (x, y, w, h, fill, label, sub) => { rect(x, y, w, h, fill); txt(label, x + w / 2, y + h / 2 + (sub ? -6 : 9), font(800, 26), '#fff', 'center'); if (sub) txt(sub, x + w / 2, y + h / 2 + 26, font(600, 18), 'rgba(255,255,255,.85)', 'center'); };
+  blk(136, 340, 440, 80, TE, 'HTTP 接收'); blk(136, 450, 440, 80, TE, 'tokenize');
+  blk(136, 600, 440, 80, TE, 'detokenize'); blk(136, 710, 440, 80, TE, '流式返回');
+  blk(720, 340, 680, 70, GR, '输入线程'); blk(720, 725, 680, 70, GR, '输出线程');
+  txt('主线程 busy loop', 720, 452, font(800, 24), K.ink);
+  let px = 720; [['处理输出、调度', 'out', 190], ['准备输入', 'prep', 300], ['提交', 'launch', 190]].forEach(([n, k, w]) => { rect(px, 470, w - 6, 110, CP[k]); txt(n, px + (w - 6) / 2, 535, font(800, 24), '#fff', 'center'); px += w; });
+  blk(1540, 470, 244, 110, K.blue, 'forward', '+ sampling');
+  txt('ZMQ', 648, 540, font(800, 22, HN), K.gray, 'center'); txt('示意', 1824, 860, font(700, 22), K.gray, 'right');
+  const STOPS = [
+    [[136, 340, 440, 80], 'HTTP 请求到达 API server'],
+    [[136, 450, 440, 80], 'tokenize：把文字切成 token id'],
+    [[720, 340, 680, 70], '经 ZMQ 发给 EngineCore，输入线程反序列化，放进队列'],
+    [[720, 470, 674, 110], '主线程：调度这个请求，准备输入，提交给 GPU'],
+    [[1540, 470, 244, 110], 'GPU 算完 forward，采样出下一个 token'],
+    [[720, 470, 674, 110], '主线程：处理输出，追加 token、检查是否结束'],
+    [[720, 725, 680, 70], '输出线程序列化结果，经 ZMQ 发回'],
+    [[136, 600, 440, 80], 'detokenize：把 token id 变回文字'],
+    [[136, 710, 440, 80], '流式返回给用户；下一步从第 4 站继续循环'],
+  ];
+  const q = (sb - 1.0) / 1.2;
+  if (q <= 0) X.restore();
+  if (q > 0) {
+    const n = Math.min(STOPS.length - 1, Math.floor(q)), f = EIO(q - Math.floor(q));
+    for (let i = 0; i <= n; i++) {
+      const [[x, y, w, h]] = STOPS[i], again = STOPS.slice(0, i).some(([b]) => b[0] === x && b[1] === y);
+      rect(x - 3, y - 3, w + 6, h + 6, null, K.red, 4);
+      const bx = again ? x + w - 22 : x - 3;
+      X.beginPath(); X.arc(bx, y - 3, 17, 0, Math.PI * 2); X.fillStyle = K.red; X.fill();
+      txt(String(i + 1), bx, y - 2, font(900, 20, HN), '#fff', 'center', 'middle');
+    }
+    if (n < STOPS.length - 1 && f < 1) {
+      const c = (b) => [b[0] + b[2] / 2, b[1] + b[3] / 2], a = c(STOPS[n][0]), b = c(STOPS[n + 1][0]);
+      X.beginPath(); X.arc(L(a[0], b[0], f), L(a[1], b[1], f), 12, 0, Math.PI * 2); X.fillStyle = K.red; X.fill();
+    }
+    X.restore();
+    const cur = Math.min(n, STOPS.length - 1), tIn = 1.0 + cur * 1.2;
+    rise(O(sb, tIn, .3), 96, 880, 1760, 72, () => rich(`{r:${cur + 1}} ${STOPS[cur][1]}`, 96, 935, font(800, 38), K.ink));
+  }
+  X.globalAlpha = 1;
+}
+
+// ---- 04：做薄输入 ----
+function sceneMrv2(s, dur) {
+  const A = sceneAlpha(s, dur); X.globalAlpha = A;
+  const partA = 1 - O(s, 9.0, .4);
+  if (partA > 0) {
+    X.globalAlpha = A * partA;
+    header(s, '准备输入：MRV1 在 {k:CPU} 上算，MRV2 在 {b:GPU} 上算');
+    X.save(); { const [fx, fy] = [L(446, 1342, EIO((s - 3.0) / 1.2)), 560], z = 1 + .05 * O(s, .8, 1.2); X.translate(fx, fy); X.scale(z, z); X.translate(-fx, -fy); }
+    const panel = (x, w, title, p) => { if (p <= 0) return; X.globalAlpha = A * partA * p; rect(x, 280, w, 560, K.paper2); txt(title, x + 28, 336, font(900, 36), K.ink); };
+    panel(96, 700, 'MRV1', O(s, .8, .4)); panel(860, 964, 'MRV2（默认）', O(s, 3.0, .4));
+    if (s > 1.2) {
+      X.globalAlpha = A * partA * O(s, 1.2, .4);
+      rect(128, 380, 636, 170, K.ink2);
+      txt('CPU：用 numpy 逐步计算', 152, 430, font(800, 28), '#fff');
+      ['positions、token 下标', 'query_start_loc、seq_lens …'].forEach((l, j) => txt(l, 152, 475 + j * 40, font(700, 24, HN), 'rgba(255,255,255,.85)'));
+      line([[446, 560], [446, 620]], K.ink2, 4); txt('每步拷到 GPU', 466, 600, font(800, 24), K.ink2);
+      rect(128, 630, 636, 90, K.blue); txt('GPU：拿到输入张量', 152, 685, font(800, 28), '#fff');
+    }
+    if (s > 3.4) {
+      X.globalAlpha = A * partA * O(s, 3.4, .4);
+      rect(892, 380, 900, 90, K.ink2); txt('CPU：只传变化（新请求、新分配的 block）', 916, 435, font(800, 28), '#fff');
+      line([[1342, 480], [1342, 520]], K.ink2, 4);
+      rect(892, 530, 900, 290, K.blue); txt('GPU：4 个 Triton kernel 直接生成输入', 916, 578, font(800, 28), '#fff');
+      const ks = [['_prepare_pos_seq_lens', 'positions、seq_lens'], ['_combine_sampled_and_draft_tokens', 'input_ids'],
+        ['_gather_block_tables', '本步的 block table'], ['_compute_slot_mappings', '新 token 的 KV 写到哪']];
+      ks.forEach(([k, v], j) => { if (s < 3.9 + j * .4) return; txt(k, 916, 630 + j * 44, font(700, 22, 'Menlo, monospace'), '#fff'); txt('→ ' + v, 1400, 630 + j * 44, font(700, 22), 'rgba(255,255,255,.9)'); });
+      if (s > 5.6) { X.globalAlpha = A * partA * O(s, 5.6, .4); txt('上一步采样出的 token 本来就在 GPU 上，不用回 CPU 再拷回来', 916, 800, font(700, 22), 'rgba(255,255,255,.85)'); }
+    }
+    X.restore();
+    X.globalAlpha = A;
+  }
+  if (s < 9.0) { X.globalAlpha = 1; return; }
+  const sb = s - 9.0; X.globalAlpha = A * O(sb, 0, .5);
+  header(sb, 'CPU 每步少做 {b:' + fmt(CPU_EXEC.mrv1 - CPU_EXEC.mrv2, 2) + ' ms}，但 ITL 没变');
+  const x0 = 300, px = 200, gy = 640, gp = EIO((sb - .6) / .8);
+  txt('GPU', x0 - 24, gy + 56, font(800, 26, HN), K.gray, 'right');
+  rect(x0, gy, GPU_STEP * px * gp, 90, K.blue);
+  if (gp > .98) txt('一步 GPU 计算 ' + GPU_STEP + ' ms', x0 + 20, gy + 56, font(800, 30), '#fff');
+  const cpuRow = (y, label, v, t0) => { const p = EIO((sb - t0) / .7); if (sb < t0) return; txt(label, x0 - 24, y + 40, font(800, 26, HN), K.ink, 'right'); rect(x0, y, v * px * p, 56, CP.prep); txt(fmt(v * p, 2) + ' ms', x0 + v * px * p + 16, y + 40, font(900, 30, HN), K.ink); };
+  cpuRow(380, 'MRV1', CPU_EXEC.mrv1, 1.2); cpuRow(470, 'MRV2', CPU_EXEC.mrv2, 1.6);
+  X.globalAlpha *= O(sb, 2.0, .4); txt('CPU：execute_model（准备输入 + 提交）', x0, 575, font(700, 22), K.gray); X.globalAlpha = A;
+  if (sb > 3.0) { X.globalAlpha = A * O(sb, 3.0, .5); line([[x0 + GPU_STEP * px, 360], [x0 + GPU_STEP * px, gy + 115]], K.red, 3, [8, 6]); txt('async 下 CPU 与上一步 GPU 并行：两条都没超过这一步', x0 + GPU_STEP * px, gy + 150, font(800, 28), K.red, 'right'); X.globalAlpha = A; }
+  say(sb, 4.4, 'ITL：MRV1 {k:7.03 ms}，MRV2 {k:7.03 ms} —— 8B 上已被 async 藏住', 905);
+  X.globalAlpha = 1;
+}
+
+// ---- 05：CUDA Graph ----
+function launchGrid(x, y, items, cols, cs, n) {             // 每格一次 launch；items: 颜色数组
+  for (let i = 0; i < items.length; i++) rect(x + (i % cols) * (cs + 3), y + Math.floor(i / cols) * (cs + 3), cs, cs, i < n ? items[i] : K.paper2);
+}
+function sceneGraph(s, dur) {
+  const A = sceneAlpha(s, dur); X.globalAlpha = A;
+  const pa = 1 - O(s, 11.6, .4), pb = O(s, 11.7, .4) * (1 - O(s, 23.5, .4)), pc = O(s, 23.6, .4);
+  if (pa > 0) {                                              // a：每步 launch 次数
+    X.globalAlpha = A * pa;
+    header(s, '每一步，CPU 要发起{r:多少次} launch？');
+    const G = K.lg, B = K.blue, Y = K.yel, D = K.ink2;
+    const prep = Array(9).fill(G), tailK = Array(15).fill(G);
+    const none = Array(LAUNCH.none).fill(D);
+    const pw = Array(8).fill(G); for (let i = 0; i < 36; i++) pw.push(B, Y, Y, Y); pw.push(B, ...tailK);   // 实测 168 = 8 + 37 段图 + 36×3 attention + 15
+    const full = [...prep, B, ...tailK];
+    const rows = [['无 CUDA Graph', none, LAUNCH.none, 1.0], ['PIECEWISE', pw, LAUNCH.piecewise, 2.4], ['FULL（默认的 decode）', full, LAUNCH.full, 3.8]];
+    rows.forEach(([name, items, cnt, t0], i) => {
+      if (s < t0) return; const y = [290, 480, 620][i], n = Math.floor(items.length * cl((s - t0) / 1.0));
+      txt(name, 96, y + 4, font(800, 28), K.ink);
+      launchGrid(96, y + 24, items, 82, 16, n);
+      txt(fmt(n) + ' 次', 1824, y + 4, font(900, 34, HN), i === 2 ? K.blue : K.red, 'right');
+    });
+    if (s > 4.8) {                                            // 图例
+      X.globalAlpha = A * pa * O(s, 4.8, .4);
+      let lx = 96; [[K.blue, '1 次 graph replay'], [K.yel, 'attention（在图外逐个 launch）'], [K.lg, '图外的小 kernel：输入准备、lm_head、sampling'], [K.ink2, '单个 kernel']].forEach(([c, t]) => { rect(lx, 846, 18, 18, c); txt(t, lx + 28, 862, font(700, 22), K.ink2); X.font = font(700, 22); lx += 28 + X.measureText(t).width + 40; });
+      X.globalAlpha = A * pa;
+    }
+    say(s, 6.0, '整图时只剩 25 次：{b:1 次 graph}（约 480 个 kernel）+ 9 次输入准备 + 15 次 lm_head、sampling', 945);
+    X.globalAlpha = A;
+  }
+  if (pb > 0) {                                              // b：为什么有 PIECEWISE，默认怎么分派，padding
+    X.globalAlpha = A * pb; const sb = s - 11.7;
+    header(sb, '为什么会有 {y:PIECEWISE}？');
+    rise(O(sb, .4, .4), 90, 250, 1760, 60, () => txt('attention 的形状随每个请求的上下文长度变化，早期无法录进同一张图', 96, 295, font(700, 32), K.ink2));
+    // 一层的结构：图段 | attention | 图段 …
+    const segs = [['norm · QKV', B_ => K.blue, 260], ['attention', 0, 200], ['O proj · norm · MLP', 0, 420], ['norm · QKV', 0, 260], ['attention', 0, 200], ['…', 0, 120]];
+    let x = 96; const y = 340;
+    segs.forEach(([n, , w], i) => {
+      if (sb < .8 + i * .2) { x += w; return; }
+      const att = n === 'attention', col = att ? K.yel : K.blue;
+      rect(x, y, w - 6, 80, col); txt(n, x + (w - 6) / 2, y + 50, font(800, 24), att ? K.ink : '#fff', 'center'); x += w;
+    });
+    X.globalAlpha = A * pb * O(sb, 2.0, .4);
+    txt('PIECEWISE：在 attention 处切开，蓝色段录进图（共 37 段），黄色的 attention 每层在图外逐个 launch', 96, 470, font(700, 26), K.ink2);
+    X.globalAlpha = A * pb;
+    // 默认模式的分派
+    if (sb > 3.4) {
+      X.globalAlpha = A * pb * O(sb, 3.4, .4);
+      txt('默认 FULL_AND_PIECEWISE：每步按 batch 选一种', 96, 560, font(900, 32), K.ink);
+      [['纯 decode batch', 'FULL：整图，连 attention 也在图里', K.blue], ['含 prefill 的 batch', 'PIECEWISE：分段图', K.yelD], ['token 数超过 512', '不用图，逐个 launch', K.ink2]].forEach(([a, b, c], i) => {
+        if (sb < 3.8 + i * .4) return; const yy = 610 + i * 62;
+        rect(96, yy, 12, 44, c); txt(a, 128, yy + 32, font(800, 28), K.ink); txt('→  ' + b, 520, yy + 32, font(700, 28), c);
+      });
+      X.globalAlpha = A * pb;
+    }
+    // padding
+    if (sb > 6.2) {
+      X.globalAlpha = A * pb * O(sb, 6.2, .4);
+      txt('图的形状固定：启动时为 1、2、4、8、16、24 … 512 个 token 各录一张', 96, 850, font(800, 28), K.ink);
+      const cs = 40; for (let i = 0; i < 16; i++) rect(96 + i * (cs + 4), 880, cs, cs, i < 13 ? K.blue : hatch(K.gray, K.paper2));
+      if (sb > 7.0) txt('本步 13 个 token → 补到 16，回放 16 的那张图；补出的 3 个是浪费', 96 + 16 * (cs + 4) + 24, 910, font(700, 26), K.ink2);
+      X.globalAlpha = A * pb;
+    }
+    X.globalAlpha = A;
+  }
+  if (pc > 0) {                                              // c：ITL
+    const sc = s - 23.6; X.globalAlpha = A * pc;
+    header(sc, 'launch 越多，ITL 越长');
+    txt('ITL · 并发 8', 96, 330, font(800, 30), K.gray);
+    bars(sc, .4, [['无 CUDA Graph', BENCH.graph_none, K.ink2], ['PIECEWISE', BENCH.piecewise, K.yel], ['FULL_AND_PIECEWISE', BENCH.default, K.red]], 380, 15, 'ms');
+    say(sc, 2.8, '逐个 launch，ITL {r:几乎翻倍}；decode 时连 attention 也进图，再省 0.5 ms', 745);
+    X.globalAlpha = A;
+  }
+  X.globalAlpha = 1;
+}
+
+// ---- 06：管不到的地方 ----
+function sceneLimits(s, dur) {
+  const A = sceneAlpha(s, dur); X.globalAlpha = A;
+  header(s, '这三个办法{r:管不到}的地方');
+  const cards = [
+    ['CPU 核数不足', ['多卡推理时 CPU 核不够，', 'GPU 照样空转；', '补足后 TTFT 降低 1.47–7.11×'], 'Chung et al., IISWC 2026', K.ink2],
+    ['长 prompt、多模态', ['tokenize 与图像预处理', '都在 API server 进程内，', '请求多时它可能先成为瓶颈'], '', TE],
+    ['Structured output', ['下一步的 grammar bitmask', '要等上一步的 token，', 'async 无法完全重叠'], 'vLLM 源码', CP.prep],
+  ];
+  cards.forEach(([title, lines, src, col], i) => {
+    const p = O(s, .8 + i * .5, .5); if (p <= 0) return;
+    const x = 96 + i * 584, y = 320 + (1 - p) * 60;
+    X.globalAlpha = A * p;
+    rect(x, y, 552, 380, K.paper2); rect(x, y, 552, 12, col);
+    txt(title, x + 32, y + 90, font(900, 40), K.ink);
+    lines.forEach((l, j) => txt(l, x + 32, y + 170 + j * 50, font(700, 30), K.ink2));
+    txt(src, x + 32, y + 345, font(700, 22), K.gray);
+  });
+  X.globalAlpha = 1;
+}
+
+// ---- 小结 ----
+function sceneFinal(s, dur) {
+  X.globalAlpha = O(s, 0, .5);
+  rise(O(s, .2, .5), 90, 130, 1760, 120, () => rich('同一张 H100、同一个模型，{r:只差 CPU overhead}', 96, 220, font(900, 58), K.ink));
+  txt('ITL · 并发 8', 96, 320, font(800, 30), K.gray);
+  bars(s, .8, [['无 CUDA Graph', BENCH.graph_none, K.ink2], ['关 async scheduling', BENCH.no_async, K.ink2], ['PIECEWISE', BENCH.piecewise, K.yel], ['MRV1', BENCH.mrv1, K.lg], ['默认', BENCH.default, K.red]], 360, 15, 'ms');
+  X.globalAlpha = O(s, 3.4, .5);
+  txt('实测 · H100 · Qwen3-8B · vLLM v0.30.0', 96, 900, font(700, 24), K.gray);
+  txt('机制与完整数据：luca-888.github.io', 96, 950, font(800, 28), K.ink2);
+  X.globalAlpha = 1;
+}
+
+// ======================= 帧 =======================
+const EV = [];
+function drawFrame(ctx, t) {
+  X = ctx; cam = camAt(t);
+  X.setTransform(1, 0, 0, 1, 0, 0); X.globalAlpha = 1; rect(0, 0, 1920, 1080, K.paper);
+  if (t < TL.frame + .6) sceneTitle(t);
+
+  // ---- 时间线 ----
+  const fa = O(t, TL.frame, .5) * (1 - O(t, TL.cpu - .6, .4)) + O(t, TL.back, .5) * (1 - O(t, TL.mrv2 - .4, .4));
+  drawRow('no_async', t, TL.sweepA, fa);
+  const fb = O(t, TL.sweepB - .5, .5) * (1 - O(t, TL.mrv2 - .4, .4));
+  drawRow('default', t, TL.sweepB, fb);
+  axis(fa * (1 - EO((cam[2] - 1) * 3)));
+  legend(fa * (1 - EO((cam[2] - 1) * 3)));
+  if (fa > 0 && cam[2] < 1.2) { X.globalAlpha = fa; txt('时间轴按真实比例', 96, 1010, font(700, 22), K.gray); X.globalAlpha = 1; }
+
+  // ---- 同步行落位后的两句字幕 ----
+  if (t > TL.frame && t < TL.zoomIn + .4) {
+    const a = 1 - O(t, TL.zoomIn - .2, .3); X.globalAlpha = a;
+    say(t, TL.frame + .6, '{b:蓝色}：GPU 在算　{r:红色}：GPU 在等 CPU', 890);
+    say(t, TL.frame + 2.4, '同步执行时，每一步都要空等约 {r:2.9 ms}', 950);
+    X.globalAlpha = 1;
+  }
+
+  // ---- 放大同步执行的一步 ----
+  const zin = O(t, TL.zoomIn + 1.1, .4) * (1 - O(t, TL.zoomOut - .3, .3));
+  if (zin > 0) {
+    const gy = sy(ROWS.no_async.y + 40), gb = gy + 96 * zy(), cy = sy(ROWS.no_async.y), ch = 22 * zy();
+    const a1 = zin * (1 - O(t, TL.split, .3)), a2 = zin * O(t, TL.split + .2, .4);
+    X.globalAlpha = a1;
+    const lx0 = sx(ZS.layers[0]), lx1 = sx(ZS.layers[36]), by = gb + 22;
+    line([[lx0, by], [lx0, by + 14], [lx1, by + 14], [lx1, by]], K.blue, 3);
+    rise(O(t, TL.zoomIn + 1.3, .4), lx0, by + 20, 1400, 70, () => rich(`{b:36 层 Transformer}，约 480 个 kernel`, lx0, by + 62, font(800, 34), K.ink));
+    const tag = (x, yy, label, col, p, al) => { if (p <= 0) return; X.globalAlpha = a1 * p; line([[x, gb + 4], [x, yy - 8]], col, 2); txt(label, x + (al === 'left' ? 10 : -10), yy, font(800, 26, HN), col, al); X.globalAlpha = a1; };
+    tag(sx((ZS.lm[0] + ZS.lm[1]) / 2), by + 110, 'lm_head', PC.lm, O(t, TL.zoomIn + 1.6, .4), 'right');
+    tag(sx((ZS.samp[0] + ZS.samp[1]) / 2), by + 110, 'sampling', K.yelD, O(t, TL.zoomIn + 1.8, .4), 'left');
+    say(t - TL.zoomIn, 2.8, 'GPU 算完一步，要等 CPU 忙完，下一步才能开始', 950);
+    X.globalAlpha = zin;
+    const gx0 = sx(ZS.samp[1]), gx1 = sx(ZN.layers[0]), ty = cy - 40;
+    line([[gx0, ty + 14], [gx0, ty], [gx1, ty], [gx1, ty + 14]], K.red, 3);
+    rise(O(t, TL.zoomIn + 2.0, .4), gx0 - 400, ty - 70, 1200, 64, () => rich(`{r:空转 ${fmt(ZIDLE / 1000, 1)} ms}`, (gx0 + gx1) / 2, ty - 16, font(900, 44), K.ink, 'center'));
+    if (a2 > 0) {
+      const ex0 = 200, exW = 1520, tot = PARTS.reduce((a, p) => a + p[2] - p[1], 0), ey = gb + 70, eh = 110;
+      let acc = 0;
+      PARTS.forEach(([name, s0, e0, k], i) => {
+        const p = O(t, TL.split + .4 + i * .5, .4); if (p <= 0) return;
+        X.globalAlpha = a2 * p;
+        rect(sx(s0), cy, sw(e0 - s0), ch, CP[k]);
+        const x0 = ex0 + acc / tot * exW, w = (e0 - s0) / tot * exW; acc += e0 - s0;
+        line([[sx(s0), cy + ch], [x0, ey]], CP[k], 1.5, [5, 5]); line([[sx(e0), cy + ch], [x0 + w, ey]], CP[k], 1.5, [5, 5]);
+        rect(x0 + 2, ey, (w - 4) * p, eh, CP[k]);
+        txt(name, x0 + 18, ey + 44, font(800, 28), '#fff');
+        txt(fmt((e0 - s0) / 1000, 2) + ' ms', x0 + 18, ey + 90, font(900, 36, HN), '#fff');
+      });
+      X.globalAlpha = a2;
+      say(t - TL.split, 2.2, 'GPU 空等时，CPU 在做这 {r:三件事}', 945);
+    }
+    X.globalAlpha = 1;
+  }
+
+  // ---- async 对比 ----
+  const cp = O(t, TL.compare, .5) * (1 - O(t, TL.mrv2 - .4, .4));
+  if (cp > 0) {
+    X.globalAlpha = cp;
+    const ea = sx(TR.default.window), eb = sx(TR.no_async.window), y = sy(ROWS.default.y + 40 + 96) + 40;
+    line([[ea, sy(ROWS.no_async.y) - 10], [ea, y + 10]], K.ink, 2, [6, 6]);
+    line([[ea, y], [eb, y]], K.red, 4); line([[eb, y - 12], [eb, y + 12]], K.red, 4); line([[ea, y - 12], [ea, y + 12]], K.red, 4);
+    rise(O(t, TL.compare + .3, .4), ea, y + 10, 900, 60, () => rich(`同样 4 步，少用 {r:${fmt((TR.no_async.window - TR.default.window) / 1000, 1)} ms}`, ea + 16, y + 48, font(800, 32), K.ink));
+    say(t - TL.compare, .8, 'Async：上一步 GPU 还在算，{b:CPU 已经在准备下一步}', 940);
+    const ov = O(t, TL.compare + .8, .4), ry = sy(ROWS.default.y), gy2 = sy(ROWS.default.y + 40);
+    X.globalAlpha = cp * ov;
+    for (const [s0, e0] of TR.default.cpu) if (s0 > 0 && e0 < TR.default.window) {
+      rect(sx(s0) - 3, ry - 3, sw(e0 - s0) + 6, 28, null, K.blue, 3);
+      line([[sx(s0), ry + 25], [sx(s0), gy2 + 96]], K.blue, 2, [5, 5]); line([[sx(e0), ry + 25], [sx(e0), gy2 + 96]], K.blue, 2, [5, 5]);
+    }
+    X.globalAlpha = 1;
+  }
+
+  // ---- 段落标签（左上） ----
+  const secs = [[TL.frame, TL.proc, '01', 'GPU 在等 CPU'], [TL.proc, TL.back, '02', '挪走：进程与线程'], [TL.back, TL.mrv2, '03', '藏住：async scheduling'],
+    [TL.mrv2, TL.graph, '04', '做薄输入：Model Runner V2'], [TL.graph, TL.limits, '05', '合并 launch：CUDA Graph'], [TL.limits, TL.final, '06', '管不到的地方']];
+  for (const [a, b, n, name] of secs) {
+    const al = O(t, a + .1, .4) * (1 - O(t, b - .35, .3)) * (t > TL.zoomIn && t < TL.zoomOut + 1 ? 1 - O(t, TL.zoomIn, .3) + O(t, TL.zoomOut + .6, .4) : 1);
+    if (al <= 0 || t < a || t > b) continue;
+    X.globalAlpha = cl(al); txt(n, 96, 96, font(900, 30, HN), K.red); txt(name, 146, 96, font(800, 30), K.ink); X.globalAlpha = 1;
+  }
+  if (t >= TL.cpu && t < TL.proc) sceneCpu(t - TL.cpu, TL.proc - TL.cpu);
+  if (t >= TL.proc && t < TL.back) sceneProc(t - TL.proc, TL.back - TL.proc);
+  if (t >= TL.mrv2 && t < TL.graph) sceneMrv2(t - TL.mrv2, TL.graph - TL.mrv2);
+  if (t >= TL.graph && t < TL.limits) sceneGraph(t - TL.graph, TL.limits - TL.graph);
+  if (t >= TL.limits && t < TL.final) sceneLimits(t - TL.limits, TL.final - TL.limits);
+  if (t >= TL.final) sceneFinal(t - TL.final, TL.end - TL.final);
+  const fe = O(t, TL.end - 1, .9); if (fe > 0) { X.globalAlpha = fe; rect(0, 0, 1920, 1080, '#000'); X.globalAlpha = 1; }
+}
+
+// ======================= events（音效由数据生成） =======================
+(() => {
+  const E = (t, k) => EV.push([t, k]);
+  E(.2, 'thud'); E(.6, 'pop'); E(1.6, 'pop'); E(2.4, 'pop'); E(TL.frame, 'whoosh');
+  for (let i = 0; i < 4; i++) E(4.6 + i * .12, 'land');
+  E(TL.frame + .6, 'pop'); E(TL.frame + 2.4, 'err');
+  for (const [k, t0] of [['default', TL.sweepB]]) {
+    const d = TR[k];
+    for (const st of d.steps) E(t0 + st.layers[0] / 1e6 * SLOW, 'click');
+    if (k === 'no_async') for (const [s, e] of d.gaps) if (e - s > 500) E(t0 + s / 1e6 * SLOW, 'err');
+  }
+  E(TL.zoomIn, 'whoosh'); E(TL.zoomIn + 1.3, 'pop'); E(TL.zoomIn + 2.0, 'hit'); E(TL.split, 'whoosh');
+  for (let i = 0; i < 3; i++) E(TL.split + .4 + i * .5, 'land');
+  E(TL.split + 2.2, 'pop'); E(TL.zoomOut, 'whoosh');
+  E(TL.cpu - .3, 'whoosh'); E(TL.cpu + .2, 'thud'); for (let i = 0; i < 3; i++) E(TL.cpu + .8 + i * .3, 'land'); for (let i = 0; i < 3; i++) E(TL.cpu + 2.0 + i * 1.6, 'pop'); E(TL.cpu + 7.4, 'hit');
+  E(TL.proc - .3, 'whoosh'); E(TL.proc + .2, 'thud'); for (let i = 0; i < 5; i++) E(TL.proc + .8 + i * .25, 'click'); E(TL.proc + 3.2, 'land'); E(TL.proc + 4.6, 'pop');
+  E(TL.proc + 9.4, 'whoosh'); for (let i = 0; i < 9; i++) E(TL.proc + 10.4 + i * 1.2, 'tick');
+  E(TL.back, 'whoosh'); E(TL.compare, 'land'); E(TL.compare + .3, 'pop'); E(TL.compare + .8, 'pop');
+  E(TL.mrv2 - .3, 'whoosh'); E(TL.mrv2 + .2, 'thud'); E(TL.mrv2 + .8, 'land'); E(TL.mrv2 + 3.0, 'land'); for (let i = 0; i < 4; i++) E(TL.mrv2 + 3.9 + i * .4, 'tick');
+  E(TL.mrv2 + 9.0, 'whoosh'); E(TL.mrv2 + 10.2, 'click'); E(TL.mrv2 + 10.6, 'click'); E(TL.mrv2 + 12.0, 'err'); E(TL.mrv2 + 13.4, 'pop');
+  E(TL.graph - .3, 'whoosh'); E(TL.graph + .2, 'thud');
+  for (const t0 of [1.0, 2.4, 3.8]) for (let i = 0; i < 12; i++) E(TL.graph + t0 + i / 12, 'tick');
+  E(TL.graph + 6.0, 'pop'); E(TL.graph + 12.0, 'whoosh'); for (let i = 0; i < 6; i++) E(TL.graph + 12.8 + i * .2, 'click');
+  E(TL.graph + 15.4, 'pop'); for (let i = 0; i < 3; i++) E(TL.graph + 15.8 + i * .4, 'land'); E(TL.graph + 18.2, 'pop');
+  E(TL.graph + 24.0, 'whoosh'); for (let i = 0; i < 3; i++) E(TL.graph + 24.4 + i * .35, 'hit'); E(TL.graph + 26.8, 'pop');
+  E(TL.limits - .3, 'whoosh'); E(TL.limits + .2, 'thud'); for (let i = 0; i < 3; i++) E(TL.limits + .8 + i * .5, 'land');
+  E(TL.final - .3, 'whoosh'); E(TL.final + .2, 'thud'); for (let i = 0; i < 5; i++) E(TL.final + .8 + i * .35, 'hit');
+  EV.sort((a, b) => a[0] - b[0]);
+})();
+
+// ======================= runtime (motion blur) =======================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const off = document.createElement('canvas'); off.width = 1920; off.height = 1080; const octx = off.getContext('2d');
+window.DURATION = TL.end;
+window.EVENTS = EV;
+window.renderAt = (t, fps = 60, samples = 5, shutter = .5) => {
+  for (let s = 0; s < samples; s++) {
+    const ts = samples > 1 ? t - (shutter / fps) * (1 - s / (samples - 1)) : t;
+    octx.setTransform(1, 0, 0, 1, 0, 0); octx.globalAlpha = 1;
+    drawFrame(octx, Math.max(0, ts));
+    ctx.globalAlpha = 1 / (s + 1); ctx.drawImage(off, 0, 0);
+  }
+  ctx.globalAlpha = 1;
+};
+window.renderAt(8);
+</script>
+</body>
+</html>

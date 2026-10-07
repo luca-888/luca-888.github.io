@@ -1,6 +1,6 @@
 # 分布式推理 文章资料
 
-状态：正文与 4 张图已起草（`content/vllm-distributed.md`、`src/VllmDistributedFigures.tsx`，`status: draft`）。未做硬件测试，正文“实测”一节为占位，测试方案与成本估算见文末。参考方案与图未经逐步确认：用户 2026-10-01 授权直接写到可发布水平。
+状态：正文与 4 张图已起草（`content/vllm-distributed.md`、`src/articles/vllm-distributed/VllmDistributedFigures.tsx`，`status: draft`）。未做硬件测试，正文“实测”一节为占位，测试方案与成本估算见文末。参考方案与图未经逐步确认：用户 2026-10-01 授权直接写到可发布水平。
 
 ## 范围与硬件
 
@@ -255,4 +255,5 @@
 - 做法：第一页的 logo 图换成纯文字“DeepSeek V4-Pro”（黑色、同一字号与位置），其余不变。只重渲染了第一个 5 秒分段，其余 47 段沿用原缓存；音轨直接从原成片复制，未重新混音。
 - 成片：`videos/vllm-distributed/build/vllm-distributed-nologo-1080p60-music.mp4`（带配乐）与 `vllm-distributed-nologo-1080p60.mp4`（只有音效），均 236.2 秒。
 - 源文件：发布版（v3）的源文件原本只在另一个会话的临时目录里，已把去掉 logo 后的 `film3.html` 与 `render.mjs` 存到 `videos/vllm-distributed/v3/`。配乐的 wav 与渲染缓存没有搬进项目。
+- 2026-10-07 整理：只保留带配乐的成片，改名为 `videos/vllm-distributed/build/vllm-distributed.mp4`；源文件移到 `videos/vllm-distributed/film.html` 与 `render.mjs`。配乐不在项目里，重渲只能得到无配乐版。
 - 封面：`covers/vllm-distributed/video-cover/first-page-1920x1080.png`（16:9）与 `feed-1440x1080.png`（4:3）已换成无 logo 版；带 logo 的旧图改名为 `*-logo-*` 保留。

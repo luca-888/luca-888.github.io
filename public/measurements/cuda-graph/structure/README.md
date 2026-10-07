@@ -13,7 +13,7 @@
 - `../export_graph.py`：`profile.py` 调用其中的 `export_structure()` 完成导出；也可作为独立脚本运行。
 - `render_graph.cjs`：使用 Graphviz 的 WebAssembly 构建 `@viz-js/viz` 渲染完整图。
 
-文章的 React + SVG 图读取 `content/data/cuda-graph-structure.json`，该文件是 `graph.json` 的副本。布局只重新安排节点位置；节点和边来自实采数据，点击节点可查看原始字段。A–D 是根据本例代码添加的语义标签，`NODE 0`–`NODE 3` 则保留 DOT 的原始 ID。
+文章的 React + SVG 图读取 `src/data/cuda-graph-structure.json`，该文件是 `graph.json` 的副本。布局只重新安排节点位置；节点和边来自实采数据，点击节点可查看原始字段。A–D 是根据本例代码添加的语义标签，`NODE 0`–`NODE 3` 则保留 DOT 的原始 ID。
 
 ## 如何读原始字段
 
@@ -40,7 +40,7 @@ PYTHONDONTWRITEBYTECODE=1 python public/measurements/cuda-graph/export_graph.py
 完成相应采集后，更新文章读取的数据并渲染原始 DOT：
 
 ```bash
-cp public/measurements/cuda-graph/structure/graph.json content/data/cuda-graph-structure.json
+cp public/measurements/cuda-graph/structure/graph.json src/data/cuda-graph-structure.json
 npm install --prefix /tmp/cuda-graph-structure-render --no-package-lock --ignore-scripts @viz-js/viz@3.30.0
 node public/measurements/cuda-graph/structure/render_graph.cjs /tmp/cuda-graph-structure-render/node_modules/@viz-js/viz
 ```

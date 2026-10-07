@@ -1,6 +1,6 @@
 # Vllm · CPU Overhead 文章资料
 
-状态：正文与 5 张图已写完（`content/vllm-cpu-overhead.md`、`src/VllmCpuOverheadFigures.tsx`，`status: draft`），已用 Modal H100 实测数据填充；图为直接精画未经草图确认。
+状态：正文与 5 张图已写完（`content/vllm-cpu-overhead.md`、`src/articles/vllm-cpu-overhead/VllmCpuOverheadFigures.tsx`，`status: draft`），已用 Modal H100 实测数据填充；图为直接精画未经草图确认。
 
 ## 范围与硬件
 
@@ -140,7 +140,9 @@ Decode 一步的 GPU 时间只有几毫秒，而每一步都要由 CPU 决定“
 - 第五次（新号，2026-09-30 18:25 CST，`modal deploy` + `.spawn()`，约 17.7 min GPU，估算约 $1.3）：补测 `piecewise`、`graph_none`，均成功，数据在 `public/measurements/vllm-cpu-overhead/20260930-102519/`。之后已停止 deployed app。
 - 补测读数（output tok/s，并发 1/8/64/256）：piecewise 132/1029/6634/12302；graph_none 71/569/4098/12421。至此 5 种配置均已采集，仍是单次读数、未重复；trace 尚未分析。
 
-## Trace 解析（scripts/analyze_cpu_overhead_traces.py → public/measurements/vllm-cpu-overhead/step_breakdown.json）
+## Trace 解析（scripts/vllm-cpu-overhead/analyze_traces.py → public/measurements/vllm-cpu-overhead/step_breakdown.json）
+
+2026-10-07 整理：各配置 `traces/` 下的 profiler trace 原件（28M）已从工作区移除，不再随站点发布；解析结果 `step_breakdown.json`、各并发的 JSON、日志与环境记录保留。原件在提交 `11e29f2` 中，`git checkout 11e29f2 -- public/measurements/vllm-cpu-overhead` 可取回。
 
 方法：取 rank0 worker 的 torch profiler trace，每个 pure-decode step 有一对 `execute_context_0(0)_generation_N(N)` 注释（CPU 线程 + GPU）。period = 相邻两步 GPU 注释起点之差；gpu_busy = 本步周期（本步注释起点到下一步注释起点）内**全部** kernel 时间的并集；idle = period − gpu_busy，即 GPU 上没有任何 kernel 在跑的时间；去掉首尾各 20% step 后取中位数。profile 先跑并发 8、后跑并发 64（按 trace 时间戳配对）。Qwen3-8B / H100，µs：
 
