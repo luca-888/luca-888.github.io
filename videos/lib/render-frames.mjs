@@ -22,7 +22,7 @@ export function parseOpts(argv, defaultFps) {
     draft, force: argv.includes('--force'), only,
     fps: Number(val('--fps')) || (draft ? 30 : defaultFps),
     crf: Number(val('--crf')) || 16,                // 正式输出的 x264 画质（越小越清晰）
-    workers: Number(val('--workers')) || Math.max(1, Math.min(4, Math.floor(cpus().length / 2))),
+    workers: Number(val('--workers')) || Math.max(1, Math.min(8, cpus().length - 2)),
   };
 }
 

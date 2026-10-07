@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>MoE Kernel</title>
+<style>
+  html, body { margin: 0; background: #111; color: #ccc; font: 14px -apple-system, sans-serif; }
+  #cv { display: block; width: 100vw; max-height: calc(100vh - 44px); aspect-ratio: 16 / 9; object-fit: contain; }
+  #bar { height: 44px; display: flex; align-items: center; gap: 12px; padding: 0 16px; }
+  #bar input { flex: 1; }
+</style>
+</head>
+<body>
+<canvas id="cv" width="1920" height="1080"></canvas>
+<div id="bar"><button>播放</button><input type="range" min="0"><span></span></div>
+<script src="core.js"></script>
+<script>
+// MoE Kernel 教学影片（约 7 分 40 秒，无配音）。沿用分布式推理影片的编辑排版：米色纸、左上角色块标签 + 粗体标题、实心色块。
+// 源码依据 vLLM v0.31.0 的 fused_moe（见 docs/moe-kernel-notes.md）；路由分布为示意数据，第六章的激活 expert 数按均匀路由估算。
+const KC = { paper: '#f1ede4', paper2: '#e6e0d3', ink: '#141414', ink2: '#3a3a3a', gray: '#8a8474', lg: '#cfc8b8',
+  red: '#e5322d', blue: '#2350d8', yel: '#f4c21b', yelD: '#9a7500', purple: '#7c3ff5', teal: '#0fa391', tealD: '#0b7d70' };
+const ZH = '"PingFang SC","Helvetica Neue",sans-serif', HN = '"Helvetica Neue","PingFang SC",sans-serif';
+
+function rich(s, x, y, size, base, weight = 700, alpha = 1) {
+  const ACC = { b: KC.blue, r: KC.red, y: KC.yelD, p: KC.purple, t: KC.teal };
+  const parts = []; const re = /\{(\w):([^}]*)\}/g; let last = 0, m;
+  while ((m = re.exec(s))) { if (m.index > last) parts.push([s.slice(last, m.index), null]); parts.push([m[2], m[1]]); last = re.lastIndex; }
+  if (last < s.length) parts.push([s.slice(last), null]);
+  g.font = `${weight} ${size}px ${ZH}`; g.globalAlpha = alpha; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  let cx = x;
+  for (const [t, k] of parts) { g.fillStyle = k ? ACC[k] : base; g.fillText(t, cx, y); cx += g.measureText(t).width; }
+  g.globalAlpha = 1;
+}
+let HATCH;
+function hatch() {
+  if (HATCH) return HATCH;
+  const c = document.createElement('canvas'); c.width = c.height = 14; const q = c.getContext('2d');
+  q.fillStyle = KC.paper2; q.fillRect(0, 0, 14, 14); q.strokeStyle = KC.red; q.lineWidth = 3;
+  q.beginPath(); for (let o = -14; o <= 28; o += 14) { q.moveTo(o, 14); q.lineTo(o + 14, 0); } q.stroke();
+  return (HATCH = g.createPattern(c, 'repeat'));
+}
+function box(x, y, w, h, col, lw = 4, a = 1) { if (a <= 0.003) return; g.globalAlpha = a; g.strokeStyle = col; g.lineWidth = lw; g.strokeRect(x, y, w, h); g.globalAlpha = 1; }
+function arrowR(x0, y, x1, k, col, a = 1) {
+  if (k <= 0 || a <= 0.003) return;
+  const x = mix(x0 + 26, x1, k);
+  rr(x0, y - 3, x - x0 - 18, 6, 0, col, a);
+  g.globalAlpha = a; g.fillStyle = col; g.beginPath(); g.moveTo(x, y); g.lineTo(x - 22, y - 13); g.lineTo(x - 22, y + 13); g.fill(); g.globalAlpha = 1;
+}
+function tokenTag(x, y, a, label = 'token', w = 120) {
+  rr(x, y - 24, w, 48, 0, KC.purple, a);
+  txt(label, x + w / 2, y, { size: 26, color: '#fff', weight: 700, align: 'center', font: ZH, alpha: a });
+}
+
+// ---------- 场景标题 ----------
+const SC = [
+  { r: [10, 16.3], tag: '稠密 FFN', col: KC.ink, head: '每个 token 都要乘{b:全部权重}', src: '示意：参数量与 128 个 expert 之和相同' },
+  { r: [16.3, 20.8], tag: 'MoE', col: KC.teal, head: '切成 {t:128 个 expert}，每个都是一个小 FFN', src: '来源：Qwen3-30B-A3B config.json' },
+  { r: [20.8, 28], tag: 'Router', col: KC.blue, head: '{b:router} 给 128 个 expert 打分，只留{r:前 8 个}', src: '路由分数为示意数据' },
+  { r: [28, 35], tag: '加权求和', col: KC.purple, head: '8 个输出按权重相加，只用到 {r:1/16} 的 expert', src: '路由分数为示意数据' },
+  { r: [35, 44.6], tag: '一批 token', col: KC.red, head: '16 个 token：每个 expert 分到的{r:数量不一样}', src: '路由分数为示意数据' },
+];
+const CHS = [[10, '一 · MoE 层算什么'], [45, '二 · 逐个 expert 算'], [105, '三 · 按 expert 排队'], [195, '四 · 一次 kernel 算完'],
+  [265, '五 · 整层流水线'], [315, '六 · batch 决定瓶颈'], [385, '七 · 别的系统怎么做'], [445, null]];
+function header(t) {
+  for (let i = 0; i < CHS.length - 1; i++) {
+    const [a0, name] = CHS[i], a1 = CHS[i + 1][0];
+    const a = win(t, a0, a1, 0.4);
+    txt('MoE Kernel · ' + name, 96, 76, { size: 28, weight: 700, color: KC.ink2, font: ZH, alpha: a, base: 'alphabetic' });
+  }
+  for (const s of SC) {
+    const k = win(t, s.r[0], s.r[1], 0.45); if (k <= 0) continue;
+    const ent = po(t, s.r[0], s.r[0] + 0.6);
+    g.font = `700 32px ${ZH}`; const w = g.measureText(s.tag).width + 36;
+    rr(96, 100, w, 50, 0, s.col, k);
+    txt(s.tag, 114, 136, { size: 32, weight: 700, color: '#fff', font: ZH, alpha: k, base: 'alphabetic' });
+    g.save(); g.translate(0, (1 - ent) * 18); rich(s.head, 96, 226, 60, KC.ink, 700, k * ent); g.restore();
+    txt(s.src, 1824, 76, { size: 26, weight: 500, color: KC.gray, font: ZH, align: 'right', alpha: k, base: 'alphabetic' });
+  }
+}
+
+// ---------- 开幕 ----------
+// expert 格子里的 token：每分到一个画一个紫色小方块（2 × 2 排列）
+function tokenDots(x, y, c, a) {
+  for (let i = 0; i < Math.min(c, 4); i++) rr(x + 7 + (i % 2) * 21, y + 7 + Math.floor(i / 2) * 21, 17, 17, 0, KC.purple, a);
+}
+const OGX = 742, OGY = 470, OC = 52, OG = 10;
+const ocell = (e) => [OGX + (e % 16) * (OC + OG), OGY + Math.floor(e / 16) * (OC + OG)];
+function opening(t) {
+  const out = 1 - p(t, 9.2, 9.9);
+  const t1 = po(t, 0.2, 1.0) * out, t2 = po(t, 0.6, 1.4) * out, t3 = po(t, 1.0, 1.8) * out;
+  txt('MoE Kernel', 90, 196, { size: 168, weight: 700, color: KC.ink, font: HN, alpha: t1, base: 'alphabetic' });
+  g.font = `700 40px ${ZH}`; const tw = g.measureText('MoE 层').width + 40;
+  rr(96, 244, tw, 64, 0, KC.ink, t2);
+  txt('MoE 层', 116, 290, { size: 40, weight: 700, color: '#fff', font: ZH, alpha: t2, base: 'alphabetic' });
+  rich('一个 token 只用 {t:128} 个 expert 里的 {r:8} 个，GPU 怎样算', 96 + tw + 28, 290, 44, KC.ink2, 600, t2);
+  txt('Router  ·  Top-k  ·  Permute  ·  Grouped GEMM  ·  Combine', 96, 370, { size: 28, weight: 600, color: KC.gray, font: HN, alpha: t3, base: 'alphabetic' });
+  const c = openCounts(t);
+  const ga = po(t, 0.8, 1.6) * out;
+  for (let e = 0; e < E; e++) {
+    const [x, y] = ocell(e);
+    rr(x, y, OC, OC, 0, c[e] ? KC.teal : KC.paper2, ga);
+    tokenDots(x, y, c[e], ga);
+  }
+  for (let i = 0; i < OT; i++) {
+    const y = 520 + i * 76, f = OFIRE(i);
+    tokenTag(400, y, ga, 'token ' + (i + 1), 150);
+    const k = lin(t, f, f + 0.4), la = (1 - lin(t, f + 0.7, f + 1.4)) * ga;
+    route[i].top.forEach((e) => { const [x, cy] = ocell(e); curve(552, y, x, cy + OC / 2, k, KC.ink, 2, la * 0.75); });
+  }
+  rich('每个 token 选 8 个 expert；格子里一个{p:紫色小方块}就是分到的一个 token', OGX, OGY + 8 * (OC + OG) + 40, 26, KC.gray, 600, ga * p(t, 2.0, 2.6));
+}
+
+// ---------- 第一章 ----------
+const X0 = 300, X1 = 1700, Y0 = 320, Y1 = 540, PITCH = (X1 - X0) / E;
+const cx = (e) => X0 + e * PITCH;
+const TY = 430;
+function chapter(t) {
+  if (t < 10) return;
+  const end = 1 - p(t, 44.3, 44.9);
+  const A = po(t, 10.6, 11.4) * end;
+  const sweep = p(t, 12.4, 14.4);
+  const split = p(t, 16.4, 18.0);
+  const sel = p(t, 24.6, 25.6);
+  const batch = p(t, 35.2, 36.2);
+  const live = liveCounts(t);
+
+  // 权重条
+  if (split < 0.02) {
+    rr(X0, Y0, X1 - X0, Y1 - Y0, 0, KC.paper2, A);
+    rr(X0, Y0, sweep * (X1 - X0), Y1 - Y0, 0, KC.blue, A);
+    box(X0, Y0, X1 - X0, Y1 - Y0, KC.ink, 4, A);
+    txt('FFN 权重', X0 + 30, Y0 + 50, { size: 34, weight: 700, color: '#fff', font: ZH, alpha: A * p(t, 13.4, 14.0) });
+  } else {
+    const gap = split * 3;
+    for (let e = 0; e < E; e++) {
+      const x = cx(e), w = PITCH - gap, h = Y1 - Y0;
+      rr(x, Y0, w, h, 0, KC.blue, A * (1 - split));
+      const off = IS_TOP[e] ? 0 : sel;              // 没被选中的 expert 退成灰色
+      rr(x, Y0, w, h, 0, KC.teal, A * split * (1 - off));
+      rr(x, Y0, w, h, 0, KC.lg, A * off);
+      if (batch > 0) rr(x, Y0, w, h, 0, live[e] ? (live[e] > 1 ? KC.tealD : KC.teal) : KC.paper2, A * batch);
+    }
+  }
+  txt('intermediate 98,304', X0, Y1 + 34, { size: 26, color: KC.gray, font: HN, weight: 600, alpha: A * (1 - p(t, 16.4, 17.0)) });
+  txt('128 个 expert × intermediate 768', X0, Y1 + 34, { size: 26, color: KC.gray, font: ZH, weight: 600, alpha: A * p(t, 17.0, 17.6) * (1 - p(t, 20.6, 21.2)) });
+
+  // token 与输出（单 token 阶段）
+  const single = A * (1 - batch);
+  tokenTag(120, TY, single);
+  arrowR(246, TY, X0 - 12, p(t, 11.2, 12.0), KC.ink, single * (1 - p(t, 20.8, 21.4)));
+  const outA = single * (p(t, 14.2, 14.8) * (1 - p(t, 16.4, 17.0)) + p(t, 31.6, 32.2) * (1 - p(t, 35.0, 35.6)));
+  rr(1744, TY - 24, 96, 48, 0, KC.purple, outA);
+  txt('输出', 1792, TY, { size: 26, color: '#fff', weight: 700, align: 'center', font: ZH, alpha: outA });
+
+  // 标出一个 expert（内部结构在插入的“一个 expert 算什么”一段里讲）
+  const dA = win(t, 18.3, 20.7) * A;
+  if (dA > 0) {
+    const x = cx(DEMO_E);
+    box(x - 5, Y0 - 8, PITCH + 7, Y1 - Y0 + 16, KC.ink, 3, dA);
+    txt('1 个 expert', x + PITCH / 2, Y1 + 80, { size: 30, weight: 700, color: KC.ink, align: 'center', font: ZH, alpha: dA });
+    line(x + PITCH / 2, Y1 + 10, x + PITCH / 2, Y1 + 56, KC.ink, 3, dA);
+  }
+
+  // router 与分数
+  const rA = A * p(t, 21.0, 21.6) * (1 - p(t, 28.0, 28.6));
+  if (rA > 0) {
+    line(160, TY + 24, 160, 610, KC.ink, 4, rA);
+    rr(96, 610, 200, 96, 0, KC.blue, rA);
+    txt('router', 196, 646, { size: 32, weight: 700, color: '#fff', align: 'center', font: HN, alpha: rA });
+    txt('2048 × 128', 196, 682, { size: 22, weight: 500, color: '#fff', align: 'center', font: HN, alpha: rA });
+    arrowR(296, 658, X0 - 12, p(t, 21.6, 22.2), KC.ink, rA);
+    const grow = p(t, 22.2, 24.0), BASE = 720;
+    for (let e = 0; e < E; e++) {
+      const h = (T0.prob[e] / PMAX) * 130 * grow;
+      rr(cx(e), BASE - h, PITCH - 3, h, 0, KC.blue, rA * (IS_TOP[e] ? 1 : 1 - sel));
+      if (!IS_TOP[e]) rr(cx(e), BASE - h, PITCH - 3, h, 0, KC.lg, rA * sel);
+    }
+    line(X0, BASE, X1, BASE, KC.ink, 2, rA);
+    rich('softmax  →  取前 8 个  →  8 个权重重新归一化，{r:和为 1}', X0, 800, 32, KC.ink2, 600, rA * p(t, 25.0, 25.6));
+  }
+
+  // 8 个输出按权重相加：账本式堆叠条
+  const cA = A * p(t, 28.2, 28.6) * (1 - p(t, 35.0, 35.6));
+  if (cA > 0) {
+    TOP_ASC.forEach((e) => curve(246, TY, cx(e) + PITCH / 2, Y0 - 4, lin(t, 28.2, 29.0), KC.ink, 2, cA * 0.7 * (1 - p(t, 31.0, 31.6))));
+    const LY = 660, LH = 76;
+    let acc = 0;
+    TOP_ASC.forEach((e, j) => {
+      const w = WOF(e), x = X0 + acc * (X1 - X0), len = w * (X1 - X0); acc += w;
+      const f = p(t, 29.0 + j * 0.08, 30.0 + j * 0.08);
+      const sx = mix(cx(e), x, f), sy = mix(Y1, LY, f), sw = mix(PITCH - 3, len - 4, f);
+      rr(sx, sy, sw, LH, 0, j % 2 ? KC.tealD : KC.teal, cA);
+      txt(w.toFixed(2), x + 14, LY + LH / 2, { size: 26, weight: 700, color: '#fff', font: HN, alpha: cA * p(t, 30.0, 30.6) });
+    });
+    txt('8 个 expert 的输出，宽度 = 权重，合计 1', X0, LY - 26, { size: 26, color: KC.gray, font: ZH, weight: 600, alpha: cA * p(t, 30.2, 30.8) });
+    arrowR(X1 + 4, LY + LH / 2, 1830, p(t, 31.0, 31.6), KC.ink, cA);
+    rich('每个 token 只用到 8 / 128 = {r:1/16} 的 expert 权重', X0, 840, 34, KC.ink, 700, cA * p(t, 32.6, 33.2));
+  }
+
+  // 一批 token
+  if (batch > 0) {
+    const bA = batch * end;
+    for (let i = 0; i < NT; i++) {
+      const y = Y0 + 6 + i * 13.5;
+      rr(150, y - 5, 60, 10, 0, KC.purple, bA);
+      const f = BT(i);
+      route[i].top.forEach((e) => curve(212, y, cx(e) + PITCH / 2, Y0 - 4, lin(t, f, f + 0.3), KC.ink, 1.5, bA * 0.5 * (1 - lin(t, f + 0.35, f + 0.9))));
+    }
+    txt('16 个 token', 150, Y0 - 24, { size: 24, weight: 600, color: KC.gray, font: ZH, alpha: bA });
+    for (let e = 0; e < E; e++) for (let c = 0; c < live[e]; c++) rr(cx(e), Y0 - 14 - c * 12, PITCH - 3, 9, 0, KC.purple, bA);
+    // 账本：128 个 expert 按分到的 token 数分组
+    const la = bA * p(t, 40.2, 40.8), LY = 640, LH = 84;
+    txt('128 个 expert，按分到的 token 数分组', X0, LY - 28, { size: 26, color: KC.gray, font: ZH, weight: 600, alpha: la });
+    let acc = 0;
+    HIST.forEach((n, c) => {
+      const x = X0 + (acc / E) * (X1 - X0), w = (n / E) * (X1 - X0); acc += n;
+      if (c === 0) { g.globalAlpha = la; g.fillStyle = hatch(); g.fillRect(x, LY, w - 4, LH); g.globalAlpha = 1; box(x, LY, w - 4, LH, KC.red, 3, la); }
+      else rr(x, LY, w - 4, LH, 0, c > 1 ? KC.tealD : KC.teal, la);
+      if (c === 0) { g.font = `700 30px ${ZH}`; rr(x + 6, LY + LH / 2 - 22, g.measureText(`0 个 token · ${n}`).width + 16, 44, 0, KC.paper, la); }
+      if (w > 60) {
+        txt(c === 0 ? `0 个 token · ${n}` : `${c} 个 · ${n}`, x + 14, LY + LH / 2, { size: c === 0 ? 30 : 24, weight: 700, color: c === 0 ? KC.red : '#fff', font: ZH, alpha: la });
+      }
+    });
+    rich(`{r:${ZERO} 个 expert} 一个 token 也没分到，最多的分到 {r:${MAXC} 个}`, X0, 800, 34, KC.ink, 700, la * p(t, 40.8, 41.4));
+    rich('接下来的问题：每个 expert 只有零到几个 token，GPU 怎样把它们{b:算快}', 96, 960, 42, KC.ink, 700, bA * p(t, 42.2, 42.8));
+  }
+}
+
+</script>
+<script src="chapters.js"></script>
+</body>
+</html>
