@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>LLM 量化 · 影片</title>
+<style>html,body{margin:0;background:#f1ede4;overflow:hidden}canvas{display:block;width:100vw;height:100vh;object-fit:contain}</style>
+</head>
+<body>
+<canvas id="cv" width="1920" height="1080"></canvas>
+<script>
+// LLM 量化，12 幕（第 3 版：从“模型是一堆数、一个数要几个 bit”推起，每一幕回答上一幕留下的问题）。示例模型 Qwen3.8-27B，示例显卡 RTX 5090（32 GiB）。
+// 速度、体积、分数引用公开来源（见 keyframes.md）；第 4 幕的直方图与第 5、6 幕的舍入误差是本站在真实权重上算的（scripts/quant_weight_hist.py）。贯穿全片的图形：一张灰度图（一个球）、刻度、显卡的显存条、被追踪的权重 0.37（purple）。
+// ?play 在浏览器里播放；node film.mjs 渲染（见该文件头部）。
+const K = { paper: '#f1ede4', paper2: '#e6e0d3', ink: '#141414', ink2: '#3a3a3a', gray: '#8a8474', lg: '#b9b2a2',
+  red: '#e5322d', blue: '#2350d8', yel: '#f4c21b', yelD: '#9a7500', purple: '#7c3ff5', teal: '#0fa391' };
+const ZH = '"PingFang SC", "Helvetica Neue", sans-serif', HN = '"Helvetica Neue", "PingFang SC", sans-serif';
+const font = (w, s, f = ZH) => `${w} ${s}px ${f}`;
+let X, T = 0;
+const clamp = (x) => Math.min(1, Math.max(0, x));
+const ease = (x) => 1 - Math.pow(1 - clamp(x), 3);
+const io = (x) => { x = clamp(x); return x < .5 ? 4 * x ** 3 : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const P = (t0, d = .7) => ease((T - t0) / d);                    // 缓出
+const S = (t0, d = 1) => io((T - t0) / d);                       // 缓入缓出
+const mix = (a, b, p) => a + (b - a) * p;
+const R = (x, y, w, h, c) => { if (w > 0 && h > 0) { X.fillStyle = c; X.fillRect(x, y, w, h); } };
+function TX(s, x, y, f, c, a = 'left') { X.font = f; X.fillStyle = c; X.textAlign = a; X.textBaseline = 'alphabetic'; const available = a === 'center' ? Math.min(x, 1920 - x) * 2 - 32 : a === 'right' ? x - 72 : 1824 - x; X.fillText(s, x, y, Math.max(40, available)); }
+function A(a, fn) { if (a <= .003) return; X.save(); X.globalAlpha *= Math.min(1, a); fn(); X.restore(); }
+function IN(t0, fn, d = .7, dy = 20) { const p = P(t0, d); if (p <= 0) return; X.save(); X.globalAlpha *= p; X.translate(0, (1 - p) * dy); fn(); X.restore(); }
+function POP(t0, x, y, w, h, fn, d = .5) { const p = P(t0, d); if (p <= 0) return; X.save(); X.globalAlpha *= Math.min(1, p * 1.5); X.translate(x + w / 2, y + h / 2); X.scale(.86 + .14 * p, .86 + .14 * p); X.translate(-x - w / 2, -y - h / 2); fn(); X.restore(); }
+function RICH(s, x, y, f, base, align = 'left') {
+  const ACC = { b: K.blue, r: K.red, y: K.yelD, p: K.purple, t: K.teal };
+  const parts = []; const re = /\{(\w):([^}]*)\}/g; let last = 0, m;
+  while ((m = re.exec(s))) { if (m.index > last) parts.push([s.slice(last, m.index), null]); parts.push([m[2], m[1]]); last = re.lastIndex; }
+  if (last < s.length) parts.push([s.slice(last), null]);
+  X.font = f; const w = parts.reduce((a, [t]) => a + X.measureText(t).width, 0); let cx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+  X.textAlign = 'left'; X.textBaseline = 'alphabetic';
+  X.save(); const limit = align === 'center' ? Math.min(x, 1920 - x) * 2 - 32 : align === 'right' ? x - 72 : 1824 - x; if (w > limit) { X.translate(cx, 0); X.scale(limit / w, 1); cx = 0; }
+  for (const [t, k] of parts) { X.fillStyle = k ? ACC[k] : base; X.fillText(t, cx, y); cx += X.measureText(t).width; } X.restore();
+}
+const PAT = {};
+function hatch(col, bg) { const k = col + bg; if (PAT[k]) return PAT[k]; const g = 14, c = document.createElement('canvas'); c.width = c.height = g; const q = c.getContext('2d');
+  q.fillStyle = bg; q.fillRect(0, 0, g, g); q.strokeStyle = col; q.lineWidth = 4; q.beginPath(); for (let o = -g; o <= g * 2; o += g) { q.moveTo(o, g); q.lineTo(o + g, 0); } q.stroke(); return (PAT[k] = X.createPattern(c, 'repeat')); }
+const HR = (x, y, w, h, col = K.lg, bg = K.paper2) => { if (w > 0 && h > 0) { X.fillStyle = hatch(col, bg); X.fillRect(x, y, w, h); } };
+const box = (x, y, w, h, lw = 4, col = K.ink) => { X.strokeStyle = col; X.lineWidth = lw; X.strokeRect(x, y, w, h); };
+function line(x1, y1, x2, y2, col = K.ink, lw = 3, dash) { X.strokeStyle = col; X.lineWidth = lw; X.setLineDash(dash || []); X.beginPath(); X.moveTo(x1, y1); X.lineTo(x2, y2); X.stroke(); X.setLineDash([]); }
+function poly(pts, col = K.ink, lw = 4) { X.strokeStyle = col; X.lineWidth = lw; X.lineJoin = 'miter'; X.beginPath(); pts.forEach(([x, y], i) => (i ? X.lineTo(x, y) : X.moveTo(x, y))); X.stroke(); }
+function arrow(x1, y1, x2, y2, col = K.ink, lw = 6) { const a = Math.atan2(y2 - y1, x2 - x1), hl = lw * 3.4, hw = lw * 2.2; if (Math.hypot(x2 - x1, y2 - y1) < hl) return;
+  line(x1, y1, x2 - Math.cos(a) * hl * .9, y2 - Math.sin(a) * hl * .9, col, lw);
+  X.fillStyle = col; X.beginPath(); X.moveTo(x2, y2); X.lineTo(x2 - Math.cos(a) * hl + Math.sin(a) * hw, y2 - Math.sin(a) * hl - Math.cos(a) * hw); X.lineTo(x2 - Math.cos(a) * hl - Math.sin(a) * hw, y2 - Math.sin(a) * hl + Math.cos(a) * hw); X.fill(); }
+function cell(x, y, w, h, col, label, size = 30, tc = '#fff', fam = HN) { R(x, y, w, h, col); if (label != null) TX(label, x + w / 2, y + h / 2 + size * .36, font(700, size, fam), tc, 'center'); }
+function span(x1, x2, y, col = K.ink, lw = 4) { line(x1, y, x2, y, col, lw); line(x1, y - 10, x1, y + 10, col, lw); line(x2, y - 10, x2, y + 10, col, lw); }
+function frame(tag, col, head, src, t0 = .15) {
+  TX('LLM 量化 · 以 Qwen3.8-27B 为例', 96, 76, font(700, 28), K.ink2);
+  IN(t0, () => { X.font = font(700, 32); const w = X.measureText(tag).width + 36; R(96, 100, w, 50, col); TX(tag, 114, 136, font(700, 32), '#fff'); }, .5, 0);
+  IN(t0 + .15, () => RICH(head, 96, 226, font(700, 60), K.ink));
+  if (src) IN(t0 + .3, () => TX(src, 1824, 76, font(500, 26), K.gray, 'right'), .5, 0);
+}
+
+// ---------- 显存条 ----------
+// checkpoint 体积（GiB）：BF16 官方、FP8 官方、NVFP4 为 NVIDIA 版、INT4 为 RedHatAI 版
+const CK = { bf16: 51.75, fp8: 28.75, nvfp4: 20.42, int4: 18.12 }, CARD = 32;
+// 外框是卡（32 GiB），蓝色是权重；装得下时余量画成黄色，装不下时超出部分画红色斜线。full 为 false 时不画余量（权重还在画出的过程中）
+function cardbar(x, y, px, h, w, full = true) {
+  const fit = w <= CARD;
+  if (fit) { if (full) R(x + w * px, y, (CARD - w) * px, h, K.yel); } else HR(x + CARD * px, y, (w - CARD) * px, h, K.red, K.paper2);
+  R(x, y, Math.min(w, CARD) * px - (fit && full ? 4 : 0), h, K.blue);
+  box(x - 3, y - 3, CARD * px + 6, h + 6, 6);
+}
+function barLabels(x, y, px, h, w, fs, wl, rl) {
+  const fit = w <= CARD, ty = y + h / 2 + fs * .36;
+  TX(wl, x + fs * .5, ty, font(700, fs), '#fff');
+  if (!rl) return;
+  const rw = Math.abs(CARD - w) * px; X.font = font(700, fs); const tw = X.measureText(rl).width, inside = tw + fs < rw;
+  const lx = x + (inside ? Math.min(w, CARD) * px + fs * .5 : Math.max(w, CARD) * px + 20);
+  if (!fit && inside) R(lx - fs * .3, ty - fs, tw + fs * .6, fs * 1.4, K.paper);
+  TX(rl, lx, ty, font(700, fs), fit ? K.ink : K.red);
+}
+
+// ---------- 定位：这些数是从模型的哪里取出来的 ----------
+// 64 层 → 其中一层里的几个权重矩阵 → 其中一个矩阵。t0 起依次展开；block 为 -1 时不强调具体哪个矩阵。结构按官方 config：64 层，MLP 是 gate / up / down 三个矩阵。
+const BLK = ['attention', 'gate_proj', 'up_proj', 'down_proj'];
+function locator(t0, layer, layerLabel, block, matLabel) {
+  const sx = 200, sy = 372, sw = 220, ly = sy + (63 - layer) * 4, bx = (i) => 580 + i * 155, mx = 1320, my = 392;
+  const fan = (t, pts) => A(P(t, .5), () => { X.fillStyle = K.paper2; X.beginPath(); pts.forEach(([x, y], i) => (i ? X.lineTo(x, y) : X.moveTo(x, y))); X.fill(); });
+  IN(t0, () => { TX('Qwen3.8-27B：64 层', sx, sy - 18, font(700, 28), K.ink); for (let i = 0; i < 64; i++) R(sx, sy + i * 4, sw, 3, 63 - i === layer && T > t0 + .9 ? K.purple : K.blue); }, .6, 0);
+  IN(t0 + .9, () => TX(layerLabel, sx - 14, Math.min(Math.max(ly + 11, sy + 20), sy + 256), font(700, 26), K.purple, 'right'), .4, 0);
+  fan(t0 + 1.1, [[sx + sw, ly], [560, 420], [560, 600], [sx + sw, ly + 3]]);
+  IN(t0 + 1.3, () => { R(560, 420, 640, 180, K.paper2); TX('这一层里的权重矩阵', 580, 408, font(700, 26), K.ink); span(bx(1), bx(3) + 135, 458, K.gray, 3); TX('MLP', bx(2) + 67, 448, font(700, 22, HN), K.gray, 'center');
+    BLK.forEach((n, i) => { const on = i === block && T > t0 + 2.3; cell(bx(i), 478, 135, 90, on ? K.purple : K.blue, n, 22); }); }, .6, 0);
+  const b0 = block < 0 ? 1200 : bx(block) + 135; fan(t0 + 2.5, [[b0, block < 0 ? 420 : 478], [mx, my], [mx, my + 220], [b0, block < 0 ? 600 : 568]]);
+  IN(t0 + 2.7, () => { let q = 11; for (let r = 0; r < 11; r++) for (let c = 0; c < 23; c++) { q = (q * 16807) % 2147483647; A(.25 + .75 * (q % 1000) / 1000, () => R(mx + c * 20, my + r * 20, 18, 18, block < 0 ? K.blue : K.purple)); }
+    TX(matLabel, mx, my + 262, font(700, 28), K.ink); }, .6, 0);
+}
+
+// ---------- 1 封面 → 模型是一堆数 ----------
+// 封面是一张大图（左半 16 bit、右半 4 bit）；图放大淡出后是一片数（权重），其中一个数 0.37 展开成 16 个 bit，再算出总体积，显存条冲出显卡外框。
+const CV = 3.6, MORPH = 1.1, HOT = 2 * 13 + 6;
+const NUMS = (() => { let q = 7; const r = () => (q = (q * 16807) % 2147483647) / 2147483647; return Array.from({ length: 65 }, (_, i) => (i === HOT ? '0.37' : ((r() + r() + r() - 1.5) * 1.1).toFixed(2).replace('-', '−').replace(/^0\.37$/, '0.73'))); })();
+function sA() {
+  const m = S(CV, MORPH), t = CV + MORPH, u = t + 4.2, dim = S(u + 1.6, .8);   // u：定位动画结束、那片数出现的时刻
+  // 封面：左边标题与两把尺子，右边一张大图，分界线从右扫到中间，左半 16 bit、右半 4 bit。转场时图放大淡出，露出下面的一片数
+  const wipe = (t0, fn) => { X.save(); X.beginPath(); X.rect(0, 0, 96 + 800 * clamp((T - t0) / 1.0), 1080); X.clip(); fn(); X.restore(); };
+  A(1 - clamp(m * 2.5), () => { TX('FP8 · INT4 · NVFP4', 96, 168, font(700, 64, HN), K.ink); TX('LLM 量化', 88, 390, font(700, 200), K.ink);
+    IN(.5, () => TX('一个数，到底要用几个 bit 来存', 96, 500, font(600, 54), K.ink2));
+    IN(.9, () => RICH('{b:16 bit}　65,536 个刻度', 96, 668, font(700, 32), K.ink), .5, 0); wipe(1.0, () => { for (let q = 96; q < 876; q += 3) R(q, 686, 2, 70, K.ink); });
+    IN(1.7, () => RICH('{b:4 bit}　16 个刻度', 96, 836, font(700, 32), K.ink), .5, 0); wipe(1.8, () => { for (let k = 0; k < 16; k++) R(96 + k * 52, 854, 8, 70, K.blue); }); });
+  if (m < 1) { const k = 1 + .6 * m, w = 810 * k, h = 630 * k, x = 1419 - w / 2, y = 525 - h / 2, sp = mix(1, .5, S(.7, 1.7)), b4 = picOf('b4', () => PIC.map((v) => Math.round(v * 15) / 15));
+    A(P(.2, .6) * (1 - clamp(m * 1.8)), () => { X.save(); X.imageSmoothingEnabled = true; X.drawImage(pic(0), x, y, w, h); X.imageSmoothingEnabled = false; X.beginPath(); X.rect(x + w * sp, y, w * (1 - sp), h); X.clip(); X.drawImage(b4, x, y, w, h); X.restore();
+      box(x, y, w, h, 5); R(x + w * sp - 3, y - 16, 6, h + 32, K.purple);
+      IN(.4, () => TX('16 bit', x + 24, y + 52, font(700, 36, HN), K.ink), .5, 0); IN(2.4, () => TX('4 bit', x + w - 24, y + 52, font(700, 36, HN), K.ink, 'right'), .5, 0); }); }
+  A(clamp(m * 2 - 1), () => frame('模型是什么', K.blue, '模型就是{b:一大堆数}：Qwen3.8-27B 有 278 亿个', '0.37 为示意', t));
+  A(1 - S(u - .5, .5), () => locator(t + .1, 0, '第 0 层', 3, '比如这一个：8,913 万个数'));
+  NUMS.forEach((n, i) => { const r = Math.floor(i / 13), c = i % 13, hot = i === HOT;
+    IN(u + i * .012, () => A(hot ? 1 : 1 - .6 * dim, () => TX(n, 96 + c * 133, 334 + r * 62, font(hot && dim > 0 ? 700 : 600, 36, HN), hot && dim > 0 ? K.purple : K.gray)), .4, 0); });
+  IN(u + 2.2, () => RICH('{p:0.37} 存成 16 个 bit', 96, 692, font(700, 36), K.ink), .5, 0);
+  '0011111010111101'.split('').forEach((b, i) => POP(u + 2.4 + i * .05, 520 + i * 66, 648, 60, 60, () => cell(520 + i * 66, 648, 60, 60, K.blue, b, 30), .35));
+  IN(u + 4.6, () => TX('278 亿 × 16 bit = 51.8 GiB', 96, 800, font(700, 44), K.ink));
+  IN(u + 6.0, () => TX('RTX 5090 · 32 GiB', 96 + CARD * 28, 826, font(700, 28), K.ink, 'right'), .5, 0);
+  A(P(u + 6.0, .5), () => cardbar(96, 842, 28, 84, CK.bf16 * S(u + 6.2, 1.4)));
+  IN(u + 7.8, () => barLabels(96, 842, 28, 84, CK.bf16, 32, '权重 51.8 GiB', '装不下：超出 19.8 GiB'), .5, 0);
+  IN(u + 9.2, () => RICH('每生成一个 token，这些数还要{b:全部读一遍}。每个数能不能少用几个 bit？', 96, 1010, font(700, 38), K.ink));
+}
+
+// ---------- 2 bit → 可选的值 → 最近的一档 ----------
+// 16 个 bit 留下 4 个；4 个 bit 的 16 种组合各对应数轴上一个值（刻度下面直接写这个值）。
+// 只跟一个数：0.37 垂直落到数轴上它自己的位置，放大它所在的那一格，量出到两边刻度的距离（0.12 与 0.13），滑到近的那个，上方对应的组合 0001 被圈出。
+const S4 = .25, NX = (v) => 160 + (v + 2) * 426.67;
+function sB() {
+  frame('每个数少用几个 bit，会怎样', K.blue, '4 个 bit 只有 {b:16 种组合}，所以只有 16 个刻度', '示意数值');
+  const ay = 520, keep = S(1.8, .8), HX = NX(.37), X0 = NX(.25), X1 = NX(.5), dot = (x, y, r, c) => { X.fillStyle = c; X.beginPath(); X.arc(x, y, r, 0, 7); X.fill(); };
+  A(1 - P(3.0, .5), () => { '0011111010111101'.split('').forEach((b, i) => A(i < 4 ? 1 : 1 - keep, () => cell(96 + i * 50, 296, 44, 44, i < 4 ? K.purple : K.blue, b, 24)));
+    IN(.8, () => TX(keep < .5 ? '原来：16 个 bit' : '只留 4 个 bit', 96 + (keep < .5 ? 16 : 4) * 50 + 20, 328, font(700, 30), K.ink), .4, 0); });
+  R(120, ay - 2, 1680 * S(2.8, 1.0), 4, K.ink);
+  for (let q = -8; q <= 7; q++) { const x = NX(q * S4), t0 = 3.3 + (q + 8) * .11, code = (q & 15).toString(2).padStart(4, '0');
+    POP(t0, x - 44, 296, 88, 44, () => code.split('').forEach((b, j) => cell(x - 44 + j * 22, 296, 20, 44, b === '1' ? K.blue : K.lg, b, 20, b === '1' ? '#fff' : K.ink)), .35);
+    POP(t0 + .15, x - 3, ay - 30, 6, 60, () => R(x - 3, ay - 30, 6, 60, K.blue), .35);
+    IN(t0 + .15, () => TX((q * S4).toFixed(2).replace('-', '−'), x, ay + 66, font(600, 24, HN), K.ink2, 'center'), .4, 0); }
+  IN(5.4, () => TX('每种组合是一个编号：编号 × scale = 它代表的值', 96, 392, font(700, 28), K.gray), .5, 0);
+  IN(6.0, () => { span(NX(-1.75), NX(-1.5), ay - 62, K.ink, 4); TX('scale = 0.25（一格多大）', NX(-1.625), ay - 84, font(700, 28), K.ink, 'center'); }, .5, 0);
+  // 一个权重：垂直落到数轴上自己的位置
+  const dr = S(7.6, .6), sn = S(11.4, .7);
+  IN(7.0, () => { dot(HX, 410, 16, K.purple); TX('一个权重：0.37', HX + 30, 421, font(700, 32), K.purple); }, .5, 0);
+  if (dr > 0) line(HX, 428, HX, 428 + (ay - 428) * dr, K.purple, 3, [8, 6]);
+  if (dr >= 1) dot(mix(HX, X0, sn), ay, 13, K.purple);
+  // 放大 0.25 … 0.50 这一格
+  const zo = S(8.6, .8), iy = 740, ix0 = 420, ix1 = 1500, ZX = (v) => ix0 + (v - .25) / .25 * (ix1 - ix0), zm = ZX(.37);
+  A(zo, () => { X.fillStyle = K.paper2; X.beginPath(); X.moveTo(X0, 600); X.lineTo(X1, 600); X.lineTo(ix1, 646); X.lineTo(ix0, 646); X.fill(); R(ix0, 646, ix1 - ix0, 128, K.paper2);
+    line(ix0, iy, ix1, iy, K.ink, 4); [[ix0, '0.25'], [ix1, '0.50']].forEach(([x, n]) => { R(x - 3, iy - 30, 6, 60, K.blue); TX(n, x, iy + 76, font(700, 30, HN), K.ink, 'center'); });
+    TX('放大这一格', ix0 - 36, iy + 10, font(600, 26), K.gray, 'right'); dot(mix(zm, ix0, sn), iy, 15, K.purple); A(1 - sn, () => TX('0.37', zm, iy + 76, font(700, 30, HN), K.purple, 'center')); });
+  IN(9.8, () => { span(ix0 + 6, zm - 6, iy - 50, sn > 0 ? K.red : K.purple, 4); TX(sn >= 1 ? '误差 0.12' : '离 0.25 差 0.12', (ix0 + zm) / 2, iy - 68, font(700, 28), sn > 0 ? K.red : K.purple, 'center'); }, .5, 0);
+  IN(10.5, () => A(1 - .6 * sn, () => { span(zm + 6, ix1 - 6, iy - 50, K.gray, 4); TX('离 0.50 差 0.13', (zm + ix1) / 2, iy - 68, font(700, 28), K.gray, 'center'); }), .5, 0);
+  IN(12.1, () => { box(X0 - 49, 291, 98, 54, 5, K.purple); line(X0, 348, X0, ay - 34, K.purple, 3); }, .4, 0);
+  // 另外两个数照同样的规则走一遍
+  [[-1.1, 14.8], [1.3, 15.4]].forEach(([w, t0]) => { const x0 = NX(w), x1 = NX(Math.round(w / S4) * S4), d = S(t0 + .3, .5), g = S(t0 + .9, .5);
+    IN(t0, () => { dot(x0, 410, 12, K.gray); TX(w.toFixed(2).replace('-', '−'), x0 + 22, 420, font(700, 28, HN), K.gray); }, .4, 0);
+    if (d > 0) line(x0, 424, x0, 424 + (ay - 424) * d, K.gray, 3, [8, 6]); if (d >= 1) dot(mix(x0, x1, g), ay, 11, K.gray); });
+  IN(12.6, () => RICH('{p:0.37} 离 0.25 更近：显存里只存编号 {p:0001}，用的时候 {p:1 × 0.25 = 0.25}', 96, 886, font(700, 36), K.ink));
+  IN(14.0, () => RICH('这就是量化：{b:从 16 个刻度里，挑最近的一个}', 96, 946, font(700, 38), K.ink));
+  IN(16.4, () => TX('像一把只有 16 个刻度的尺子：量什么都只能读到最近的刻度', 96, 1004, font(600, 30), K.ink2));
+}
+
+// ---------- 3 损失多大：同一张图按 16 / 8 / 4 bit 存 ----------
+function sBall() {
+  frame('这样做损失多大', K.blue, '8 bit 看不出区别，{r:4 bit 出现断层}', '图片为类比');
+  const b8 = picOf('b8', () => PIC.map((v) => Math.round(v * 255) / 255)), b4 = picOf('b4', () => PIC.map((v) => Math.round(v * 15) / 15));
+  panel(0, .8, pic(0), null, 0, '16 bit　65,536 个刻度', K.ink, '把每个权重想成一个像素的亮度', 896);
+  panel(1, 2.0, pic(0), b8, 1.6, '8 bit　256 个刻度', K.ink, '看不出区别', 896, .9); panel(2, 4.6, pic(0), b4, 2.0, '4 bit　16 个刻度', K.ink, '{r:一圈圈断层}', 896, 1.0);
+  [[65536, 2, K.ink], [256, 1, K.blue], [16, 5, K.blue]].forEach(([n, tw, col], i) => IN(.8 + i * .1, () => { const x = PX[i];
+    if (n > 600) for (let q = x; q < x + PWD; q += 3) R(q, 790, 2, 60, col); else for (let k = 0; k < n; k++) R(x + k * PWD / n, 790, tw, 60, col); }, .6, 0));
+  IN(8.2, () => RICH('只有 16 个刻度可选，损失是真的。还能决定的只有两件事：', 96, 964, font(700, 36), K.ink));
+  IN(9.6, () => RICH('{b:① 刻度放在哪}　　　{p:② 每个数落到哪个刻度上}', 96, 1024, font(700, 38), K.ink));
+}
+
+// ---------- 真实的权重长什么样 ----------
+// Qwen3.8-27B `layers.0.mlp.down_proj.weight`（5120 × 17408）的直方图：本站用 scripts/quant_weight_hist.py 在 Modal（CPU）上算的，数据在 public/measurements/llm-quantization/weights.json。
+// 标准差 0.0106，绝对值最大 0.98（92 倍标准差）；99.98% 的权重小于最大值的 1/16。横轴先只看 ±8 倍标准差，再缩小到能看见最大值。
+const WH = { std: 0.010634, max: 0.9805, hist: [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0001,0.0,0.0,0.0001,0.0001,0.0001,0.0001,0.0001,0.0001,0.0002,0.0001,0.0002,0.0003,0.0003,0.0004,0.0007,0.0007,0.0009,0.0016,0.0018,0.0024,0.0031,0.0054,0.0058,0.0075,0.0121,0.0154,0.018,0.0261,0.0342,0.0389,0.0551,0.0702,0.0779,0.108,0.1341,0.1445,0.1954,0.2351,0.2458,0.314,0.377,0.4083,0.4638,0.5538,0.5838,0.6421,0.7454,0.7498,0.8373,0.887,0.9094,0.9511,0.986,0.9937,1.0,0.9937,0.9862,0.9507,0.9105,0.8865,0.8374,0.7502,0.7445,0.6433,0.5835,0.5546,0.464,0.4093,0.3756,0.3134,0.2459,0.2351,0.1954,0.1442,0.1342,0.1083,0.0781,0.0702,0.0554,0.0387,0.0341,0.0261,0.0178,0.0153,0.012,0.0076,0.0058,0.0054,0.0031,0.0023,0.0018,0.0016,0.0009,0.0007,0.0007,0.0004,0.0003,0.0003,0.0002,0.0001,0.0002,0.0001,0.0001,0.0001,0.0001,0.0001,0.0001,0.0,0.0,0.0001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0] };
+function sHist() {
+  frame('① 刻度放在哪：先看真实的权重', K.teal, '几乎全挤在零附近，{r:偶尔有一个特别大}', '本站计算：Qwen3.8-27B layers.0.mlp.down_proj');
+  const ay = 700, z = S(4.6, 2.2), Rv = Math.exp(mix(Math.log(8 * WH.std), Math.log(1.16), z)), XV = (v) => 960 + v / Rv * 820, bw = 16 * WH.std / 161;
+  IN(.9, () => RICH('还是开头那个矩阵（{p:第 0 层 › MLP › down_proj}）：这次看它真实的 8,913 万个数，各有多少', 96, 316, font(700, 32), K.ink));
+  R(120, ay - 2, 1680 * S(.9, 1.0), 4, K.ink);
+  const g = S(1.4, 1.4); if (g > 0) { X.fillStyle = K.blue; X.beginPath(); X.moveTo(XV(-8 * WH.std), ay - 2); WH.hist.forEach((h, k) => X.lineTo(XV((k - 80) * bw), ay - 2 - h * 340 * g)); X.lineTo(XV(8 * WH.std), ay - 2); X.fill(); }
+  [[-WH.max, '−0.98'], [-.05, '−0.05'], [0, '0'], [.05, '0.05'], [WH.max, '0.98']].forEach(([v, n]) => { const x = XV(v), far = Math.abs(v) > .5; if (Math.abs(x - 960) > 830 || (!far && v && z > .35)) return;
+    A(far ? clamp(z * 3 - 2) : v ? 1 - clamp(z * 3) : 1, () => { R(x - 1.5, ay, 3, 16, K.ink); TX(n, x, ay + 66, font(600, 26, HN), K.gray, 'center'); }); });
+  IN(2.8, () => A(1 - clamp(z * 4), () => TX('99.99% 的数，绝对值小于 0.044', 1160, 470, font(700, 32), K.blue)), .5, 0);
+  IN(7.0, () => { const x = XV(WH.max); X.fillStyle = K.red; X.beginPath(); X.arc(x, ay - 2, 13, 0, 7); X.fill(); TX('绝对值最大的一个：0.98', x + 20, 574, font(700, 32), K.red, 'right'); TX('是标准差的 92 倍', x + 20, 618, font(600, 28), K.red, 'right'); line(x, 632, x, ay - 20, K.red, 3); }, .5, 0);
+  for (let q = -8; q <= 7; q++) { const x = XV(q * WH.max / 7); POP(9.0 + (q + 8) * .08, x - 3, ay - 36, 6, 72, () => A(.9, () => R(x - 3, ay - 36, 6, 72, K.ink)), .35); }
+  IN(9.2, () => { TX('尺子要量到它：scale = 0.98 ÷ 7 ≈ 0.14', 140, 440, font(700, 32), K.ink); TX('最大的数 ÷ 最大的编号（0111 = 7）', 140, 488, font(600, 28), K.gray); }, .5, 0);
+  IN(10.8, () => { span(XV(-WH.max / 14), XV(WH.max / 14), ay + 96, K.red, 4); TX('一格 0.14，99.98% 的权重离 0 这个刻度最近：全部存成 0', 960, ay + 148, font(700, 32), K.red, 'center'); }, .5, 0);
+  IN(12.2, () => RICH('整层共用一个 scale、刻度等距：舍入误差 {r:99%}，几乎什么都没存下', 96, 950, font(700, 38), K.ink));
+  IN(13.6, () => RICH('要改两处：{t:刻度怎么摆}，{t:一个 scale 管多少个数}', 96, 1010, font(600, 34), K.ink2));
+}
+
+// ---------- 各版本的体积构成 ----------
+// 各版本的体积构成，按 Hugging Face safetensors 元数据里各 dtype 的参数量算（2026-10-03 读取）。每段：[层, BF16 时的 GiB, 量化后的 GiB, 颜色, 位宽]
+//   FP8：24.70B 个 FP8 + 3.08B 个 BF16；NVFP4（NVIDIA）：18.38B 个 FP4（9.19 GB）+ 每 16 个值一个 scale（1.15 GB）+ 7.21B 个 FP8 + 2.18B 个 BF16；
+//   INT4（RedHatAI）：3.03B 个 BF16，其余 13.39 GB 是 4 bit 权重与步长。
+const GIB = 1e9 / 2 ** 30, B8 = '#5b7fe6';
+const PARTS = {
+  fp8: [['要量化的层', 49.40 * GIB, 24.70 * GIB, B8, '8 bit'], ['没压', 6.16 * GIB, 6.16 * GIB, K.ink2, '']],
+  nvfp4: [['MLP 与 lm_head', 36.76 * GIB, 9.19 * GIB, K.blue, '4 bit'], ['scale', 0, 1.15 * GIB, K.ink, ''], ['attention', 14.42 * GIB, 7.21 * GIB, B8, '8 bit'], ['没压', 4.36 * GIB, 4.36 * GIB, K.ink2, '']],
+  int4: [['要量化的层', 49.50 * GIB, 13.39 * GIB, K.blue, '4 bit'], ['没压', 6.06 * GIB, 6.06 * GIB, K.ink2, '']],
+};
+
+// ---------- GPTQ：误差让后面的权重补回来 ----------
+// 示意：一行 4 个权重，输入都取 1，这一层的输出就是 4 个权重之和，画成首尾相接的条，总长 = 输出。步长 0.25。
+// GPTQ 一行：按顺序量化，每量化一个，把它的误差平均分给后面还没量化的。GT 是每一步 [舍入, 后面补偿] 的时间。
+const GW = [.37, .61, .35, .56], rq = (v) => Math.round(v / .25) * .25, GT = [[7.0, 8.6], [10.6, 11.8], [13.2, 14.0], [15.0, 0]];
+function gstate() { const w = [...GW]; let qn = 0;
+  GT.forEach(([ta, tb], k) => { const a = S(ta, .7), b = k < 3 ? S(tb, .8) : 0; if (a <= 0) return; const q = rq(w[k]), e = w[k] - q;
+    w[k] = mix(w[k], q, a); if (a >= 1) qn = k + 1; for (let j = k + 1; j < 4; j++) w[j] += e / (3 - k) * b; });
+  return { w, qn }; }
+function s5() {
+  frame('② 每个数落到哪个刻度上', K.purple, '各自取最近的不是最好：要保住的是{b:加起来的输出}', 'Frantar et al., 2023 · 数值为示意');
+  const x0 = 330, U = 690, h = 78, tx = x0 + 1.89 * U, y1 = 384, y2 = 524, y3 = 686;
+  const segs = (y, ws, col) => { let x = x0; ws.forEach((w, i) => { const c = col(i), pw = w * U; R(x + 2, y, pw - 4, h, c); TX(w.toFixed(2), x + pw / 2, y + 56, font(700, 34, HN), c === K.lg ? K.ink : '#fff', 'center'); x += pw; }); return x; };
+  const name = (y, a, b) => { TX(a, 96, y + 44, font(700, 40), K.ink); TX(b, 96, y + 78, font(600, 24), K.gray); };
+  IN(.9, () => RICH('从矩阵里取一行，只看 4 个权重。输出 = 每个权重 {b:× 它的输入}，再相加。先看最简单的情况：四个输入都是 1', 96, 318, font(600, 30), K.ink2));
+  IN(1.6, () => GW.forEach((w, i) => { let x = x0; for (let k = 0; k < i; k++) x += GW[k] * U; TX('× 1', x + w * U / 2, y1 - 12, font(700, 24, HN), K.gray, 'center'); }), .5, 0);
+  IN(1.6, () => { name(y1, '原始', '16 bit'); segs(y1, GW, (i) => (i ? K.lg : K.purple)); }, .6, 12);
+  const dl = S(2.0, .9); if (dl > 0) line(tx, y1 - 14, tx, y1 - 14 + (y3 + h + 28 - y1) * dl, K.ink, 3, [10, 8]);
+  IN(2.4, () => TX('输出 1.89', tx + 16, y1 + 56, font(700, 36), K.ink), .5, 0);
+  // 直接舍入：四个都向下取，误差同向累加
+  IN(2.8, () => { name(y2, '直接舍入', '各自取最近的刻度');
+    const e = segs(y2, GW.map((w, i) => mix(w, rq(w), S(3.4 + i * .35, .6))), (i) => (T > 3.7 + i * .35 ? K.blue : i ? K.lg : K.purple));
+    A(P(5.2, .4), () => HR(e, y2, tx - e, h, K.red, K.paper2)); }, .6, 12);
+  IN(5.4, () => TX('少了 0.39', tx + 16, y2 + 56, font(700, 36), K.red), .5, 0);
+  // GPTQ：蓝 = 已量化，紫 = 正在量化的，灰 = 还没量化
+  const g = gstate();
+  IN(6.4, () => { name(y3, 'GPTQ', '按顺序，误差往后传'); const e = segs(y3, g.w, (i) => (i < g.qn ? K.blue : i === g.qn ? K.purple : K.lg));
+    if (T > 7.0 && Math.abs(e - tx) > 6) span(Math.min(e, tx), Math.max(e, tx), y3 - 20, K.red, 4); }, .6, 12);
+  const caps = [[7.0, '{p:0.37} 取最近的刻度 0.25，输出{r:少了 0.12}'], [8.6, '后面三个各加 0.04，把输出{b:补回来}'], [10.6, '第二个：0.65 取 0.75，输出{r:多了 0.10}'], [11.8, '后面两个各减 0.05'],
+    [13.2, '每量化一个，剩下的就补一次'], [16.0, '直接舍入差 {r:0.39}，GPTQ 只差 {b:0.11}']], ci = caps.findLastIndex(([t]) => T >= t);
+  if (ci >= 0) IN(caps[ci][0], () => RICH(caps[ci][1], x0, y3 + h + 50, font(700, 34), K.ink), .4, 0);
+  IN(17.2, () => RICH('这个办法叫 {p:GPTQ}：每个权重还是只有 16 个刻度，{b:加起来的输出}却更接近原值', 96, 916, font(700, 36), K.ink));
+  IN(18.6, () => RICH('真实的输入各不相同：误差只能交给{b:输入总是一起变}的权重去补，GPTQ 用几百条样本找出它们', 96, 970, font(700, 30), K.ink));
+  IN(20.0, () => TX('像几个人凑整付账：前面的人少付了，后面的人补上，总数对得上', 96, 1022, font(600, 28), K.gray));
+}
+
+// ---------- 同一个办法用在图片上 ----------
+// 类比：同一张灰度图按 4 bit（16 档）存。各自取最近的一档出现断层；把每个像素的误差分给还没处理的邻居（Floyd–Steinberg），档数不变，断层消失。
+const PIC_W = 180, PIC_H = 140, PIC = (() => { const v = new Float32Array(PIC_W * PIC_H), cx = .46 * PIC_W, cy = .5 * PIC_H, r = .3 * PIC_H, L = [-.5, -.6, .62].map((c) => c / Math.hypot(.5, .6, .62));
+  for (let y = 0; y < PIC_H; y++) for (let x = 0; x < PIC_W; x++) { const u = x / PIC_W, t = y / PIC_H, nx = (x - cx) / r, ny = (y - cy) / r, d2 = nx * nx + ny * ny; let g;
+    if (d2 < 1) g = .05 + .9 * Math.max(0, nx * L[0] + ny * L[1] + Math.sqrt(1 - d2) * L[2]);
+    else if (t < .66) g = .93 - .4 * t / .66 + .08 * (u - .5);
+    else g = (.4 + .32 * (t - .66) / .34) * (1 - .6 * Math.exp(-1.5 * (((u - .6) / .27) ** 2 + ((t - .83) / .07) ** 2)));
+    v[y * PIC_W + x] = clamp(g); }
+  return v; })();
+const PICS = {};
+function pic(mode) { if (PICS[mode]) return PICS[mode]; const c = document.createElement('canvas'); c.width = PIC_W; c.height = PIC_H; const q = c.getContext('2d'), im = q.createImageData(PIC_W, PIC_H), v = Float32Array.from(PIC);
+  for (let y = 0; y < PIC_H; y++) for (let x = 0; x < PIC_W; x++) { const i = y * PIC_W + x, o = v[i], n = mode ? Math.round(clamp(o) * 3) / 3 : o;
+    if (mode === 2) { const e = o - n; if (x + 1 < PIC_W) v[i + 1] += e * 7 / 16; if (y + 1 < PIC_H) { if (x) v[i + PIC_W - 1] += e * 3 / 16; v[i + PIC_W] += e * 5 / 16; if (x + 1 < PIC_W) v[i + PIC_W + 1] += e / 16; } }
+    const k = 22 + n * 226; im.data.set([k, k, k * .97, 255], i * 4); }
+  q.putImageData(im, 0, 0); return (PICS[mode] = c); }
+// 贯穿全片的三格图：同一张图的三种存法并排。picOf 按数值数组生成一张图并缓存，disp 把数值映射到显示亮度
+const PX = [96, 690, 1284], PY = 344, PWD = 540, PHT = 420;
+function picOf(key, make, disp = (v) => v) { if (PICS[key]) return PICS[key]; const vals = make(), c = document.createElement('canvas'); c.width = PIC_W; c.height = PIC_H; const q = c.getContext('2d'), im = q.createImageData(PIC_W, PIC_H);
+  vals.forEach((v, i) => { const k = 22 + clamp(disp(v)) * 226; im.data.set([k, k, k * .97, 255], i * 4); }); q.putImageData(im, 0, 0); return (PICS[key] = c); }
+function drawPic(c, x, p = 1, smooth = false) { X.save(); X.imageSmoothingEnabled = smooth; X.beginPath(); X.rect(x, PY, PWD, PHT * p); X.clip(); X.drawImage(c, x, PY, PWD, PHT); X.restore(); }
+// 一格：先画 base，t0 起一条扫描线自上而下把它换成 over；head 写在图上方，foot 写在 fy；ta 是这一格出现的时间
+function panel(j, t0, base, over, d, head, hc, foot, fy = PY + PHT + 46, ta = t0) { const x = PX[j], p = clamp((T - t0 - .6) / d);
+  IN(ta, () => { if (head) TX(head, x, PY - 16, font(700, 30), hc); drawPic(base, x, 1, true); if (over) { drawPic(over, x, p); if (p > 0 && p < 1) R(x, PY + PHT * p - 3, PWD, 6, K.purple); } box(x, PY, PWD, PHT, 4); }, .6, 0);
+  if (foot) IN(t0 + (over ? .8 + d : .6), () => RICH(foot, x, fy, font(700, 30), K.ink), .5, 0); }
+// 同一个球，右上角加一盏灯：灯是 100，其余都在 1.5 以内。显示时 1.6 以上都画成白
+const NIGHT = (() => { const v = new Float32Array(PIC.length), lx = .85 * PIC_W, ly = .17 * PIC_H; for (let i = 0; i < v.length; i++) { const d = Math.hypot(i % PIC_W - lx, Math.floor(i / PIC_W) - ly); v[i] = PIC[i] * 1.5 + (d < 6 ? 100 : 100 * Math.exp(-(((d - 6) / 2.5) ** 2))); } return v; })();
+const D16 = (v) => v / 1.6, LAMP = (j) => [PX[j] + .85 * PWD, PY + .17 * PHT];
+// 16 档（4 bit）加误差扩散（Floyd–Steinberg）
+const FS16 = () => { const v = Float32Array.from(PIC), o = new Float32Array(v.length); for (let yy = 0; yy < PIC_H; yy++) for (let xx = 0; xx < PIC_W; xx++) { const i = yy * PIC_W + xx, n = Math.round(clamp(v[i]) * 15) / 15, e = v[i] - n; o[i] = n;
+      if (xx + 1 < PIC_W) v[i + 1] += e * 7 / 16; if (yy + 1 < PIC_H) { if (xx) v[i + PIC_W - 1] += e * 3 / 16; v[i + PIC_W] += e * 5 / 16; if (xx + 1 < PIC_W) v[i + PIC_W + 1] += e / 16; } } return o; };
+function sPic() {
+  frame('② 每个数落到哪个刻度上', K.purple, '同一个办法用在图片上：{p:误差分给邻居}，远看就对了', '图片为类比 · 分数：RedHatAI 模型卡');
+  panel(0, .8, pic(0), null, 0, '原图', K.ink, '');
+  const b4 = picOf('b4', () => PIC.map((v) => Math.round(v * 15) / 15));
+  panel(1, 2.4, pic(0), b4, 2.0, '4 bit，各自取最近的刻度', K.ink, '{r:还是前面那些断层}');
+  panel(2, 5.8, pic(0), picOf('d16', FS16), 3.0, '同样 4 bit，误差分给还没处理的邻居', K.purple, '还是 16 个刻度，{p:断层没了}');
+  IN(10.6, () => RICH('GPTQ 的目标也一样：不是每个权重接近原值，而是{b:这一层的输出}接近原输出', 96, 920, font(700, 38), K.ink));
+  IN(12.0, () => TX('Qwen3.8-27B 的公开 INT4 版本就用了 GPTQ：GPQA Diamond 89.2 分 → 87.9 分', 96, 984, font(600, 32), K.ink2));
+}
+
+// ---------- 7 FP8 ----------
+const FP8 = (() => { const a = [0]; for (let m = 1; m < 8; m++) a.push(m / 8 * 2 ** -6); for (let e = 1; e <= 15; e++) for (let m = 0; m < 8; m++) { const v = (1 + m / 8) * 2 ** (e - 7); if (v <= 448) a.push(v); } return a.map((v) => v * 100 / 448); })();
+const INT8 = Array.from({ length: 128 }, (_, i) => i * 100 / 127);
+const E2M1 = [0, .5, 1, 1.5, 2, 3, 4, 6];
+// FP8：图里的数值是 0 … 100（灯），球身在 0 … 1.5。INT8 与 FP8 都按各自的全部取值舍入；图下面的刻度条是 0 到 1.6 这一段里的档位
+function s7() {
+  frame('① 刻度放在哪：等距还是零附近密', K.teal, '数挤在零附近，刻度也该{t:零附近密}：这就是浮点格式', '图片为类比 · 误差：本站在同一层权重上计算');
+  const near = (arr) => (v) => arr.reduce((b, a) => (Math.abs(a - v) < Math.abs(b - v) ? a : b)), lo = (a) => a.filter((v) => v <= 1.6);
+  const o = picOf('night', () => NIGHT, D16), qi = picOf('i8', () => NIGHT.map(near(INT8)), D16), qf = picOf('f8', () => NIGHT.map(near(FP8)), D16);
+  const strip = (j, t0, arr, col, lw) => IN(t0, () => { R(PX[j], 782, PWD, 48, K.paper2); lo(arr).forEach((v) => R(PX[j] + v / 1.6 * (PWD - lw), 782, lw, 48, col)); }, .5, 0);
+  panel(0, .8, o, null, 0, '同一个球，旁边加一盏灯', K.ink, '');
+  IN(1.8, () => { const [lx, ly] = LAMP(0); TX('灯 = 那个特别大的数：100', lx - 44, ly + 10, font(700, 26), K.ink, 'right'); TX('球身：0 到 1.5', PX[0] + 150, PY + 384, font(700, 28), '#fff'); }, .5, 0);
+  IN(2.4, () => { RICH('要存的数从 0 到 100，但{b:大多数挤在零附近}', PX[0], 816, font(700, 28), K.ink); TX('右边灰条：0 到 1.6 之间有几个刻度', PX[0], 858, font(600, 26), K.gray); }, .5, 0);
+  panel(1, 3.4, o, qi, 2.0, 'INT8：256 个刻度，间隔相等', K.ink, '{r:球身上只用到 3 个}', 878); strip(1, 6.2, INT8, K.ink2, 6);
+  panel(2, 7.2, o, qf, 2.0, 'FP8：256 个刻度，零附近密', K.teal, '{t:球身上用到 79 个}', 878); strip(2, 10.0, FP8, K.teal, 3);
+  IN(11.4, () => RICH('像科学计数法：小数记得细，大数记得粗。{t:FP8} 也是整层一个 scale，只是刻度零附近密', 96, 956, font(700, 34), K.ink));
+  IN(12.6, () => RICH('刚才那一层真实权重，都用 8 bit：等距的 INT8 舍入误差 {r:21%}，FP8 是 {t:2.7%}', 96, 1014, font(700, 32), K.ink));
+}
+
+// ---------- 8 NVFP4 ----------
+// 同一张带灯的图压到 4 bit。INT4：每 128 个像素（16 × 8 一块）共用一个步长，等距 8 档；NVFP4：每 16 个像素（4 × 4 一块）共用一个 scale，FP4 的 8 档。图里没有负数，只用到一半的档位
+function s8() {
+  frame('① 刻度放在哪：一个 scale 管多少个数', K.teal, '大数会把尺子撑大：分成小组，{t:每组配一把自己的尺子}', 'NVIDIA, 2025 · 图片为类比 · 误差：本站在同一层权重上计算');
+  const tiles = (tw, th, q) => () => { const out = new Float32Array(NIGHT.length);
+    for (let ty = 0; ty < PIC_H; ty += th) for (let tx = 0; tx < PIC_W; tx += tw) { const idx = []; let mx = 0;
+      for (let y = ty; y < Math.min(PIC_H, ty + th); y++) for (let x = tx; x < Math.min(PIC_W, tx + tw); x++) { idx.push(y * PIC_W + x); mx = Math.max(mx, NIGHT[y * PIC_W + x]); }
+      idx.forEach((i) => (out[i] = q(NIGHT[i], mx))); }
+    return out; };
+  const o = picOf('night', () => NIGHT, D16), qi = picOf('i4', tiles(16, 8, (v, mx) => Math.round(v / (mx / 7)) * (mx / 7)), D16),
+    qf = picOf('f4', tiles(4, 4, (v, mx) => E2M1.reduce((b, a) => (Math.abs(a * mx / 6 - v) < Math.abs(b * mx / 6 - v) ? a : b)) * mx / 6), D16);
+  const fp4 = [...E2M1.slice(1).map((v) => -v).reverse(), ...E2M1].map((v) => v / 6);
+  const strip = (j, t0, xs, col) => IN(t0, () => { R(PX[j], 782, PWD, 48, K.paper2); xs.forEach((u) => R(PX[j] + 8 + u * (PWD - 22), 782, 6, 48, col)); }, .5, 0);
+  panel(0, .8, o, null, 0, '同一张图，压到 4 bit', K.ink, '');
+  IN(2.0, () => { RICH('{b:每组一个 scale}，由组内最大的数决定', PX[0], 816, font(700, 28), K.ink); RICH('真实权重：灯那组 {r:0.14}，普通的组 {b:0.0042}', PX[0], 858, font(600, 26), K.gray); }, .5, 0);
+  panel(1, 3.2, o, qi, 2.0, 'INT4：128 个值一组，刻度等距', K.blue, '{r:灯所在的一大块全被拖累}', 878); strip(1, 6.0, Array.from({ length: 16 }, (_, k) => k / 16), K.blue);
+  panel(2, 7.0, o, qf, 2.0, 'NVFP4：16 个值一组，刻度零附近密', K.teal, '{t:只影响灯旁边一小块}', 878); strip(2, 9.8, fp4.map((v) => (v + 1) / 2), K.teal);
+  // 圈出灯所在的那一组：INT4 是 16 × 8 像素，NVFP4 是 4 × 4 像素
+  IN(6.4, () => { box(PX[1] + 144 * 3, PY + 16 * 3, 48, 24, 4, K.purple); TX('一组', PX[1] + 144 * 3 - 10, PY + 16 * 3 + 22, font(700, 24), K.purple, 'right'); }, .4, 0);
+  IN(10.2, () => { box(PX[2] + 152 * 3, PY + 20 * 3, 12, 12, 4, K.purple); TX('一组', PX[2] + 152 * 3 - 10, PY + 20 * 3 + 14, font(700, 24), K.purple, 'right'); }, .4, 0);
+  IN(11.2, () => RICH('同一层真实权重，4 bit 等距刻度：整层一个 scale {r:99%}，每 128 个值一个 scale {b:12%}', 96, 958, font(700, 36), K.ink));
+  IN(12.4, () => RICH('{t:NVFP4} = 零附近密的刻度 + 每 16 个值一个 scale（scale 也要存）：{t:9.4%}', 96, 1014, font(700, 32), K.ink));
+}
+
+// ---------- batch 变大之后 ----------
+const SPEED = [[1, 2.93], [2, 3.19], [4, 3.02], [8, 2.9], [16, 2.74], [32, 2.26], [64, 1.78], [128, 1.2]];
+function sRes() {
+  frame('同时服务很多请求，还快吗', K.red, 'batch 小时 4 bit 快{b:约 3 倍}，batch 128 只剩 1.2 倍', 'Marlin 论文 · Llama-2-7B · A10 · batch = 同时处理的请求数');
+  const x0 = 220, pitch = 190, base = 846, U = 138, yv = (v) => base - v * U;
+  IN(.8, () => { [0, 1, 2, 3].forEach((v) => { line(x0 - 30, yv(v), 1720, yv(v), K.paper2, 3); TX(`${v}×`, x0 - 46, yv(v) + 10, font(600, 28, HN), K.gray, 'right'); }); TX('batch', x0 - 46, base + 42, font(600, 28, HN), K.gray, 'right'); TX('Llama-2-7B 上，INT4 相对 16 bit 的速度（Marlin 论文的测量）', x0 - 30, yv(3.87) + 44, font(600, 26), K.gray); }, .5, 0);
+  const dl = S(1.4, 1.0); if (dl > 0) line(x0 - 30, yv(3.87), x0 - 30 + (1750 - x0) * dl, yv(3.87), K.purple, 4, [14, 10]);
+  IN(2.2, () => TX('体积之比 3.87×：只看读权重的上限', 1720, yv(3.87) - 16, font(700, 30), K.purple, 'right'), .5, 0);
+  SPEED.forEach(([b, v], i) => { const x = x0 + i * pitch, g = S(3.0 + i * .4, .8), far = i > 4; R(x, yv(v * g), 130, v * g * U, far ? K.red : K.blue);
+    IN(3.0 + i * .4, () => TX(String(b), x + 65, base + 42, font(700, 32, HN), K.ink, 'center'), .4, 0);
+    if (!i || i === 7) IN(3.7 + i * .4, () => TX(v.toFixed(2) + '×', x + 65, yv(v) - 14, font(700, 38, HN), K.ink, 'center'), .4, 0); });
+  IN(6.6, () => { span(x0, x0 + 4 * pitch + 130, base + 76, K.blue); TX('时间花在读权重：字节少就快', x0 + 2 * pitch + 65, base + 120, font(700, 30), K.blue, 'center'); }, .5, 0);
+  IN(7.8, () => { span(x0 + 5 * pitch, x0 + 7 * pitch + 130, base + 76, K.red); TX('时间花在计算：INT4 要先还原（编号 × scale）', x0 + 6 * pitch + 65, base + 120, font(700, 30), K.red, 'center'); }, .5, 0);
+  IN(9.4, () => RICH('想让计算也变便宜，中间结果（activation）也要压到低位宽：{t:NVFP4 就是这样做的}', 96, 1036, font(700, 32), K.ink));
+}
+
+// ---------- 体积、速度、收尾 ----------
+// 体积：四座塔立在同一条地面上，一条 32 GiB 的线横穿；要压的段变矮，没压的段不变
+function sFit2() {
+  frame('实际能省多少', K.blue, '三个公开版本：{b:压哪些层、压到几 bit}，各家选得不一样', 'checkpoint 构成：Hugging Face，2026-10');
+  const by = 900, u = 11.4, cy = by - CARD * u, xs = [470, 820, 1170, 1520], w = 230;
+  IN(.8, () => { line(96, cy, 1824, cy, K.ink, 4, [14, 10]); TX('RTX 5090 · 32 GiB', 96, cy - 16, font(700, 30), K.ink); R(96, by, 1728, 4, K.ink); }, .5, 0);
+  IN(3.8, () => { let lx = 1290; [[K.blue, '4 bit'], [B8, '8 bit'], [K.ink2, '没压，仍是 16 bit']].forEach(([c, t]) => { R(lx, 293, 24, 24, c); TX(t, lx + 32, 315, font(600, 26), K.ink2); X.font = font(600, 26); lx += X.measureText(t).width + 62; }); }, .5, 0);
+  const name = (i, n, sub2) => { TX(n, xs[i] + w / 2, by + 50, font(700, 40, HN), K.ink, 'center'); TX(sub2, xs[i] + w / 2, by + 84, font(600, 24), K.gray, 'center'); };
+  const g = CK.bf16 * S(1.0, 1.6);
+  A(P(.8, .5), () => { name(0, 'BF16', '原始权重'); R(xs[0], by - Math.min(g, CARD) * u, w, Math.min(g, CARD) * u, K.blue); if (g > CARD) HR(xs[0], by - g * u, w, (g - CARD) * u, K.red, K.paper2); });
+  IN(2.6, () => { TX('51.8 GiB', xs[0] + w / 2, by - CK.bf16 * u - 14, font(700, 32, HN), K.ink, 'center'); R(xs[0] + 30, cy - 142, w - 60, 46, K.paper); TX('超出 19.8', xs[0] + w / 2, cy - 108, font(700, 30), K.red, 'center'); }, .5, 0);
+  [['FP8', '官方发布', 'fp8', CK.fp8, 3.8], ['NVFP4', 'NVIDIA 发布', 'nvfp4', CK.nvfp4, 8.2], ['INT4', 'RedHatAI 发布', 'int4', CK.int4, 13.0]].forEach(([n, sub2, k, tot, t0], i) => { const a = P(t0, .5), c = S(t0 + 1.4, 1.3), x = xs[i + 1]; if (a <= 0) return;
+    A(a, () => { name(i + 1, n, sub2); let y = by; [...PARTS[k]].reverse().forEach(([pn, pa, pb, col, bit]) => { const hh = mix(pa, pb, c) * u; if (hh < 1) return; y -= hh; R(x, y + (hh > 10 ? 3 : 0), w, hh - (hh > 10 ? 3 : 0), col);
+        const put = (t, al, fs) => A(al, () => { if (hh > fs + 8) TX(t, x + w / 2, y + hh / 2 + fs * .36, font(700, fs), '#fff', 'center'); });
+        put(pn, 1 - clamp(c * 4), 26); put(hh > 70 ? `${bit} · ${pb.toFixed(1)}` : pb.toFixed(1), clamp(c * 5 - 4), 28); });
+      A(P(t0 + 2.8, .5), () => { R(x, cy + 2, w, y - cy - 2, K.yel); if (y - cy > 40) TX(`余 ${(CARD - tot.toFixed(1)).toFixed(1)}`, x + w / 2, (y + cy) / 2 + 10, font(700, 28), K.ink, 'center'); }); });
+    IN(t0 + 2.9, () => TX(`${tot.toFixed(1)} GiB`, x + w / 2, cy - 16, font(700, 32, HN), K.ink, 'center'), .5, 0); });
+  const caps = [[3.8, 'FP8 版：大部分层从 16 bit 压到 8 bit，体积减半；embedding 等少数层没压'], [8.2, 'NVIDIA 的 NVFP4 版：MLP 压到 4 bit，attention 只压到 8 bit，每 16 个值再配一个 scale'],
+    [13.0, 'RedHatAI 的 INT4 版：能压的层全部压到 4 bit，所以最小'], [17.0, '都不是正好一半、四分之一：{b:没压的层}一点没变，各家压的层也不一样']], ci = caps.findLastIndex(([t]) => T >= t);
+  if (ci >= 0) IN(caps[ci][0], () => RICH(caps[ci][1], 96, 1040, font(700, 32), K.ink), .4, 0);
+}
+// 速度：同一段话，三种格式同时开始写，按真实的 tok/s 播放（每个字算一个 token）
+const ESSAY = '模型就是一大堆数。每个数原来占十六个比特，量化之后只占四个。四个比特只有十六种组合，所以每个数只能从十六个值里挑最近的一个。这些值放在哪，每个数落到哪一个，决定了还剩多少精度。数大多挤在零附近，所以刻度也要在零附近放得密一些。偶尔有一个特别大的数，就把数分成小组，每组配一把自己的尺子。取最近的值不一定最好，要保住的是加起来的输出。字节少了，读一遍权重的时间就短，生成每个字也就更快。';
+function s2b() {
+  frame('省下的字节换来什么', K.blue, '每生成一个 token，{b:全部权重}读一遍：字节少了就快', '速度：DGX Spark，单请求，开 MTP（Rieker, 2026-09）');
+  const y = 300, h = 70, ww = 1300, grow = S(.5, 1.0), pos = T < 1.6 ? 0 : ((T - 1.6) * .5) % 1, hx = 96 + ww * pos;
+  A(.45, () => R(96, y, ww * grow, h, K.blue)); R(96, y, Math.min(hx - 96, ww * grow), h, K.blue);
+  IN(.9, () => TX('Qwen3.8-27B 的权重', 118, y + h / 2 + 13, font(700, 36), '#fff'), .5, 0);
+  A(P(1.4, .4), () => { line(hx, y - 20, hx, y + h + 20, K.ink, 8); X.fillStyle = K.ink; X.beginPath(); X.moveTo(hx - 18, y - 38); X.lineTo(hx + 18, y - 38); X.lineTo(hx, y - 12); X.fill(); });
+  IN(2.4, () => { TX('GPU 算得快、读得慢：', 1430, y + 28, font(700, 30), K.ink); TX('写一个字的时间 ≈ 读一遍权重的时间', 1430, y + 68, font(700, 28), K.ink); });
+  IN(4.0, () => TX('同一段话，三种格式同时开始写（按真实速度播放，每个字算一个 token）', 96, 444, font(700, 30), K.ink));
+  const el = clamp((T - 5.2) / 5.0) * 5.0, PER = 48;
+  [['BF16', CK.bf16, 14.6], ['FP8', CK.fp8, 20.6], ['NVFP4', CK.nvfp4, 38.6]].forEach(([n, g, tps], i) => { const ry = 470 + i * 156, cnt = Math.min(ESSAY.length, Math.floor(tps * el));
+    IN(4.4 + i * .2, () => { TX(n, 96, ry + 44, font(700, 36, HN), K.ink); TX(`${g.toFixed(1)} GiB`, 96, ry + 78, font(600, 26, HN), K.gray); R(320, ry, 1190, 140, K.paper2);
+      X.font = font(600, 24); X.fillStyle = i === 2 ? K.blue : K.ink; X.textAlign = 'left'; X.textBaseline = 'alphabetic';
+      for (let l = 0; l * PER < cnt; l++) X.fillText(ESSAY.slice(l * PER, Math.min(cnt, (l + 1) * PER)), 334, ry + 34 + l * 33);
+      if (T > 5.2 && cnt < ESSAY.length) R(334 + (cnt % PER) * 24 + 2, ry + 12 + Math.floor(cnt / PER) * 33, 12, 26, K.purple); }, .5, 0);
+    IN(10.4 + i * .3, () => { TX(`${tps} tok/s`, 1540, ry + 62, font(700, 44, HN), i === 2 ? K.blue : K.ink); TX(`${cnt} 个字`, 1540, ry + 104, font(600, 28), K.gray); }, .5, 0); });
+  IN(11.8, () => RICH('同样 5 秒：{b:14.6 tok/s} 写了 73 个字，{b:38.6 tok/s} 写了 193 个字', 96, 986, font(700, 38), K.ink));
+  IN(13.2, () => TX('像每写一个字都要把整本书翻一遍：书薄了，写得就快', 96, 1034, font(600, 30), K.ink2));
+}
+// 收尾：封面那张图回来。右半先是开头的 4 bit（断层），再换成“同样 4 bit、用上两个选择”的结果
+function sEnd2() {
+  frame('回到开头', K.ink2, '同样是 4 bit：{b:选对放法和落法}，图回来了，模型也装下了', '图片为类比 · 分数：NVIDIA 与 RedHatAI 的模型卡');
+  const x = 96, y = 300, w = 720, h = 560, b4 = picOf('b4', () => PIC.map((v) => Math.round(v * 15) / 15)), sw = S(2.0, 2.2);
+  const d16 = picOf('d16', FS16);
+  IN(.6, () => { X.save(); X.imageSmoothingEnabled = true; X.drawImage(pic(0), x, y, w, h); X.imageSmoothingEnabled = false; X.beginPath(); X.rect(x + w / 2, y, w / 2, h); X.clip(); X.drawImage(b4, x, y, w, h);
+    X.beginPath(); X.rect(x + w / 2, y, w / 2, h * sw); X.clip(); X.drawImage(d16, x, y, w, h); X.restore(); if (sw > 0 && sw < 1) R(x + w / 2, y + h * sw - 3, w / 2, 6, K.purple);
+    box(x, y, w, h, 5); R(x + w / 2 - 3, y - 14, 6, h + 28, K.purple); TX('16 bit', x + 20, y + 46, font(700, 32, HN), K.ink); TX('4 bit', x + w - 20, y + 46, font(700, 32, HN), K.ink, 'right'); }, .6, 0);
+  IN(4.4, () => RICH('右半还是只有 16 个刻度，{p:误差分给了邻居}', x, y + h + 46, font(700, 30), K.ink), .5, 0);
+  const cx = 900, px = 17, wv = mix(CK.bf16, CK.nvfp4, S(5.4, 1.8));
+  IN(5.0, () => { TX('RTX 5090 · 32 GiB', cx + CARD * px, 320, font(700, 28), K.ink, 'right'); cardbar(cx, 340, px, 90, wv); }, .6, 0);
+  IN(7.4, () => barLabels(cx, 340, px, 90, CK.nvfp4, 32, 'NVFP4 版 20.4 GiB', '余 11.6 GiB'), .5, 0);
+  IN(8.2, () => RICH('NVFP4 版的生成速度（DGX Spark 上）　{b:14.6} → {b:38.6} tok/s', cx, 506, font(700, 32), K.ink));
+  R(cx, 546, 924 * S(9.4, .7), 3, K.lg);
+  IN(9.8, () => TX('两个公开的 4 bit 版本，各靠一个选择保住精度', cx, 604, font(700, 32), K.ink));
+  IN(10.6, () => { RICH('{b:① 刻度放在哪}　NVFP4 版：浮点刻度，每 16 个值一个 scale', cx, 668, font(700, 30), K.ink); TX('GPQA Diamond　88.9 分 → 88.0 分', cx + 190, 712, font(600, 28), K.ink2); });
+  IN(12.0, () => { RICH('{p:② 落到哪个刻度}　INT4 版：等距刻度，用 GPTQ 补偿', cx, 782, font(700, 30), K.ink); TX('GPQA Diamond　89.2 分 → 87.9 分', cx + 190, 826, font(600, 28), K.ink2); });
+  IN(13.6, () => TX('上线前在自己的任务上评测精度', cx, 892, font(600, 28), K.gray));
+}
+
+// ====================== 运行时：场景之间交叉淡化，帧内多次采样做运动模糊 ======================
+const FILM = [[sA, 21.6], [sB, 19.6], [sBall, 13.2], [sHist, 16.4], [s7, 14.8], [s8, 14.6], [s5, 22.6], [sPic, 15.0], [sFit2, 20.2], [s2b, 15.6], [sRes, 12.8], [sEnd2, 16.6]], XF = .7;
+let _t = 0; const SCENES = FILM.map(([fn, dur]) => { const sc = { fn, dur, at: _t }; _t += dur; return sc; });
+window.DURATION = _t;
+// 音效事件：[幕内时间, 类型]，与各幕的动效时间对应
+const t1 = CV + MORPH, seq = (n, t0, dt, k) => Array.from({ length: n }, (_, i) => [t0 + i * dt, k]);
+const EV = new Map([
+  [sA, [[.2, 'pop'], [.7, 'whoosh'], [1.0, 'tick'], [1.8, 'tick'], [2.4, 'land'], [CV, 'whoosh'], [t1 + .1, 'pop'], [t1 + 1.0, 'tick'], [t1 + 1.4, 'whoosh'], [t1 + 2.6, 'whoosh'], [t1 + 2.8, 'pop'], [t1 + 4.2, 'whoosh'], [t1 + 5.8, 'pop'], ...seq(16, t1 + 6.6, .05, 'tick'), [t1 + 8.8, 'pop'], [t1 + 10.4, 'whoosh'], [t1 + 12.0, 'err'], [t1 + 13.4, 'pop']]],
+  [sB, [[.1, 'click'], [1.8, 'whoosh'], ...seq(16, 3.3, .11, 'tick'), [6.0, 'tick'], [7.0, 'pop'], [7.6, 'whoosh'], [8.2, 'land'], [8.6, 'whoosh'], [9.8, 'tick'], [10.5, 'tick'], [11.4, 'whoosh'], [12.1, 'land'], [12.6, 'pop'], [14.0, 'pop'], [15.1, 'tick'], [15.7, 'tick'], [16.4, 'tick']]],
+  [sBall, [[.1, 'click'], [.8, 'pop'], [2.6, 'whoosh'], [4.4, 'tick'], [5.2, 'whoosh'], [7.4, 'err'], [8.2, 'pop'], [9.6, 'pop']]],
+  [sHist, [[.1, 'click'], [.9, 'whoosh'], [1.4, 'whoosh'], [2.8, 'tick'], [4.6, 'whoosh'], [7.0, 'err'], ...seq(16, 9.0, .08, 'tick'), [10.8, 'err'], [12.2, 'pop'], [13.6, 'tick']]],
+  [sFit2, [[.1, 'click'], [1.0, 'whoosh'], [2.6, 'err'], ...[3.8, 8.2, 13.0].flatMap((t) => [[t, 'pop'], [t + 1.4, 'whoosh'], [t + 2.8, 'land']]), [17.0, 'pop']]],
+  [s2b, [[.1, 'click'], [.5, 'whoosh'], [2.4, 'tick'], [4.0, 'tick'], ...seq(36, 5.2, .137, 'tick'), [10.4, 'pop'], [11.8, 'pop'], [13.2, 'tick']]],
+  [sEnd2, [[.1, 'click'], [.6, 'pop'], [2.6, 'whoosh'], [4.4, 'land'], [5.4, 'whoosh'], [7.2, 'land'], [8.2, 'pop'], [9.4, 'whoosh'], [9.8, 'tick'], [10.6, 'pop'], [12.0, 'pop'], [13.6, 'tick']]],
+  [s5, [[.1, 'click'], [1.6, 'pop'], [2.0, 'whoosh'], ...seq(4, 3.4, .35, 'land'), [5.4, 'err'], [7.0, 'land'], [7.7, 'err'], [8.6, 'whoosh'], [9.4, 'pop'], [10.6, 'land'], [11.8, 'whoosh'], [13.2, 'land'], [14.0, 'whoosh'], [15.0, 'land'], [16.0, 'pop'], [17.2, 'pop'], [18.6, 'pop'], [20.0, 'tick']]],
+  [sPic, [[.1, 'click'], [.8, 'pop'], [3.0, 'whoosh'], [5.2, 'err'], [6.4, 'whoosh'], [9.6, 'land'], [10.6, 'pop'], [12.0, 'tick']]],
+  [s7, [[.1, 'click'], [.8, 'pop'], [1.8, 'tick'], [2.4, 'tick'], [4.0, 'whoosh'], [6.2, 'err'], [7.8, 'whoosh'], [10.0, 'land'], [11.4, 'pop'], [12.6, 'tick']]],
+  [s8, [[.1, 'click'], [.8, 'pop'], [2.0, 'tick'], [3.8, 'whoosh'], [6.0, 'err'], [7.6, 'whoosh'], [9.8, 'land'], [11.2, 'pop'], [12.4, 'tick']]],
+  [sRes, [[.1, 'click'], [1.4, 'whoosh'], ...seq(8, 3.0, .4, 'tick'), [6.6, 'pop'], [7.8, 'err'], [9.4, 'pop']]],
+]);
+window.EVENTS = SCENES.flatMap((sc) => (EV.get(sc.fn) || []).map(([x, k]) => [sc.at + x, k]));
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const mk = () => { const c = document.createElement('canvas'); c.width = 1920; c.height = 1080; return c; };
+const o1 = mk(), o2 = mk(), c1 = o1.getContext('2d'), c2 = o2.getContext('2d');
+function paint(c, sc, tt) { X = c; T = Math.max(0, tt); X.setTransform(1, 0, 0, 1, 0, 0); X.globalAlpha = 1; X.setLineDash([]); X.lineCap = 'butt'; R(0, 0, 1920, 1080, K.paper); sc.fn(); }
+function drawFrame(t) { let i = SCENES.findIndex((s) => t < s.at + s.dur); if (i < 0) i = SCENES.length - 1; const sc = SCENES[i], local = t - sc.at;
+  paint(c1, sc, local);
+  if (i > 0 && local < XF) { const pv = SCENES[i - 1]; paint(c2, pv, pv.dur + local); c1.setTransform(1, 0, 0, 1, 0, 0); c1.globalAlpha = 1 - io(local / XF); c1.drawImage(o2, 0, 0); c1.globalAlpha = 1; } }
+window.renderAt = (t, fps = 60, samples = 5, shutter = .25) => {
+  for (let s = 0; s < samples; s++) { const ts = samples > 1 ? t - (shutter / Math.max(fps, 30)) * (1 - s / (samples - 1)) : t;
+    drawFrame(Math.max(0, ts)); ctx.globalAlpha = 1 / (s + 1); ctx.drawImage(o1, 0, 0); }
+  ctx.globalAlpha = 1;
+  const ch = SCENES.findIndex((s) => t < s.at + s.dur), ci = ch < 0 ? SCENES.length - 1 : ch;
+  ctx.fillStyle = K.paper2; ctx.fillRect(96, 1066, 1728, 4); ctx.fillStyle = K.teal; ctx.fillRect(96, 1066, 1728 * clamp(t / window.DURATION), 4);
+  ctx.font = font(600, 18); ctx.fillStyle = K.gray; ctx.textAlign = 'right'; ctx.fillText(String(ci + 1).padStart(2, '0') + ' / ' + SCENES.length, 1824, 1055);
+  if (t > window.DURATION - .8) { ctx.globalAlpha = io((t - window.DURATION + .8) / .8); ctx.fillStyle = K.paper; ctx.fillRect(0, 0, 1920, 1080); ctx.globalAlpha = 1; }
+};
+window.sceneStarts = SCENES.map((s) => s.at);
+window.sceneEnds = SCENES.map((s, i) => s.at + s.dur - (i === SCENES.length - 1 ? .9 : .05));
+window.renderAt(0);
+if (new URLSearchParams(location.search).has('play')) { const start = performance.now(); const play = (now) => { window.renderAt(((now - start) / 1000) % window.DURATION, 60, 1); requestAnimationFrame(play); }; requestAnimationFrame(play); }
+</script>
+</body>
+</html>

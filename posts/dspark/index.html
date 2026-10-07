@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="DeepSeek V4 线上的 speculative decoding：并行 backbone 加一个很小的 Markov head 生成 draft，confidence head 估计每个 token 的存活概率，调度器按负载决定每个请求验几个。" />
+    <meta name="theme-color" content="#ffffff" />
+    <script src="/theme.js"></script>
+    <title>DSpark：DeepSeek V4 的 Speculative Decoding · luca’s blog</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/articles/dspark/dspark.tsx"></script>
+  </body>
+</html>

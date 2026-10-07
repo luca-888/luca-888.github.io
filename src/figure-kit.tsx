@@ -5,7 +5,7 @@ import katex from 'katex'
 import './figure-kit.css'
 
 export type Hue = 'blue' | 'purple' | 'teal' | 'green' | 'amber' | 'red' | 'gray'
-export type Fill = Hue | 'free' | 'empty'
+export type Fill = Hue | 'free' | 'empty' | 'ink' | 'void'
 
 // 紧凑模式：小红书等窄屏导出时为 true，图按约 520 宽的竖排布局绘制，放大后图内文字接近正文字号。
 export const CompactContext = createContext(false)

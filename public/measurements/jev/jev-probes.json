@@ -1,0 +1,2021 @@
+{
+ "meta": {
+  "model": "jev-1.13.0",
+  "date": "2026-10-03",
+  "note": "wall_ms is client-side round trip from the author's laptop; upstream_ms is the x-envoy-upstream-service-time header when present"
+ },
+ "accounting": [
+  {
+   "questions": 1,
+   "usage": {
+    "input_tokens": 298,
+    "output_tokens": 21
+   }
+  },
+  {
+   "questions": 2,
+   "usage": {
+    "input_tokens": 311,
+    "output_tokens": 38
+   }
+  },
+  {
+   "questions": 3,
+   "usage": {
+    "input_tokens": 324,
+    "output_tokens": 55
+   }
+  },
+  {
+   "questions": 5,
+   "usage": {
+    "input_tokens": 350,
+    "output_tokens": 89
+   }
+  },
+  {
+   "questions": 10,
+   "usage": {
+    "input_tokens": 415,
+    "output_tokens": 174
+   }
+  },
+  {
+   "state": "ticket x20",
+   "questions": 1,
+   "usage": {
+    "input_tokens": 792,
+    "output_tokens": 21
+   }
+  },
+  {
+   "state": "ticket x20",
+   "questions": 2,
+   "usage": {
+    "input_tokens": 805,
+    "output_tokens": 38
+   }
+  },
+  {
+   "state": "ticket x20",
+   "questions": 10,
+   "usage": {
+    "input_tokens": 909,
+    "output_tokens": 174
+   }
+  }
+ ],
+ "isolation": [
+  {
+   "secret_in_sibling": {
+    "none": 1.0,
+    "OTTER-1029": 0.0,
+    "FALCON-5530": 0.0,
+    "ZEBRA-7741": 0.0
+   },
+   "secret_in_state": {
+    "ZEBRA-7741": 1.0,
+    "FALCON-5530": 0.0,
+    "OTTER-1029": 0.0,
+    "none": 0.0
+   }
+  },
+  {
+   "secret_in_sibling": {
+    "ZEBRA-7741": 0.0,
+    "FALCON-5530": 0.0,
+    "OTTER-1029": 0.0,
+    "none": 1.0
+   },
+   "secret_in_state": {
+    "ZEBRA-7741": 1.0,
+    "none": 0.0,
+    "OTTER-1029": 0.0,
+    "FALCON-5530": 0.0
+   }
+  },
+  {
+   "secret_in_sibling": {
+    "OTTER-1029": 0.0,
+    "FALCON-5530": 0.0,
+    "none": 1.0,
+    "ZEBRA-7741": 0.0
+   },
+   "secret_in_state": {
+    "FALCON-5530": 0.0,
+    "OTTER-1029": 0.0,
+    "ZEBRA-7741": 1.0,
+    "none": 0.0
+   }
+  },
+  {
+   "secret_in_sibling": {
+    "OTTER-1029": 0.0,
+    "none": 1.0,
+    "ZEBRA-7741": 0.0,
+    "FALCON-5530": 0.0
+   },
+   "secret_in_state": {
+    "OTTER-1029": 0.0,
+    "ZEBRA-7741": 1.0,
+    "none": 0.0,
+    "FALCON-5530": 0.0
+   }
+  },
+  {
+   "secret_in_sibling": {
+    "FALCON-5530": 0.0,
+    "OTTER-1029": 0.0,
+    "ZEBRA-7741": 0.0,
+    "none": 1.0
+   },
+   "secret_in_state": {
+    "ZEBRA-7741": 1.0,
+    "OTTER-1029": 0.0,
+    "FALCON-5530": 0.0,
+    "none": 0.0
+   }
+  }
+ ],
+ "order": [
+  {
+   "order": [
+    "payments",
+    "account",
+    "bank"
+   ],
+   "probabilities": {
+    "payments": 1.0,
+    "account": 0.0,
+    "bank": 0.0
+   }
+  },
+  {
+   "order": [
+    "payments",
+    "account",
+    "bank"
+   ],
+   "probabilities": {
+    "account": 0.0,
+    "payments": 1.0,
+    "bank": 0.0
+   }
+  },
+  {
+   "order": [
+    "payments",
+    "account",
+    "bank"
+   ],
+   "probabilities": {
+    "account": 0.0,
+    "bank": 0.0,
+    "payments": 1.0
+   }
+  },
+  {
+   "order": [
+    "payments",
+    "bank",
+    "account"
+   ],
+   "probabilities": {
+    "payments": 1.0,
+    "bank": 0.0,
+    "account": 0.0
+   }
+  },
+  {
+   "order": [
+    "payments",
+    "bank",
+    "account"
+   ],
+   "probabilities": {
+    "bank": 0.0,
+    "account": 0.0,
+    "payments": 1.0
+   }
+  },
+  {
+   "order": [
+    "payments",
+    "bank",
+    "account"
+   ],
+   "probabilities": {
+    "account": 0.0,
+    "bank": 0.0,
+    "payments": 1.0
+   }
+  },
+  {
+   "order": [
+    "account",
+    "payments",
+    "bank"
+   ],
+   "probabilities": {
+    "payments": 1.0,
+    "account": 0.0,
+    "bank": 0.0
+   }
+  },
+  {
+   "order": [
+    "account",
+    "payments",
+    "bank"
+   ],
+   "probabilities": {
+    "bank": 0.0,
+    "account": 0.0,
+    "payments": 1.0
+   }
+  },
+  {
+   "order": [
+    "account",
+    "payments",
+    "bank"
+   ],
+   "probabilities": {
+    "account": 0.0,
+    "bank": 0.0,
+    "payments": 1.0
+   }
+  },
+  {
+   "order": [
+    "account",
+    "bank",
+    "payments"
+   ],
+   "probabilities": {
+    "payments": 1.0,
+    "bank": 0.0,
+    "account": 0.0
+   }
+  },
+  {
+   "order": [
+    "account",
+    "bank",
+    "payments"
+   ],
+   "probabilities": {
+    "bank": 0.0,
+    "account": 0.0,
+    "payments": 1.0
+   }
+  },
+  {
+   "order": [
+    "account",
+    "bank",
+    "payments"
+   ],
+   "probabilities": {
+    "bank": 0.0,
+    "payments": 1.0,
+    "account": 0.0
+   }
+  },
+  {
+   "order": [
+    "bank",
+    "payments",
+    "account"
+   ],
+   "probabilities": {
+    "bank": 0.0,
+    "payments": 1.0,
+    "account": 0.0
+   }
+  },
+  {
+   "order": [
+    "bank",
+    "payments",
+    "account"
+   ],
+   "probabilities": {
+    "bank": 0.0,
+    "payments": 1.0,
+    "account": 0.0
+   }
+  },
+  {
+   "order": [
+    "bank",
+    "payments",
+    "account"
+   ],
+   "probabilities": {
+    "bank": 0.0,
+    "payments": 1.0,
+    "account": 0.0
+   }
+  },
+  {
+   "order": [
+    "bank",
+    "account",
+    "payments"
+   ],
+   "probabilities": {
+    "bank": 0.0,
+    "account": 0.0,
+    "payments": 1.0
+   }
+  },
+  {
+   "order": [
+    "bank",
+    "account",
+    "payments"
+   ],
+   "probabilities": {
+    "bank": 0.0,
+    "account": 0.0,
+    "payments": 1.0
+   }
+  },
+  {
+   "order": [
+    "bank",
+    "account",
+    "payments"
+   ],
+   "probabilities": {
+    "account": 0.0,
+    "bank": 0.0,
+    "payments": 1.0
+   }
+  }
+ ],
+ "latency_questions": [
+  {
+   "size": 1,
+   "runs": [
+    {
+     "wall_ms": 658.1,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 303,
+      "output_tokens": 21
+     }
+    },
+    {
+     "wall_ms": 740.3,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 303,
+      "output_tokens": 21
+     }
+    },
+    {
+     "wall_ms": 767.7,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 303,
+      "output_tokens": 21
+     }
+    },
+    {
+     "wall_ms": 611.3,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 303,
+      "output_tokens": 21
+     }
+    },
+    {
+     "wall_ms": 696.4,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 303,
+      "output_tokens": 21
+     }
+    },
+    {
+     "wall_ms": 690.4,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 303,
+      "output_tokens": 21
+     }
+    }
+   ],
+   "median_wall_ms": 693.4,
+   "min_wall_ms": 611.3,
+   "input_tokens": 303
+  },
+  {
+   "size": 10,
+   "runs": [
+    {
+     "wall_ms": 697.1,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 477,
+      "output_tokens": 174
+     }
+    },
+    {
+     "wall_ms": 769.0,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 477,
+      "output_tokens": 174
+     }
+    },
+    {
+     "wall_ms": 689.8,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 477,
+      "output_tokens": 174
+     }
+    },
+    {
+     "wall_ms": 690.5,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 477,
+      "output_tokens": 174
+     }
+    },
+    {
+     "wall_ms": 622.7,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 477,
+      "output_tokens": 174
+     }
+    },
+    {
+     "wall_ms": 707.3,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 477,
+      "output_tokens": 174
+     }
+    }
+   ],
+   "median_wall_ms": 693.8,
+   "min_wall_ms": 622.7,
+   "input_tokens": 477
+  },
+  {
+   "size": 100,
+   "runs": [
+    {
+     "wall_ms": 788.9,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 2323,
+      "output_tokens": 1794
+     }
+    },
+    {
+     "wall_ms": 752.9,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 2323,
+      "output_tokens": 1794
+     }
+    },
+    {
+     "wall_ms": 780.6,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 2323,
+      "output_tokens": 1794
+     }
+    },
+    {
+     "wall_ms": 707.6,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 2323,
+      "output_tokens": 1794
+     }
+    },
+    {
+     "wall_ms": 648.7,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 2323,
+      "output_tokens": 1794
+     }
+    },
+    {
+     "wall_ms": 792.2,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 2323,
+      "output_tokens": 1794
+     }
+    }
+   ],
+   "median_wall_ms": 766.75,
+   "min_wall_ms": 648.7,
+   "input_tokens": 2323
+  },
+  {
+   "size": 300,
+   "runs": [
+    {
+     "wall_ms": 924.7,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 6623,
+      "output_tokens": 5594
+     }
+    },
+    {
+     "wall_ms": 1095.3,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 6623,
+      "output_tokens": 5594
+     }
+    },
+    {
+     "wall_ms": 896.2,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 6623,
+      "output_tokens": 5594
+     }
+    },
+    {
+     "wall_ms": 858.8,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 6623,
+      "output_tokens": 5594
+     }
+    },
+    {
+     "wall_ms": 1007.5,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 6623,
+      "output_tokens": 5594
+     }
+    },
+    {
+     "wall_ms": 978.9,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 6623,
+      "output_tokens": 5594
+     }
+    }
+   ],
+   "median_wall_ms": 951.8,
+   "min_wall_ms": 858.8,
+   "input_tokens": 6623
+  },
+  {
+   "size": 600,
+   "runs": [
+    {
+     "wall_ms": 1284.1,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 13075,
+      "output_tokens": 11294
+     }
+    },
+    {
+     "wall_ms": 1200.6,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 13075,
+      "output_tokens": 11294
+     }
+    },
+    {
+     "wall_ms": 1256.6,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 13075,
+      "output_tokens": 11294
+     }
+    },
+    {
+     "wall_ms": 1235.9,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 13075,
+      "output_tokens": 11294
+     }
+    },
+    {
+     "wall_ms": 1170.2,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 13075,
+      "output_tokens": 11294
+     }
+    },
+    {
+     "wall_ms": 1165.3,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 13075,
+      "output_tokens": 11294
+     }
+    }
+   ],
+   "median_wall_ms": 1218.25,
+   "min_wall_ms": 1165.3,
+   "input_tokens": 13075
+  },
+  {
+   "size": 1000,
+   "runs": [
+    {
+     "wall_ms": 1424.2,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 21675,
+      "output_tokens": 18894
+     }
+    },
+    {
+     "wall_ms": 1426.1,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 21675,
+      "output_tokens": 18894
+     }
+    },
+    {
+     "wall_ms": 1471.6,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 21675,
+      "output_tokens": 18894
+     }
+    },
+    {
+     "wall_ms": 1343.6,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 21675,
+      "output_tokens": 18894
+     }
+    },
+    {
+     "wall_ms": 1313.1,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 21675,
+      "output_tokens": 18894
+     }
+    },
+    {
+     "wall_ms": 1289.8,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 21675,
+      "output_tokens": 18894
+     }
+    }
+   ],
+   "median_wall_ms": 1383.9,
+   "min_wall_ms": 1289.8,
+   "input_tokens": 21675
+  },
+  {
+   "size": 1500,
+   "runs": [
+    {
+     "wall_ms": 1597.2,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 32923,
+      "output_tokens": 28894
+     }
+    },
+    {
+     "wall_ms": 1651.2,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 32923,
+      "output_tokens": 28894
+     }
+    },
+    {
+     "wall_ms": 1652.8,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 32923,
+      "output_tokens": 28894
+     }
+    },
+    {
+     "wall_ms": 1579.2,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 32923,
+      "output_tokens": 28894
+     }
+    },
+    {
+     "wall_ms": 1540.5,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 32923,
+      "output_tokens": 28894
+     }
+    },
+    {
+     "wall_ms": 2044.5,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 32923,
+      "output_tokens": 28894
+     }
+    }
+   ],
+   "median_wall_ms": 1624.2,
+   "min_wall_ms": 1540.5,
+   "input_tokens": 32923
+  }
+ ],
+ "latency_state": [
+  {
+   "size": 0,
+   "runs": [
+    {
+     "wall_ms": 725.9,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 300,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 700.2,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 300,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 715.8,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 300,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 720.7,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 300,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 735.6,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 300,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 719.1,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 300,
+      "output_tokens": 20
+     }
+    }
+   ],
+   "median_wall_ms": 719.9000000000001,
+   "min_wall_ms": 700.2,
+   "input_tokens": 300
+  },
+  {
+   "size": 80,
+   "runs": [
+    {
+     "wall_ms": 703.0,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 1980,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 732.5,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 1980,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 737.7,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 1980,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 699.9,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 1980,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 693.3,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 1980,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 681.6,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 1980,
+      "output_tokens": 20
+     }
+    }
+   ],
+   "median_wall_ms": 701.45,
+   "min_wall_ms": 681.6,
+   "input_tokens": 1980
+  },
+  {
+   "size": 400,
+   "runs": [
+    {
+     "wall_ms": 974.2,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 8700,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 896.8,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 8700,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 975.2,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 8700,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 962.4,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 8700,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 891.8,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 8700,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 923.6,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 8700,
+      "output_tokens": 20
+     }
+    }
+   ],
+   "median_wall_ms": 943.0,
+   "min_wall_ms": 891.8,
+   "input_tokens": 8700
+  },
+  {
+   "size": 800,
+   "runs": [
+    {
+     "wall_ms": 1121.7,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 17100,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 1139.2,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 17100,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 1128.7,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 17100,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 1134.2,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 17100,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 1168.6,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 17100,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 1120.6,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 17100,
+      "output_tokens": 20
+     }
+    }
+   ],
+   "median_wall_ms": 1131.45,
+   "min_wall_ms": 1120.6,
+   "input_tokens": 17100
+  },
+  {
+   "size": 1250,
+   "runs": [
+    {
+     "wall_ms": 1398.4,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 26550,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 1328.9,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 26550,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 1216.5,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 26550,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 1350.0,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 26550,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 1228.4,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 26550,
+      "output_tokens": 20
+     }
+    },
+    {
+     "wall_ms": 1432.5,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 26550,
+      "output_tokens": 20
+     }
+    }
+   ],
+   "median_wall_ms": 1339.45,
+   "min_wall_ms": 1216.5,
+   "input_tokens": 26550
+  }
+ ],
+ "options": [
+  {
+   "size": 2,
+   "runs": [
+    {
+     "wall_ms": 703.7,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 343,
+      "output_tokens": 33
+     }
+    },
+    {
+     "wall_ms": 638.8,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 343,
+      "output_tokens": 33
+     }
+    },
+    {
+     "wall_ms": 607.9,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 343,
+      "output_tokens": 33
+     }
+    },
+    {
+     "wall_ms": 741.9,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 343,
+      "output_tokens": 33
+     }
+    },
+    {
+     "wall_ms": 646.1,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 343,
+      "output_tokens": 33
+     }
+    },
+    {
+     "wall_ms": 684.4,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 343,
+      "output_tokens": 33
+     }
+    }
+   ],
+   "median_wall_ms": 665.25,
+   "min_wall_ms": 607.9,
+   "input_tokens": 343,
+   "output_tokens": 33
+  },
+  {
+   "size": 20,
+   "runs": [
+    {
+     "wall_ms": 645.6,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 721,
+      "output_tokens": 204
+     }
+    },
+    {
+     "wall_ms": 743.1,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 721,
+      "output_tokens": 204
+     }
+    },
+    {
+     "wall_ms": 692.2,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 721,
+      "output_tokens": 204
+     }
+    },
+    {
+     "wall_ms": 744.2,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 721,
+      "output_tokens": 204
+     }
+    },
+    {
+     "wall_ms": 761.5,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 721,
+      "output_tokens": 204
+     }
+    },
+    {
+     "wall_ms": 788.4,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 721,
+      "output_tokens": 204
+     }
+    }
+   ],
+   "median_wall_ms": 743.6500000000001,
+   "min_wall_ms": 645.6,
+   "input_tokens": 721,
+   "output_tokens": 204
+  },
+  {
+   "size": 100,
+   "runs": [
+    {
+     "wall_ms": 707.1,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 2481,
+      "output_tokens": 1004
+     }
+    },
+    {
+     "wall_ms": 658.8,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 2481,
+      "output_tokens": 1004
+     }
+    },
+    {
+     "wall_ms": 676.7,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 2481,
+      "output_tokens": 1004
+     }
+    },
+    {
+     "wall_ms": 637.8,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 2481,
+      "output_tokens": 1004
+     }
+    },
+    {
+     "wall_ms": 848.1,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 2481,
+      "output_tokens": 1004
+     }
+    },
+    {
+     "wall_ms": 720.7,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 2481,
+      "output_tokens": 1004
+     }
+    }
+   ],
+   "median_wall_ms": 691.9000000000001,
+   "min_wall_ms": 637.8,
+   "input_tokens": 2481,
+   "output_tokens": 1004
+  },
+  {
+   "size": 200,
+   "runs": [
+    {
+     "wall_ms": 676.6,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 4879,
+      "output_tokens": 2103
+     }
+    },
+    {
+     "wall_ms": 667.1,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 4879,
+      "output_tokens": 2103
+     }
+    },
+    {
+     "wall_ms": 734.5,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 4879,
+      "output_tokens": 2103
+     }
+    },
+    {
+     "wall_ms": 651.7,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 4879,
+      "output_tokens": 2103
+     }
+    },
+    {
+     "wall_ms": 735.9,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 4879,
+      "output_tokens": 2103
+     }
+    },
+    {
+     "wall_ms": 677.6,
+     "upstream_ms": null,
+     "usage": {
+      "input_tokens": 4879,
+      "output_tokens": 2103
+     }
+    }
+   ],
+   "median_wall_ms": 677.1,
+   "min_wall_ms": 651.7,
+   "input_tokens": 4879,
+   "output_tokens": 2103
+  }
+ ],
+ "example": {
+  "wall_ms": 715.4,
+  "upstream_ms": null,
+  "usage": {
+   "input_tokens": 410,
+   "output_tokens": 70
+  },
+  "answers": {
+   "queue": {
+    "type": "choice",
+    "choice": "payments",
+    "confidence": 1.0,
+    "probabilities": {
+     "account": 0.0,
+     "other": 0.0,
+     "payments": 1.0
+    }
+   },
+   "urgent": {
+    "type": "noul",
+    "noul": 0.87
+   },
+   "frustration": {
+    "type": "score",
+    "score": 1.09,
+    "confidence": 0.87,
+    "legend": {
+     "0": "Calm",
+     "1": "Frustrated",
+     "2": "Very angry"
+    },
+    "probabilities": {
+     "0": 0.0,
+     "1": 0.91,
+     "2": 0.09
+    }
+   }
+  }
+ },
+ "order_ambiguous": [
+  {
+   "order": [
+    "payments",
+    "account",
+    "technical"
+   ],
+   "probabilities": {
+    "payments": 0.83,
+    "account": 0.0,
+    "technical": 0.17
+   }
+  },
+  {
+   "order": [
+    "payments",
+    "technical",
+    "account"
+   ],
+   "probabilities": {
+    "payments": 0.86,
+    "account": 0.0,
+    "technical": 0.14
+   }
+  },
+  {
+   "order": [
+    "account",
+    "payments",
+    "technical"
+   ],
+   "probabilities": {
+    "payments": 0.76,
+    "account": 0.0,
+    "technical": 0.24
+   }
+  },
+  {
+   "order": [
+    "account",
+    "technical",
+    "payments"
+   ],
+   "probabilities": {
+    "payments": 0.79,
+    "account": 0.0,
+    "technical": 0.21
+   }
+  },
+  {
+   "order": [
+    "technical",
+    "payments",
+    "account"
+   ],
+   "probabilities": {
+    "payments": 0.75,
+    "account": 0.0,
+    "technical": 0.25
+   }
+  },
+  {
+   "order": [
+    "technical",
+    "account",
+    "payments"
+   ],
+   "probabilities": {
+    "payments": 0.72,
+    "account": 0.0,
+    "technical": 0.28
+   }
+  }
+ ],
+ "negation": {
+  "a": {
+   "type": "noul",
+   "noul": 0.83
+  },
+  "b": {
+   "type": "noul",
+   "noul": 0.24
+  }
+ },
+ "battle": {
+  "state": {
+   "game": "Turn-based monster battle. Each turn you pick one move.",
+   "type_chart": "Electric is super effective against Water. Grass is super effective against Water. Water resists Fire. Normal is neutral.",
+   "your_monster": {
+    "name": "Emberfox",
+    "type": "Fire",
+    "hp": "62/100"
+   },
+   "opponent": {
+    "name": "Shellback",
+    "type": "Water",
+    "hp": "80/100"
+   }
+  },
+  "questions": {
+   "move": {
+    "type": "choice",
+    "instructions": "Which move should you use this turn?",
+    "criteria": {
+     "Flame Burst": "Fire move, power 90",
+     "Thunder Fang": "Electric move, power 65",
+     "Quick Scratch": "Normal move, power 40",
+     "Guard": "No damage; halves the next hit you take"
+    }
+   },
+   "switch": {
+    "type": "noul",
+    "instructions": "Should you switch Emberfox out for another monster?"
+   },
+   "position": {
+    "type": "score",
+    "instructions": "How favorable is the current position for you?",
+    "criteria": [
+     "Losing",
+     "Even",
+     "Winning"
+    ]
+   },
+   "ko": {
+    "type": "noul",
+    "instructions": "Thunder Fang deals 2 x 65 x 0.5 damage to Shellback. Will it knock Shellback out this turn?"
+   }
+  },
+  "answers": {
+   "move": {
+    "type": "choice",
+    "choice": "Thunder Fang",
+    "confidence": 0.88,
+    "probabilities": {
+     "Thunder Fang": 0.91,
+     "Quick Scratch": 0.01,
+     "Guard": 0.04,
+     "Flame Burst": 0.04
+    }
+   },
+   "switch": {
+    "type": "noul",
+    "noul": 0.57
+   },
+   "position": {
+    "type": "score",
+    "score": 0.31,
+    "confidence": 0.53,
+    "legend": {
+     "0": "Losing",
+     "1": "Even",
+     "2": "Winning"
+    },
+    "probabilities": {
+     "0": 0.72,
+     "1": 0.26,
+     "2": 0.02
+    }
+   },
+   "ko": {
+    "type": "noul",
+    "noul": 0.49
+   }
+  },
+  "usage": {
+   "input_tokens": 586,
+   "output_tokens": 96
+  },
+  "order": [
+   {
+    "order": [
+     "Flame Burst",
+     "Thunder Fang",
+     "Quick Scratch",
+     "Guard"
+    ],
+    "p": {
+     "Flame Burst": 0.05,
+     "Thunder Fang": 0.88,
+     "Quick Scratch": 0.02,
+     "Guard": 0.05
+    }
+   },
+   {
+    "order": [
+     "Guard",
+     "Quick Scratch",
+     "Thunder Fang",
+     "Flame Burst"
+    ],
+    "p": {
+     "Flame Burst": 0.03,
+     "Thunder Fang": 0.95,
+     "Quick Scratch": 0.01,
+     "Guard": 0.01
+    }
+   },
+   {
+    "order": [
+     "Thunder Fang",
+     "Flame Burst",
+     "Guard",
+     "Quick Scratch"
+    ],
+    "p": {
+     "Flame Burst": 0.04,
+     "Thunder Fang": 0.92,
+     "Quick Scratch": 0.01,
+     "Guard": 0.03
+    }
+   },
+   {
+    "order": [
+     "Quick Scratch",
+     "Guard",
+     "Flame Burst",
+     "Thunder Fang"
+    ],
+    "p": {
+     "Flame Burst": 0.03,
+     "Thunder Fang": 0.95,
+     "Quick Scratch": 0.01,
+     "Guard": 0.01
+    }
+   }
+  ],
+  "turn2": {
+   "opponent": {
+    "name": "Thornback",
+    "type": "Grass",
+    "hp": "100/100"
+   },
+   "answers": {
+    "move": {
+     "type": "choice",
+     "choice": "Flame Burst",
+     "confidence": 0.99,
+     "probabilities": {
+      "Thunder Fang": 0.0,
+      "Guard": 0.0,
+      "Flame Burst": 1.0,
+      "Quick Scratch": 0.0
+     }
+    }
+   }
+  },
+  "turn1b": {
+   "opponent": {
+    "name": "Shellback",
+    "type": "Water",
+    "hp": "15/100"
+   },
+   "answers": {
+    "move": {
+     "type": "choice",
+     "choice": "Thunder Fang",
+     "confidence": 0.68,
+     "probabilities": {
+      "Quick Scratch": 0.09,
+      "Thunder Fang": 0.75,
+      "Flame Burst": 0.15,
+      "Guard": 0.01
+     }
+    }
+   }
+  },
+  "switch_turn": {
+   "state": {
+    "game": "Turn-based monster battle. Each turn you either pick one move or switch to a monster on your bench.",
+    "type_chart": "Electric and Grass are super effective against Water. Water is super effective against Fire and Rock. Water resists Fire. Grass resists Water. Ice is neutral against Water.",
+    "your_monster": {
+     "name": "Emberfox",
+     "type": "Fire",
+     "hp": "20/100"
+    },
+    "your_bench": [
+     {
+      "name": "Leafling",
+      "type": "Grass",
+      "hp": "100/100"
+     },
+     {
+      "name": "Pebblepup",
+      "type": "Rock",
+      "hp": "100/100"
+     },
+     {
+      "name": "Frostwing",
+      "type": "Ice",
+      "hp": "100/100"
+     }
+    ],
+    "opponent": {
+     "name": "Tidalback",
+     "type": "Water",
+     "hp": "100/100"
+    }
+   },
+   "questions": {
+    "switch": {
+     "type": "noul",
+     "instructions": "Should you switch Emberfox out for a monster on your bench this turn?"
+    },
+    "who": {
+     "type": "choice",
+     "instructions": "If you switch, which monster should come in?",
+     "criteria": {
+      "Leafling": "Grass type",
+      "Pebblepup": "Rock type",
+      "Frostwing": "Ice type"
+     }
+    },
+    "position": {
+     "type": "score",
+     "instructions": "How favorable is the current position for you?",
+     "criteria": [
+      "Losing",
+      "Even",
+      "Winning"
+     ]
+    }
+   },
+   "answers": {
+    "switch": {
+     "type": "noul",
+     "noul": 0.88
+    },
+    "who": {
+     "type": "choice",
+     "choice": "Leafling",
+     "confidence": 0.99,
+     "probabilities": {
+      "Leafling": 0.99,
+      "Pebblepup": 0.0,
+      "Frostwing": 0.01
+     }
+    },
+    "position": {
+     "type": "score",
+     "score": 0.2,
+     "confidence": 0.71,
+     "legend": {
+      "0": "Losing",
+      "1": "Even",
+      "2": "Winning"
+     },
+     "probabilities": {
+      "0": 0.88,
+      "1": 0.05,
+      "2": 0.07
+     }
+    }
+   },
+   "usage": {
+    "input_tokens": 658,
+    "output_tokens": 77
+   }
+  },
+  "story": {
+   "t2": {
+    "state": {
+     "game": "Turn-based monster battle. Each turn you either pick one move or switch to a monster on your bench.",
+     "type_chart": "Electric and Grass are super effective against Water. Water is super effective against Fire and Rock. Water resists Fire. Grass resists Water. Ice is neutral against Water.",
+     "your_monster": {
+      "name": "Emberfox",
+      "type": "Fire",
+      "hp": "20/100"
+     },
+     "your_bench": [
+      {
+       "name": "Leafling",
+       "type": "Grass",
+       "hp": "100/100"
+      },
+      {
+       "name": "Pebblepup",
+       "type": "Rock",
+       "hp": "100/100"
+      },
+      {
+       "name": "Frostwing",
+       "type": "Ice",
+       "hp": "100/100"
+      }
+     ],
+     "opponent": {
+      "name": "Shellback",
+      "type": "Water",
+      "hp": "15/100"
+     }
+    },
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "Thunder Fang",
+      "confidence": 0.38,
+      "probabilities": {
+       "Flame Burst": 0.13,
+       "Thunder Fang": 0.54,
+       "Quick Scratch": 0.17,
+       "Guard": 0.16
+      }
+     },
+     "switch": {
+      "type": "noul",
+      "noul": 0.87
+     }
+    }
+   },
+   "t4": {
+    "state": {
+     "game": "Turn-based monster battle. Each turn you either pick one move or switch to a monster on your bench.",
+     "type_chart": "Electric and Grass are super effective against Water. Water is super effective against Fire and Rock. Water resists Fire. Grass resists Water. Ice is neutral against Water.",
+     "your_monster": {
+      "name": "Leafling",
+      "type": "Grass",
+      "hp": "80/100"
+     },
+     "opponent": {
+      "name": "Tidalback",
+      "type": "Water",
+      "hp": "100/100"
+     }
+    },
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "Leaf Blade",
+      "confidence": 0.96,
+      "probabilities": {
+       "Guard": 0.02,
+       "Tackle": 0.0,
+       "Leaf Blade": 0.98,
+       "Synthesis": 0.0
+      }
+     }
+    }
+   },
+   "trap": [
+    {
+     "hp": 30,
+     "double": [
+      2,
+      14
+     ],
+     "triple": [
+      3,
+      11
+     ],
+     "state": {
+      "game": "Turn-based monster battle. Each turn you either pick one move or switch to a monster on your bench.",
+      "your_monster": {
+       "name": "Leafling",
+       "type": "Grass",
+       "hp": "60/100"
+      },
+      "opponent": {
+       "name": "Tidalback",
+       "type": "Water",
+       "hp": "30/100"
+      },
+      "note": "Damage ignores types for these moves. If the opponent survives, it will hit back hard."
+     },
+     "moves": {
+      "Double Kick": "Hits 2 times, 14 damage each time",
+      "Triple Jab": "Hits 3 times, 11 damage each time",
+      "Guard": "No damage; halves the next hit you take"
+     },
+     "p": {
+      "Triple Jab": 0.83,
+      "Guard": 0.0,
+      "Double Kick": 0.17
+     }
+    },
+    {
+     "hp": 35,
+     "double": [
+      2,
+      17
+     ],
+     "triple": [
+      3,
+      12
+     ],
+     "state": {
+      "game": "Turn-based monster battle. Each turn you either pick one move or switch to a monster on your bench.",
+      "your_monster": {
+       "name": "Leafling",
+       "type": "Grass",
+       "hp": "60/100"
+      },
+      "opponent": {
+       "name": "Tidalback",
+       "type": "Water",
+       "hp": "35/100"
+      },
+      "note": "Damage ignores types for these moves. If the opponent survives, it will hit back hard."
+     },
+     "moves": {
+      "Double Kick": "Hits 2 times, 17 damage each time",
+      "Triple Jab": "Hits 3 times, 12 damage each time",
+      "Guard": "No damage; halves the next hit you take"
+     },
+     "p": {
+      "Double Kick": 0.3,
+      "Guard": 0.01,
+      "Triple Jab": 0.69
+     }
+    },
+    {
+     "hp": 40,
+     "double": [
+      2,
+      19
+     ],
+     "triple": [
+      3,
+      14
+     ],
+     "state": {
+      "game": "Turn-based monster battle. Each turn you either pick one move or switch to a monster on your bench.",
+      "your_monster": {
+       "name": "Leafling",
+       "type": "Grass",
+       "hp": "60/100"
+      },
+      "opponent": {
+       "name": "Tidalback",
+       "type": "Water",
+       "hp": "40/100"
+      },
+      "note": "Damage ignores types for these moves. If the opponent survives, it will hit back hard."
+     },
+     "moves": {
+      "Double Kick": "Hits 2 times, 19 damage each time",
+      "Triple Jab": "Hits 3 times, 14 damage each time",
+      "Guard": "No damage; halves the next hit you take"
+     },
+     "p": {
+      "Guard": 0.01,
+      "Double Kick": 0.22,
+      "Triple Jab": 0.77
+     }
+    },
+    {
+     "hp": 30,
+     "double": [
+      4,
+      7
+     ],
+     "triple": [
+      2,
+      16
+     ],
+     "state": {
+      "game": "Turn-based monster battle. Each turn you either pick one move or switch to a monster on your bench.",
+      "your_monster": {
+       "name": "Leafling",
+       "type": "Grass",
+       "hp": "60/100"
+      },
+      "opponent": {
+       "name": "Tidalback",
+       "type": "Water",
+       "hp": "30/100"
+      },
+      "note": "Damage ignores types for these moves. If the opponent survives, it will hit back hard."
+     },
+     "moves": {
+      "Double Kick": "Hits 4 times, 7 damage each time",
+      "Triple Jab": "Hits 2 times, 16 damage each time",
+      "Guard": "No damage; halves the next hit you take"
+     },
+     "p": {
+      "Double Kick": 0.06,
+      "Triple Jab": 0.94,
+      "Guard": 0.0
+     }
+    }
+   ],
+   "t6": {
+    "state": {
+     "game": "Turn-based monster battle. Each turn you either pick one move or switch to a monster on your bench.",
+     "type_chart": "Electric and Grass are super effective against Water. Water is super effective against Fire and Rock. Water resists Fire. Grass resists Water. Ice is neutral against Water.",
+     "your_monster": {
+      "name": "Leafling",
+      "type": "Grass",
+      "hp": "25/100"
+     },
+     "opponent": {
+      "name": "Tidalback",
+      "type": "Water",
+      "hp": "2/100"
+     }
+    },
+    "answers": {
+     "move": {
+      "type": "choice",
+      "choice": "Leaf Blade",
+      "confidence": 0.88,
+      "probabilities": {
+       "Synthesis": 0.03,
+       "Leaf Blade": 0.91,
+       "Guard": 0.0,
+       "Tackle": 0.06
+      }
+     }
+    }
+   },
+   "ko_noul": [
+    {
+     "hp": 30,
+     "damage": 28,
+     "truth": false,
+     "p": 0.64,
+     "state": {
+      "game": "Turn-based monster battle.",
+      "your_monster": {
+       "name": "Leafling",
+       "type": "Grass",
+       "hp": "60/100",
+       "status": "Weakened"
+      },
+      "opponent": {
+       "name": "Tidalback",
+       "type": "Water",
+       "hp": "30/100"
+      }
+     }
+    },
+    {
+     "hp": 25,
+     "damage": 28,
+     "truth": true,
+     "p": 0.68,
+     "state": {
+      "game": "Turn-based monster battle.",
+      "your_monster": {
+       "name": "Leafling",
+       "type": "Grass",
+       "hp": "60/100",
+       "status": "Weakened"
+      },
+      "opponent": {
+       "name": "Tidalback",
+       "type": "Water",
+       "hp": "25/100"
+      }
+     }
+    },
+    {
+     "hp": 40,
+     "damage": 28,
+     "truth": false,
+     "p": 0.54,
+     "state": {
+      "game": "Turn-based monster battle.",
+      "your_monster": {
+       "name": "Leafling",
+       "type": "Grass",
+       "hp": "60/100",
+       "status": "Weakened"
+      },
+      "opponent": {
+       "name": "Tidalback",
+       "type": "Water",
+       "hp": "40/100"
+      }
+     }
+    },
+    {
+     "hp": 20,
+     "damage": 28,
+     "truth": true,
+     "p": 0.76,
+     "state": {
+      "game": "Turn-based monster battle.",
+      "your_monster": {
+       "name": "Leafling",
+       "type": "Grass",
+       "hp": "60/100",
+       "status": "Weakened"
+      },
+      "opponent": {
+       "name": "Tidalback",
+       "type": "Water",
+       "hp": "20/100"
+      }
+     }
+    }
+   ],
+   "self_question": {
+    "state": "Jev is a model that reads a text and a set of typed questions and returns a probability for each allowed answer. It cannot generate any text. It was built from a pretrained large language model.",
+    "runs": [
+     {
+      "order": [
+       "AI",
+       "classifier"
+      ],
+      "p": {
+       "AI": 0.33,
+       "classifier": 0.67
+      }
+     },
+     {
+      "order": [
+       "classifier",
+       "AI"
+      ],
+      "p": {
+       "AI": 0.45,
+       "classifier": 0.55
+      }
+     }
+    ]
+   }
+  }
+ }
+}

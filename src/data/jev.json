@@ -1,0 +1,313 @@
+{
+ "probe": {
+  "model": "jev-1.13.0",
+  "date": "2026-10-03",
+  "example": {
+   "usage": {
+    "input_tokens": 410,
+    "output_tokens": 70
+   },
+   "answers": {
+    "queue": {
+     "type": "choice",
+     "choice": "payments",
+     "confidence": 1.0,
+     "probabilities": {
+      "account": 0.0,
+      "other": 0.0,
+      "payments": 1.0
+     }
+    },
+    "urgent": {
+     "type": "noul",
+     "noul": 0.87
+    },
+    "frustration": {
+     "type": "score",
+     "score": 1.09,
+     "confidence": 0.87,
+     "legend": {
+      "0": "Calm",
+      "1": "Frustrated",
+      "2": "Very angry"
+     },
+     "probabilities": {
+      "0": 0.0,
+      "1": 0.91,
+      "2": 0.09
+     }
+    }
+   }
+  },
+  "accounting": [
+   {
+    "questions": 1,
+    "usage": {
+     "input_tokens": 298,
+     "output_tokens": 21
+    }
+   },
+   {
+    "questions": 2,
+    "usage": {
+     "input_tokens": 311,
+     "output_tokens": 38
+    }
+   },
+   {
+    "questions": 3,
+    "usage": {
+     "input_tokens": 324,
+     "output_tokens": 55
+    }
+   },
+   {
+    "questions": 5,
+    "usage": {
+     "input_tokens": 350,
+     "output_tokens": 89
+    }
+   },
+   {
+    "questions": 10,
+    "usage": {
+     "input_tokens": 415,
+     "output_tokens": 174
+    }
+   },
+   {
+    "state": "ticket x20",
+    "questions": 1,
+    "usage": {
+     "input_tokens": 792,
+     "output_tokens": 21
+    }
+   },
+   {
+    "state": "ticket x20",
+    "questions": 2,
+    "usage": {
+     "input_tokens": 805,
+     "output_tokens": 38
+    }
+   },
+   {
+    "state": "ticket x20",
+    "questions": 10,
+    "usage": {
+     "input_tokens": 909,
+     "output_tokens": 174
+    }
+   }
+  ],
+  "options": [
+   {
+    "options": 2,
+    "output_tokens": 33,
+    "median_wall_ms": 665
+   },
+   {
+    "options": 20,
+    "output_tokens": 204,
+    "median_wall_ms": 744
+   },
+   {
+    "options": 100,
+    "output_tokens": 1004,
+    "median_wall_ms": 692
+   },
+   {
+    "options": 200,
+    "output_tokens": 2103,
+    "median_wall_ms": 677
+   }
+  ],
+  "order": [
+   {
+    "order": [
+     "payments",
+     "account",
+     "technical"
+    ],
+    "probabilities": {
+     "payments": 0.83,
+     "account": 0.0,
+     "technical": 0.17
+    }
+   },
+   {
+    "order": [
+     "payments",
+     "technical",
+     "account"
+    ],
+    "probabilities": {
+     "payments": 0.86,
+     "account": 0.0,
+     "technical": 0.14
+    }
+   },
+   {
+    "order": [
+     "account",
+     "payments",
+     "technical"
+    ],
+    "probabilities": {
+     "payments": 0.76,
+     "account": 0.0,
+     "technical": 0.24
+    }
+   },
+   {
+    "order": [
+     "account",
+     "technical",
+     "payments"
+    ],
+    "probabilities": {
+     "payments": 0.79,
+     "account": 0.0,
+     "technical": 0.21
+    }
+   },
+   {
+    "order": [
+     "technical",
+     "payments",
+     "account"
+    ],
+    "probabilities": {
+     "payments": 0.75,
+     "account": 0.0,
+     "technical": 0.25
+    }
+   },
+   {
+    "order": [
+     "technical",
+     "account",
+     "payments"
+    ],
+    "probabilities": {
+     "payments": 0.72,
+     "account": 0.0,
+     "technical": 0.28
+    }
+   }
+  ],
+  "negation": {
+   "a": {
+    "type": "noul",
+    "noul": 0.83
+   },
+   "b": {
+    "type": "noul",
+    "noul": 0.24
+   }
+  }
+ },
+ "hume": {
+  "source": "Archer Hume, Jev's Architecture Unmasked, 2026-09-17; x-envoy-upstream-service-time, median of 8",
+  "state": [
+   [
+    360,
+    57.5
+   ],
+   [
+    1869,
+    84
+   ],
+   [
+    4941,
+    81
+   ],
+   [
+    9796,
+    89
+   ],
+   [
+    15071,
+    153
+   ],
+   [
+    20423,
+    185
+   ],
+   [
+    26103,
+    200
+   ],
+   [
+    29835,
+    218
+   ]
+  ],
+  "questions": [
+   [
+    1,
+    86.5
+   ],
+   [
+    25,
+    72
+   ],
+   [
+    50,
+    81
+   ],
+   [
+    100,
+    82
+   ],
+   [
+    175,
+    99.5
+   ],
+   [
+    250,
+    132
+   ],
+   [
+    375,
+    162
+   ],
+   [
+    500,
+    181
+   ],
+   [
+    625,
+    213
+   ],
+   [
+    750,
+    245.5
+   ],
+   [
+    875,
+    315.5
+   ],
+   [
+    1000,
+    453.5
+   ],
+   [
+    1125,
+    358.5
+   ],
+   [
+    1250,
+    483
+   ],
+   [
+    1375,
+    395.5
+   ],
+   [
+    1500,
+    610
+   ]
+  ]
+ }
+}

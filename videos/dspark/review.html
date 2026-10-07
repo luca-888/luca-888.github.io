@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DSpark 关键帧审阅</title>
+<style>
+  :root { --ink: #1d1d1b; --ink2: #555; --gray: #8a8577; --paper: #f1ece3; --line: #ddd6c8;
+    --purple: #7b3ff2; --blue: #2350d8; --teal: #12a08a; --red: #e3342f; --chg: #fff4cc; }
+  body { margin: 0; background: #fff; color: var(--ink); font: 16px/1.6 -apple-system, "PingFang SC", sans-serif; }
+  main { max-width: 1240px; margin: 0 auto; padding: 32px 24px 80px; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  .sub { color: var(--gray); margin: 0 0 28px; }
+  nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
+  nav a { text-decoration: none; color: var(--ink2); border: 1px solid var(--line); border-radius: 6px; padding: 2px 10px; font-size: 14px; }
+  nav a.chg { background: var(--chg); border-color: #e8d48a; }
+  nav a.new { background: #ede4ff; border-color: #c9b2fb; }
+  section { border-top: 1px solid var(--line); padding: 24px 0; }
+  section h2 { font-size: 19px; margin: 0 0 10px; display: flex; gap: 10px; align-items: baseline; }
+  .tag { font-size: 13px; font-weight: 600; padding: 1px 8px; border-radius: 4px; }
+  .tag.chg { background: var(--chg); color: #8a6a00; }
+  .tag.same { background: #eee; color: var(--gray); }
+  .tag.new { background: #ede4ff; color: var(--purple); }
+  img, video { width: 100%; border: 1px solid var(--line); display: block; box-sizing: border-box; }
+  video { aspect-ratio: 16 / 9; background: var(--paper); }
+  ul { margin: 10px 0 0; padding-left: 20px; }
+  li { margin: 2px 0; }
+  .sketch { background: var(--paper); border: 1px dashed var(--gray); }
+  .sketch svg { display: block; width: 100%; height: auto; }
+  .note { color: var(--ink2); }
+  .vo { margin-top: 12px; border-left: 3px solid var(--purple); padding: 4px 0 4px 14px; }
+  .vo p { margin: 4px 0; }
+  .vo span { color: var(--gray); font-size: 13px; margin-left: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>DSpark 视频 v6 · 关键帧审阅</h1>
+  <p class="sub">2026-10-06 第二轮：全片文字改为书面语，术语与文章统一（draft、接受、接受概率 / 存活概率、自回归 / 并行、backbone、低负载 / 高负载、hidden state）；灰色小字不重要的删去，重要的改为正常字号的深色。右上角出处行已删去。<br>每帧下方紫色竖线内是 v7 配音稿第二稿（灰字为对应画面），配音约 3 分钟；尚未合成。<br>第三轮：底部两行结论全部去掉，改为单行字幕（关键帧里是这一幕最后一句；合成配音前按字数暂排时间）。K09 平段补“耗时主要在读取权重”，K12 右下补线上实测“每个请求平均验证 4–6 个，MTP-1 固定 2 个”。</p>
+  <nav id="nav"></nav>
+  <section id="voice">
+    <h2>全片（带配音，1080p 60 fps） <span class="tag new">MiniMax</span></h2>
+    <video src="build/dspark.mp4?v=1" controls preload="metadata"></video>
+    <p class="note">5 分 09 秒。MiniMax speech-2.8-hd，语速 1.1（语音合计 264 秒；语速 1.0 为 298 秒，1.15 为 257 秒），录音未做变速；配音约 -15 LUFS，音效降 9 dB，无背景音乐。开场（K01）与总结（K13）是新做的两幕，下面各幕的片段也都带配音。</p>
+  </section>
+  <div id="list"></div>
+  
+
+</main>
+<script>
+const frames = [
+  ['开场（新）', ['不再停在静态封面：标题与两个窗口同时出现，同一个回答（320 个字）按真实速度输出到写完，DSpark 2.5 秒，MTP-1 4.0 秒，进度条与计时对着同一条基线', '第二句给出不变的部分（target、输出分布），第三句给出改动：每轮 draft token 1 个 → 5 个，按负载验证其中几个']],
+  ['全貌（新）', ['新增一幕：用同一组 5 个 draft token 把一轮从上到下走一遍，target → 并行 backbone → Markov head → confidence head → 调度器 → target 验证；四个部件在这里先有名字和位置', '之后各幕顶部的结构条是这四个部件的缩略，当前讲的部件为实色']],
+  ['提速来自哪里', ['式子改为数学分式 t = (T_draft + T_verify) / τ，记号与文章一致；式子下方先逐个写出记号的含义（T_draft：生成 draft 的耗时；τ：每轮平均接受的 token 数；T_verify：验证的耗时），三种途径 ① ② ③ 在下一拍出现在对应记号下面', 'MTP-1 一轮的两种结果画成上下两行：接受时 draft ✓ + bonus，产出 2 个；拒绝时 draft ✗ + target 补的 token，产出 1 个；括号括住两行连到分母 τ', '定义行由灰色改为正常深色；删去“一轮”灰字']],
+  ['生成 5 个 draft token 的直接做法', ['按 K04 的版面重排：同一网格的 token 行，1 层的 drafter 逐位运行并留下 5 个痕迹；底部时间条与右下角的接受率和 K04 在同一位置', '“一个接一个写 / 跑 5 次”改为“自回归生成 / 运行 5 次”', '右下角分式里 τ 旁的红色 ↓ 改为“升幅有限”：draft 从 1 个增加到 5 个，τ 是上升的，只是受第 1 位接受率限制']],
+  ['能否一次生成全部', ['版面改为样稿 B：一个主图（输入 → 5 层 → 输出），右侧只留名词标注，底部是贯穿的时间条与第 1 位接受率', '左侧重画为“输入 → 5 层 → 输出”：行名、每个位置一条向上的箭头；写明 mask 是占位 token、每一层做什么、输出是什么；层内横线删去', '右侧标题改为“层越多预测越准，耗时也越长。相同耗时：”', '“一个个写 / 一次写完”改为“自回归 / 并行”']],
+  ['第 2 位能否看到第 1 位的结果', ['“各抽各的 / 接不上 / 作废”改为“独立采样 / 拼接错误 / 丢弃”', '删去底部第二行（与左侧重复）']],
+  ['第 2 位缺少的信息', ['重画：接着 K05 的例子。左边是第 1 位采到的 token 和第 2 位各占一半的概率条，中间是加分表（每个 token 一行，格子只写加分 / 减分），右边是查表之后的概率条与采样结果；先走“当然”一支，再走“没”一支，最后 6 个 token 逐位查表', '“大网络”改为 backbone，“分数”改为 logits', '删去输入法比喻与“论文也尝试过……”两行']],
+  ['transition bias 的规模', ['“加分表 / 加分”改为论文术语 transition bias / logit bias；配音写“低秩分解”', '“拆成两条细长的矩阵”改为“分解为两个低秩矩阵”']],
+  ['效果', ['坐标轴文字由灰色改为深色、放大', '图例改为“自回归 / 并行 / 并行 + Markov head”，纵轴为“条件接受率”']],
+  ['是否验证全部 draft token', ['“空闲 / 繁忙 / 白算”改为“低负载 / 高负载 / 无效计算”', '删去“引擎启动时实测……”']],
+  ['单个 token 的期望收益', ['“被收下的概率”改为“存活概率”，并在底部给出定义', '“自己猜对”改为“条件接受率”']],
+  ['验证前如何得到接受概率', ['“两边各自觉得”改为“drafter 与 target 的分布”', '删去“原始估计偏高……”']],
+  ['本步验证多少个', ['“验到不划算为止”改为“验证至吞吐不再提升”', '坐标轴与请求说明由灰色改为深色']],
+  ['总结（新）', ['式子的三项各一列，与 K02 的 ① ② ③ 同位置同颜色：负责的部件与一个结果（一次 forward 生成 5 个；每轮接受 3.11 → 3.72 个；线上每个请求验证 4–6 个），一句配音点亮一列', '最后一句两个窗口重新输出，标题给出 V4-Flash 60%–85% 与 V4-Pro 57%–78%']],
+];
+
+const VO = [["0 封面", [["同一个模型，同样的吞吐，右边的用户快了 60%。", "标题与两个窗口；同一个回答按真实速度输出到写完，进度条与计时"]]], ["1 改动了什么", [["这是 DeepSeek-V4 线上的 DSpark：只换 drafter，target 和输出分布都不变。", "窗口下方一行：target 不变、输出分布不变、只换 drafter"], ["每轮的 draft token 从 1 个增加到 5 个，再按负载决定验证几个。", "两个窗口下方的 draft token 色块：1 个；5 个，其中 2 个不验证"]]], ["1b 全貌", [["提升来自一轮里的四个部件。target 先给出 hidden state，", "target 一行"], ["backbone 一次给出 5 个位置的预测，", "backbone 一行"], ["Markov head 逐位采样，", "5 个 draft token 逐个出现"], ["confidence head 估计每个 token 被接受的概率，", "概率条"], ["调度器选出值得验证的，", "前 3 个变蓝，后 2 个不验证"], ["target 一次 forward 验证，被拒绝的那一位换成它自己的 token。", "前两位 ✓，第 3 位先标红再换成蓝色的 target token，标题"]]], ["2 提速来自哪里", [["先看每个 token 的耗时。原来的 MTP-1 只有两步：drafter 生成 1 个 draft token，target 用一次 forward 验证。", "定义行，时间条"], ["同一次 forward 还会算出下一位：draft 被接受时多得一个 bonus token，被拒绝时只有 target 补的 1 个。", "两行 token：接受（draft ✓ + bonus）与拒绝（draft ✗ + target 补的）"], ["每个 token 的耗时，等于一轮耗时除以平均接受的 token 数。", "式子；括号括住两种结果，箭头指到分母 τ"], ["提速有三种途径：draft 更快、接受更多、少做无效验证。", "三个注解，标题"]]], ["3 自回归生成", [["先看 backbone。最直接的做法是逐个生成：要运行 5 次，draft 的耗时变成 5 倍。", "drafter 逐次运行，draft 段逐格变长"], ["要压住这部分耗时，drafter 只能做得很小，预测就不准：第 1 位接受率只有 0.53。", "接受率条"]]], ["4 并行生成", [["另一种做法是并行生成：上一个 token 后面接 5 个 mask。mask 是占位 token，表示这个位置等待预测。", "输入行、mask 的说明"], ["6 个位置一起经过 backbone，DeepSeek-V4 用的是 3 层 MoE，一次 forward 输出 5 个 draft token。", "target hidden state 连到各层，5 层扫过，输出块"], ["并行只运行一次，可以用更深的网络：Qwen3 上的对比实验里，第 1 位接受率从 0.53 提高到 0.72。", "右侧耗时对比与接受率条，标题"], ["这是 DFlash 的做法，但并行有一个代价。", "停留"]]], ["5 独立采样", [["代价是各个位置各自独立采样，Markov head 就是为此而加的。", "标签、标题"], ["换一个 prompt 来看：target 会回答“当然可以”或“没问题”，两种各占一半。drafter 给出的每个位置的概率都是对的。", "prompt、两种回答、两个位置的分布"], ["但两个位置同时采样，第 2 位不知道第 1 位采到了什么：第 1 位采到“当然”，第 2 位仍有一半可能采到“问题”。", "互相看不到的 ✗，两个位置依次采样"], ["target 验证时在第一个错误处停止，后面的 draft token 全部丢弃。", "红色 ✗，后三格丢弃"], ["所以第 2 位的接受率比第 1 位低：这个例子里是 100% 对 50%，Qwen3 上的实测是 72% 对 65%。", "例子与实测的第 1、2 位接受率条上下对齐"]]], ["6 Markov head", [["第 2 位只缺一条信息：第 1 位采到了什么。", "第 1 位的“当然”，第 2 位各占一半的概率条，标题"], ["DSpark 加了一张训练得到的表，称为 transition bias：每个 token 一行，是加在后一位 logits 上的偏置。", "transition bias 表"], ["第 1 位采到“当然”，就取“当然”这一行加到第 2 位的 logits 上，概率从各占一半变为 90% 对 10%。", "查“当然”一行，右侧概率条变化，采到“可以”，“当然可以 ✓”"], ["之后每一位都加上前一位对应的那一行。偏置只取决于前一个 token，与更早的无关，这就是 Markov 性质，所以称为 Markov head。", "底部 6 个 token 逐位“查一行”，名字出现"]]], ["7 transition bias 的规模", [["每个 token 一行，每行和词表一样长，完整的 transition bias 是词表乘词表，无法存储。", "大方块"], ["低秩分解成两个秩 256 的矩阵，参数只有完整矩阵的 0.40%，每轮耗时只增加约 1%。", "两条线、查表流程、标题"]]], ["8 效果", [["Qwen3 上的对比：自回归第 1 位低，并行后面会掉，DSpark 第 1 位高，后面也不掉。", "三条曲线依次画出，标题"], ["每轮接受的 token 也最多。", "三根柱子"]]], ["9 验证的代价", [["剩下第三种途径：验证。draft 从 1 个增加到 5 个以后，是否全部验证取决于负载。", "标签"], ["低负载时多验证一批几乎不增加耗时，高负载时每个 token 都占用算力。", "曲线上的两个点，标题"], ["固定验证 5 个，被拒绝的部分就是无效计算。", "右侧 A、B、C 三行"]]], ["10 存活概率", [["先看每个 token 有多大可能被接受。", "请求 B 的 4 个 token 与条件接受率"], ["一个 token 只有在前面各位都被接受时才有效，所以把条件接受率逐位相乘，得到存活概率。", "柱子逐个缩短，标题"], ["第 4 个只剩 0.22，越靠后越不值得验证。", "停留"]]], ["11 confidence head", [["条件接受率等于 drafter 和 target 两个分布的重叠。", "两组分布条与重叠框"], ["但 target 的分布要验证时才有，所以在 drafter 上加一层，自行估计一个 0 到 1 之间的值。", "target 分布变为问号，右侧结构，标题"], ["这一层就是 confidence head。", "名字出现"]]], ["12 调度器", [["最后是调度器。有了存活概率，所有请求的 token 按它排队，一个个加入，直到吞吐不再上升。", "队列、指针、右侧曲线"], ["负载越高，停得越早。这就是调度器。", "两种结果，标题"]]], ["13 总结", [["回到开头的式子。并行 backbone 一次 forward 生成 5 个 draft token。", "式子；第 ① 列"], ["Markov head 补上前一个 token 的信息，每轮接受的 token 更多。", "第 ② 列"], ["confidence head 和调度器按负载决定验证几个，减少无效验证。", "第 ③ 列"], ["三项合起来，吞吐相同时，V4-Flash 每个用户快 60% 到 85%，V4-Pro 快 57% 到 78%。", "两个窗口重新输出，标题"]]]];
+const voHtml = (k) => { const sc = VO[k]; return sc ? '<div class="vo">' + sc[1].map(([t, v]) => `<p>${t}<span>${v}</span></p>`).join('') + '</div>' : ''; };
+const nav = document.getElementById('nav'), list = document.getElementById('list');
+nav.insertAdjacentHTML('beforeend', '<a href="#voice" class="new">全片</a>');
+const KN = ['k01', 'k01b', 'k02', 'k03', 'k04', 'k05', 'k06', 'k07', 'k08', 'k09', 'k10', 'k11', 'k12', 'k13'];
+frames.forEach(([name, notes], i) => { const chg = 1;
+  const id = KN[i];
+  nav.insertAdjacentHTML('beforeend', `<a href="#${id}" class="${chg ? 'chg' : ''}">${id.toUpperCase()}</a>`);
+  list.insertAdjacentHTML('beforeend', `<section id="${id}"><h2>${id.toUpperCase()} · ${name} <span class="tag ${chg ? 'chg' : 'same'}">${chg ? '已改' : '未改'}</span></h2>
+    <video src="build/clips/${id}.mp4?v=${Date.now()}" poster="keyframes-v6/${id}.png?v=${Date.now()}" controls preload="none"></video>${notes.length ? '<ul>' + notes.map((n) => `<li>${n}</li>`).join('') + '</ul>' : ''}${i ? voHtml(i + 1) : voHtml(0) + voHtml(1)}</section>`);
+});
+</script>
+</body>
+</html>
