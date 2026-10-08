@@ -25,6 +25,7 @@ export default defineConfig({
         jev: 'posts/jev/index.html',
         vllmDistributed: 'posts/vllm-distributed/index.html',
         dspark: 'posts/dspark/index.html',
+        attentionKvCompression: 'posts/attention-kv-compression/index.html',
       },
     },
   },

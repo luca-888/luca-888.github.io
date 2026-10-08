@@ -52,6 +52,7 @@
 | SAC | Selective Activation Checkpointing | 首次写作“Selective Activation Checkpointing（SAC）”；后文固定使用 SAC。Selective 表示选择性，不将 SAC 当作自动选择策略的简称。 |
 | LoRA | Low-Rank Adaptation | 直接使用 LoRA，无需展开或附中文；保留大小写，不写作 LORA 或 lora，源码标识符除外。 |
 | RMSNorm | Root Mean Square Normalization | 直接使用 RMSNorm，无需展开或附中文。 |
+| MHA / MQA / GQA / MLA | Multi-Head Attention / Multi-Query Attention / Grouped-Query Attention / Multi-head Latent Attention | 用户指定（2026-10-08）：首次出现时写“英文全称（缩写）”，后文用缩写；MLA 按 DeepSeek 原文写作 Multi-head（h 小写）。GQA 的组数写作 GQA-8 等。 |
 | SDPA | Scaled Dot-Product Attention | 直接使用 SDPA，无需展开或附中文；讨论具体接口时保留 `scaled_dot_product_attention`。 |
 | BF16 | bfloat16 | 无需展开或附中文；正文、表格与图中统一使用 BF16，代码保留 `torch.bfloat16` 等实际标识符。 |
 | FP32 | 32-bit floating point | 无需展开或附中文；正文、表格与图中统一使用 FP32，代码保留 `torch.float32` 等实际标识符。 |
