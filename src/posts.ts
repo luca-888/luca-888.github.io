@@ -14,6 +14,14 @@ export type Post = {
 // 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。
 export const posts: Post[] = [
   {
+    slug: 'attention-kv-compression',
+    title: 'KV Cache 压缩：MQA、GQA 与 MLA',
+    description: 'decode 每步都要把 KV cache 读一遍。MQA、GQA 让多个 query head 共享 KV head，MLA 只缓存低秩 latent 并借矩阵吸收在 decode 时做 MQA，DeepSeek V4 直接训练 key 与 value 共用的单个 KV head。',
+    category: '推理系统',
+    tags: ['Attention', 'KV cache', 'MQA', 'GQA', 'MLA', 'DeepSeek', 'vLLM', 'LLM serving'],
+    status: 'draft',
+  },
+  {
     slug: 'dspark',
     title: 'DSpark：DeepSeek V4 的 Speculative Decoding',
     description: 'DeepSeek V4 线上的 speculative decoding：并行 backbone 加一个很小的 Markov head 生成 draft，confidence head 估计每个 token 的存活概率，调度器按负载决定每个请求验几个。',

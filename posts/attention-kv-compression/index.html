@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="decode 每步都要把 KV cache 读一遍：MQA、GQA 共享 KV head，MLA 只缓存低秩 latent 并借矩阵吸收在 decode 时做 MQA，DeepSeek V4 直接训练 key 与 value 共用的单个 KV head。" />
+    <meta name="theme-color" content="#ffffff" />
+    <script src="/theme.js"></script>
+    <title>KV Cache 压缩：MQA、GQA 与 MLA · luca’s blog</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/articles/attention-kv-compression/attention-kv-compression.tsx"></script>
+  </body>
+</html>
