@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>KV Cache 压缩</title>
+<style>html,body{margin:0;background:#f1ede4;overflow:hidden}canvas{display:block;width:100vw;height:100vh;object-fit:contain}</style>
+</head>
+<body>
+<canvas id="cv" width="1920" height="1080"></canvas>
+<!-- KV Cache 压缩影片（有配音）。概念与分镜见 keyframes.md，配音稿见 script.md；?play 在浏览器里播放，?t=秒 停在某一刻；渲染见 render.mjs -->
+<script src="lib.js"></script>
+<script src="beats.js"></script>
+<script src="vo.js" onerror="0"></script>
+<script src="scenes.js"></script>
+<script>
+// 每幕的时长由配音节拍决定（beats.js；配音合成后 vo.js 用实测时长覆盖）
+const FILM = [[s0, S0_DUR], [s1, S1_DUR], [s2, S2_DUR], [s3, S3_DUR], [s4, S4_DUR], [s5, S5_DUR], [s6, S6_DUR], [s7, S7_DUR], [s8, S8_DUR], [s9, S9_DUR], [s10, S10_DUR], [s11, S11_DUR], [s12, S12_DUR], [s13, S13_DUR], [s14, S14_DUR]], XF = .7;
+[B0, B1, B2, B3, B4, B5, B6, B7, B8, B9, B10, B11, B12, B13, B14].forEach((B, k) => { BEAT_AT[k] = B; });
+let _t = 0; const SCENES = FILM.map(([fn, dur]) => { const sc = { fn, dur, at: _t }; _t += dur; return sc; });
+window.DURATION = _t;
+// 音效：每句配音开头一声轻响，每幕开头一声 whoosh（音量在 render.mjs 里压在配音之下）
+window.EVENTS = SCENES.flatMap((sc, k) => [...(k ? [[0.05, 'whoosh']] : []), ...(EV[k] || BEAT_AT[k].map((x) => [x.s, 'click']))].map(([x, kind]) => [sc.at + x, kind]));
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const mk = () => { const c = document.createElement('canvas'); c.width = 1920; c.height = 1080; return c; };
+const o1 = mk(), o2 = mk(), c1 = o1.getContext('2d'), c2 = o2.getContext('2d');
+function paint(c, sc, tt) { X = c; T = Math.max(0, tt); X.setTransform(1, 0, 0, 1, 0, 0); X.globalAlpha = 1; X.setLineDash([]); X.lineCap = 'butt'; R(0, 0, 1920, 1080, K.paper); sc.fn(); }
+function drawFrame(t) { let i = SCENES.findIndex((s) => t < s.at + s.dur); if (i < 0) i = SCENES.length - 1; const sc = SCENES[i], local = t - sc.at;
+  paint(c1, sc, local);
+  if (i > 0 && local < XF) { const pv = SCENES[i - 1]; paint(c2, pv, pv.dur + local); c1.setTransform(1, 0, 0, 1, 0, 0); c1.globalAlpha = 1 - io(local / XF); c1.drawImage(o2, 0, 0); c1.globalAlpha = 1; } }
+window.renderAt = (t, fps = 60, samples = 5, shutter = .25) => {
+  for (let s = 0; s < samples; s++) { const ts = samples > 1 ? t - (shutter / Math.max(fps, 30)) * (1 - s / (samples - 1)) : t;
+    drawFrame(Math.max(0, ts)); ctx.globalAlpha = 1 / (s + 1); ctx.drawImage(o1, 0, 0); }
+  ctx.globalAlpha = 1;
+  drawSub(t);
+  ctx.fillStyle = K.paper2; ctx.fillRect(96, 1066, 1728, 4); ctx.fillStyle = K.purple; ctx.fillRect(96, 1066, 1728 * clamp(t / window.DURATION), 4);
+  if (t > window.DURATION - .8) { ctx.globalAlpha = io((t - window.DURATION + .8) / .8); ctx.fillStyle = K.paper; ctx.fillRect(0, 0, 1920, 1080); ctx.globalAlpha = 1; }
+};
+// 字幕：底部居中一行，按节拍与短句（cues）切换；有配音时用 vo.js 给出的句内起点
+function drawSub(t) {
+  const i = SCENES.findIndex((s) => t < s.at + s.dur), k = i < 0 ? SCENES.length - 1 : i, B = BEAT_AT[k], G = window.BEATS[k]; if (!B) return;
+  const lt = t - SCENES[k].at; let cur = null;
+  B.forEach(({ s, e }, j) => { if (lt < s) return; const cs = G[j].cues, w = cs.map((x) => x.length), W = w.reduce((a, c) => a + c, 0); let acc = s;
+    cs.forEach((c, q) => { const d = (e - s) * w[q] / W; if (G[j].cs) acc = s + (e - s) * G[j].cs[q] - .1; if (lt >= acc) cur = lt < e + .6 || j === B.length - 1 ? c : null; acc += d; }); });
+  if (cur) { ctx.font = font(600, 40); ctx.fillStyle = K.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillText(cur, 960, 1012, 1728); }
+}
+window.sceneStarts = SCENES.map((s) => s.at);
+window.sceneEnds = SCENES.map((s, i) => s.at + s.dur - (i === SCENES.length - 1 ? .9 : .05));
+const q = new URLSearchParams(location.search);
+window.renderAt(Number(q.get('t')) || 0, 60, 1);
+if (q.has('play')) { const start = performance.now() - (Number(q.get('t')) || 0) * 1000; const play = (now) => { window.renderAt(((now - start) / 1000) % window.DURATION, 60, 1); requestAnimationFrame(play); }; requestAnimationFrame(play); }
+</script>
+</body>
+</html>

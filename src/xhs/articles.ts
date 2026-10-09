@@ -1,4 +1,5 @@
 import type { Components } from 'react-markdown'
+import { attentionKvCompression } from '../articles/attention-kv-compression/attention-kv-compression.blocks'
 import { vllmCpuOverhead } from '../articles/vllm-cpu-overhead/vllm-cpu-overhead.blocks'
 import { vllmDistributed } from '../articles/vllm-distributed/vllm-distributed.blocks'
 import { vllmPagedAttention } from '../articles/vllm-paged-attention/vllm-paged-attention.blocks'
@@ -16,4 +17,5 @@ export const articles: Record<string, XhsArticle> = {
   'vllm-cpu-overhead': vllmCpuOverhead,
   'vllm-speculative-decoding': vllmSpeculativeDecoding,
   'vllm-distributed': vllmDistributed,
+  'attention-kv-compression': attentionKvCompression,
 }

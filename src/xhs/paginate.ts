@@ -133,6 +133,14 @@ export function paginate(source: HTMLElement, container: HTMLElement, headerTitl
     const free = content.clientHeight - used()
     const splitHere = (el.tagName === 'P' && (free >= content.clientHeight * PARA_SPLIT || height >= content.clientHeight * PARA_SPLIT))
       || ((el.tagName === 'UL' || el.tagName === 'OL') && free >= content.clientHeight * LIST_SPLIT_FREE)
+    // 列表差一点放不下时，先把本页已有的图适度缩小，让整个列表留在本页，不拆开。
+    const isList = el.tagName === 'UL' || el.tagName === 'OL'
+    const figureHere = isList ? [...content.children].reverse().find(isFigure) as HTMLElement | undefined : undefined
+    if (figureHere && Number(figureHere.querySelector<SVGElement>(':scope > svg')?.dataset.scale ?? 1) === 1 && !figureHere.style.zoom) {
+      content.appendChild(el)
+      if (shrinkUntilFits(figureHere, shrinkLimit(figureHere))) return
+      content.removeChild(el)
+    }
     if (content.childElementCount && splitHere) {
       const result = split(el)
       if (result === 'all') return

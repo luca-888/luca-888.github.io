@@ -73,6 +73,18 @@
 
 图 3 的整模型数字（BF16，每 token，只计 full attention 层，不计 DSA indexer 的 key 与线性层状态；128K 请求 = KiB ÷ 8 GiB）：Llama-3.1-70B 320 KiB（40 GiB）；Qwen3-235B-A22B 188（23.5）；MiniMax-M3 120（15）；GLM-5 87.75（11.0）；DeepSeek-V3、Kimi-K2 68.625（8.6）；Kimi-K3 27（3.4，24 层 MLA）；DeepSeek-V4-Pro 7.7 KiB（0.97 GiB）：config 的 `compress_ratios` 前 61 项中 30 层为 4、31 层为 128，每个 entry 512 维，BF16 平均每 token 7928 B；按实际的 FP8 + BF16 存储（每 entry 576 B）为 4460 B，加 FP4 indexer key 480 B，合计为 61 层 BF16 GQA-8（head dim 128）的 1.98%，与报告的“约 2%”一致。2026-10-08 用户要求去掉假想的 MHA 对照行，并在图中加入 V4。
 
+前言表（2026-10-08 用户要求：做等价对比，不混入层数等其他因素；不写真实模型，直接用虚构配置）：固定 80 层、64 个 query head、head dim 128，只改 attention 形式。MHA 每层 16384 个元素，2560 KiB，128K 为 320 GiB；GQA-8 每层 2048，320 KiB，40 GiB；MLA（512 + 64）每层 576，90 KiB，11.25 GiB。
+
+第二章直觉（2026-10-08 用户要求，后要求去重、按图讲）：新增“MHA 的信息传递”一节（query / key / value 的作用与 head 输出公式）；“共享方式”改为先放图 1，再按图中四行各用一条说明缓存了什么，MLA 也在此处给出定义；不再另设对照表。均为自己的分析，无新增来源。
+
+精简（2026-10-08 用户确认方案）：8 章改为 7 章。质量差异表只留 DeepSeek 7B 与 876M 各一行，T5-XXL 并成一句；原第五章（vLLM 两种算法）并入“MLA 的代价”首节，去掉代码与分块展开；GLA 缩为一句，TransMLA 从正文与参考中删去；现状一章删去模型配置表，只留图 3；V4 只留位置编码与序列压缩，删去输出投影分组与存储精度。下方章节提纲为精简前的版本。
+
+第三、四章重写与新图（2026-10-08 用户要求：MLA 与 decoupled RoPE 难懂，用图呈现）：低秩联合压缩补“32768 维由 512 维决定”；矩阵吸收改为“展开 / 吸收”两条对照；新增图 `::decoupled-rope::`（上：query × R × W × latent 的冲突；下：query 与缓存各分 512 + 64 两段、对齐做点积），核心图由 3 张变为 4 张。随后用户仍觉第三章难懂：低秩联合压缩改为“MHA 缓存投影结果，MLA 把投影拆成两步、缓存中间结果”的讲法，新增图 `::mla-latent::`（MHA 与 MLA 的投影路径，描边块为缓存）；矩阵吸收先讲按定义计算的问题，再讲“只需要点积、不需要 key 本身”。核心图共 5 张。
+
+章节重排（2026-10-08 用户确认）：参考 Raschka《A Visual Guide to Attention Variants in Modern LLMs》（https://magazine.sebastianraschka.com/p/visual-attention-variants ，已读全文，只借用“一种形式一章、章首给定义与代表模型”的分法，未引用其内容）。现为：一 MHA；二 MQA 与 GQA；三 MLA（低秩联合压缩、矩阵吸收、Decoupled RoPE、吸收后的形态、质量）；四 MLA 的代价；五 Shared-KV MQA；六 各模型的 KV cache；七 小结。原第三、四章合并，576 的结论移到“吸收后的形态”。
+
+MHA 配图（2026-10-08 用户要求）：`::mha-flow::`，3 个 head × 4 个历史 token 的 K/V 网格，示例路径为 head 1 的 query → 点积 → softmax → 加权求和 → 输出。核心图共 6 张。
+
 ## 文章主线
 
 decode 每步都要把整个 KV cache 从显存读一遍，计算量却很少（MHA 的算术强度约为 1），所以每 token 缓存的字节数决定了 decode 速度与并发上限。MQA/GQA 让多个 query head 共享一组 K/V。MLA 只缓存一个低秩 latent，再借矩阵吸收让 decode 直接在 latent 上做 MQA，同一份数据既当 K 又当 V。代价转移到计算（head 数决定 FLOPs）和并行（latent 无法按 head 切分）。DeepSeek V4 直接训练“吸收后”的形态：一个 512 维、K=V 的共享 KV head。
@@ -105,3 +117,7 @@ decode 每步都要把整个 KV cache 从显存读一遍，计算量却很少（
 3. GLM-5 每 head 的 qk 为 256（nope 192 + rope 64），需要确认其吸收后 latent 仍为 512+64，以 vLLM `glm5next` 或 GLM 的 MLA 实现为准。
 4. V4 的 shared-KV MQA 是否在 vLLM 中也走 MLA 后端（`MLAAttentionSpec`、`fp8_ds_mla` 576B slot），用于说明“吸收后的 MLA 与 V4 共用同一类 kernel”。
 5. 是否需要实测：初定不做；如需代表数字，可在 4090 上测 GQA 与 MLA decode kernel 在长 context 下的耗时。
+
+## 视频
+
+2026-10-09 用户确认分镜后制作，源文件在 `videos/attention-kv-compression/`，概念、分镜与已知限制见该目录的 `keyframes.md`，配音稿见 `script.md`。横版 1920 × 1080，MiniMax 配音，15 幕，约 8 分 47 秒。全片用一个配置（80 层、64 个 query head、head dim 128），因此算术强度一幕写 MLA 约 128（2h 代入 h = 64），文章里的 256 对应 h = 128。视频不讲 prefill 与 decode 的两套算法、GQA 由 MHA checkpoint 转换、GLA 与 V4 的 −t 旋转。RoPE key 在视频里用 teal（系列里 red 表示装不下与重复），与文章图中的红色不同。
