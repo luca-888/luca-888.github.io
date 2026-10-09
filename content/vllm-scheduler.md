@@ -1,4 +1,4 @@
-vLLM 的调度器每一步只回答一个问题：**这一步让哪些请求各算多少个 token**。答案要同时照顾三方：吞吐要求 batch 尽量大，新请求希望尽快开始，正在生成的请求希望不被打断。三者互相冲突，vLLM V1 用一个 token budget 统一了这三者的取舍。它是 Orca 的 iteration-level scheduling 与 Sarathi-Serve 的 chunked prefill 演化到今天的形态。下文按这条演化线展开，最后对照 vLLM v0.30.0 的源码。
+vLLM 的调度器每一步决定**哪些请求各算多少个 token**。答案要同时照顾三方：吞吐要求 batch 尽量大，新请求希望尽快开始，正在生成的请求希望不被打断。三者互相冲突，vLLM V1 用一个 token budget 统一了这三者的取舍。它由 Orca 的 iteration-level scheduling 与 Sarathi-Serve 的 chunked prefill 演化而来。
 
 ## 一、Prefill 与 decode
 

@@ -1,6 +1,6 @@
 DeepSeek-V4-Pro 的权重文件有 865 GB，一张 B200 的显存是 180 GB，一张卡装不下。SGLang 的 cookbook 用一台 8 卡的机器部署它，并给了两种把权重分到 8 张卡上的分法。
 
-TP 把每个矩阵切成 8 条，单个请求最快。DP attention + EP 让 expert 整个放、attention 每张卡放一份，能装下的 KV cache 是 TP 的约 5 倍。实例之间还可以再加一层 PD 分离，把 prefill 与 decode 分开。下表列出各种并行方式切的是什么、通信发生在哪、适用于什么模型。源码基于 vLLM v0.30.0，部署配置取自 SGLang 的 DeepSeek-V4 cookbook。
+TP 把每个矩阵切成 8 条，单个请求最快。DP attention + EP 让 expert 整个放、attention 每张卡放一份，能装下的 KV cache 是 TP 的约 5 倍。实例之间还可以再加一层 PD 分离，把 prefill 与 decode 分开。下表列出各种并行方式切的是什么、通信发生在哪、适用于什么模型。
 
 | 并行方式 | 切的是什么 | 通信发生在哪 | 适用 |
 | --- | --- | --- | --- |
