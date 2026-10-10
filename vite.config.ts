@@ -26,6 +26,8 @@ export default defineConfig({
         vllmDistributed: 'posts/vllm-distributed/index.html',
         dspark: 'posts/dspark/index.html',
         attentionKvCompression: 'posts/attention-kv-compression/index.html',
+        sparseAttention: 'posts/sparse-attention/index.html',
+        linearAttention: 'posts/linear-attention/index.html',
       },
     },
   },

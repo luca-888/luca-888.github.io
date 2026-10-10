@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>稀疏 Attention</title>
+<style>
+  html, body { margin: 0; background: #111; color: #ccc; font: 14px -apple-system, sans-serif; }
+  #cv { display: block; width: 100vw; max-height: calc(100vh - 44px); aspect-ratio: 16 / 9; object-fit: contain; }
+  #bar { height: 44px; display: flex; align-items: center; gap: 12px; padding: 0 16px; }
+  #bar input { flex: 1; }
+</style>
+</head>
+<body>
+<canvas id="cv" width="1920" height="1080"></canvas>
+<div id="bar"><button>播放</button><input type="range" min="0"><span></span></div>
+<!-- 稀疏 Attention 科普影片：每一步只读一部分 token，读哪一部分。文案与节拍在 script.js，分镜在 storyboard.md，出处见 docs/sparse-attention-notes.md -->
+<script src="script.js"></script>
+<script src="vo.js"></script>
+<script src="core.js"></script>
+<script src="scenes.js"></script>
+</body>
+</html>

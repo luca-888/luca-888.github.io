@@ -23,7 +23,7 @@
 .fk-figure svg .fk-mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 12px; }
 .fk-figure svg .fk-cell-text { fill: #fff; font-size: 12px; font-weight: 600; }
 .fk-figure svg .fk-cell-text.fk-on-gray { fill: #374151; }
-.fk-figure svg .fk-cell-text.fk-on-void { fill: var(--color-muted); }
+.fk-figure svg .fk-cell-text.fk-on-void, .fk-figure svg .fk-cell-text.fk-on-free, .fk-figure svg .fk-cell-text.fk-on-empty { fill: var(--color-muted); }
 .fk-figure svg .fk-cell-text.fk-on-amber { fill: #3b2400; }
 .fk-figure svg .fk-cell-sub { font-size: 11px; font-weight: 400; }
 .fk-figure svg .fk-cell-small { font-size: 10px; font-weight: 600; }

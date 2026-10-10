@@ -34,7 +34,7 @@ export function paginate(source: HTMLElement, container: HTMLElement, headerTitl
     if (pages.length >= 200) throw new Error('分页超过 200 页，可能陷入循环')
     const page = document.createElement('section')
     page.className = 'xhs-page'
-    page.innerHTML = `<header><span></span><span>luca’s blog</span></header><div class="xhs-content xhs-body"></div><footer><span></span><span></span></footer>`
+    page.innerHTML = `<header><span></span><span>流形笔记 · luca’s blog</span></header><div class="xhs-content xhs-body"></div><footer><span></span><span></span></footer>`
     page.querySelector('header span')!.textContent = headerTitle
     container.appendChild(page)
     content = page.querySelector('.xhs-content')!
