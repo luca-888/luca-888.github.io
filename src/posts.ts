@@ -14,6 +14,14 @@ export type Post = {
 // 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。
 export const posts: Post[] = [
   {
+    slug: 'bf16-weight-offset',
+    title: 'Gemma RMSNorm 的 1 + w：BF16 舍入与 weight offset 的相加位置',
+    description: 'Gemma 的 RMSNorm 把缩放系数写成 1 + w。weight 以 BF16 存储时，在 BF16 中加 1 会舍掉 w 的低位：BF16 的 ulp 与舍入、误差怎样进入 Y 与 dX，以及把 offset 移进 kernel、在 FP32 中相加的做法。',
+    category: '算子优化',
+    tags: ['RMSNorm', 'Gemma', 'BF16', '数值精度', 'CuTe DSL', 'Liger Kernel'],
+    status: 'draft',
+  },
+  {
     slug: 'linear-attention',
     title: '线性 Attention：Gated DeltaNet、KDA 与混合架构',
     description: '把历史写进固定大小的矩阵 state：decay gate 与 delta rule 决定忘什么、怎么写，chunkwise 计算让训练并行，Gated DeltaNet 与 KDA 以 3:1 与 full attention 混合，以及 state 在推理系统中的代价与反对意见。',
