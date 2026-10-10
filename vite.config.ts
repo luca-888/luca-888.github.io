@@ -28,6 +28,7 @@ export default defineConfig({
         attentionKvCompression: 'posts/attention-kv-compression/index.html',
         sparseAttention: 'posts/sparse-attention/index.html',
         linearAttention: 'posts/linear-attention/index.html',
+        bf16WeightOffset: 'posts/bf16-weight-offset/index.html',
       },
     },
   },
