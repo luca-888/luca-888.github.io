@@ -85,6 +85,7 @@
 | calibration / ECE | 预测概率与实际正确率是否一致 / expected calibration error | 概率语境保留英文 calibration，与量化语境的“校准”区分；ECE 首次出现时给出一句定义。 |
 | FLCE | Fused Linear Cross Entropy：把 lm_head 与 cross-entropy 合并、按 token 分块计算的 loss 实现 | 首次写全称 Fused Linear Cross Entropy，后文用 FLCE；指 Liger 的实现时保留其类名 `LigerFusedLinearCrossEntropyLoss`。 |
 | logits / lm_head | 词表上每个词的分数 / 把 hidden state 映射到 logits 的最后一层线性层 | 保留英文，不写“对数几率”“输出头”；lm_head 保留下划线写法。 |
+| monkey patch / patch | 在运行时替换模块中的名字、类上的方法或实例的属性，不改源码 | 保留英文，不写“猴子补丁”；动词写 patch（“patch 实例”）。2026-10-10 Liger 接入文章采用。 |
 | 线性 attention / state | 去掉 softmax、把历史累积进固定大小矩阵的 attention / 这个矩阵 | 写“线性 attention”“线性层”，不写“线性注意力”；矩阵写 state，不写“状态矩阵”“隐状态”（与 RNN 类比时除外）。2026-10-10 线性 attention 文章采用。 |
 | decay gate / delta rule | 每步把 state 整体乘衰减系数 α 的机制 / 先读出 key 已存的值、只写入差值的更新 | 保留英文；α 称为衰减系数，β 称为写入强度。 |
 | GDN / KDA | Gated DeltaNet / Kimi Delta Attention | 首次写全称，后文可用 GDN、KDA；Mamba2、GLA、DeltaNet 直接用原名。 |
