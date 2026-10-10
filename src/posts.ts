@@ -14,6 +14,14 @@ export type Post = {
 // 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。
 export const posts: Post[] = [
   {
+    slug: 'semantic-cache-verification',
+    title: 'Semantic Cache 的命中校验：误命中、校验器故障与 fail-closed',
+    description: 'Semantic cache 靠 embedding 相似度命中，意思相反的问题也可能命中。命中校验的做法，以及校验器故障时 fail-open 与 fail-closed 的取舍、请求取消与候选相似度的处理。',
+    category: '推理系统',
+    tags: ['Semantic cache', 'Semantic Router', 'NLI', 'Fail-closed', 'LLM serving'],
+    status: 'draft',
+  },
+  {
     slug: 'liger-hf-patching',
     title: 'Liger-Kernel 的模型接入：类替换、实例 patch 与静默回退',
     description: 'Liger-Kernel 怎样把 Triton kernel 接入 Hugging Face 模型：构建前替换类与构建后 patch 实例的区别，漏掉的 patch 为什么静默回退到原实现，以及 patched forward 中 logits_to_keep、shift_labels 与 FLCE 的关系。',
