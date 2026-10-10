@@ -14,6 +14,14 @@ export type Post = {
 // 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。
 export const posts: Post[] = [
   {
+    slug: 'liger-hf-patching',
+    title: 'Liger-Kernel 的模型接入：类替换、实例 patch 与静默回退',
+    description: 'Liger-Kernel 怎样把 Triton kernel 接入 Hugging Face 模型：构建前替换类与构建后 patch 实例的区别，漏掉的 patch 为什么静默回退到原实现，以及 patched forward 中 logits_to_keep、shift_labels 与 FLCE 的关系。',
+    category: '训练优化',
+    tags: ['Liger Kernel', 'Hugging Face', 'transformers', 'Monkey patch', 'RMSNorm', 'FLCE', 'Qwen'],
+    status: 'draft',
+  },
+  {
     slug: 'bf16-weight-offset',
     title: 'Gemma RMSNorm 的 1 + w：BF16 舍入与 weight offset 的相加位置',
     description: 'Gemma 的 RMSNorm 把缩放系数写成 1 + w。weight 以 BF16 存储时，在 BF16 中加 1 会舍掉 w 的低位：BF16 的 ulp 与舍入、误差怎样进入 Y 与 dX，以及把 offset 移进 kernel、在 FP32 中相加的做法。',

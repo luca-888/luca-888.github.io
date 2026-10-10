@@ -29,6 +29,7 @@ export default defineConfig({
         sparseAttention: 'posts/sparse-attention/index.html',
         linearAttention: 'posts/linear-attention/index.html',
         bf16WeightOffset: 'posts/bf16-weight-offset/index.html',
+        ligerHfPatching: 'posts/liger-hf-patching/index.html',
       },
     },
   },
