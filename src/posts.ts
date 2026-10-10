@@ -14,6 +14,23 @@ export type Post = {
 // 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。
 export const posts: Post[] = [
   {
+    slug: 'linear-attention',
+    title: '线性 Attention：Gated DeltaNet、KDA 与混合架构',
+    description: '把历史写进固定大小的矩阵 state：decay gate 与 delta rule 决定忘什么、怎么写，chunkwise 计算让训练并行，Gated DeltaNet 与 KDA 以 3:1 与 full attention 混合，以及 state 在推理系统中的代价与反对意见。',
+    category: '推理系统',
+    tags: ['Attention', 'Linear attention', 'Gated DeltaNet', 'KDA', 'Qwen', 'Kimi', 'KV cache'],
+    status: 'draft',
+  },
+  {
+    slug: 'sparse-attention',
+    title: '稀疏 Attention：Sliding Window、Attention Sink、DSA 与 CSA',
+    description: '每个 query 只读一部分历史 token：sliding window 与 local / global 层交替，attention sink 的成因与显式 sink，NSA、DSA 的学习式选择，DeepSeek V4 先压缩再选择的 CSA 与 HCA。',
+    category: '推理系统',
+    tags: ['Attention', 'Sparse attention', 'Sliding window', 'Attention sink', 'NSA', 'DSA', 'DeepSeek', 'KV cache'],
+    status: 'published',
+    publishedAt: '2026-10-10',
+  },
+  {
     slug: 'attention-kv-compression',
     title: 'KV Cache 压缩：MQA、GQA 与 MLA',
     description: 'decode 每步都要把 KV cache 读一遍。MQA、GQA 让多个 query head 共享 KV head，MLA 只缓存低秩 latent 并借矩阵吸收在 decode 时做 MQA，DeepSeek V4 直接训练 key 与 value 共用的单个 KV head。',

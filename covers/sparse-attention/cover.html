@@ -1,0 +1,68 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- 稀疏 Attention 封面，9:16（1080 × 1920）。node render.mjs 导出 portrait-1080x1920.png。
+     竖版改排自影片结尾一幕（videos/sparse-attention/scenes.js 的 s11）：128K 个 token 铺成 512 列 × 256 行的一页，
+     紫色为选中的 1024 个压缩 entry（每个覆盖 4 个 token，位置为示意），蓝色为最近 128 个 token；配色、选点的随机种子与影片相同。 -->
+<style>html, body { margin: 0; background: #f1ede4; } canvas { display: block; }</style>
+<canvas id="cv" width="1080" height="1920"></canvas>
+<script>
+  const C = { paper: '#f1ede4', paper2: '#e6e0d3', ink: '#141414', ink2: '#3a3a3a', blue: '#2350d8', yel: '#f4c21b', yelD: '#9a7500', purple: '#7c3ff5' }
+  const GHOST = '#e4ded0', ZH = '"PingFang SC","Helvetica Neue",sans-serif'
+  const g = document.getElementById('cv').getContext('2d')
+  const rr = (x, y, w, h, fill) => { g.fillStyle = fill; g.fillRect(x, y, w, h) }
+  const txt = (s, x, y, { size = 30, color = C.ink, align = 'left', weight = 700 } = {}) => {
+    g.fillStyle = color; g.textAlign = align; g.textBaseline = 'alphabetic'; g.font = `${weight} ${size}px ${ZH}`; g.fillText(s, x, y)
+  }
+  // 与影片 core.js 相同的选点
+  function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 } }
+  function pick(n, total, seed) {
+    const r = rng(seed), set = new Set()
+    while (set.size < n * 0.6) { const at = Math.floor(r() * total), len = 4 + Math.floor(r() * 36); for (let j = 0; j < len && set.size < n * 0.6; j++) if (at + j < total) set.add(at + j) }
+    while (set.size < n) set.add(Math.floor(r() * total))
+    return set
+  }
+  const N = 131072, COLS = 512, ROWS = 256, X = 76, CW = 928
+  const SEL = new Set(); for (const e of pick(1024, 32768, 11)) for (let j = 0; j < 4; j++) SEL.add(e * 4 + j)
+
+  rr(0, 0, 1080, 1920, C.paper)
+  txt('稀疏', 66, 478, { size: 260, weight: 800 })
+  txt('Attention', 70, 690, { size: 196, weight: 800, color: C.blue })
+  txt('每一步，只读其中一小部分', X, 790, { size: 56, color: C.ink2 })
+
+  // token 页：先按 5 px 一格画到离屏画布，再缩到 896 × 448（一格 1.75 px）
+  const colorOf = i => (i >= N - 128 ? C.blue : SEL.has(i) ? C.purple : GHOST)
+  const S = 5, off = document.createElement('canvas'); off.width = COLS * S; off.height = ROWS * S
+  const q = off.getContext('2d')
+  for (const col of [GHOST, C.purple, C.blue]) {
+    q.fillStyle = col
+    for (let i = 0; i < N; i++) if (colorOf(i) === col) q.fillRect((i % COLS) * S, Math.floor(i / COLS) * S, S - 1, S - 1)
+  }
+  const PW = 896, PITCH = PW / COLS, PY = 850, PH = ROWS * PITCH, PB = PY + PH
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(off, X, PY, PW, PH)
+  rr(X + PW + 8, PB - 20, 20, 20, C.yel); g.strokeStyle = C.ink; g.lineWidth = 2; g.strokeRect(X + PW + 8, PB - 20, 20, 20)
+
+  // 放大小窗：页的右下角 32 列 × 14 行，连同页外的 query
+  const ZC = 32, ZR = 14, Z = 13, ZX = 540, ZY = 1352, ZW = 464, ZHT = ZR * Z + 14
+  const fx = X + (COLS - ZC) * PITCH - 2, fy = PB - ZR * PITCH - 2, fw = X + CW - fx + 2, fh = PB - fy + 3
+  g.strokeStyle = C.ink; g.lineWidth = 2.5; g.strokeRect(fx, fy, fw, fh)
+  g.setLineDash([5, 5]); g.lineWidth = 1.5; g.beginPath(); g.moveTo(fx, fy + fh); g.lineTo(ZX, ZY); g.moveTo(fx + fw, fy + fh); g.lineTo(ZX + ZW, ZY); g.stroke(); g.setLineDash([])
+  rr(ZX, ZY, ZW, ZHT, '#fbf9f4'); g.lineWidth = 2.5; g.strokeRect(ZX, ZY, ZW, ZHT)
+  for (let r = 0; r < ZR; r++) for (let c = 0; c < ZC; c++)
+    rr(ZX + 7 + c * Z, ZY + 7 + r * Z, Z - 2, Z - 2, colorOf((ROWS - ZR + r) * COLS + COLS - ZC + c))
+  const qx = ZX + 7 + ZC * Z + 6, qy = ZY + 7 + ZR * Z - 28
+  rr(qx, qy, 26, 26, C.yel); g.lineWidth = 2; g.strokeRect(qx, qy, 26, 26)
+  txt('query：正在生成的 token', ZX + ZW, ZY + ZHT + 38, { size: 28, color: C.yelD, align: 'right' })
+  txt('最近 128 个 token', ZX + ZW, ZY + ZHT + 78, { size: 28, color: C.blue, align: 'right' })
+
+  // 两条对着同一条基线：整条 = 128K 个 entry
+  const MW = 424
+  txt('每步读取', X, 1386, { size: 34 })
+  const meter = (y, label, parts, value) => {
+    txt(label, X, y, { size: 28 }); txt(value, X + MW, y, { size: 30, align: 'right' })
+    rr(X, y + 14, MW, 38, C.paper2)
+    let at = X; for (const [n, col] of parts) { const w = Math.max(4, MW * n / N); rr(at, y + 14, w, 38, col); at += w }
+  }
+  meter(1444, '全部读', [[N, C.blue]], '128K 个')
+  meter(1550, '只读一部分', [[1024, C.purple], [128, C.blue]], '1024 + 128 个')
+  txt('上下文再长，这一条也不变', X, 1654, { size: 30, color: C.purple })
+</script>

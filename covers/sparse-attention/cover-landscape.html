@@ -1,0 +1,57 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- 稀疏 Attention 横版封面，4:3（1920 × 1440）。node render-landscape.mjs 导出 landscape-1920x1440.png。
+     改排自影片结尾一幕（videos/sparse-attention/scenes.js 的 s11）：128K 个 token 铺成 512 列 × 256 行的一页，
+     紫色为选中的 1024 个压缩 entry（每个覆盖 4 个 token，位置为示意），蓝色为最近 128 个 token；配色、选点的随机种子与影片相同。 -->
+<style>html, body { margin: 0; background: #f1ede4; } canvas { display: block; }</style>
+<canvas id="cv" width="1920" height="1440"></canvas>
+<script>
+  const C = { paper: '#f1ede4', paper2: '#e6e0d3', ink: '#141414', ink2: '#3a3a3a', blue: '#2350d8', yel: '#f4c21b', yelD: '#9a7500', purple: '#7c3ff5' }
+  const GHOST = '#e4ded0', ZH = '"PingFang SC","Helvetica Neue",sans-serif'
+  const g = document.getElementById('cv').getContext('2d')
+  const rr = (x, y, w, h, fill) => { g.fillStyle = fill; g.fillRect(x, y, w, h) }
+  const txt = (s, x, y, { size = 30, color = C.ink, align = 'left', weight = 700 } = {}) => {
+    g.fillStyle = color; g.textAlign = align; g.textBaseline = 'alphabetic'; g.font = `${weight} ${size}px ${ZH}`; g.fillText(s, x, y)
+  }
+  // 与影片 core.js 相同的选点
+  function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 } }
+  function pick(n, total, seed) {
+    const r = rng(seed), set = new Set()
+    while (set.size < n * 0.6) { const at = Math.floor(r() * total), len = 4 + Math.floor(r() * 36); for (let j = 0; j < len && set.size < n * 0.6; j++) if (at + j < total) set.add(at + j) }
+    while (set.size < n) set.add(Math.floor(r() * total))
+    return set
+  }
+  const N = 131072, COLS = 512, ROWS = 256, X = 116, PW = 1200
+  const SEL = new Set(); for (const e of pick(1024, 32768, 11)) for (let j = 0; j < 4; j++) SEL.add(e * 4 + j)
+
+  // 影片结尾一幕的构图原样搬到 4:3：左边是页，右边是开场与现在的读取量对比；左右各留 6%，顶部 12% 不放字
+  rr(0, 0, 1920, 1440, C.paper)
+  txt('稀疏', 106, 450, { size: 250, weight: 800 })
+  g.font = `800 250px ${ZH}`; const tx = 106 + g.measureText('稀疏').width + 44
+  txt('Attention', tx, 450, { size: 250, weight: 800, color: C.blue })
+  txt('每一步，只读其中一小部分', X, 548, { size: 58, color: C.ink2 })
+
+  // token 页：先按 5 px 一格画到离屏画布，再缩到 1200 × 600
+  const colorOf = i => (i >= N - 128 ? C.blue : SEL.has(i) ? C.purple : GHOST)
+  const S = 5, off = document.createElement('canvas'); off.width = COLS * S; off.height = ROWS * S
+  const q = off.getContext('2d')
+  for (const col of [GHOST, C.purple, C.blue]) {
+    q.fillStyle = col
+    for (let i = 0; i < N; i++) if (colorOf(i) === col) q.fillRect((i % COLS) * S, Math.floor(i / COLS) * S, S - 1, S - 1)
+  }
+  const PY = 610, PH = PW / 2, PB = PY + PH, MX = 1384, MW = 420
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(off, X, PY, PW, PH)
+  rr(X + PW + 10, PB - 24, 24, 24, C.yel); g.strokeStyle = C.ink; g.lineWidth = 2; g.strokeRect(X + PW + 10, PB - 24, 24, 24)
+  txt('query：正在生成的 token', MX, PB - 3, { size: 28, color: C.yelD })
+
+  // 两条对着同一条基线：整条 = 128K 个 entry
+  const meter = (y, label, parts, value) => {
+    txt(label, MX, y, { size: 32 }); txt(value, MX + MW, y, { size: 34, align: 'right' })
+    rr(MX, y + 18, MW, 42, C.paper2)
+    let at = MX; for (const [n, col] of parts) { const w = Math.max(4, MW * n / N); rr(at, y + 18, w, 42, col); at += w }
+  }
+  txt('每步读取', MX, PY + 132, { size: 34 })
+  meter(PY + 200, '开场', [[N, C.blue]], '128K 个')
+  meter(PY + 330, '现在', [[1024, C.purple], [128, C.blue]], '1024 + 128 个')
+  txt('上下文再长，这一条也不变', MX, PY + 472, { size: 30, color: C.purple })
+</script>

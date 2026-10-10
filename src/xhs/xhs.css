@@ -12,6 +12,7 @@ body { margin: 0; background: #e9ebee; }
 .xhs-page > header, .xhs-page > footer { margin: 0 72px; }
 .xhs-page > header { padding-bottom: 20px; border-bottom: 1px solid #e1e4e7; }
 .xhs-page > header span:first-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.xhs-page > header span:last-child { flex: none; white-space: nowrap; }
 .xhs-page > footer { align-items: center; height: 96px; flex: none; border-top: 1px solid #e1e4e7; }
 .xhs-content { flex: 1; min-height: 0; overflow: hidden; padding: 36px 72px 0; }
 

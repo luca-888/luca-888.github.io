@@ -1,0 +1,7 @@
+/* 章首规格卡：四栏并排，细边框，标签小字、内容加重。 */
+.sa-spec { display: grid; grid-template-columns: repeat(4, 1fr); margin: 18px 0 22px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-surface); }
+.sa-spec > div { padding: 12px 16px; }
+.sa-spec > div + div { border-left: 1px solid var(--color-border); }
+.sa-spec dt { margin-bottom: 4px; color: var(--color-muted); font-size: 12px; }
+.sa-spec dd { margin: 0; color: var(--color-heading); font-size: 14px; font-weight: 600; line-height: 1.5; }
+.sa-spec dd small { display: block; color: var(--color-muted); font-size: 12px; font-weight: 400; }

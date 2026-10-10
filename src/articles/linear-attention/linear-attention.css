@@ -1,0 +1,8 @@
+/* 章首规格卡：四栏并排，细边框，标签小字、内容加重。 */
+.la-spec { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; margin: 18px 0 22px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-surface); }
+.la-spec > div { padding: 12px 16px; }
+.la-spec > div + div { border-left: 1px solid var(--color-border); }
+.la-spec dt { margin-bottom: 4px; color: var(--color-muted); font-size: 12px; }
+.la-spec dd { margin: 0; color: var(--color-heading); font-size: 14px; font-weight: 600; line-height: 1.5; }
+.la-spec dd small { display: block; color: var(--color-muted); font-size: 12px; font-weight: 400; }
+.la-spec dd .katex { font-size: 1.08em; font-weight: 400; }

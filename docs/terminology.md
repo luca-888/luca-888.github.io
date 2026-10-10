@@ -53,6 +53,9 @@
 | LoRA | Low-Rank Adaptation | 直接使用 LoRA，无需展开或附中文；保留大小写，不写作 LORA 或 lora，源码标识符除外。 |
 | RMSNorm | Root Mean Square Normalization | 直接使用 RMSNorm，无需展开或附中文。 |
 | MHA / MQA / GQA / MLA | Multi-Head Attention / Multi-Query Attention / Grouped-Query Attention / Multi-head Latent Attention | 用户指定（2026-10-08）：首次出现时写“英文全称（缩写）”，后文用缩写；MLA 按 DeepSeek 原文写作 Multi-head（h 小写）。GQA 的组数写作 GQA-8 等。 |
+| sliding window attention / local 层 / global 层 | 每个 token 只读最近 W 个 token 的 attention / 使用它的层 / 保留 full attention 的层 | 保留英文，W 称为“窗口”；不缩写为 SWA（引用 DeepSeek 等原文时除外），不写“滑动窗口注意力”。完整读取的 attention 写 full attention。 |
+| attention sink / sink token / sink logit | 获得大量权重但语义不重要的 token / 训练时加在样本开头的可学习 token / 每个 head 加在 softmax 分母中的可学习标量 | 保留英文，可简称 sink；sink logit 为稀疏 attention 文章采用的叫法，首次出现时定义。 |
+| NSA / DSA / CSA / HCA | Native Sparse Attention / DeepSeek Sparse Attention / Compressed Sparse Attention / Heavily Compressed Attention | 首次出现时写“英文全称（缩写）”，后文用缩写。打分模块写 lightning indexer（可简称 indexer），选择写 top-k；被读取的缓存单元写 KV entry（可简称 entry）。 |
 | SDPA | Scaled Dot-Product Attention | 直接使用 SDPA，无需展开或附中文；讨论具体接口时保留 `scaled_dot_product_attention`。 |
 | BF16 | bfloat16 | 无需展开或附中文；正文、表格与图中统一使用 BF16，代码保留 `torch.bfloat16` 等实际标识符。 |
 | FP32 | 32-bit floating point | 无需展开或附中文；正文、表格与图中统一使用 FP32，代码保留 `torch.float32` 等实际标识符。 |
@@ -82,6 +85,10 @@
 | calibration / ECE | 预测概率与实际正确率是否一致 / expected calibration error | 概率语境保留英文 calibration，与量化语境的“校准”区分；ECE 首次出现时给出一句定义。 |
 | FLCE | Fused Linear Cross Entropy：把 lm_head 与 cross-entropy 合并、按 token 分块计算的 loss 实现 | 首次写全称 Fused Linear Cross Entropy，后文用 FLCE；指 Liger 的实现时保留其类名 `LigerFusedLinearCrossEntropyLoss`。 |
 | logits / lm_head | 词表上每个词的分数 / 把 hidden state 映射到 logits 的最后一层线性层 | 保留英文，不写“对数几率”“输出头”；lm_head 保留下划线写法。 |
+| 线性 attention / state | 去掉 softmax、把历史累积进固定大小矩阵的 attention / 这个矩阵 | 写“线性 attention”“线性层”，不写“线性注意力”；矩阵写 state，不写“状态矩阵”“隐状态”（与 RNN 类比时除外）。2026-10-10 线性 attention 文章采用。 |
+| decay gate / delta rule | 每步把 state 整体乘衰减系数 α 的机制 / 先读出 key 已存的值、只写入差值的更新 | 保留英文；α 称为衰减系数，β 称为写入强度。 |
+| GDN / KDA | Gated DeltaNet / Kimi Delta Attention | 首次写全称，后文可用 GDN、KDA；Mamba2、GLA、DeltaNet 直接用原名。 |
+| chunkwise 计算 / chunk | 训练与 prefill 中按 chunk 并行、chunk 之间串行传递 state 的算法 / 序列切分的单位 | 保留英文 chunk，不写“分块”，以免与 KV cache 的 block 混淆。 |
 
 ## 维护方式
 
