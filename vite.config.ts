@@ -31,6 +31,7 @@ export default defineConfig({
         bf16WeightOffset: 'posts/bf16-weight-offset/index.html',
         ligerHfPatching: 'posts/liger-hf-patching/index.html',
         semanticCacheVerification: 'posts/semantic-cache-verification/index.html',
+        cudaGraphCorrectness: 'posts/cuda-graph-correctness/index.html',
       },
     },
   },

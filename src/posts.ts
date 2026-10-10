@@ -14,6 +14,14 @@ export type Post = {
 // 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。
 export const posts: Post[] = [
   {
+    slug: 'cuda-graph-correctness',
+    title: 'CUDA Graph 的正确性：捕获遗漏与过期输入',
+    description: 'Replay 等价于 eager 需要两个前提：每个 GPU 操作都录进图，每个随批次变化的输入都在 replay 前写入固定地址。Liger-Kernel 的 RMSNorm backward 漏捕获了 kernel，vLLM 的 EAGLE draft prefill 在 FULL 图中拿不到本批图像 embedding。',
+    category: 'GPU 编程',
+    tags: ['CUDA Graph', 'Stream capture', 'CuTe DSL', 'Liger-Kernel', 'vLLM', 'EAGLE', 'Speculative decoding'],
+    status: 'draft',
+  },
+  {
     slug: 'semantic-cache-verification',
     title: 'Semantic Cache 的命中校验：误命中、校验器故障与 fail-closed',
     description: 'Semantic cache 靠 embedding 相似度命中，意思相反的问题也可能命中。命中校验的做法，以及校验器故障时 fail-open 与 fail-closed 的取舍、请求取消与候选相似度的处理。',
