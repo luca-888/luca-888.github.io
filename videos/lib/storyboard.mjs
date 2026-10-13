@@ -2,7 +2,7 @@
 //   const kit = reviewKit({ page, title, fps, scenes });   在影片目录下运行，page 已打开 film.html（1920 × 1080 视口）
 //   await kit.clips({ only, force })   每幕一段带配音与字幕的视频 build/clips/sNN.mp4（1280 宽），没改过的幕跳过；每渲染完一幕更新一次分镜页
 //   await kit.storyboard()             build/storyboard.html：左边目录，逐幕列出视频（没有就放关键帧）与配音稿
-// scenes[i]：{ tag, chap, head, srcNote, at, dur, key, beats: [{ s, e, text, file, head }] }
+// scenes[i]：{ tag, chap, head, srcNote, at, dur, key, beats: [{ s, e, text, act, sub, file, head }] }（act 为画面动作，sub 为另给的字幕）
 //   at / dur 为这一幕在全片里的起点与时长；beats 的 s / e 为幕内时间，file 为这一句的录音（没有则留空），head 为录音开头的静音；
 //   key 为这一幕的内容指纹，变了才重渲；hold 为关键帧距幕尾的秒数（默认 0.01，幕尾有淡出时加大）。页面需提供 window.renderAt(t, fps, samples)。
 import { spawn } from 'node:child_process';
@@ -39,7 +39,7 @@ async function storyboard() {
     body += `<section id="s${i + 1}"><header><span class="num">${pad(i)}</span><div class="ttl">${s.head ? `<p class="tag">${esc(s.chap ? s.chap + ' · ' + s.tag : s.tag)}</p>` : ''}<h2>${title}</h2></div>`
       + `<p class="meta">${clock(s.at)} – ${clock(s.at + s.dur)}<span>${s.dur.toFixed(1)} s · ${n} 句</span>${chips}</p></header>`
       + `<div class="body"><div class="media">${media}</div><ol class="script">`
-      + s.beats.map((b, j) => `<li data-s="${b.s.toFixed(2)}" data-e="${(j + 1 < n ? s.beats[j + 1].s : s.dur).toFixed(2)}"><span class="tc">${clock(b.s)}</span><span class="tx">${mark(b.text)}${b.sub ? `<em>字幕　${esc(b.sub)}</em>` : ''}</span><span class="len">${(b.e - b.s).toFixed(1)} s</span></li>`).join('')
+      + s.beats.map((b, j) => `<li data-s="${b.s.toFixed(2)}" data-e="${(j + 1 < n ? s.beats[j + 1].s : s.dur).toFixed(2)}"><span class="tc">${clock(b.s)}</span><span class="tx">${mark(b.text)}${b.act ? `<em>画面　${esc(b.act)}</em>` : ''}${b.sub ? `<em>字幕　${esc(b.sub)}</em>` : ''}</span><span class="len">${(b.e - b.s).toFixed(1)} s</span></li>`).join('')
       + `</ol></div>${s.srcNote ? `<p class="src">${esc(s.srcNote)}</p>` : ''}</section>\n`;
   }
   const total = scenes.reduce((a, s) => a + s.dur, 0), done = scenes.filter((_, i) => fresh(i)).length;

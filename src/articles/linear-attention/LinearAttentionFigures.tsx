@@ -1,17 +1,10 @@
 import type { ReactNode } from 'react'
-import { Cell, Figure, Legend, Link, tex, useCompact } from '../../figure-kit'
+import { Cell, Figure, Legend, Link, useCompact } from '../../figure-kit'
 
-// 语义色：teal 为线性层与它的 state，purple 为 full attention 层与它的 KV cache，
-// void 为改用线性层后不再缓存的部分。图 1 中 amber / blue / green 分别是旧 value、新 value 与无关的另一条关联。
+// 语义色：teal 为线性 attention 层与它的 state，purple 为 full attention 层与它的 KV cache，
+// void 为改用线性 attention 层后不再缓存的部分。图 1 中 amber / blue / green 分别是旧 value、新 value 与无关的另一条关联。
 
 const KiB = 1024, MiB = KiB * KiB, GiB = MiB * KiB
-
-// 章首规格卡：更新式、写入、遗忘、代表模型。
-export function SpecCard({ items }: { items: [string, ReactNode][] }) {
-  return <dl className="la-spec">{items.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
-}
-
-export const Tex = ({ src }: { src: string }) => <span dangerouslySetInnerHTML={tex(src)} />
 
 // 图 1：三种写入方式之后，用 k 与 k' 从 state 中读出的内容。长度为向量的大小，数值为示意（α = 0.5，β = 1，k 与 k' 正交）。
 const U = 96 // 一个单位向量画多长
@@ -173,7 +166,7 @@ export function HybridLayers() {
   )
 }
 
-// 图 4：线性层的 state 与同样层数改用 full attention 时的 KV，随上下文长度的变化。双对数坐标。
+// 图 4：线性 attention 层的 state 与同样层数改用 full attention 时的 KV，随上下文长度的变化。双对数坐标。
 // Qwen3.8-27B：48 层 GDN，state 144 MiB；改用 GQA（4 KV head，head dim 256）每 token 192 KiB，交叉点 768。
 // Kimi K3：69 层 KDA，state 414 MiB；改用 MLA（576 维）每 token 77.625 KiB，交叉点约 5461。
 const QS = 144 * MiB, QKV = 192 * KiB, KS = 414 * MiB, KKV = 69 * 576 * 2
@@ -202,11 +195,11 @@ export function StateVsKv() {
   const qx = QS / QKV, kx = KS / KKV
   return (
     <Figure
-      title="线性层的 state 与同样层数改用 full attention 时的 KV"
+      title="线性 attention 层的 state 与同样层数改用 full attention 时的 KV"
       desc="双对数坐标。Qwen3.8-27B 的 48 层 GDN 共有 144 MiB 的 state，同样 48 层改用 GQA 时每个 token 的 KV 为 192 KiB，两者在 768 个 token 处相等；Kimi K3 的 69 层 KDA 共有 414 MiB 的 state，改用 MLA 时每个 token 的 KV 为 77.6 KiB，两者在约 5.5K 个 token 处相等。"
       width={W}
       height={PY + PH + 44}
-      below={<Legend items={[['teal', '线性层的 state'], ['purple', '同样层数改用 full attention 的 KV']]} />}
+      below={<Legend items={[['teal', '线性 attention 层的 state'], ['purple', '同样层数改用 full attention 的 KV']]} />}
       caption="实线为 Qwen3.8-27B（画到它的最大上下文 256K），虚线为 Kimi K3（画到 1M），圆点为交叉点。"
     >{() => <>
       {xt.map(([v, t]) => <g key={t}>
@@ -331,8 +324,8 @@ export function LayerStrips() {
       desc="一格一层。MiniMax-Text-01 共 80 层，每 8 层的最后一层为 full attention；Qwen3-Next、Qwen3.8-27B 与 Qwen3.8-Flash-Next 每 4 层的最后一层为 full attention，Flash-Next 的这些层为 QSA；Kimi Linear 共 27 层、Kimi K3 共 93 层，每 4 层的最后一层为 MLA，最后一层也是 MLA。"
       width={W}
       height={STRIPS.length * PITCH + 6}
-      below={<Legend items={[['teal', '线性层'], ['purple', 'full attention 层'], ['blue', '稀疏 attention 层（QSA）']]} />}
-      caption="一格一层，从左到右为第 1 层到最后一层；右侧为线性层与其余层的层数。"
+      below={<Legend items={[['teal', '线性 attention 层'], ['purple', 'full attention 层'], ['blue', '稀疏 attention 层（QSA）']]} />}
+      caption="一格一层，从左到右为第 1 层到最后一层；右侧为线性 attention 层与其余层的层数。"
     >{() => STRIPS.map((r, n) => {
       const y = n * PITCH + 6
       return <g key={r.name}>
