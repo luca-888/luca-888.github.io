@@ -56,7 +56,7 @@ export const posts: Post[] = [
   {
     slug: 'linear-attention',
     title: '线性 Attention：Gated DeltaNet、KDA 与混合架构',
-    description: '把历史写进固定大小的矩阵 state：decay gate 与 delta rule 决定忘什么、怎么写，chunkwise 计算让训练并行，Gated DeltaNet 与 KDA 以 3:1 与 full attention 混合，以及 state 在推理系统中的代价与反对意见。',
+    description: '把历史写进固定大小的矩阵 state：decay gate 与 delta rule 决定忘什么、怎么写，chunkwise 计算让训练并行，Gated DeltaNet 与 KDA 以 3:1 与 full attention 混合，以及 state 在推理系统中的代价与线性 attention 与稀疏 attention 两条路线的比较。',
     category: '推理系统',
     tags: ['Attention', 'Linear attention', 'Gated DeltaNet', 'KDA', 'Qwen', 'Kimi', 'KV cache'],
     status: 'draft',

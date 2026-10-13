@@ -1,6 +1,6 @@
 # 线性 Attention 与混合架构文章资料
 
-状态：2026-10-10 用户回复“直接文章”，据此确认方案并跳过草图确认，直接完成正文与图；`status: 'draft'`，未 commit。正文 `content/linear-attention.md`，页面 `src/articles/linear-attention/`，原图 `src/assets/linear-attention/`。已做成稿自查与 de-ai-edit（subagent）。2026-10-10 用户反馈“视觉层次不够丰富，文本太多”：正文从约 18K 字压到约 12K 字，新增 state 一步写入/读取图、S-NIAH 条形图、各模型层排布色带图，模型表、混合比例消融、位置编码分歧、MiniMax 三代结构改为表格，“每层缓存”图移到第七章开头。三篇 attention 文章的第三篇，独立成篇，不写“上一篇 / 下一篇”。2026-10-09 用户确认系列按三条路线组织（KV 压缩 → 稀疏 → 线性）；本篇代表“只存固定大小的 state”这条路线。不做实测，数字来自论文、官方 config 与自己的计算。
+状态：2026-10-10 用户回复“直接文章”，据此确认方案并跳过草图确认，直接完成正文与图；`status: 'draft'`，未 commit。正文 `content/linear-attention.md`，页面 `src/articles/linear-attention/`，原图 `src/assets/linear-attention/`。已做成稿自查与 de-ai-edit（subagent）。2026-10-13 再次审查：串扰段补写 $d_k = 128$ 的前提，第六章两组检索与消融数字由正文改为表格，第五章表头说明“平均分”的口径；de-ai-edit 二次过稿改两句。同日用户要求按评审意见提升（不做实测）：第三章补写 S-NIAH 两种失败的原因、过渡句改写；第四章新增“Delta rule 也能分块”段，给出 WY 表示的 chunk 更新式（$T$ 为 $C\times C$ 下三角求解，来源 Yang et al. 2024 §3）；第六章把 GDN 检索分数与 Qwen 消融合并为一个表，perplexity 表后补 7:1 与 MiniMax-Text-01 的对应。de-ai-edit 再过一遍改五句。同日用户确认把第八章“反对意见”改为“路线比较”：开头给线性与稀疏的区别，DeepSeek-V3.2 / V4 对 Kimi K3 的对照表，保留 MiniMax 三代结构与三点理由，末尾加各家选择表（Kimi、Qwen、DeepSeek、GLM、MiniMax、gpt-oss / Gemma，结构取自稀疏 attention 与 KV 压缩两篇的 notes 与 config）；参考补 DeepSeek-V3.2 与 V4。同日用户指出“线性层”易与 nn.Linear 混淆，全站改为“线性 attention 层”（术语表已记）；TL;DR 改正稀疏 attention 主 attention 读取量同样固定的表述；四张 SpecCard 规格卡删除，改为第五章末尾一张四种机制对照表（更新 / 写入 / 遗忘 / 代表），SpecCard 组件与 linear-attention.css 一并删除。2026-10-10 用户反馈“视觉层次不够丰富，文本太多”：正文从约 18K 字压到约 12K 字，新增 state 一步写入/读取图、S-NIAH 条形图、各模型层排布色带图，模型表、混合比例消融、位置编码分歧、MiniMax 三代结构改为表格，“每层缓存”图移到第七章开头。三篇 attention 文章的第三篇，独立成篇，不写“上一篇 / 下一篇”。2026-10-09 用户确认系列按三条路线组织（KV 压缩 → 稀疏 → 线性）；本篇代表“只存固定大小的 state”这条路线。不做实测，数字来自论文、官方 config 与自己的计算。
 
 - 源码基准：vLLM `ac18817e`（2026-10-10）。
 - 论文全文优先读 arXiv 源文件包的 `.tex`；Kimi K3 技术报告只有 GitHub 上的 PDF，用 `scripts/pdf_tools.py text` 提取。
@@ -93,3 +93,12 @@
 - MiniMax M2 的反对意见与 Kimi、Qwen 的正面结果规模与评测不同，正文只陈述各自的证据。
 - K3 serving 时 KV cache 与 state 的实际 dtype 未核实（以上按 BF16 KV / FP32 state 计算）。
 - Kimi Linear 的 6× decode 加速为 batch size 1 的 TPOT（论文图注），正文未用。
+
+## 视频实测：GDN 的 α（2026-10-13）
+
+- 脚本 `scripts/linear-attention/alpha_probe.py`（Modal CPU、FP32，transformers 5.19.0 的纯 PyTorch 实现），结果 `public/measurements/linear-attention/20261013-184512/results.json`。
+- 模型 Qwen3.5-0.8B：24 层，18 层 GDN（每层 16 个 head，head dim 128），3:1 排布。文本为三句中文，32 个 token；第一句的分词与视频开场的 14 个 token 一致。
+- 288 个 head 的 α 分布很宽：中位数 0.958，10% 分位 0.29；最快的 head（第 1 层 head 4，1 起计）每步 α 约 0.03，最慢的一批始终约 1.00。
+- 第 21 层 head 9 在句内 α 为 0.99–1.00，只在标点处变小（0.93、0.88、0.81、0.93、0.59）；“钥匙”写入后的保留比例（只计 α 的连乘）在标点处阶梯下降，到段末为 0.31。
+- 与 Yamamoto et al. 2026（Mamba-130M 的 Δ 在句首出现峰值、少数层保持篇章级信息）的结论方向一致；那篇是 Mamba，这里是 GDN，参数化相同（g = −exp(A_log)·softplus(a + dt_bias)）。
+- key 的正交程度（`scripts/linear-attention/key_cosine.py`，结果 `public/measurements/linear-attention/20261013-185805-keys/results.json`，同一段文本）：L2 归一化后 key 两两余弦的绝对值，按 head 平均，288 个 head 的中位数 0.41（10% 分位 0.26，最大 0.98），同维度随机单位向量为 0.071；所有 head 的平均余弦都为正，即 key 共享公共方向；深层更高（第 15–18 个 GDN 层的中位数 0.79–0.85）。第 6 层 head 14（1 起计）中三次“钥匙”的 key 两两余弦为 0.93、0.94，其余 token 在 0.1–0.6 之间。
