@@ -1,0 +1,27 @@
+$ nvidia-smi --query-gpu=name,power.limit --format=csv,noheader
+NVIDIA H100 80GB HBM3, 700.00 W
+
+$ /build/matmul_tc cublas,wgmma_tstore,wgmma_tstore_c1,wgmma_hilbert_c1,wgmma_micro_c1,wgmma_best_c1 2048,4096,8192
+# 计时：每个 N 先逐个对答案，再轮流计时（每轮每个 kernel 各跑一次，取中位数），免得排在前面的 kernel 赶上 GPU 还没降频
+kernel                  N         ms    TFLOPS  max_rel_err
+cublas_bf16          2048      0.033    516.22            -
+wgmma_tstore         2048      0.032    540.11     0.00e+00
+wgmma_tstore_c1      2048      0.030    567.52     0.00e+00
+wgmma_best_c1        2048      0.030    574.19     0.00e+00
+wgmma_hilbert_c1     2048      0.030    569.93     0.00e+00
+wgmma_micro_c1       2048      0.030    567.52     0.00e+00
+cublas_bf16          4096      0.180    762.60            -
+wgmma_tstore         4096      0.186    737.59     0.00e+00
+wgmma_tstore_c1      4096      0.182    755.76     0.00e+00
+wgmma_best_c1        4096      0.178    773.17     0.00e+00
+wgmma_hilbert_c1     4096      0.181    759.90     0.00e+00
+wgmma_micro_c1       4096      0.179    767.51     0.00e+00
+cublas_bf16          8192      1.627    675.88            -
+wgmma_tstore         8192      1.609    683.37     0.00e+00
+wgmma_tstore_c1      8192      1.631    674.21     0.00e+00
+wgmma_best_c1        8192      1.582    694.94     0.00e+00
+wgmma_hilbert_c1     8192      1.630    674.74     0.00e+00
+wgmma_micro_c1       8192      1.582    695.23     0.00e+00
+no error
+
+# GPU 容器内耗时 1.2 s

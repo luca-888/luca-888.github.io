@@ -14,6 +14,22 @@ export type Post = {
 // 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。
 export const posts: Post[] = [
   {
+    slug: 'matmul-ladder-fp32',
+    title: '矩阵乘法优化（上）：FP32 路线',
+    description: '在 H100 上从朴素写法开始，每一版只改一处、依据是上一版的瓶颈：合并访存、共享内存与寄存器分块、向量化、warp 分块与双缓冲。8192 阶达到 cuBLAS SGEMM 的 86%，止于 FP32 单元的峰值。',
+    category: '算子优化',
+    tags: ['GEMM', 'CUDA', 'H100', 'SGEMM', '共享内存', 'bank 冲突', 'cuBLAS'],
+    status: 'draft',
+  },
+  {
+    slug: 'matmul-ladder-tc',
+    title: '矩阵乘法优化（下）：Tensor Core 路线追平 cuBLAS',
+    description: '在 H100 上用 Tensor Core 逐版优化 BF16 矩阵乘法：mma.sync 与三级缓冲、TMA 与 wgmma、warp 特化、L2 调度、常驻 kernel、集群多播与 TMA 写回。8192 阶达到 cuBLAS BF16 的 99.5%，持续运行时两者都受 700 W 功耗上限约束。',
+    category: '算子优化',
+    tags: ['GEMM', 'CUDA', 'H100', 'Tensor Core', 'wgmma', 'TMA', 'warp 特化', 'cuBLAS'],
+    status: 'draft',
+  },
+  {
     slug: 'qwen-vl-video-tokens',
     title: 'Qwen-VL 的视频 token：采样、grid 与时间戳',
     description: 'Qwen2-VL 与 Qwen3-VL 如何把一段视频变成 prompt 中的 token：帧采样、奇数帧补齐、smart_resize、video_grid_thw 与时间戳，以及不解码视频计算 token 数、多个视频时占位符与元数据的对应。',

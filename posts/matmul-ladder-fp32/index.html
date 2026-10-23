@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="在 H100 上从朴素写法开始逐版优化 FP32 矩阵乘法：合并访存、共享内存与寄存器分块、向量化、warp 分块与双缓冲，达到 cuBLAS SGEMM 的 86%。" />
+    <meta name="theme-color" content="#ffffff" />
+    <script src="/theme.js"></script>
+    <title>矩阵乘法优化（上）：FP32 路线 · luca’s blog</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/articles/matmul-ladder-fp32/matmul-ladder-fp32.tsx"></script>
+  </body>
+</html>

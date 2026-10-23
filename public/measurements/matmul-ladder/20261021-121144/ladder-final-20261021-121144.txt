@@ -1,0 +1,410 @@
+$ nvidia-smi --query-gpu=name,power.limit --format=csv,noheader
+NVIDIA H100 80GB HBM3, 700.00 W
+
+$ nvcc -O2 -arch=sm_90 -Xptxas -v -o /build/matmul /src/matmul.cu -lcublas   # 镜像构建时运行
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_Z15matmul_warptileILi128ELi128ELi8ELi64ELi32EEvPKfS1_Pfi' for 'sm_90'
+ptxas info    : Function properties for _Z15matmul_warptileILi128ELi128ELi8ELi64ELi32EEvPKfS1_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 123 registers, used 1 barriers, 8192 bytes smem
+ptxas info    : Compile time = 28.275 ms
+ptxas info    : Compiling entry function '_Z10matmul_vecILi128ELi128ELi8ELi8ELi8EEvPKfS1_Pfi' for 'sm_90'
+ptxas info    : Function properties for _Z10matmul_vecILi128ELi128ELi8ELi8ELi8EEvPKfS1_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 121 registers, used 1 barriers, 8192 bytes smem
+ptxas info    : Compile time = 25.484 ms
+ptxas info    : Compiling entry function '_Z11matmul_smemILi32EEvPKfS1_Pfi' for 'sm_90'
+ptxas info    : Function properties for _Z11matmul_smemILi32EEvPKfS1_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 1 barriers, 8192 bytes smem
+ptxas info    : Compile time = 3.490 ms
+ptxas info    : Compiling entry function '_Z11matmul_smemILi16EEvPKfS1_Pfi' for 'sm_90'
+ptxas info    : Function properties for _Z11matmul_smemILi16EEvPKfS1_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 1 barriers, 2048 bytes smem
+ptxas info    : Compile time = 7.446 ms
+ptxas info    : Compiling entry function '_Z11matmul_dbufILi64ELi64ELi8ELi32ELi32EEvPKfS1_Pfi' for 'sm_90'
+ptxas info    : Function properties for _Z11matmul_dbufILi64ELi64ELi8ELi32ELi32EEvPKfS1_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 78 registers, used 1 barriers, 8192 bytes smem
+ptxas info    : Compile time = 14.452 ms
+ptxas info    : Compiling entry function '_Z11matmul_dbufILi128ELi64ELi8ELi64ELi32EEvPKfS1_Pfi' for 'sm_90'
+ptxas info    : Function properties for _Z11matmul_dbufILi128ELi64ELi8ELi64ELi32EEvPKfS1_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 159 registers, used 1 barriers, 12288 bytes smem
+ptxas info    : Compile time = 17.777 ms
+ptxas info    : Compiling entry function '_Z11matmul_dbufILi64ELi128ELi8ELi32ELi64EEvPKfS1_Pfi' for 'sm_90'
+ptxas info    : Function properties for _Z11matmul_dbufILi64ELi128ELi8ELi32ELi64EEvPKfS1_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 116 registers, used 1 barriers, 12288 bytes smem
+ptxas info    : Compile time = 9.503 ms
+ptxas info    : Compiling entry function '_Z11matmul_dbufILi128ELi128ELi16ELi64ELi64EEvPKfS1_Pfi' for 'sm_90'
+ptxas info    : Function properties for _Z11matmul_dbufILi128ELi128ELi16ELi64ELi64EEvPKfS1_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 216 registers, used 1 barriers, 32768 bytes smem
+ptxas info    : Compile time = 19.505 ms
+ptxas info    : Compiling entry function '_Z11matmul_dbufILi128ELi128ELi8ELi64ELi64EEvPKfS1_Pfi' for 'sm_90'
+ptxas info    : Function properties for _Z11matmul_dbufILi128ELi128ELi8ELi64ELi64EEvPKfS1_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 190 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 16.325 ms
+ptxas info    : Compiling entry function '_Z11matmul_dbufILi256ELi128ELi8ELi64ELi64EEvPKfS1_Pfi' for 'sm_90'
+ptxas info    : Function properties for _Z11matmul_dbufILi256ELi128ELi8ELi64ELi64EEvPKfS1_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 186 registers, used 1 barriers, 24576 bytes smem
+ptxas info    : Compile time = 15.754 ms
+ptxas info    : Compiling entry function '_Z11matmul_dbufILi128ELi256ELi8ELi64ELi64EEvPKfS1_Pfi' for 'sm_90'
+ptxas info    : Function properties for _Z11matmul_dbufILi128ELi256ELi8ELi64ELi64EEvPKfS1_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 184 registers, used 1 barriers, 24576 bytes smem
+ptxas info    : Compile time = 15.778 ms
+ptxas info    : Compiling entry function '_Z11matmul_dbufILi128ELi128ELi16ELi64ELi32EEvPKfS1_Pfi' for 'sm_90'
+ptxas info    : Function properties for _Z11matmul_dbufILi128ELi128ELi16ELi64ELi32EEvPKfS1_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 122 registers, used 1 barriers, 32768 bytes smem
+ptxas info    : Compile time = 10.157 ms
+ptxas info    : Compiling entry function '_Z11matmul_dbufILi128ELi128ELi8ELi64ELi32EEvPKfS1_Pfi' for 'sm_90'
+ptxas info    : Function properties for _Z11matmul_dbufILi128ELi128ELi8ELi64ELi32EEvPKfS1_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 16384 bytes smem
+ptxas info    : Compile time = 17.006 ms
+ptxas info    : Compiling entry function '_Z10matmul_regILi128ELi128ELi8ELi8ELi8EEvPKfS1_Pfi' for 'sm_90'
+ptxas info    : Function properties for _Z10matmul_regILi128ELi128ELi8ELi8ELi8EEvPKfS1_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 104 registers, used 1 barriers, 8192 bytes smem
+ptxas info    : Compile time = 9.144 ms
+ptxas info    : Compiling entry function '_Z7to_bf16PKfP13__nv_bfloat16m' for 'sm_90'
+ptxas info    : Function properties for _Z7to_bf16PKfP13__nv_bfloat16m
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 10 registers, used 0 barriers
+ptxas info    : Compile time = 1.083 ms
+ptxas info    : Compiling entry function '_Z7max_errPKfS0_mPj' for 'sm_90'
+ptxas info    : Function properties for _Z7max_errPKfS0_mPj
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 19 registers, used 0 barriers
+ptxas info    : Compile time = 2.726 ms
+ptxas info    : Compiling entry function '_Z14matmul_naive_TPKfS0_Pfi' for 'sm_90'
+ptxas info    : Function properties for _Z14matmul_naive_TPKfS0_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 4.783 ms
+ptxas info    : Compiling entry function '_Z12matmul_naivePKfS0_Pfi' for 'sm_90'
+ptxas info    : Function properties for _Z12matmul_naivePKfS0_Pfi
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 32 registers, used 0 barriers
+ptxas info    : Compile time = 4.758 ms
+
+$ /build/matmul all
+kernel                        N         ms    TFLOPS  max_rel_err
+cublas                      256      0.017      2.00            -
+tf32                        256      0.012      2.86            -
+bf16                        256      0.012      2.90            -
+naive                       256      0.014      2.37     5.47e-07
+naive_T                     256      0.042      0.79     5.47e-07
+smem16                      256      0.011      2.92     5.47e-07
+smem32                      256      0.014      2.39     5.47e-07
+reg8x8                      256      0.071      0.47     5.47e-07
+vec                         256      0.042      0.80     5.47e-07
+warptile                    256      0.040      0.84     5.47e-07
+dbuf                        256      0.034      0.99     5.47e-07
+dbuf_128x128x8_w64x32       256      0.034      0.99     5.47e-07
+dbuf_128x128x16_w64x32      256      0.038      0.88     5.47e-07
+dbuf_128x256x8_w64x64       256      0.066      0.51     5.47e-07
+dbuf_256x128x8_w64x64       256      0.067      0.50     5.47e-07
+dbuf_128x128x8_w64x64       256      0.039      0.87     5.47e-07
+dbuf_128x128x16_w64x64      256      0.037      0.91     5.47e-07
+dbuf_64x128x8_w32x64        256      0.028      1.22     5.47e-07
+dbuf_128x64x8_w64x32        256      0.024      1.42     5.47e-07
+dbuf_64x64x8_w32x32         256      0.018      1.83     5.47e-07
+tuned                       256      0.018      1.83            -  (= dbuf_64x64x8_w32x32)
+cublas                      512      0.023     11.80            -
+tf32                        512      0.014     19.20            -
+bf16                        512      0.011     23.43            -
+naive                       512      0.061      4.42     9.63e-07
+naive_T                     512      0.294      0.91     9.63e-07
+smem16                      512      0.042      6.40     9.63e-07
+smem32                      512      0.037      7.35     9.63e-07
+reg8x8                      512      0.131      2.05     9.63e-07
+vec                         512      0.077      3.49     9.63e-07
+warptile                    512      0.073      3.66     9.63e-07
+dbuf                        512      0.061      4.40     9.63e-07
+dbuf_128x128x8_w64x32       512      0.061      4.41     9.63e-07
+dbuf_128x128x16_w64x32      512      0.070      3.84     9.63e-07
+dbuf_128x256x8_w64x64       512      0.123      2.18     9.63e-07
+dbuf_256x128x8_w64x64       512      0.126      2.13     9.63e-07
+dbuf_128x128x8_w64x64       512      0.071      3.79     9.63e-07
+dbuf_128x128x16_w64x64      512      0.067      4.01     9.63e-07
+dbuf_64x128x8_w32x64        512      0.049      5.49     9.63e-07
+dbuf_128x64x8_w64x32        512      0.041      6.52     9.63e-07
+dbuf_64x64x8_w32x32         512      0.031      8.59     9.63e-07
+tuned                       512      0.031      8.59            -  (= dbuf_64x64x8_w32x32)
+cublas                     1024      0.065     33.24            -
+tf32                       1024      0.025     84.31            -
+bf16                       1024      0.014    154.63            -
+naive                      1024      0.418      5.13     0.00e+00
+naive_T                    1024      2.301      0.93     0.00e+00
+smem16                     1024      0.279      7.70     0.00e+00
+smem32                     1024      0.239      8.99     0.00e+00
+reg8x8                     1024      0.245      8.76     0.00e+00
+vec                        1024      0.146     14.73     0.00e+00
+warptile                   1024      0.142     15.15     0.00e+00
+dbuf                       1024      0.116     18.58     0.00e+00
+dbuf_128x128x8_w64x32      1024      0.116     18.55     0.00e+00
+dbuf_128x128x16_w64x32     1024      0.133     16.12     0.00e+00
+dbuf_128x256x8_w64x64      1024      0.239      9.00     0.00e+00
+dbuf_256x128x8_w64x64      1024      0.245      8.75     0.00e+00
+dbuf_128x128x8_w64x64      1024      0.135     15.90     0.00e+00
+dbuf_128x128x16_w64x64     1024      0.127     16.85     0.00e+00
+dbuf_64x128x8_w32x64       1024      0.092     23.23     0.00e+00
+dbuf_128x64x8_w64x32       1024      0.077     28.01     0.00e+00
+dbuf_64x64x8_w32x32        1024      0.074     29.14     0.00e+00
+tuned                      1024      0.074     29.14            -  (= dbuf_64x64x8_w32x32)
+cublas                     2048      0.348     49.44            -
+tf32                       2048      0.060    286.94            -
+bf16                       2048      0.033    524.29            -
+naive                      2048      3.176      5.41     0.00e+00
+naive_T                    2048     17.924      0.96     0.00e+00
+smem16                     2048      2.111      8.14     0.00e+00
+smem32                     2048      1.848      9.29     0.00e+00
+reg8x8                     2048      0.718     23.94     0.00e+00
+vec                        2048      0.500     34.33     0.00e+00
+warptile                   2048      0.453     37.97     0.00e+00
+dbuf                       2048      0.401     42.81     0.00e+00
+dbuf_128x128x8_w64x32      2048      0.401     42.84     0.00e+00
+dbuf_128x128x16_w64x32     2048      0.458     37.55     0.00e+00
+dbuf_128x256x8_w64x64      2048      0.471     36.44     0.00e+00
+dbuf_256x128x8_w64x64      2048      0.484     35.52     0.00e+00
+dbuf_128x128x8_w64x64      2048      0.424     40.49     0.00e+00
+dbuf_128x128x16_w64x64     2048      0.395     43.48     0.00e+00
+dbuf_64x128x8_w32x64       2048      0.475     36.19     0.00e+00
+dbuf_128x64x8_w64x32       2048      0.564     30.44     0.00e+00
+dbuf_64x64x8_w32x32        2048      0.515     33.33     0.00e+00
+tuned                      2048      0.395     43.48            -  (= dbuf_128x128x16_w64x64)
+cublas                     4096      2.661     51.65            -
+tf32                       4096      0.355    386.83            -
+bf16                       4096      0.181    760.58            -
+naive                      4096     25.497      5.39     0.00e+00
+naive_T                    4096    142.500      0.96     0.00e+00
+smem16                     4096     16.752      8.20     0.00e+00
+smem32                     4096     15.027      9.15     0.00e+00
+reg8x8                     4096      5.520     24.90     0.00e+00
+vec                        4096      3.927     34.99     0.00e+00
+warptile                   4096      3.619     37.98     0.00e+00
+dbuf                       4096      3.150     43.63     0.00e+00
+dbuf_128x128x8_w64x32      4096      3.150     43.63     0.00e+00
+dbuf_128x128x16_w64x32     4096      3.588     38.31     0.00e+00
+dbuf_128x256x8_w64x64      4096      3.737     36.78     0.00e+00
+dbuf_256x128x8_w64x64      4096      3.804     36.13     0.00e+00
+dbuf_128x128x8_w64x64      4096      3.326     41.33     0.00e+00
+dbuf_128x128x16_w64x64     4096      3.100     44.33     0.00e+00
+dbuf_64x128x8_w32x64       4096      3.726     36.89     0.00e+00
+dbuf_128x64x8_w64x32       4096      3.564     38.56     0.00e+00
+dbuf_64x64x8_w32x32        4096      3.876     35.46     0.00e+00
+tuned                      4096      3.100     44.33            -  (= dbuf_128x128x16_w64x64)
+cublas                     8192     21.251     51.74            -
+tf32                       8192      2.685    409.57            -
+bf16                       8192      1.394    788.68            -
+naive                      8192    203.384      5.41     0.00e+00
+smem16                     8192    133.695      8.22     0.00e+00
+smem32                     8192    119.233      9.22     0.00e+00
+reg8x8                     8192     44.475     24.72     0.00e+00
+vec                        8192     31.161     35.28     0.00e+00
+warptile                   8192     29.719     37.00     0.00e+00
+dbuf                       8192     24.821     44.30     0.00e+00
+dbuf_128x128x8_w64x32      8192     24.819     44.30     0.00e+00
+dbuf_128x128x16_w64x32     8192     28.256     38.91     0.00e+00
+dbuf_128x256x8_w64x64      8192     29.525     37.24     0.00e+00
+dbuf_256x128x8_w64x64      8192     30.291     36.30     0.00e+00
+dbuf_128x128x8_w64x64      8192     26.292     41.82     0.00e+00
+dbuf_128x128x16_w64x64     8192     24.691     44.53     0.00e+00
+dbuf_64x128x8_w32x64       8192     29.043     37.86     0.00e+00
+dbuf_128x64x8_w64x32       8192     26.223     41.93     0.00e+00
+dbuf_64x64x8_w32x32        8192     30.024     36.62     0.00e+00
+tuned                      8192     24.691     44.53            -  (= dbuf_128x128x16_w64x64)
+no error
+
+$ nvcc -O3 -arch=sm_90a -std=c++17 -Xptxas -v -o /build/matmul_tc /src/matmul_tc.cu -lcublas -L/usr/local/cuda/lib64/stubs -lnvidia-ml   # 镜像构建时运行
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi3ELi16ELb1ELi1ELb1EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi3ELi16ELb1ELi1ELb1EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 16 barriers, 128 bytes smem
+ptxas info    : Compile time = 158.592 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi3ELi8ELb1ELi2ELb1EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi3ELi8ELb1ELi2ELb1EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 16 barriers, 128 bytes smem
+ptxas info    : Compile time = 156.098 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi3ELi16ELb1ELi2ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi3ELi16ELb1ELi2ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 149.286 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi4ELi8ELb1ELi2ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi4ELi8ELb1ELi2ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 157.572 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi4ELi8ELb0ELi1ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi4ELi8ELb0ELi1ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 148.058 ms
+ptxas info    : Compiling entry function '_Z6mm_mmaILi128ELi256ELi4EEvPK13__nv_bfloat16S2_PS0_iii' for 'sm_90a'
+ptxas info    : Function properties for _Z6mm_mmaILi128ELi256ELi4EEvPK13__nv_bfloat16S2_PS0_iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 216 registers, used 1 barriers
+ptxas info    : Compile time = 49.142 ms
+ptxas info    : Compiling entry function '_Z6mm_mmaILi128ELi256ELi3EEvPK13__nv_bfloat16S2_PS0_iii' for 'sm_90a'
+ptxas info    : Function properties for _Z6mm_mmaILi128ELi256ELi3EEvPK13__nv_bfloat16S2_PS0_iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 216 registers, used 1 barriers
+ptxas info    : Compile time = 48.306 ms
+ptxas info    : Compiling entry function '_Z6mm_mmaILi128ELi128ELi4EEvPK13__nv_bfloat16S2_PS0_iii' for 'sm_90a'
+ptxas info    : Function properties for _Z6mm_mmaILi128ELi128ELi4EEvPK13__nv_bfloat16S2_PS0_iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 127 registers, used 1 barriers
+ptxas info    : Compile time = 32.367 ms
+ptxas info    : Compiling entry function '_Z6mm_mmaILi128ELi128ELi2EEvPK13__nv_bfloat16S2_PS0_iii' for 'sm_90a'
+ptxas info    : Function properties for _Z6mm_mmaILi128ELi128ELi2EEvPK13__nv_bfloat16S2_PS0_iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 127 registers, used 1 barriers
+ptxas info    : Compile time = 31.335 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi3ELi16ELb1ELi2ELb1EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi3ELi16ELb1ELi2ELb1EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 16 barriers, 128 bytes smem
+ptxas info    : Compile time = 164.833 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi4ELi16ELb1ELi2ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi4ELi16ELb1ELi2ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 154.157 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi4ELi16ELb1ELi1ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi4ELi16ELb1ELi1ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 147.757 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi4ELi16ELb0ELi1ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi4ELi16ELb0ELi1ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 160.000 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi4ELi0ELb0ELi1ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi4ELi0ELb0ELi1ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 149.174 ms
+ptxas info    : Compiling entry function '_Z8mm_wgmmaILi4EEv14CUtensorMap_stS0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z8mm_wgmmaILi4EEv14CUtensorMap_stS0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 154 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 38.075 ms
+ptxas info    : Compiling entry function '_Z6mm_mmaILi128ELi128ELi3EEvPK13__nv_bfloat16S2_PS0_iii' for 'sm_90a'
+ptxas info    : Function properties for _Z6mm_mmaILi128ELi128ELi3EEvPK13__nv_bfloat16S2_PS0_iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 127 registers, used 1 barriers
+ptxas info    : Compile time = 31.118 ms
+ptxas info    : Compiling entry function '_Z6mm_mmaILi128ELi128ELi1EEvPK13__nv_bfloat16S2_PS0_iii' for 'sm_90a'
+ptxas info    : Function properties for _Z6mm_mmaILi128ELi128ELi1EEvPK13__nv_bfloat16S2_PS0_iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 124 registers, used 1 barriers
+ptxas info    : Compile time = 25.831 ms
+ptxas info    : Compiling entry function '_Z7max_errPK13__nv_bfloat16S1_mPj' for 'sm_90a'
+ptxas info    : Function properties for _Z7max_errPK13__nv_bfloat16S1_mPj
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 19 registers, used 0 barriers
+ptxas info    : Compile time = 3.739 ms
+ptxas info    : Compiling entry function '_Z9fill_randP13__nv_bfloat16mj' for 'sm_90a'
+ptxas info    : Function properties for _Z9fill_randP13__nv_bfloat16mj
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 8 registers, used 0 barriers
+ptxas info    : Compile time = 1.651 ms
+ptxas info    : Compiling entry function '_Z7mm_wmmaPK13__nv_bfloat16S1_PS_iii' for 'sm_90a'
+ptxas info    : Function properties for _Z7mm_wmmaPK13__nv_bfloat16S1_PS_iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 24576 bytes smem
+ptxas info    : Compile time = 23.522 ms
+
+$ /build/matmul_tc all
+# 计时：每个 N 先逐个对答案，再轮流计时（每轮每个 kernel 各跑一次，取中位数），免得排在前面的 kernel 赶上 GPU 还没降频
+kernel                  N         ms    TFLOPS  max_rel_err
+cublas_bf16           256      0.013      2.55            -
+wmma                  256      0.023      1.49     0.00e+00
+mma                   256      0.013      2.54     0.00e+00
+mma_async             256      0.013      2.51     0.00e+00
+wgmma                 256      0.011      2.95     0.00e+00
+wgmma_ws              256      0.015      2.31     0.00e+00
+wgmma_l2              256      0.015      2.26     0.00e+00
+wgmma_pipe            256      0.015      2.25     0.00e+00
+wgmma_persist         256      0.015      2.28     0.00e+00
+wgmma_cluster         256      0.016      2.08     0.00e+00
+wgmma_tstore          256      0.013      2.57     0.00e+00
+cublas_bf16           512      0.013     20.46            -
+wmma                  512      0.036      7.37     0.00e+00
+mma                   512      0.019     14.36     0.00e+00
+mma_async             512      0.017     15.68     0.00e+00
+wgmma                 512      0.013     20.07     0.00e+00
+wgmma_ws              512      0.017     16.10     0.00e+00
+wgmma_l2              512      0.017     15.80     0.00e+00
+wgmma_pipe            512      0.017     15.86     0.00e+00
+wgmma_persist         512      0.017     15.98     0.00e+00
+wgmma_cluster         512      0.019     14.39     0.00e+00
+wgmma_tstore          512      0.016     16.64     0.00e+00
+cublas_bf16          1024      0.016    136.12            -
+wmma                 1024      0.063     34.15     0.00e+00
+mma                  1024      0.028     76.26     0.00e+00
+mma_async            1024      0.025     85.16     0.00e+00
+wgmma                1024      0.018    119.84     0.00e+00
+wgmma_ws             1024      0.022     95.73     0.00e+00
+wgmma_l2             1024      0.023     95.33     0.00e+00
+wgmma_pipe           1024      0.022     97.54     0.00e+00
+wgmma_persist        1024      0.022     99.27     0.00e+00
+wgmma_cluster        1024      0.024     88.19     0.00e+00
+wgmma_tstore         1024      0.020    106.69     0.00e+00
+cublas_bf16          2048      0.036    483.23            -
+wmma                 2048      0.178     96.68     0.00e+00
+mma                  2048      0.067    256.14     0.00e+00
+mma_async            2048      0.064    269.24     0.00e+00
+wgmma                2048      0.046    372.57     0.00e+00
+wgmma_ws             2048      0.036    476.37     0.00e+00
+wgmma_l2             2048      0.036    475.53     0.00e+00
+wgmma_pipe           2048      0.036    477.22     0.00e+00
+wgmma_persist        2048      0.036    479.35     0.00e+00
+wgmma_cluster        2048      0.038    447.77     0.00e+00
+wgmma_tstore         2048      0.033    520.22     0.00e+00
+cublas_bf16          4096      0.185    743.33            -
+wmma                 4096      1.339    102.67     0.00e+00
+mma                  4096      0.495    277.65     0.00e+00
+mma_async            4096      0.428    321.14     0.00e+00
+wgmma                4096      0.285    481.44     0.00e+00
+wgmma_ws             4096      0.217    634.69     0.00e+00
+wgmma_l2             4096      0.205    669.21     0.00e+00
+wgmma_pipe           4096      0.205    669.42     0.00e+00
+wgmma_persist        4096      0.216    637.52     0.00e+00
+wgmma_cluster        4096      0.200    687.97     0.00e+00
+wgmma_tstore         4096      0.189    726.48     0.00e+00
+cublas_bf16          8192      1.406    781.86            -
+wmma                 8192     11.786     93.29     0.00e+00
+mma                  8192      4.081    269.41     0.00e+00
+mma_async            8192      3.561    308.77     0.00e+00
+wgmma                8192      2.271    484.21     0.00e+00
+wgmma_ws             8192      2.292    479.74     0.00e+00
+wgmma_l2             8192      1.486    740.05     0.00e+00
+wgmma_pipe           8192      1.485    740.51     0.00e+00
+wgmma_persist        8192      1.674    657.00     0.00e+00
+wgmma_cluster        8192      1.452    757.26     0.00e+00
+wgmma_tstore         8192      1.414    777.63     0.00e+00
+no error
+
+$ /build/matmul_tc soak cublas,wgmma_l2,wgmma_cluster,wgmma_tstore 4096,8192
+cublas_bf16          4096  9830 次  平均 0.204 ms   674.88 TFLOPS  SM   1453 MHz  功耗   589 W  (1962 个采样)
+wgmma_l2             4096  8715 次  平均 0.230 ms   598.19 TFLOPS  SM   1463 MHz  功耗   695 W  (1739 个采样)
+wgmma_cluster        4096  8865 次  平均 0.226 ms   608.82 TFLOPS  SM   1478 MHz  功耗   695 W  (1769 个采样)
+wgmma_tstore         4096  9480 次  平均 0.211 ms   650.80 TFLOPS  SM   1402 MHz  功耗   698 W  (1892 个采样)
+cublas_bf16          8192  1245 次  平均 1.614 ms   681.14 TFLOPS  SM   1368 MHz  功耗   697 W  (245 个采样)
+wgmma_l2             8192  1190 次  平均 1.691 ms   650.10 TFLOPS  SM   1369 MHz  功耗   698 W  (234 个采样)
+wgmma_cluster        8192  1220 次  平均 1.651 ms   665.92 TFLOPS  SM   1380 MHz  功耗   697 W  (240 个采样)
+wgmma_tstore         8192  1250 次  平均 1.611 ms   682.34 TFLOPS  SM   1360 MHz  功耗   699 W  (246 个采样)
+
+# GPU 容器内耗时 27.7 s

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>H100 矩阵乘法 · 上（FP32）</title>
+<style>
+  html, body { margin: 0; background: #111; color: #ccc; font: 14px -apple-system, sans-serif; }
+  #cv { display: block; width: 100vw; max-height: calc(100vh - 44px); aspect-ratio: 16 / 9; object-fit: contain; }
+  #bar { height: 44px; display: flex; align-items: center; gap: 12px; padding: 0 16px; }
+  #bar input { flex: 1; }
+</style>
+</head>
+<body>
+<canvas id="cv" width="1920" height="1080"></canvas>
+<div id="bar"><button>播放</button><input type="range" min="0"><span></span></div>
+<!-- H100 矩阵乘法 · 上（FP32）：同一块 H100 上的 8192 阶矩阵乘法。文案与节拍在 script.js，素材出处见 src/assets/matmul-ladder-fp32/SOURCES.md -->
+<script>var VO, VODUR;</script>
+<script src="vo.js" onerror="void 0"></script>
+<script src="script.js"></script>
+<script src="frames.js"></script>
+<script src="core.js"></script>
+<script src="scenes.js"></script>
+</body>
+</html>

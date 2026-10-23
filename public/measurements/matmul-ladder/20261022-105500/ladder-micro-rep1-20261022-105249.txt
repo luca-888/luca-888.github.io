@@ -1,0 +1,48 @@
+$ nvidia-smi --query-gpu=name,power.limit --format=csv,noheader
+NVIDIA H100 80GB HBM3, 700.00 W
+
+$ /build/matmul_tc cublas,wgmma_tstore,wgmma_tstore_c1,wgmma_hilbert,wgmma_micro,wgmma_best,wgmma_best_c1,wgmma_micro_g8,wgmma_micro_g32 2048,4096,8192
+# 计时：每个 N 先逐个对答案，再轮流计时（每轮每个 kernel 各跑一次，取中位数），免得排在前面的 kernel 赶上 GPU 还没降频
+kernel                  N         ms    TFLOPS  max_rel_err
+cublas_bf16          2048      0.034    504.10            -
+wgmma_tstore         2048      0.032    537.95     0.00e+00
+wgmma_tstore_c1      2048      0.031    559.24     0.00e+00
+wgmma_hilbert        2048      0.032    535.80     0.00e+00
+wgmma_micro          2048      0.032    536.87     0.00e+00
+wgmma_best           2048      0.032    532.61     0.00e+00
+wgmma_best_c1        2048      0.030    572.36     0.00e+00
+wgmma_micro_g8       2048      0.032    535.80     0.00e+00
+wgmma_micro_g32      2048      0.032    537.95     0.00e+00
+cublas_bf16          4096      0.182    753.24            -
+wgmma_tstore         4096      0.187    734.43     0.00e+00
+wgmma_tstore_c1      4096      0.183    751.92     0.00e+00
+wgmma_hilbert        4096      0.186    737.21     0.00e+00
+wgmma_micro          4096      0.186    737.71     0.00e+00
+wgmma_best           4096      0.185    741.79     0.00e+00
+wgmma_best_c1        4096      0.179    766.27     0.00e+00
+wgmma_micro_g8       4096      0.188    732.55     0.00e+00
+wgmma_micro_g32      4096      0.187    733.43     0.00e+00
+cublas_bf16          8192      1.619    678.97            -
+wgmma_tstore         8192      1.602    686.40     0.00e+00
+wgmma_tstore_c1      8192      1.620    678.79     0.00e+00
+wgmma_hilbert        8192      1.607    684.09     0.00e+00
+wgmma_micro          8192      1.580    696.08     0.00e+00
+wgmma_best           8192      1.582    695.18     0.00e+00
+wgmma_best_c1        8192      1.576    697.76     0.00e+00
+wgmma_micro_g8       8192      1.588    692.23     0.00e+00
+wgmma_micro_g32      8192      1.593    690.19     0.00e+00
+no error
+
+$ /build/matmul_tc soak cublas,wgmma_tstore,wgmma_tstore_c1,wgmma_best,wgmma_best_c1 4096,8192
+cublas_bf16          4096  9935 次  平均 0.202 ms   682.00 TFLOPS  SM   1457 MHz  功耗   552 W  (1983 个采样)
+wgmma_tstore         4096  9595 次  平均 0.209 ms   658.72 TFLOPS  SM   1411 MHz  功耗   698 W  (1915 个采样)
+wgmma_tstore_c1      4096  9540 次  平均 0.210 ms   655.13 TFLOPS  SM   1390 MHz  功耗   698 W  (1904 个采样)
+wgmma_best           4096  9630 次  平均 0.208 ms   661.21 TFLOPS  SM   1393 MHz  功耗   697 W  (1922 个采样)
+wgmma_best_c1        4096  9715 次  平均 0.206 ms   667.10 TFLOPS  SM   1375 MHz  功耗   698 W  (1939 个采样)
+cublas_bf16          8192  1255 次  平均 1.606 ms   684.42 TFLOPS  SM   1397 MHz  功耗   676 W  (247 个采样)
+wgmma_tstore         8192  1245 次  平均 1.614 ms   681.05 TFLOPS  SM   1370 MHz  功耗   699 W  (245 个采样)
+wgmma_tstore_c1      8192  1190 次  平均 1.689 ms   650.94 TFLOPS  SM   1380 MHz  功耗   695 W  (234 个采样)
+wgmma_best           8192  1255 次  平均 1.606 ms   684.74 TFLOPS  SM   1351 MHz  功耗   697 W  (247 个采样)
+wgmma_best_c1        8192  1240 次  平均 1.624 ms   677.06 TFLOPS  SM   1365 MHz  功耗   697 W  (244 个采样)
+
+# GPU 容器内耗时 22.5 s

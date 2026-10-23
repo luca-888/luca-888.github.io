@@ -1,0 +1,85 @@
+"""python3 vo.py [--speed S] [--redo N ...]
+  -> build/vo/cache/<hash>.mp3（每幕一段，按文案与语速缓存）、每句一个 build/vo/b-<幕>-<句>.wav，以及 vo.js（每句的实测时长）。
+MiniMax TTS（音色与模型见 AGENTS.md，读法规范见 docs/tts.md）。按幕合成：一幕的配音稿（script.js 的节拍）一次送出，
+句间插入停顿标记，返回的字幕文件按标记分句。缓存按句复用：改过的幕只合成新句子，没变的句子沿用原录音；--redo 3 5 整幕重录第 3、5 幕（从 1 数）。
+合成后核对每句是否在下一个节拍之前说完，超出的列出来，改 script.js 的节拍而不是加快语速。
+key 从仓库根目录 .env.local 的 MINIMAX_API_KEY 读取。"""
+import hashlib, json, re, subprocess, sys, urllib.request
+from pathlib import Path
+
+here = Path(__file__).resolve().parent
+sys.path.insert(0, str(here.parent / "lib"))
+from tts import say
+
+VOICE, MODEL, PAUSE = "ttv-voice-2026100701390026-S2EIdGRY", "speech-2.8-hd", "<#0.5#>"
+# 本片自己的术语读法（通用规则在 videos/lib/tts.py）。2026-10-21 v5b：cuBLAS 读 Q-blas、整数后的 TFLOPS 读“N 个 T flops”、I/O 读 I O，
+# 依据 videos/tts-samples/matmul-v5b/ 的样本（本机无语音识别，按停顿与时长选，待用户试听确认）
+EXTRA = [(r"wgmma_persist", "W G M M A persist"), (r"naive_T", "naive T"), (r"LDS\.128", "L D S 128"), (r"\bMMA\b", "M M A"), (r"warpgroup", "warp group"), (r"\bwgmma\b", "W G M M A"), (r"\bwmma\b", "W M M A"), (r"\bmma\b", "M M A"), (r"\bTMA\b", "T M A"), (r"cp\.async", "C P async"), (r"ldmatrix", "LD matrix"), (r"cuBLAS", "Q-blas"), (r"I/O", "I O"), (r"\bAs\b", "A s"), (r"\bBs\b", "B s"), (r"(?<![\d.])(\d+) T flops", r"\1个T flops"), (r"\bL2\b", "L 2"), (r"\bSM\b", "S M")]
+args = sys.argv[1:]
+speed = float(args[args.index("--speed") + 1]) if "--speed" in args else 1.15
+redo = {int(a) - 1 for a in args[args.index("--redo") + 1:] if a.isdigit()} if "--redo" in args else set()
+# 节拍按实测时长排（script.js 读 vo.js 里的 VODUR），所以先载入上一次生成的 vo.js
+script = json.loads(subprocess.run(["node", "-e", "const fs=require('fs');eval((fs.existsSync('vo.js')?fs.readFileSync('vo.js','utf8').replace(/^const /gm,'var '):'')+fs.readFileSync('script.js','utf8')+';console.log(JSON.stringify(SCRIPT))')"], cwd=here, capture_output=True, text=True, check=True).stdout)
+out = here / "build/vo"; cache = out / "cache"; cache.mkdir(parents=True, exist_ok=True)
+
+def duration(f):
+    d = re.search(r"Duration: (\d+):(\d+):([\d.]+)", subprocess.run(["ffmpeg", "-i", str(f)], capture_output=True, text=True).stderr)
+    return int(d.group(1)) * 3600 + int(d.group(2)) * 60 + float(d.group(3))
+
+def synth(text):
+    api_key = next((l.split("=", 1)[1].strip() for l in (here / "../../.env.local").read_text().splitlines() if l.startswith("MINIMAX_API_KEY=")), "")
+    if not api_key: sys.exit("MINIMAX_API_KEY missing in .env.local")
+    payload = {"model": MODEL, "text": text, "stream": False, "language_boost": "Chinese", "subtitle_enable": True,
+        "voice_setting": {"voice_id": VOICE, "speed": speed, "vol": 1.0, "pitch": 0}, "audio_setting": {"sample_rate": 44100, "bitrate": 256000, "format": "mp3", "channel": 1}}
+    req = urllib.request.Request("https://api.minimaxi.com/v1/t2a_v2", data=json.dumps(payload).encode(), headers={"Authorization": "Bearer " + api_key, "Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=600) as r: res = json.loads(r.read())
+    if res["base_resp"]["status_code"]: sys.exit(f"MiniMax: {res['base_resp']}")
+    for i in range(5):   # 字幕文件下载偶尔断连：重试，避免重复付费合成
+        try:
+            with urllib.request.urlopen(res["data"]["subtitle_file"], timeout=60) as r: sub = json.loads(r.read()); break
+        except Exception as e:
+            if i == 4: raise
+            print("  字幕下载失败，重试：", e); import time; time.sleep(3)
+    return bytes.fromhex(res["data"]["audio"]), [[x["time_begin"] / 1000, x["time_end"] / 1000] for x in sub], res["extra_info"]["usage_characters"]
+
+# 逐句复用：缓存里每段录音（一幕或几句）按停顿标记分句；文案改动的幕只合成新句子，没变的句子沿用原录音（2026-10-21）
+def segments(h):
+    m = json.loads((cache / f"{h}.json").read_text()); bounds, total = m["bounds"], duration(cache / f"{h}.mp3")
+    parts = m["text"].split(PAUSE); assert len(parts) == len(bounds), h
+    cuts = [0.0] + [(bounds[i][1] + bounds[i + 1][0]) / 2 for i in range(len(parts) - 1)] + [total]
+    return {t: (cache / f"{h}.mp3", *bounds[i], cuts[i], cuts[i + 1]) for i, t in enumerate(parts)}
+SENT = {}
+for mf in sorted(cache.glob("*.json"), key=lambda p: p.stat().st_mtime):   # 只认同一音色、模型与语速的录音（文件名即哈希）
+    t = json.loads(mf.read_text())["text"]
+    if hashlib.sha1(f"{VOICE}|{MODEL}|{speed}|{t}".encode()).hexdigest()[:16] == mf.stem: SENT.update(segments(mf.stem))
+
+vo, billed, late = [], 0, []
+for k, sc in enumerate(script):
+    allv = [b[2] for b in sc["beats"]]
+    idx = [j for j, l in enumerate(allv) if l]                  # 配音为空的拍只看画面，不送去合成
+    lines = [allv[j] for j in idx]
+    says = [say(l, EXTRA) for l in lines]
+    need = says if k in redo else [t for t in says if t not in SENT]
+    if need:
+        text = PAUSE.join(need)
+        h = hashlib.sha1(f"{VOICE}|{MODEL}|{speed}|{text}".encode()).hexdigest()[:16]
+        audio, bounds, used = synth(text)
+        assert len(bounds) == len(need), (k, len(bounds), len(need))
+        (cache / f"{h}.mp3").write_bytes(audio); (cache / f"{h}.json").write_text(json.dumps({"text": text, "bounds": bounds, "usage": used}, ensure_ascii=False))
+        SENT.update(segments(h)); billed += used; print(f"  幕 {k + 1}: 新合成 {len(need)} 句，计费 {used} 字符")
+    row = [{"text": "", "dur": 0, "head": 0, "file": ""} for _ in allv]
+    for i, l in enumerate(lines):
+        j = idx[i]
+        src, t0, t1, c0, c1 = SENT[says[i]]; a, z = max(c0, t0 - .2), min(c1, t1 + .3)
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{a:.3f}", "-to", f"{z:.3f}", "-i", str(src), "-af",
+            f"afade=t=in:d=0.03,afade=t=out:st={z - a - .05:.3f}:d=0.05", "-ar", "48000", "-ac", "2", str(out / f"b-{k}-{j}.wav")], check=True)
+        row[j] = {"text": l, "dur": round(t1 - t0, 2), "head": round(t0 - a, 2), "file": f"build/vo/b-{k}-{j}.wav"}
+        start = sc["beats"][j][0]; limit = sc["beats"][j + 1][0] if j + 1 < len(allv) else sc["dur"]
+        if start + (t1 - t0) > limit - 0.15: late.append(f"  幕 {k + 1} 句 {j + 1}: {start:.1f} + {t1 - t0:.2f} s 超过 {limit:.1f}")
+    vo.append(row)
+vodur = {v["text"]: v["dur"] for g in vo for v in g if v["text"]}
+(here / "vo.js").write_text("// 由 vo.py 生成：每句配音的实测时长（秒）、录音开头的静音与录音位置，顺序与 script.js 的节拍一致；VODUR 供 script.js 按实测排节拍\nVO = "
+                            + json.dumps({"speed": speed, "beats": vo}, ensure_ascii=False) + ";\nVODUR = " + json.dumps(vodur, ensure_ascii=False) + ";\n")
+print(f"speed {speed}; {sum(len(g) for g in vo)} 句; 本次计费 {billed} 字符")
+for k, g in enumerate(vo): print(f"  幕 {k + 1}: " + " ".join(f"{v['dur']:.2f}" for v in g) + "   节拍 " + " ".join(str(b[0]) for b in script[k]["beats"]) + f"  幕长 {script[k]['dur']}")
+print("超出节拍的句子：\n" + "\n".join(late) if late else "每句都在下一个节拍之前说完")

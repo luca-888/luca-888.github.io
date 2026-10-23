@@ -1,0 +1,166 @@
+$ nvidia-smi --query-gpu=name,power.limit --format=csv,noheader
+NVIDIA H100 80GB HBM3, 700.00 W
+
+$ nvcc -O3 -arch=sm_90a -std=c++17 -Xptxas -v -o /build/matmul_tc /src/matmul_tc.cu -lcublas -L/usr/local/cuda/lib64/stubs -lnvidia-ml   # 镜像构建时运行
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi3ELi32ELb1ELi2ELb1ELb0ELb1EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi3ELi32ELb1ELi2ELb1ELb0ELb1EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 16 barriers, 128 bytes smem
+ptxas info    : Compile time = 183.755 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi3ELi8ELb1ELi2ELb1ELb0ELb1EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi3ELi8ELb1ELi2ELb1ELb0ELb1EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 16 barriers, 128 bytes smem
+ptxas info    : Compile time = 179.941 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi3ELi16ELb1ELi1ELb1ELb1ELb1EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi3ELi16ELb1ELi1ELb1ELb1ELb1EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 16 barriers, 128 bytes smem
+ptxas info    : Compile time = 182.293 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi3ELi16ELb1ELi2ELb1ELb1ELb1EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi3ELi16ELb1ELi2ELb1ELb1ELb1EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 16 barriers, 128 bytes smem
+ptxas info    : Compile time = 183.243 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi3ELi16ELb1ELi2ELb1ELb0ELb1EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi3ELi16ELb1ELi2ELb1ELb0ELb1EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 16 barriers, 128 bytes smem
+ptxas info    : Compile time = 177.526 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi3ELi16ELb1ELi2ELb1ELb1ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi3ELi16ELb1ELi2ELb1ELb1ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 16 barriers, 128 bytes smem
+ptxas info    : Compile time = 153.969 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi3ELi16ELb1ELi1ELb1ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi3ELi16ELb1ELi1ELb1ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 16 barriers, 128 bytes smem
+ptxas info    : Compile time = 150.216 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi3ELi8ELb1ELi2ELb1ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi3ELi8ELb1ELi2ELb1ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 16 barriers, 128 bytes smem
+ptxas info    : Compile time = 141.758 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi3ELi16ELb1ELi2ELb0ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi3ELi16ELb1ELi2ELb0ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 137.879 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi4ELi8ELb1ELi2ELb0ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi4ELi8ELb1ELi2ELb0ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 136.519 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi4ELi8ELb0ELi1ELb0ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi4ELi8ELb0ELi1ELb0ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 133.372 ms
+ptxas info    : Compiling entry function '_Z6mm_mmaILi128ELi256ELi4EEvPK13__nv_bfloat16S2_PS0_iii' for 'sm_90a'
+ptxas info    : Function properties for _Z6mm_mmaILi128ELi256ELi4EEvPK13__nv_bfloat16S2_PS0_iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 216 registers, used 1 barriers
+ptxas info    : Compile time = 49.392 ms
+ptxas info    : Compiling entry function '_Z6mm_mmaILi128ELi256ELi3EEvPK13__nv_bfloat16S2_PS0_iii' for 'sm_90a'
+ptxas info    : Function properties for _Z6mm_mmaILi128ELi256ELi3EEvPK13__nv_bfloat16S2_PS0_iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 216 registers, used 1 barriers
+ptxas info    : Compile time = 46.507 ms
+ptxas info    : Compiling entry function '_Z6mm_mmaILi128ELi128ELi4EEvPK13__nv_bfloat16S2_PS0_iii' for 'sm_90a'
+ptxas info    : Function properties for _Z6mm_mmaILi128ELi128ELi4EEvPK13__nv_bfloat16S2_PS0_iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 127 registers, used 1 barriers
+ptxas info    : Compile time = 32.266 ms
+ptxas info    : Compiling entry function '_Z6mm_mmaILi128ELi128ELi2EEvPK13__nv_bfloat16S2_PS0_iii' for 'sm_90a'
+ptxas info    : Function properties for _Z6mm_mmaILi128ELi128ELi2EEvPK13__nv_bfloat16S2_PS0_iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 127 registers, used 1 barriers
+ptxas info    : Compile time = 31.842 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi3ELi16ELb1ELi2ELb1ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi3ELi16ELb1ELi2ELb1ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 16 barriers, 128 bytes smem
+ptxas info    : Compile time = 162.719 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi4ELi16ELb1ELi2ELb0ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi4ELi16ELb1ELi2ELb0ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 141.602 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi4ELi16ELb1ELi1ELb0ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi4ELi16ELb1ELi1ELb0ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 141.700 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi4ELi16ELb0ELi1ELb0ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi4ELi16ELb0ELi1ELb0ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 158.970 ms
+ptxas info    : Compiling entry function '_Z11mm_wgmma_wsILi4ELi0ELb0ELi1ELb0ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z11mm_wgmma_wsILi4ELi0ELb0ELi1ELb0ELb0ELb0EEv14CUtensorMap_stS0_S0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 168 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 136.831 ms
+ptxas info    : Compiling entry function '_Z8mm_wgmmaILi4EEv14CUtensorMap_stS0_P13__nv_bfloat16iii' for 'sm_90a'
+ptxas info    : Function properties for _Z8mm_wgmmaILi4EEv14CUtensorMap_stS0_P13__nv_bfloat16iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 154 registers, used 1 barriers, 128 bytes smem
+ptxas info    : Compile time = 37.282 ms
+ptxas info    : Compiling entry function '_Z6mm_mmaILi128ELi128ELi3EEvPK13__nv_bfloat16S2_PS0_iii' for 'sm_90a'
+ptxas info    : Function properties for _Z6mm_mmaILi128ELi128ELi3EEvPK13__nv_bfloat16S2_PS0_iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 127 registers, used 1 barriers
+ptxas info    : Compile time = 30.796 ms
+ptxas info    : Compiling entry function '_Z6mm_mmaILi128ELi128ELi1EEvPK13__nv_bfloat16S2_PS0_iii' for 'sm_90a'
+ptxas info    : Function properties for _Z6mm_mmaILi128ELi128ELi1EEvPK13__nv_bfloat16S2_PS0_iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 124 registers, used 1 barriers
+ptxas info    : Compile time = 25.563 ms
+ptxas info    : Compiling entry function '_Z7max_errPK13__nv_bfloat16S1_mPj' for 'sm_90a'
+ptxas info    : Function properties for _Z7max_errPK13__nv_bfloat16S1_mPj
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 19 registers, used 0 barriers
+ptxas info    : Compile time = 3.475 ms
+ptxas info    : Compiling entry function '_Z9fill_randP13__nv_bfloat16mj' for 'sm_90a'
+ptxas info    : Function properties for _Z9fill_randP13__nv_bfloat16mj
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 8 registers, used 0 barriers
+ptxas info    : Compile time = 1.515 ms
+ptxas info    : Compiling entry function '_Z7mm_wmmaPK13__nv_bfloat16S1_PS_iii' for 'sm_90a'
+ptxas info    : Function properties for _Z7mm_wmmaPK13__nv_bfloat16S1_PS_iii
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 128 registers, used 1 barriers, 24576 bytes smem
+ptxas info    : Compile time = 21.819 ms
+
+$ /build/matmul_tc cublas,wgmma_tstore,wgmma_hilbert,wgmma_micro,wgmma_best,wgmma_best_c1,wgmma_micro_g8,wgmma_micro_g32 2048,4096,8192
+# 计时：每个 N 先逐个对答案，再轮流计时（每轮每个 kernel 各跑一次，取中位数），免得排在前面的 kernel 赶上 GPU 还没降频
+kernel                  N         ms    TFLOPS  max_rel_err
+cublas_bf16          2048      0.033    523.78            -
+wgmma_tstore         2048      0.031    555.77     0.00e+00
+wgmma_hilbert        2048      0.031    553.48     0.00e+00
+wgmma_micro          2048      0.031    552.91     0.00e+00
+wgmma_best           2048      0.031    554.62     0.00e+00
+wgmma_best_c1        2048      0.030    577.28     0.00e+00
+wgmma_micro_g8       2048      0.031    557.50     0.00e+00
+wgmma_micro_g32      2048      0.031    556.34     0.00e+00
+cublas_bf16          4096      0.178    771.64            -
+wgmma_tstore         4096      0.184    745.78     0.00e+00
+wgmma_hilbert        4096      0.184    745.40     0.00e+00
+wgmma_micro          4096      0.183    749.30     0.00e+00
+wgmma_best           4096      0.183    749.69     0.00e+00
+wgmma_best_c1        4096      0.177    777.93     0.00e+00
+wgmma_micro_g8       4096      0.185    742.30     0.00e+00
+wgmma_micro_g32      4096      0.186    740.13     0.00e+00
+cublas_bf16          8192      1.679    654.87            -
+wgmma_tstore         8192      1.658    663.34     0.00e+00
+wgmma_hilbert        8192      1.664    660.68     0.00e+00
+wgmma_micro          8192      1.636    672.02     0.00e+00
+wgmma_best           8192      1.637    671.65     0.00e+00
+wgmma_best_c1        8192      1.630    674.38     0.00e+00
+wgmma_micro_g8       8192      1.639    670.67     0.00e+00
+wgmma_micro_g32      8192      1.644    668.63     0.00e+00
+no error
+
+# GPU 容器内耗时 1.2 s
