@@ -1,0 +1,135 @@
+$ nvidia-smi --query-gpu=name,power.limit --format=csv,noheader
+NVIDIA H100 80GB HBM3, 700.00 W
+
+$ /opt/nvidia/nsight-compute/2025.1.1/ncu --clock-control none --section SpeedOfLight --section LaunchStats --section Occupancy --section ComputeWorkloadAnalysis --section MemoryWorkloadAnalysis -k "regex:sm90|gemm|xmma" -c 1 /build/matmul_tc cublas 8192
+==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 38 (/build/matmul_tc)
+kernel              N         ms    TFLOPS  max_rel_err
+cublas_bf16      8192      1.572    699.29            -
+no error
+==PROF== Disconnected from process 38
+==WARNING== No kernels were profiled.
+Available Kernels:
+1. fill_rand
+2. nvjet_tst_320x128_64x3_1x2_h_bz_coopB_TNT
+
+$ /opt/nvidia/nsight-compute/2025.1.1/ncu --clock-control none --section SpeedOfLight --section LaunchStats --section Occupancy --section ComputeWorkloadAnalysis --section MemoryWorkloadAnalysis -k "regex:mm_wgmma_ws" -c 1 /build/matmul_tc wgmma_cluster 8192
+==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 57 (/build/matmul_tc)
+==PROF== Profiling "mm_wgmma_ws": 0%....50%....100% - 12 passes
+kernel              N         ms    TFLOPS  max_rel_err
+# cluster=2：同时可驻留 66 个集群 = 132 个 CTA（共 132 个 SM）
+wgmma_cluster    8192      1.513    726.87     0.00e+00
+no error
+==PROF== Disconnected from process 57
+[57] matmul_tc@127.0.0.1
+  void mm_wgmma_ws<4, 16, 1, 2>(CUtensorMap_st, CUtensorMap_st, __nv_bfloat16 *, int, int, int) (132, 1, 1)x(384, 1, 1), Context 1, Stream 7, Device 0, CC 9.0
+    Warning: Data collection happened without fixed GPU frequencies. Profiling results may be inconsistent.
+    Section: GPU Speed Of Light Throughput
+    ----------------------- ----------- ------------
+    Metric Name             Metric Unit Metric Value
+    ----------------------- ----------- ------------
+    DRAM Frequency                  Ghz         2.62
+    SM Frequency                    Ghz         1.56
+    Elapsed Cycles                cycle      2314825
+    Memory Throughput                 %        65.51
+    DRAM Throughput                   %        29.09
+    Duration                         ms         1.47
+    L1/TEX Cache Throughput           %        61.17
+    L2 Cache Throughput               %        66.11
+    SM Active Cycles              cycle   2189174.97
+    Compute (SM) Throughput           %        89.08
+    ----------------------- ----------- ------------
+
+    INF   This workload is utilizing greater than 80.0% of the available compute or memory performance of the device.   
+          To further improve performance, work will likely need to be shifted from the most utilized to another unit.   
+          Start by analyzing workloads in the Compute Workload Analysis section.                                        
+
+    Section: Compute Workload Analysis
+    -------------------- ----------- ------------
+    Metric Name          Metric Unit Metric Value
+    -------------------- ----------- ------------
+    Executed Ipc Active   inst/cycle         0.78
+    Executed Ipc Elapsed  inst/cycle         0.75
+    Issue Slots Busy               %        19.78
+    Issued Ipc Active     inst/cycle         0.79
+    SM Busy                        %        92.89
+    -------------------- ----------- ------------
+
+    OPT   Tensor is the highest-utilized pipeline (92.9%) based on active cycles, taking into account the rates of its  
+          different instructions. It is the logical aggregation of individual tensor pipelines. It's dominated by its   
+          Tensor (FP) sub-pipeline. The pipeline is over-utilized and likely a performance bottleneck. Based on the     
+          number of executed instructions, the highest utilized pipeline (12.7%) is Uniform. Comparing the two, the     
+          overall pipeline utilization appears to be caused by high-latency instructions. See the Kernel Profiling      
+          Guide (https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html#metrics-decoder) or hover over the    
+          pipeline name to understand the workloads handled by each pipeline. The Instruction Statistics section shows  
+          the mix of executed instructions for this workload.                                                           
+
+    Section: Memory Workload Analysis
+    ---------------------------- ----------- ------------
+    Metric Name                  Metric Unit Metric Value
+    ---------------------------- ----------- ------------
+    Memory Throughput                Gbyte/s       975.13
+    Mem Busy                               %        58.66
+    Max Bandwidth                          %        65.51
+    L1/TEX Hit Rate                        %        86.77
+    L2 Compression Success Rate            %            0
+    L2 Compression Ratio                   %            0
+    L2 Compression Input Sectors                  8430870
+    L2 Hit Rate                            %        76.87
+    Mem Pipes Busy                         %        47.34
+    ---------------------------- ----------- ------------
+
+    Section: Launch Statistics
+    -------------------------------- --------------- ---------------
+    Metric Name                          Metric Unit    Metric Value
+    -------------------------------- --------------- ---------------
+    Block Size                                                   384
+    Cluster Scheduling Policy                           PolicySpread
+    Cluster Size                                                   2
+    Function Cache Configuration                     CachePreferNone
+    Grid Size                                                    132
+    Registers Per Thread             register/thread             168
+    Shared Memory Configuration Size           Kbyte          200.70
+    Driver Shared Memory Per Block       Kbyte/block            1.02
+    Dynamic Shared Memory Per Block      Kbyte/block          197.63
+    Static Shared Memory Per Block        byte/block             128
+    # SMs                                         SM             132
+    Stack Size                                                  1024
+    Threads                                   thread           50688
+    # TPCs                                                        66
+    Enabled TPC IDs                                              all
+    Uses Green Context                                             0
+    Waves Per SM                                                   1
+    -------------------------------- --------------- ---------------
+
+    OPT   If you execute __syncthreads() to synchronize the threads of a block, it is recommended to have at least two  
+          blocks per multiprocessor (compared to the currently executed 1.0 blocks) This way, blocks that aren't        
+          waiting for __syncthreads() can keep the hardware busy.                                                       
+
+    Section: Occupancy
+    ------------------------------- ----------- ------------
+    Metric Name                     Metric Unit Metric Value
+    ------------------------------- ----------- ------------
+    Max Active Clusters                 cluster           66
+    Max Cluster Size                      block           16
+    Overall GPU Occupancy                     %         0.59
+    Cluster Occupancy                         %         3.12
+    Block Limit Barriers                  block           32
+    Block Limit SM                        block           32
+    Block Limit Registers                 block            1
+    Block Limit Shared Mem                block            1
+    Block Limit Warps                     block            5
+    Theoretical Active Warps per SM        warp           12
+    Theoretical Occupancy                     %        18.75
+    Achieved Occupancy                        %        18.75
+    Achieved Active Warps Per SM           warp        12.00
+    ------------------------------- ----------- ------------
+
+    OPT   Est. Local Speedup: 81.25%                                                                                    
+          The 3.00 theoretical warps per scheduler this kernel can issue according to its occupancy are below the       
+          hardware maximum of 16. This kernel's theoretical occupancy (18.8%) is limited by the number of required      
+          registers, and the required amount of shared memory.                                                          
+
+
+# GPU 容器内耗时 5.5 s

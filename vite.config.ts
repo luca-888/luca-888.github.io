@@ -33,6 +33,8 @@ export default defineConfig({
         semanticCacheVerification: 'posts/semantic-cache-verification/index.html',
         cudaGraphCorrectness: 'posts/cuda-graph-correctness/index.html',
         qwenVlVideoTokens: 'posts/qwen-vl-video-tokens/index.html',
+        matmulLadderFp32: 'posts/matmul-ladder-fp32/index.html',
+        matmulLadderTc: 'posts/matmul-ladder-tc/index.html',
       },
     },
   },

@@ -1,0 +1,45 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- 矩阵乘法阶梯 · 上集封面，4:3（2048 × 1536）。配色、字体、线宽与标签块沿用影片（videos/matmul-ladder-fp32/core.js、scenes.js）。
+     定稿方向：嵌套方块（显存 → 共享内存 → 寄存器）加标题，node render.mjs 导出 cover-2048x1536.png。数字：8192 阶 TFLOPS 与 cuBLAS 51.7 来自 inference-study labs/1.3-matmul-flops/out/ladder.json（H100 SXM 实测）。 -->
+<style>html, body { margin: 0; background: #f1ede4; } canvas { display: block; }</style>
+<canvas id="cv" width="2048" height="1536"></canvas>
+<script>
+const W = 2048, H = 1536;
+const C = { paper: '#f1ede4', ink: '#141414', ink2: '#3a3a3a', gray: '#8a8474', lg: '#cfc8b8', red: '#e5322d', blue: '#2350d8', hot: '#c4561d', use: '#2f8a57', thr: '#2f6fdc', warp: '#a9c2ee', tealD: '#0b7d70' };
+const BOX = '#fbf9f4', CEL = '#e8e4da', BLK = '#cfe3d6', THC = '#9db7ea';
+const ZH = '"PingFang SC","Helvetica Neue",sans-serif', MONO = '"SF Mono",Menlo,monospace', EN = '"Helvetica Neue",sans-serif';
+const g = document.getElementById('cv').getContext('2d');
+const rr = (x, y, w, h, c, a = 1) => { g.globalAlpha = a; g.fillStyle = c; g.fillRect(x, y, w, h); g.globalAlpha = 1; };
+const sr = (x, y, w, h, c, lw = 2, a = 1) => { g.globalAlpha = a; g.strokeStyle = c; g.lineWidth = lw; g.strokeRect(x, y, w, h); g.globalAlpha = 1; };
+const ln = (x1, y1, x2, y2, c, lw = 2, a = 1, dash = []) => { g.globalAlpha = a; g.strokeStyle = c; g.lineWidth = lw; g.setLineDash(dash); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.setLineDash([]); g.globalAlpha = 1; };
+const tw = (s, size, w = 800, font = ZH) => { g.font = `${w} ${size}px ${font}`; return g.measureText(s).width; };
+const tx = (s, x, y, { size = 40, c = C.ink, w = 800, align = 'left', font = ZH, a = 1 } = {}) => { g.globalAlpha = a; g.fillStyle = c; g.textAlign = align; g.font = `${w} ${size}px ${font}`; g.fillText(s, x, y); g.globalAlpha = 1; return x + tw(s, size, w, font); };
+const tag = (s, x, y, size = 40, bg = C.ink) => { const w = tw(s, size, 700) + size * 1.1; rr(x, y, w, size * 1.6, bg); tx(s, x + size * 0.55, y + size * 1.17, { size, c: '#fff', w: 700 }); return w; };
+const poly = (pts, c, a) => { g.globalAlpha = a; g.fillStyle = c; g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill(); g.globalAlpha = 1; };
+const grid = (x, y, s, n, c, lw = 1.5) => { for (let i = 1; i < n; i++) { ln(x + i * s / n, y, x + i * s / n, y + s, c, lw); ln(x, y + i * s / n, x + s, y + i * s / n, c, lw); } };
+const chip = (s, x, y, size, col) => { const w = tw(s, size, 800) + 28; rr(x, y, w, size * 1.7, BOX, 0.95); tx(s, x + 14, y + size * 1.22, { size, c: col }); };
+const regTile = (x, y, s) => { rr(x, y, s, s, THC); for (let i = 1; i < 8; i++) { ln(x + i * s / 8, y, x + i * s / 8, y + s, BOX, Math.max(1.5, s / 90)); ln(x, y + i * s / 8, x + s, y + i * s / 8, BOX, Math.max(1.5, s / 90)); } sr(x, y, s, s, C.thr, Math.max(3, s / 70)); };
+const SX = W * 0.06;                                   // 左右边距 123 px；顶部 184 px 不放文字
+rr(0, 0, W, H, C.paper);
+
+const L0 = [1080, 110, 860], b = [L0[0] + L0[2] * 5 / 8, L0[1] + L0[2] * 2 / 8, L0[2] / 8];
+const L1 = [720, 640, 560], t = [L1[0] + L1[2] * 9 / 16, L1[1] + L1[2] * 4 / 16, L1[2] / 16];
+const L2 = [140, 1000, 420];
+rr(L0[0], L0[1], L0[2], L0[2], BOX); rr(L0[0], L0[1], L0[2], L0[2], CEL, 0.6); grid(L0[0], L0[1], L0[2], 8, C.lg, 2); sr(L0[0], L0[1], L0[2], L0[2], C.ink2, 3);
+poly([[b[0] + b[2], b[1]], [L1[0] + L1[2], L1[1]], [L1[0], L1[1] + L1[2]], [b[0], b[1] + b[2]]], C.use, 0.13);
+rr(b[0], b[1], b[2], b[2], BLK); sr(b[0], b[1], b[2], b[2], C.use, 5);
+rr(L1[0], L1[1], L1[2], L1[2], BLK); grid(L1[0], L1[1], L1[2], 16, '#a9cdb6', 1.5); sr(L1[0], L1[1], L1[2], L1[2], C.use, 6);
+poly([[t[0] + t[2], t[1]], [L2[0] + L2[2], L2[1]], [L2[0], L2[1] + L2[2]], [t[0], t[1] + t[2]]], C.thr, 0.13);
+rr(t[0], t[1], t[2], t[2], THC); sr(t[0], t[1], t[2], t[2], C.thr, 4);
+regTile(L2[0], L2[1], L2[2]);
+chip('C：8192 × 8192  显存', L0[0] + 16, L0[1] + 16, 30, C.ink2);
+chip('block 的块：128 × 128  共享内存', L1[0] + 16, L1[1] + 16, 28, C.use);
+tx('线程的块：8 × 8  寄存器', L2[0], L2[1] - 20, { size: 30, c: C.thr });
+const w1 = tag('H100', SX, 196, 60); tag('FP32', SX + w1 + 20, 196, 60, C.blue);
+tx('矩阵乘法优化', SX, 438, { size: 136, w: 900 });
+tx('（上）', SX - 10, 586, { size: 112, w: 900, c: C.use });
+let x = tx('5.4', SX, 726, { size: 84, c: C.red, font: MONO }); x = tx(' → ', x, 726, { size: 70, c: C.gray, font: MONO }); tx('44.3', x, 726, { size: 84, c: C.blue, font: MONO });
+tx('TFLOPS · 8192 阶 · H100 SXM 实测', SX + 2, 782, { size: 30, c: C.gray, w: 700 });
+tx('FP32 GEMM on H100 · from 5.4 to 44.3 TFLOPS', W - SX, 1452, { size: 44, c: C.ink2, w: 600, align: 'right', font: EN });
+</script>

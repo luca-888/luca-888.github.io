@@ -1,0 +1,36 @@
+$ nvidia-smi --query-gpu=name,power.limit --format=csv,noheader
+NVIDIA H100 80GB HBM3, 700.00 W
+
+$ /build/matmul_tc cublas,wgmma_tstore,wgmma_tstore_c1,wgmma_hilbert,wgmma_micro,wgmma_best,wgmma_best_c1,wgmma_micro_g8,wgmma_micro_g32 2048,4096,8192
+# 计时：每个 N 先逐个对答案，再轮流计时（每轮每个 kernel 各跑一次，取中位数），免得排在前面的 kernel 赶上 GPU 还没降频
+kernel                  N         ms    TFLOPS  max_rel_err
+cublas_bf16          2048      0.036    479.78            -
+wgmma_tstore         2048      0.033    515.73     0.00e+00
+wgmma_tstore_c1      2048      0.032    538.49     0.00e+00
+wgmma_hilbert        2048      0.033    517.72     0.00e+00
+wgmma_micro          2048      0.033    517.72     0.00e+00
+wgmma_best           2048      0.033    519.22     0.00e+00
+wgmma_best_c1        2048      0.031    546.16     0.00e+00
+wgmma_micro_g8       2048      0.033    520.22     0.00e+00
+wgmma_micro_g32      2048      0.033    519.72     0.00e+00
+cublas_bf16          4096      0.184    745.27            -
+wgmma_tstore         4096      0.188    731.31     0.00e+00
+wgmma_tstore_c1      4096      0.186    740.64     0.00e+00
+wgmma_hilbert        4096      0.188    732.06     0.00e+00
+wgmma_micro          4096      0.187    736.83     0.00e+00
+wgmma_best           4096      0.186    739.24     0.00e+00
+wgmma_best_c1        4096      0.181    757.62     0.00e+00
+wgmma_micro_g8       4096      0.188    730.81     0.00e+00
+wgmma_micro_g32      4096      0.190    724.28     0.00e+00
+cublas_bf16          8192      1.613    681.52            -
+wgmma_tstore         8192      1.597    688.31     0.00e+00
+wgmma_tstore_c1      8192      1.611    682.58     0.00e+00
+wgmma_hilbert        8192      1.600    687.11     0.00e+00
+wgmma_micro          8192      1.576    697.76     0.00e+00
+wgmma_best           8192      1.576    697.76     0.00e+00
+wgmma_best_c1        8192      1.568    701.18     0.00e+00
+wgmma_micro_g8       8192      1.582    695.22     0.00e+00
+wgmma_micro_g32      8192      1.588    692.50     0.00e+00
+no error
+
+# GPU 容器内耗时 2.7 s

@@ -60,7 +60,7 @@ export function Figure({ title, desc, width = 760, height, caption, below, child
         {children(`url(#${id}-arrow)`)}
       </svg>
       {below}
-      <figcaption>{caption}</figcaption>
+      {caption ? <figcaption>{caption}</figcaption> : null}
     </figure>
   )
 }
