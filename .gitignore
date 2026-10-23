@@ -19,3 +19,6 @@ __pycache__/
 /videos/*/keyframes*/
 /videos/*/node_modules
 /videos/tts-samples/
+
+# Preview videos for local viewing only
+/public/tmp/
