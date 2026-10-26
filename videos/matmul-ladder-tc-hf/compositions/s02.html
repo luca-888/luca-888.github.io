@@ -23,7 +23,7 @@
   <div id="root" data-composition-id="s02" data-width="1920" data-height="1080">
 
     <!-- 0：承接 s01 的 Tensor Core 立方体（中心 1240,470，宽 360），缩到右上角淡出 -->
-    <div id="s02-cube" class="clip s02-full" data-start="0" data-duration="1.3" data-track-index="1">
+    <div id="s02-cube" class="clip s02-full" data-start="0.00" data-a-start="0.0" data-duration="1.30" data-a-duration="1.3" data-track-index="1">
       <svg id="s02-cube-in" class="s02-abs" style="left:1060px;top:262px" width="360" height="416" viewBox="-180 -208 360 416">
         <!-- 与 s01 结尾的立方体同一几何（A=208，16 × 16 网格） -->
         <polygon points="-180.1,-104.0 0.0,-208.0 180.1,-104.0 0.0,0.0" style="fill:var(--teal)" />
@@ -35,57 +35,57 @@
     </div>
 
     <!-- 承接 s01 的“16 倍”：0–0.6 s 淡出 -->
-    <div id="s02-x16" class="clip s02-abs" data-start="0" data-duration="0.8" data-track-index="2" style="left:150px;top:380px;font-size:180px;line-height:1;font-weight:800;color:var(--ink);white-space:nowrap">
+    <div id="s02-x16" class="clip s02-abs" data-start="0.00" data-a-start="0.0" data-duration="0.80" data-a-duration="0.8" data-track-index="2" style="left:150px;top:380px;font-size:180px;line-height:1;font-weight:800;color:var(--ink);white-space:nowrap">
       <div id="s02-x16-in"><span class="acc">16</span> 倍</div>
     </div>
 
     <!-- 0.5：公式 -->
-    <div id="s02-formula" class="clip s02-abs" data-start="0.5" data-duration="14.5" data-track-index="2" style="left:150px;top:230px">
+    <div id="s02-formula" class="clip s02-abs" data-start="0.50" data-a-start="0.5" data-duration="14.97" data-a-duration="14.5" data-track-index="2" style="left:150px;top:230px">
       <div id="s02-formula-in" class="s02-formula"><span class="acc-p">C</span> = <span class="acc-b">A</span> · <span class="acc-y">Wᵀ</span></div>
     </div>
 
     <!-- 矩阵组（交接坐标：Wᵀ 760,150；A 400,510；C 760,510；边长 340） -->
-    <div id="s02-mats" class="clip s02-full" data-start="0.9" data-duration="33.1" data-track-index="3">
+    <div id="s02-mats" class="clip s02-full" data-start="0.90" data-a-start="0.9" data-duration="34.97" data-a-duration="33.1" data-track-index="3">
       <div id="s02-mats-in" class="s02-full" style="transform-origin:0 0">
-        <div id="s02-A" class="clip s02-mat" data-start="0.9" data-duration="33.1" data-track-index="4" style="left:400px;top:510px">
+        <div id="s02-A" class="clip s02-mat" data-start="0.90" data-a-start="0.9" data-duration="34.97" data-a-duration="33.1" data-track-index="4" style="left:400px;top:510px">
           <div id="s02-A-in" class="s02-full"><div class="bg"></div></div>
-          <div id="s02-bandA" class="clip s02-abs" data-start="31.2" data-duration="2.8" data-track-index="5" style="left:0;top:0;width:340px;height:5.3125px">
+          <div id="s02-bandA" class="clip s02-abs" data-start="32.10" data-a-start="31.2" data-duration="3.77" data-a-duration="2.8" data-track-index="5" style="left:0;top:0;width:340px;height:5.3125px">
             <div id="s02-bandA-in" class="s02-full" style="background:var(--blue);transform-origin:0 50%"></div>
           </div>
         </div>
-        <div id="s02-W" class="clip s02-mat" data-start="1.5" data-duration="32.5" data-track-index="6" style="left:760px;top:150px">
+        <div id="s02-W" class="clip s02-mat" data-start="1.50" data-a-start="1.5" data-duration="34.37" data-a-duration="32.5" data-track-index="6" style="left:760px;top:150px">
           <div id="s02-W-in" class="s02-full"><div class="bg"></div></div>
-          <div id="s02-bandW" class="clip s02-abs" data-start="31.35" data-duration="2.65" data-track-index="7" style="left:0;top:0;width:5.3125px;height:340px">
+          <div id="s02-bandW" class="clip s02-abs" data-start="32.30" data-a-start="31.35" data-duration="3.57" data-a-duration="2.65" data-track-index="7" style="left:0;top:0;width:5.3125px;height:340px">
             <div id="s02-bandW-in" class="s02-full" style="background:var(--yel-t);transform-origin:50% 0"></div>
           </div>
         </div>
-        <div id="s02-C" class="clip s02-mat" data-start="2.1" data-duration="31.9" data-track-index="8" style="left:760px;top:510px">
+        <div id="s02-C" class="clip s02-mat" data-start="2.10" data-a-start="2.1" data-duration="33.77" data-a-duration="31.9" data-track-index="8" style="left:760px;top:510px">
           <div id="s02-C-in" class="s02-full"><div class="bg"></div></div>
-          <div id="s02-blk" class="clip s02-abs" data-start="31.0" data-duration="3.0" data-track-index="9" style="left:0;top:0;width:5.3125px;height:5.3125px;background:var(--purple)"></div>
+          <div id="s02-blk" class="clip s02-abs" data-start="31.83" data-a-start="31.0" data-duration="4.04" data-a-duration="3.0" data-track-index="9" style="left:0;top:0;width:5.3125px;height:5.3125px;background:var(--purple)"></div>
         </div>
 
         <!-- 名字（第 1 拍）与精度（第 2 拍），矩阵缩小时退场 -->
-        <div id="s02-nA" class="clip s02-abs" data-start="0.9" data-duration="14.1" data-track-index="10" style="left:200px;top:626px;width:170px;text-align:right">
+        <div id="s02-nA" class="clip s02-abs" data-start="0.90" data-a-start="0.9" data-duration="14.57" data-a-duration="14.1" data-track-index="10" style="left:200px;top:626px;width:170px;text-align:right">
           <div class="s02-name acc-b">A</div>
         </div>
-        <div id="s02-nW" class="clip s02-abs" data-start="1.5" data-duration="13.5" data-track-index="11" style="left:1130px;top:246px">
+        <div id="s02-nW" class="clip s02-abs" data-start="1.50" data-a-start="1.5" data-duration="13.97" data-a-duration="13.5" data-track-index="11" style="left:1130px;top:246px">
           <div class="s02-name acc-y">Wᵀ</div>
         </div>
-        <div id="s02-nC" class="clip s02-abs" data-start="2.1" data-duration="12.9" data-track-index="12" style="left:1130px;top:606px">
+        <div id="s02-nC" class="clip s02-abs" data-start="2.10" data-a-start="2.1" data-duration="13.37" data-a-duration="12.9" data-track-index="12" style="left:1130px;top:606px">
           <div class="s02-name acc-p">C</div>
         </div>
-        <div id="s02-bfA" class="clip s02-abs" data-start="8.0" data-duration="7.0" data-track-index="13" style="left:200px;top:694px;width:170px;text-align:right">
+        <div id="s02-bfA" class="clip s02-abs" data-start="8.00" data-a-start="8.0" data-duration="7.47" data-a-duration="7.0" data-track-index="13" style="left:200px;top:694px;width:170px;text-align:right">
           <div class="s02-tag">BF16</div>
         </div>
-        <div id="s02-bfW" class="clip s02-abs" data-start="8.15" data-duration="6.85" data-track-index="14" style="left:1130px;top:314px">
+        <div id="s02-bfW" class="clip s02-abs" data-start="8.16" data-a-start="8.15" data-duration="7.31" data-a-duration="6.85" data-track-index="14" style="left:1130px;top:314px">
           <div class="s02-tag">BF16</div>
         </div>
-        <div id="s02-fpC" class="clip s02-abs" data-start="9.3" data-duration="5.7" data-track-index="15" style="left:1130px;top:674px">
+        <div id="s02-fpC" class="clip s02-abs" data-start="9.39" data-a-start="9.3" data-duration="6.09" data-a-duration="5.7" data-track-index="15" style="left:1130px;top:674px">
           <div class="s02-tagzh">FP32 累加</div>
         </div>
 
         <!-- “沿 K 连续”：A 沿横向，Wᵀ 沿纵向 -->
-        <div id="s02-arrA" class="clip s02-abs" data-start="3.7" data-duration="11.3" data-track-index="16" style="left:400px;top:700px;width:340px;height:130px">
+        <div id="s02-arrA" class="clip s02-abs" data-start="3.70" data-a-start="3.7" data-duration="11.77" data-a-duration="11.3" data-track-index="16" style="left:400px;top:700px;width:340px;height:130px">
           <div id="s02-arrA-in" class="s02-full">
             <div class="k-label s02-abs" style="left:30px;top:10px;color:var(--ink)">沿 K 连续</div>
             <svg class="s02-abs" style="left:0;top:70px" width="340" height="40" viewBox="0 0 340 40">
@@ -94,7 +94,7 @@
             </svg>
           </div>
         </div>
-        <div id="s02-arrW" class="clip s02-abs" data-start="3.85" data-duration="11.15" data-track-index="17" style="left:760px;top:150px;width:340px;height:340px">
+        <div id="s02-arrW" class="clip s02-abs" data-start="3.85" data-a-start="3.85" data-duration="11.62" data-a-duration="11.15" data-track-index="17" style="left:760px;top:150px;width:340px;height:340px">
           <div id="s02-arrW-in" class="s02-full">
             <div class="k-label s02-abs" style="left:40px;top:150px;color:var(--ink)">沿 K 连续</div>
             <svg class="s02-abs" style="left:250px;top:0" width="60" height="340" viewBox="0 0 60 340">
@@ -107,25 +107,25 @@
     </div>
 
     <!-- 14.6：峰值刻度尺（同一基线：989 规格 / 735 持续） -->
-    <div id="s02-ruler" class="clip s02-full" data-start="14.9" data-duration="7.0" data-track-index="18">
-      <div id="s02-rtitle" class="clip s02-abs k-label" data-start="14.9" data-duration="7.0" data-track-index="19" style="left:760px;top:400px;font-size:36px;color:var(--ink)">Tensor Core 峰值 · TFLOPS</div>
-      <div id="s02-axis" class="clip s02-abs" data-start="14.9" data-duration="7.0" data-track-index="20" style="left:760px;top:618px;width:1040px;height:4px">
+    <div id="s02-ruler" class="clip s02-full" data-start="15.37" data-a-start="14.9" data-duration="7.50" data-a-duration="7.0" data-track-index="18">
+      <div id="s02-rtitle" class="clip s02-abs k-label" data-start="15.37" data-a-start="14.9" data-duration="7.50" data-a-duration="7.0" data-track-index="19" style="left:760px;top:400px;font-size:36px;color:var(--ink)">Tensor Core 峰值 · TFLOPS</div>
+      <div id="s02-axis" class="clip s02-abs" data-start="15.37" data-a-start="14.9" data-duration="7.50" data-a-duration="7.0" data-track-index="20" style="left:760px;top:618px;width:1040px;height:4px">
         <div id="s02-axis-in" class="s02-full" style="background:var(--ink);transform-origin:0 50%"></div>
       </div>
-      <div id="s02-b989" class="clip s02-abs" data-start="15.2" data-duration="6.7" data-track-index="21" style="left:760px;top:568px;width:989px;height:50px">
+      <div id="s02-b989" class="clip s02-abs" data-start="15.69" data-a-start="15.2" data-duration="7.17" data-a-duration="6.7" data-track-index="21" style="left:760px;top:568px;width:989px;height:50px">
         <div id="s02-b989-in" class="s02-full" style="border:3px solid var(--teal);border-bottom:none;transform-origin:0 50%"></div>
       </div>
-      <div id="s02-l989" class="clip s02-abs" data-start="15.7" data-duration="6.2" data-track-index="22" style="left:1360px;top:450px;width:400px;height:170px">
+      <div id="s02-l989" class="clip s02-abs" data-start="16.23" data-a-start="15.7" data-duration="6.63" data-a-duration="6.2" data-track-index="22" style="left:1360px;top:450px;width:400px;height:170px">
         <div class="s02-abs" style="right:10px;top:72px;width:3px;height:98px;background:var(--ink)"></div>
         <div class="s02-abs" style="right:24px;top:0;text-align:right">
           <div class="s02-big" style="color:var(--ink)">989</div>
         </div>
         <div class="k-note s02-abs" style="right:24px;top:62px;white-space:nowrap;color:var(--ink2)">规格 · 1830 MHz</div>
       </div>
-      <div id="s02-b735" class="clip s02-abs" data-start="17.85" data-duration="4.05" data-track-index="23" style="left:760px;top:568px;width:735px;height:50px">
+      <div id="s02-b735" class="clip s02-abs" data-start="18.56" data-a-start="17.85" data-duration="4.30" data-a-duration="4.05" data-track-index="23" style="left:760px;top:568px;width:735px;height:50px">
         <div id="s02-b735-in" class="s02-full" style="background:var(--teal);transform-origin:0 50%"></div>
       </div>
-      <div id="s02-l735" class="clip s02-abs" data-start="18.2" data-duration="3.7" data-track-index="24" style="left:995px;top:620px;width:500px;height:170px">
+      <div id="s02-l735" class="clip s02-abs" data-start="18.94" data-a-start="18.2" data-duration="3.92" data-a-duration="3.7" data-track-index="24" style="left:995px;top:620px;width:500px;height:170px">
         <div class="s02-abs" style="right:0;top:0;width:3px;height:70px;background:var(--ink)"></div>
         <div class="s02-abs" style="right:14px;top:30px;text-align:right">
           <div class="s02-big" style="color:var(--teal-t)">735</div>
@@ -135,22 +135,22 @@
     </div>
 
     <!-- 21.5：显存 → Tensor Core 的通路，蓝色小方块沿它走 -->
-    <div id="s02-path" class="clip s02-full" data-start="21.5" data-duration="7.5" data-track-index="25">
-      <div id="s02-pmem" class="clip s02-abs s02-name-zh" data-start="21.5" data-duration="7.5" data-track-index="26" style="left:110px;top:718px;color:var(--hot-t)">显存</div>
-      <div id="s02-pline" class="clip s02-abs" data-start="21.6" data-duration="7.4" data-track-index="27" style="left:236px;top:720px;width:1300px;height:40px">
+    <div id="s02-path" class="clip s02-full" data-start="22.52" data-a-start="21.5" data-duration="6.62" data-a-duration="7.5" data-track-index="25">
+      <div id="s02-pmem" class="clip s02-abs s02-name-zh" data-start="22.52" data-a-start="21.5" data-duration="6.62" data-a-duration="7.5" data-track-index="26" style="left:110px;top:718px;color:var(--hot-t)">显存</div>
+      <div id="s02-pline" class="clip s02-abs" data-start="22.61" data-a-start="21.6" data-duration="6.53" data-a-duration="7.4" data-track-index="27" style="left:236px;top:720px;width:1300px;height:40px">
         <svg id="s02-pline-in" class="s02-full" style="transform-origin:0 50%" width="1300" height="40" viewBox="0 0 1300 40">
           <line x1="0" y1="20" x2="1272" y2="20" stroke="var(--ink)" stroke-width="4" />
           <polygon points="1298,20 1270,6 1270,34" fill="var(--ink)" />
         </svg>
       </div>
-      <div id="s02-ptc" class="clip s02-abs s02-name-zh" data-start="22.2" data-duration="6.8" data-track-index="28" style="left:1556px;top:718px;color:var(--teal-t)">Tensor Core</div>
-      <div id="s02-car" class="clip s02-abs" data-start="22.4" data-duration="6.6" data-track-index="29" style="left:250px;top:722px;width:36px;height:36px">
+      <div id="s02-ptc" class="clip s02-abs s02-name-zh" data-start="23.12" data-a-start="22.2" data-duration="6.02" data-a-duration="6.8" data-track-index="28" style="left:1556px;top:718px;color:var(--teal-t)">Tensor Core</div>
+      <div id="s02-car" class="clip s02-abs" data-start="23.29" data-a-start="22.4" data-duration="5.85" data-a-duration="6.6" data-track-index="29" style="left:250px;top:722px;width:36px;height:36px">
         <div id="s02-car-in" class="s02-full" style="background:var(--blue)"></div>
       </div>
     </div>
 
     <!-- 右上进度条：10.4 出参照 cuBLAS 781.86；28.6 起涨到 777.6 再退回到 44.3（s03 从这里接），留目标虚线 -->
-    <div id="s02-meter" class="clip kit-meter" data-start="10.4" data-duration="23.6" data-track-index="30">
+    <div id="s02-meter" class="clip kit-meter" data-start="10.56" data-a-start="10.4" data-duration="25.31" data-a-duration="23.6" data-track-index="30">
       <div id="s02-meter-in" class="s02-full">
         <div class="lbl">8192 阶 · BF16 · TFLOPS</div>
         <div class="track" data-layout-allow-overflow>
@@ -159,24 +159,24 @@
         </div>
         <div class="tick"></div>
         <div class="ref">cuBLAS 781.86</div>
-        <div id="s02-same" class="clip note" data-start="11.4" data-duration="3.6" data-track-index="31">结果逐位相同</div>
-        <div id="s02-target" class="clip" data-start="30.7" data-duration="3.3" data-track-index="32"></div>
-        <div id="s02-tnote" class="clip note" data-start="31.9" data-duration="2.1" data-track-index="33">目标 777.6（99.5%）</div>
+        <div id="s02-same" class="clip note" data-start="11.63" data-a-start="11.4" data-duration="3.85" data-a-duration="3.6" data-track-index="31">结果逐位相同</div>
+        <div id="s02-target" class="clip" data-start="31.43" data-a-start="30.7" data-duration="4.44" data-a-duration="3.3" data-track-index="32"></div>
+        <div id="s02-tnote" class="clip note" data-start="33.04" data-a-start="31.9" data-duration="2.83" data-a-duration="2.1" data-track-index="33">目标 777.6（99.5%）</div>
       </div>
     </div>
 
     <!-- 结尾：一个 block（C 左上角，128 × 128 ≈ 5.3 px）的定位圈与引线标注 -->
-    <div id="s02-ring" class="clip s02-abs" data-start="31.0" data-duration="3.0" data-track-index="34" style="left:740px;top:490px;width:46px;height:46px">
+    <div id="s02-ring" class="clip s02-abs" data-start="31.83" data-a-start="31.0" data-duration="4.04" data-a-duration="3.0" data-track-index="34" style="left:740px;top:490px;width:46px;height:46px">
       <svg id="s02-ring-in" class="s02-full" width="46" height="46" viewBox="0 0 46 46">
         <circle cx="23" cy="23" r="19" fill="none" stroke="var(--ink)" stroke-width="3" />
       </svg>
     </div>
-    <div id="s02-lead" class="clip s02-abs" data-start="31.5" data-duration="2.5" data-track-index="35" style="left:690px;top:440px;width:70px;height:70px">
+    <div id="s02-lead" class="clip s02-abs" data-start="32.50" data-a-start="31.5" data-duration="3.37" data-a-duration="2.5" data-track-index="35" style="left:690px;top:440px;width:70px;height:70px">
       <svg class="s02-full" width="70" height="70" viewBox="0 0 70 70">
         <line x1="62" y1="62" x2="10" y2="10" stroke="var(--ink)" stroke-width="3" />
       </svg>
     </div>
-    <div id="s02-blklbl" class="clip s02-abs k-label" data-start="31.6" data-duration="2.4" data-track-index="36" style="left:300px;top:404px;width:390px;text-align:right;color:var(--ink);white-space:nowrap">一个 block：128 × 128</div>
+    <div id="s02-blklbl" class="clip s02-abs k-label" data-start="32.64" data-a-start="31.6" data-duration="3.23" data-a-duration="2.4" data-track-index="36" style="left:300px;top:404px;width:390px;text-align:right;color:var(--ink);white-space:nowrap">一个 block：128 × 128</div>
   </div>
   <script>
     (function () {
@@ -259,7 +259,7 @@
 
       drawMeter();
       tl.set({}, {}, 34.0);
-      window.__timelines["s02"] = tl;
+      /* warp */ { const P = [[0.0, 0.0], [0.5, 0.5], [8.0, 8.0], [14.6, 15.04], [21.5, 22.52], [28.6, 28.6], [34.0, 35.87]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 35.87, duration: 35.87, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s02"] = outer; } /* /warp */
     })();
   </script>
 </template>

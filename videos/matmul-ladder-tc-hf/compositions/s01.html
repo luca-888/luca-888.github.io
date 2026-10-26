@@ -21,20 +21,20 @@
   <div id="root" data-composition-id="s01" data-width="1920" data-height="1080">
 
     <!-- 点：封面的一个 FP32 乘加 → 一排 32 个 → 4 × 8 小阵 → 128 点阵的一角 -->
-    <div id="s01-dots" class="clip s01-full" data-start="0" data-duration="17.95" data-track-index="1" data-layout-ignore>
+    <div id="s01-dots" class="clip s01-full" data-start="0.00" data-a-start="0.0" data-duration="19.20" data-a-duration="17.95" data-track-index="1" data-layout-ignore>
       <div id="s01-dots-in" class="s01-full"></div>
     </div>
 
-    <div id="s01-cover-lbl" class="clip s01-lbl" data-start="0" data-duration="1.75" data-track-index="2">
+    <div id="s01-cover-lbl" class="clip s01-lbl" data-start="0.00" data-a-start="0.0" data-duration="2.06" data-a-duration="1.75" data-track-index="2">
       <div id="s01-cover-lbl-in">FP32：一次乘加</div>
     </div>
 
-    <div id="s01-row-lbl" class="clip s01-lbl" data-start="1.7" data-duration="4.7" data-track-index="2">
+    <div id="s01-row-lbl" class="clip s01-lbl" data-start="2.00" data-a-start="1.7" data-duration="5.72" data-a-duration="4.7" data-track-index="2">
       <div id="s01-row-lbl-in">一个处理块：32 个 FP32 单元</div>
     </div>
 
     <!-- 右上实测进度条：停在 44.3 -->
-    <div id="s01-meter" class="clip kit-meter" data-start="0.9" data-duration="5.5" data-track-index="3">
+    <div id="s01-meter" class="clip kit-meter" data-start="1.00" data-a-start="0.9" data-duration="6.72" data-a-duration="5.5" data-track-index="3">
       <div id="s01-meter-in" style="position:absolute;inset:0">
         <div class="lbl">FP32 版本 · TFLOPS</div>
         <div class="track"><div id="s01-meter-fill" class="fill"></div></div>
@@ -44,7 +44,7 @@
     </div>
 
     <!-- Tensor Core 乘加立方体（16 × 16 × 16）与 A / B / C 三片 -->
-    <div id="s01-cube" class="clip s01-abs" data-start="5.9" data-duration="13.1" data-track-index="4" data-layout-ignore>
+    <div id="s01-cube" class="clip s01-abs" data-start="7.24" data-a-start="5.9" data-duration="13.05" data-a-duration="13.1" data-track-index="4" data-layout-ignore>
       <div id="s01-cubeg" style="position:absolute;left:0;top:0;width:600px;height:620px">
       <svg width="600" height="620" viewBox="-300 -340 600 620" xmlns="http://www.w3.org/2000/svg" style="display:block">
         <g>
@@ -75,16 +75,16 @@
       </svg>
     </div>
 
-    <div id="s01-cube-lbl" class="clip s01-lbl" data-start="7.0" data-duration="6.4" data-track-index="5">
+    <div id="s01-cube-lbl" class="clip s01-lbl" data-start="8.30" data-a-start="7.0" data-duration="6.20" data-a-duration="6.4" data-track-index="5">
       <div id="s01-cube-lbl-in">一条指令：16 × 16 × 16</div>
     </div>
 
-    <div id="s01-clu-lbl" class="clip s01-lbl" data-start="6.8" data-duration="6.5" data-track-index="2">
+    <div id="s01-clu-lbl" class="clip s01-lbl" data-start="8.11" data-a-start="6.8" data-duration="6.29" data-a-duration="6.5" data-track-index="2">
       <div id="s01-clu-lbl-in">32 个 FP32 单元</div>
     </div>
 
     <!-- 同一点距：128 个点（FP32，整个 SM）对 2048 个点（Tensor Core） -->
-    <div id="s01-g128" class="clip s01-abs" data-start="13.3" data-duration="4.65" data-track-index="6" data-layout-ignore>
+    <div id="s01-g128" class="clip s01-abs" data-start="14.39" data-a-start="13.3" data-duration="4.81" data-a-duration="4.65" data-track-index="6" data-layout-ignore>
       <svg width="192" height="96" viewBox="0 0 192 96" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="s01-pat-a" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="4.5" style="fill:var(--ink2)" /></pattern>
@@ -94,11 +94,11 @@
         <rect id="s01-q3" x="96" y="48" width="96" height="48" fill="url(#s01-pat-a)" />
       </svg>
     </div>
-    <div id="s01-g128-lbl" class="clip s01-lbl" data-start="13.6" data-duration="4.35" data-track-index="7">
+    <div id="s01-g128-lbl" class="clip s01-lbl" data-start="14.70" data-a-start="13.6" data-duration="4.50" data-a-duration="4.35" data-track-index="7">
       <div id="s01-g128-lbl-in">FP32：128 次乘加</div>
     </div>
 
-    <div id="s01-g2048" class="clip s01-abs" data-start="14.0" data-duration="4.4" data-track-index="8" data-layout-ignore>
+    <div id="s01-g2048" class="clip s01-abs" data-start="15.12" data-a-start="14.0" data-duration="4.55" data-a-duration="4.4" data-track-index="8" data-layout-ignore>
       <svg id="s01-g2048-svg" width="768" height="384" viewBox="0 0 768 384" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="s01-pat-b" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="4.5" style="fill:var(--teal)" /></pattern>
@@ -107,11 +107,11 @@
         <path id="s01-g2048-cut" d="M192 0V384M384 0V384M576 0V384M0 96H768M0 192H768M0 288H768" fill="none" style="stroke:var(--paper)" stroke-width="5" />
       </svg>
     </div>
-    <div id="s01-g2048-lbl" class="clip s01-lbl" data-start="14.2" data-duration="3.75" data-track-index="9">
+    <div id="s01-g2048-lbl" class="clip s01-lbl" data-start="15.32" data-a-start="14.2" data-duration="3.88" data-a-duration="3.75" data-track-index="9">
       <div id="s01-g2048-lbl-in">Tensor Core：2048 次乘加</div>
     </div>
 
-    <div id="s01-x16" class="clip s01-abs" data-start="16.3" data-duration="2.7" data-track-index="10">
+    <div id="s01-x16" class="clip s01-abs" data-start="17.50" data-a-start="16.3" data-duration="2.79" data-a-duration="2.7" data-track-index="10">
       <div id="s01-x16-in"><span class="acc">16</span> 倍</div>
     </div>
   </div>
@@ -225,7 +225,7 @@
       tl.fromTo("#s01-x16-in", { y: 0 }, { y: -60, duration: 0.8, ease: "power2.inOut", immediateRender: false }, 17.5);
 
       tl.set({}, {}, 19.0);
-      window.__timelines["s01"] = tl;
+      /* warp */ { const P = [[0.0, 0.0], [0.5, 0.5], [5.9, 7.24], [12.9, 13.98], [19.0, 20.29]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 20.29, duration: 20.29, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s01"] = outer; } /* /warp */
     })();
   </script>
 </template>

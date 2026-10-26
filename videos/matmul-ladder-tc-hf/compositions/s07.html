@@ -1,0 +1,305 @@
+<template>
+  <!--
+    tile 图（26.0 起，与 s08、s09 同一画法）：#s07-tmap left:200px; top:300px; 960 × 480。
+      8192 阶 C 按 128 × 256 切成 64 行 × 32 列 tile，画成转置：横向 = tile 行 m（x = 15m），纵向 = tile 列 n（y = 15n），每格 15 px。
+      Wᵀ 边条在左侧：left:172px; top:300px; 14 × 480，每 15 px 一段。按行发放的一轮 = 前 4 条竖带 + 第 5 条的前 4 格。
+  -->
+  <style>
+    #root { position: absolute; inset: 0; }
+    #root .s07-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .s07-abs { position: absolute; }
+    #root .s07-in { position: absolute; inset: 0; }
+    #root .s07-lbl { position: absolute; font-size: 32px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+    #root .s07-mono { font-family: var(--mono); font-weight: 700; }
+    #root #s07-ttl { transform-origin: 0 0; }
+    /* 进度条（与 s03 同款）+ 第二行 4096 阶 */
+    #root .kit-meter .track { overflow: hidden; }
+    #root #s07-target { position: absolute; left: 541px; top: 32px; height: 56px; border-left: 3px dashed var(--teal-t); }
+    #root .s07-mnum { position: absolute; left: 0; top: 40px; height: 40px; line-height: 40px; font-family: var(--mono); font-size: 32px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+    #root .s07-mnote { position: absolute; left: 0; top: 92px; font-size: 28px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
+    #root #s07-tr2 { position: absolute; left: 0; top: 182px; width: 544px; height: 34px; background: var(--paper2); overflow: hidden; }
+    #root #s07-fill2 { position: absolute; left: 0; top: 0; width: 100%; height: 34px; background: var(--teal); transform-origin: 0 50%; }
+    #root .s07-n2 { position: absolute; left: 0; top: 182px; height: 34px; line-height: 34px; font-family: var(--mono); font-size: 30px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+    /* warpgroup 方框：4 × 32 个线程点（与 s06 同一画法，缩小） */
+    #root .s07-wg { position: absolute; width: 413px; height: 77px; border: 3px solid; border-radius: 3px; }
+    #root .s07-dots { position: absolute; left: 13px; top: 13px; width: 381px; height: 45px; }
+    #root .s07-dot { position: absolute; width: 9px; height: 9px; border-radius: 50%; }
+    /* 槽位与 full / empty 灯 */
+    #root .s07-slot { position: absolute; top: 440px; width: 140px; height: 140px; border: 3px solid var(--use); background: var(--paper2); }
+    #root .s07-dat { position: absolute; left: 13px; top: 13px; width: 108px; height: 108px; }
+    #root .s07-lt { position: absolute; top: 600px; width: 30px; height: 30px; border-radius: 50%; border: 3px solid var(--gray); }
+    #root .s07-lt i { position: absolute; inset: -3px; border-radius: 50%; }
+    #root .s07-key { display: inline-block; width: 26px; height: 26px; border-radius: 50%; vertical-align: -3px; margin-right: 10px; }
+    #root #s07-cur { position: absolute; left: 622px; top: 436px; width: 148px; height: 148px; border: 5px solid var(--teal); }
+    /* 时间线 */
+    #root .s07-seg { position: absolute; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 600; white-space: nowrap; }
+    #root .s07-tk { position: absolute; left: 96px; font-size: 32px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+    /* 容量条 */
+    #root #s07-cap { position: absolute; left: 1250px; top: 500px; width: 512px; height: 48px; background: var(--paper2); }
+    #root .s07-capf { position: absolute; top: 0; height: 48px; transform-origin: 0 50%; }
+  </style>
+  <div id="root" data-composition-id="s07" data-width="1920" data-height="1080">
+
+    <!-- 0–1.0 标题卡；之后缩到左上角常驻 -->
+    <div id="s07-title" class="clip s07-full" data-start="0.00" data-a-start="0.0" data-duration="39.96" data-a-duration="36.5" data-track-index="1">
+      <div id="s07-chip" class="kit-chip">mm_wgmma_ws</div>
+      <div id="s07-ttl" class="kit-title">第 5 步：<span class="acc">warp 特化</span></div>
+    </div>
+
+    <!-- 右上进度条：开场 484；21.2 起 4096 阶 481 → 635（第二行），8192 阶停在 480 -->
+    <div id="s07-meter" class="clip kit-meter" data-start="1.00" data-a-start="1.0" data-duration="28.60" data-a-duration="25.6" data-track-index="2" data-layout-allow-overflow>
+      <div id="s07-mt" class="s07-in">
+        <div class="lbl">8192 阶 · BF16 · TFLOPS</div>
+        <div class="track"><div id="s07-fill" class="fill"></div></div>
+        <div class="tick"></div>
+        <div id="s07-target"></div>
+        <div class="ref">cuBLAS 781.86</div>
+        <div id="s07-n484" class="s07-mnum">484</div>
+        <div id="s07-n480" class="s07-mnum">480</div>
+        <div id="s07-same" class="s07-mnote">8192 阶仍为 480</div>
+        <div id="s07-row2" class="s07-in">
+          <div class="s07-mnote" style="top:140px;color:var(--teal-t)">4096 阶</div>
+          <div id="s07-tr2"><div id="s07-fill2"></div></div>
+          <div id="s07-m481" class="s07-n2">481</div>
+          <div id="s07-m635" class="s07-n2">635</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.0 三个 warpgroup：0 号生产者（发 TMA），1、2 号消费者（计算）；8.4 起中间加 4 个槽位 -->
+    <div id="s07-pipe" class="clip s07-full" data-start="1.00" data-a-start="1.0" data-duration="14.60" data-a-duration="14.6" data-track-index="3" data-layout-allow-overlap>
+      <div id="s07-p" class="s07-full">
+        <div id="s07-pl" class="s07-lbl" style="left:96px;top:424px"><span class="acc-g">0 号 · 生产者</span></div>
+        <div id="s07-wg0" class="s07-wg" style="left:96px;top:476px;border-color:var(--use)"><div id="s07-d0" class="s07-dots"></div></div>
+        <div id="s07-pt" class="s07-lbl" style="left:96px;top:566px;color:var(--ink2)">一个线程发 TMA</div>
+      </div>
+      <div id="s07-c1" class="s07-full">
+        <div class="s07-lbl" style="left:1411px;top:304px"><span class="acc">1 号 · 消费者</span>：计算</div>
+        <div id="s07-wg1" class="s07-wg" style="left:1411px;top:356px;border-color:var(--teal)"><div id="s07-d1" class="s07-dots"></div></div>
+      </div>
+      <div id="s07-c2" class="s07-full">
+        <div class="s07-lbl" style="left:1411px;top:544px"><span class="acc">2 号 · 消费者</span>：计算</div>
+        <div id="s07-wg2" class="s07-wg" style="left:1411px;top:596px;border-color:var(--teal)"><div id="s07-d2" class="s07-dots"></div></div>
+      </div>
+      <!-- 8.4 槽位 -->
+      <div id="s07-slots" class="s07-full">
+        <div id="s07-sh" class="s07-lbl" style="left:626px;top:384px">共享内存 · 4 个槽位</div>
+        <svg id="s07-wires" class="s07-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none">
+          <path d="M509 514 H618" style="stroke:var(--use)" stroke-width="4" />
+          <path d="M1302 494 L1405 394 M1302 534 L1405 634" style="stroke:var(--teal)" stroke-width="4" />
+        </svg>
+        <div id="s07-sl" class="s07-full"></div>
+        <div id="s07-cur"></div>
+        <div id="s07-leg" class="s07-lbl" style="left:626px;top:660px;font-size:32px"><span class="s07-key" style="background:var(--use)"></span><span class="s07-mono">full</span>：数据已到&#160;&#160;&#160;&#160;<span class="s07-key" style="background:var(--teal)"></span><span class="s07-mono">empty</span>：已用完</div>
+      </div>
+    </div>
+
+    <!-- 15.1 两个消费者的时间线：交替使用 Tensor Core -->
+    <div id="s07-tl" class="clip s07-full" data-start="15.10" data-a-start="15.1" data-duration="14.50" data-a-duration="11.5" data-track-index="4" data-layout-allow-overlap>
+      <div id="s07-tk1" class="s07-tk" style="top:410px">1 号</div>
+      <div id="s07-tk2" class="s07-tk" style="top:500px">2 号</div>
+      <div id="s07-tk3" class="s07-tk" style="top:622px">Tensor Core</div>
+      <div id="s07-lane" class="s07-full"></div>
+      <div id="s07-tcl" class="s07-lbl" style="left:340px;top:700px;color:var(--teal-t)">一个等待时，另一个在计算：Tensor Core 不再空闲</div>
+    </div>
+
+    <!-- 26.0 tile 图（坐标与画法见文件头注释；s08 原位复用）+ L2 容量条 -->
+    <div id="s07-tiles" class="clip s07-full" data-start="28.97" data-a-start="26.0" data-duration="10.99" data-a-duration="10.5" data-track-index="5" data-layout-allow-overlap>
+      <div id="s07-wl" class="s07-abs s07-mono" style="left:150px;top:792px;font-size:28px;color:var(--yel-t)">Wᵀ</div>
+      <div id="s07-wstrip" class="s07-abs" style="left:172px;top:300px;width:14px;height:480px">
+        <div class="s07-in" style="background:var(--yel);opacity:0.38"></div>
+        <div id="s07-wlit" class="s07-in" style="background:var(--yel);transform-origin:50% 0"></div>
+        <svg class="s07-abs" style="left:0;top:0" width="14" height="480"><path id="s07-wgap" fill="none" style="stroke:var(--paper)" stroke-width="1" /></svg>
+      </div>
+      <div id="s07-tmap" class="s07-abs" style="left:200px;top:300px;width:960px;height:480px">
+        <svg class="s07-abs" style="left:0;top:0" width="960" height="480" viewBox="0 0 960 480">
+          <rect x="0" y="0" width="960" height="480" style="fill:var(--purple)" opacity="0.18" />
+          <rect id="s07-r0" x="0" y="0" width="15" height="480" style="fill:var(--purple)" />
+          <rect id="s07-r1" x="15" y="0" width="15" height="480" style="fill:var(--purple)" />
+          <rect id="s07-r2" x="30" y="0" width="15" height="480" style="fill:var(--purple)" />
+          <rect id="s07-r3" x="45" y="0" width="15" height="480" style="fill:var(--purple)" />
+          <rect id="s07-r4" x="60" y="0" width="15" height="60" style="fill:var(--purple)" />
+          <path id="s07-gap" fill="none" style="stroke:var(--paper)" stroke-width="1" />
+        </svg>
+      </div>
+      <div id="s07-cl" class="s07-lbl" style="left:200px;top:800px;color:var(--ink2)"><span class="acc-p">C</span> 的 tile：横向 64 行，纵向 32 列（每个 128 × 256）</div>
+      <div id="s07-wneed" class="s07-lbl" style="left:1190px;top:360px;color:var(--yel-t)">Wᵀ 全部点亮：需要整个 W</div>
+      <div id="s07-round" class="s07-lbl" style="left:1190px;top:300px;color:var(--purple-t)">按行发放：一轮 132 个 tile</div>
+      <div id="s07-capt" class="s07-lbl" style="left:1250px;top:436px;font-size:36px;font-weight:700"><span class="acc-y">W</span> 共 <span class="k-num">128 MB</span></div>
+      <div id="s07-cap">
+        <div id="s07-cy" class="s07-capf" style="left:0;width:200px;background:var(--yel)"></div>
+        <div id="s07-ch" class="s07-capf" style="left:200px;width:312px;background:var(--hot)"></div>
+      </div>
+      <div id="s07-l2t" class="s07-abs" style="left:1449px;top:486px;height:76px;border-left:4px solid var(--ink)"></div>
+      <div id="s07-l2l" class="s07-lbl" style="left:1370px;top:570px">L2 <span class="k-num">50 MB</span></div>
+      <div id="s07-ovl" class="s07-lbl" style="left:1620px;top:570px;color:var(--hot-t)">溢出</div>
+      <div id="s07-bn" class="s07-abs" style="left:1250px;top:650px"><span class="k-bottleneck">瓶颈：L2 容量</span></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const $ = (k) => document.getElementById("s07-" + k);
+      const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
+      const IN = "power3.out", MOVE = "power2.inOut", OUT = "power2.in";
+      const ft = (el, a, b, t) => tl.fromTo(el, a, b, t);
+      const fadeIn = (el, t, d = 0.5) => ft(el, { opacity: 0 }, { opacity: 1, duration: d, ease: IN }, t);
+      const fadeOut = (el, t, d = 0.4) => ft(el, { opacity: 1 }, { opacity: 0, duration: d, ease: OUT }, t);
+      const set1 = (el, t) => ft(el, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: IN }, t);
+      const set0 = (el, t) => ft(el, { opacity: 1 }, { opacity: 0, duration: 0.2, ease: OUT }, t);
+
+      // ---------- 生成的静态子元素 ----------
+      const mkDots = (el, color, first) => {
+        for (let r = 0; r < 4; r++) for (let i = 0; i < 32; i++) {
+          const d = document.createElement("div");
+          d.className = "s07-dot";
+          d.style.left = i * 12 + "px"; d.style.top = r * 12 + "px";
+          d.style.background = r === 0 && i === 0 && first ? first : color;
+          el.appendChild(d);
+        }
+      };
+      mkDots($("d0"), "var(--line)", "var(--use)");
+      mkDots($("d1"), "var(--teal)");
+      mkDots($("d2"), "var(--teal)");
+      const slotX = (s) => 626 + s * 176;
+      const SL = [];
+      for (let s = 0; s < 4; s++) {
+        const box = document.createElement("div");
+        box.className = "s07-slot"; box.style.left = slotX(s) + "px";
+        const dat = document.createElement("div");
+        dat.className = "s07-dat";
+        dat.innerHTML = '<i style="position:absolute;left:0;top:0;width:108px;height:50px;background:var(--blue)"></i><i style="position:absolute;left:0;top:58px;width:108px;height:50px;background:var(--yel)"></i>';
+        box.appendChild(dat);
+        const lf = document.createElement("div"), le = document.createElement("div");
+        lf.className = "s07-lt"; lf.style.left = slotX(s) + 30 + "px"; lf.innerHTML = '<i style="background:var(--use)"></i>';
+        le.className = "s07-lt"; le.style.left = slotX(s) + 80 + "px"; le.innerHTML = '<i style="background:var(--teal)"></i>';
+        $("sl").append(box, lf, le);
+        SL.push({ box, dat, lf, le, f: lf.firstChild, e: le.firstChild });
+      }
+      // 时间线：每段 240 px；1 号 算/等/算/等/算/等，2 号相反；Tensor Core 一轨连续，标出是谁在用
+      const lane = $("lane"), X0 = 340, W = 240;
+      const seg = (x, y, h, css, text) => {
+        const d = document.createElement("div");
+        d.className = "s07-seg";
+        d.style.cssText += `left:${x}px;top:${y}px;width:${W}px;height:${h}px;${css}`;
+        if (text) d.textContent = text;
+        lane.appendChild(d);
+      };
+      for (let k = 0; k < 6; k++) {
+        const x = X0 + k * W, c1 = k % 2 === 0;
+        seg(x, 400, 60, c1 ? "background:var(--teal);color:var(--ink)" : "background:var(--paper2);color:var(--note)", k < 2 ? (c1 ? "计算" : "等待") : "");
+        seg(x, 490, 60, !c1 ? "background:var(--teal);color:var(--ink)" : "background:var(--paper2);color:var(--note)", k < 2 ? (!c1 ? "计算" : "等待") : "");
+        seg(x, 610, 64, "background:var(--teal);color:var(--ink);border-right:2px solid var(--paper)", c1 ? "1 号" : "2 号");
+      }
+      // tile 图的缝与 Wᵀ 边条的缝
+      let g = "";
+      for (let k = 1; k < 64; k++) g += `M${k * 15} 0V480`;
+      for (let k = 1; k < 32; k++) g += `M0 ${k * 15}H960`;
+      $("gap").setAttribute("d", g);
+      let wg = "";
+      for (let k = 1; k < 32; k++) wg += `M0 ${k * 15}H14`;
+      $("wgap").setAttribute("d", wg);
+
+      // ---------- 初始状态 ----------
+      gsap.set([$("chip"), $("ttl")], { opacity: 0 });
+      gsap.set($("ttl"), { x: 0, y: 0, scale: 1 });
+      const fx = (v) => (v / 781.86) * 544;
+      gsap.set($("fill"), { scaleX: 484 / 781.86 });
+      gsap.set([$("n484"), $("n480")], { x: fx(484) + 10 });
+      gsap.set($("fill2"), { scaleX: 481 / 781.86 });
+      gsap.set([$("m481"), $("m635")], { x: fx(481) + 10 });
+      gsap.set([$("mt"), $("n480"), $("same"), $("row2"), $("m635")], { opacity: 0 });
+      gsap.set([$("pl"), $("wg0"), $("pt"), $("c1"), $("c2"), $("slots")], { opacity: 0 });
+      gsap.set($("d0").children[0], { scale: 1 });
+      gsap.set(SL.map((o) => o.box).concat(SL.map((o) => o.lf), SL.map((o) => o.le)), { opacity: 0 });
+      gsap.set(SL.map((o) => o.dat).concat(SL.map((o) => o.f), SL.map((o) => o.e)), { opacity: 0 });
+      gsap.set([$("sh"), $("wires"), $("cur"), $("leg")], { opacity: 0 });
+      gsap.set([$("tk1"), $("tk2"), $("tk3"), $("tcl")], { opacity: 0 });
+      gsap.set(lane, { clipPath: "inset(0px 1920px 0px 0px)" });
+      gsap.set([$("wl"), $("wstrip"), $("tmap"), $("cl"), $("wneed"), $("round"), $("capt"), $("cap"), $("l2t"), $("l2l"), $("ovl"), $("bn")], { opacity: 0 });
+      gsap.set([$("r0"), $("r1"), $("r2"), $("r3"), $("r4"), $("wlit"), $("cy"), $("ch")], { scaleX: 0, transformOrigin: "0 50%" });
+
+      // ---------- 0–1.0 标题卡；1.0 缩到版本名右侧 ----------
+      ft($("chip"), { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3, ease: IN }, 0.0);
+      ft($("ttl"), { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.4, ease: IN }, 0.1);
+      ft($("ttl"), { x: 0, y: 0, scale: 1 }, { x: 284, y: -72, scale: 0.6, duration: 0.7, ease: MOVE }, 1.0);
+
+      // ---------- 1.0 生产者 + 两个消费者 ----------
+      ft($("wg0"), { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.6, ease: IN }, 1.1);
+      fadeIn($("pl"), 1.3);
+      ft($("c1"), { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.6, ease: IN }, 2.6);
+      ft($("c2"), { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.6, ease: IN }, 2.75);
+      ft($("d0").children[0], { scale: 1 }, { scale: 1.8, duration: 0.4, ease: IN }, 4.4);
+      fadeIn($("pt"), 4.5);
+      fadeIn($("mt"), 5.6);
+
+      // ---------- 8.4 4 个槽位，每个两盏灯：full（绿）/ empty（teal）循环 ----------
+      ft($("slots"), { opacity: 0 }, { opacity: 1, duration: 0.01 }, 8.4);
+      fadeIn($("sh"), 8.4);
+      SL.forEach((o, s) => ft(o.box, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 8.5 + s * 0.08));
+      SL.forEach((o, s) => { fadeIn(o.lf, 8.9 + s * 0.05, 0.3); fadeIn(o.le, 8.95 + s * 0.05, 0.3); });
+      fadeIn($("wires"), 9.0);
+      fadeIn($("leg"), 9.3);
+      // 生产者先把 4 个槽位装满
+      SL.forEach((o, s) => {
+        const t = 9.8 + s * 0.4;
+        ft(o.dat, { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.35, ease: IN }, t);
+        set1(o.f, t + 0.3);
+      });
+      // 消费者依次用完槽位 → empty 亮；生产者随即重装 → full 亮
+      fadeIn($("cur"), 11.6, 0.3);
+      for (let k = 0; k < 4; k++) {
+        const o = SL[k], t = 11.6 + k * 0.85;
+        if (k > 0) ft($("cur"), { x: (k - 1) * 176 }, { x: k * 176, duration: 0.3, ease: MOVE }, t - 0.3);
+        set0(o.f, t + 0.15);
+        ft(o.dat, { opacity: 1 }, { opacity: 0.25, duration: 0.3, ease: MOVE }, t + 0.15);
+        set1(o.e, t + 0.45);
+        set0(o.e, t + 0.75);
+        ft(o.dat, { opacity: 0.25, x: -40 }, { opacity: 1, x: 0, duration: 0.3, ease: IN }, t + 0.75);
+        set1(o.f, t + 0.95);
+      }
+
+      // ---------- 15.1 两个消费者交替使用 Tensor Core ----------
+      ft($("p"), { opacity: 1 }, { opacity: 0, duration: 0.4, ease: OUT }, 15.1);
+      fadeOut($("c1"), 15.1); fadeOut($("c2"), 15.1);
+      ft($("slots"), { opacity: 1 }, { opacity: 0, duration: 0.4, ease: OUT }, 15.1);
+      fadeIn($("tk1"), 15.5); fadeIn($("tk2"), 15.6); fadeIn($("tk3"), 15.7);
+      ft(lane, { clipPath: "inset(0px 1920px 0px 0px)" }, { clipPath: "inset(0px 0px 0px 0px)", duration: 3.0, ease: "none" }, 15.6);
+      fadeIn($("tcl"), 18.8);
+
+      // ---------- 21.2 4096 阶 481 → 635；8192 阶仍为 480 ----------
+      ft($("row2"), { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 21.2);
+      ft($("fill2"), { scaleX: 481 / 781.86 }, { scaleX: 635 / 781.86, duration: 1.1, ease: MOVE }, 21.9);
+      ft([$("m481"), $("m635")], { x: fx(481) + 10 }, { x: fx(635) + 10, duration: 1.1, ease: MOVE }, 21.9);
+      fadeOut($("m481"), 21.95, 0.3);
+      fadeIn($("m635"), 22.8, 0.3);
+      ft($("fill"), { scaleX: 484 / 781.86 }, { scaleX: 480 / 781.86, duration: 0.4, ease: MOVE }, 23.8);
+      ft([$("n484"), $("n480")], { x: fx(484) + 10 }, { x: fx(480) + 10, duration: 0.4, ease: MOVE }, 23.8);
+      fadeOut($("n484"), 23.8, 0.2); fadeIn($("n480"), 24.0, 0.3);
+      fadeIn($("same"), 24.1);
+
+      // ---------- 26.0 tile 图：按行发放，一轮 132 个 tile 覆盖约 4 行、全部 32 列；W 128 MB 对 L2 50 MB ----------
+      fadeOut($("mt"), 26.0);
+      [$("tk1"), $("tk2"), $("tk3"), $("tcl"), lane].forEach((e) => fadeOut(e, 26.0));
+      ft($("tmap"), { opacity: 0, scale: 0.97, transformOrigin: "0 0" }, { opacity: 1, scale: 1, duration: 0.6, ease: IN }, 26.3);
+      fadeIn($("cl"), 26.5);
+      fadeIn($("wstrip"), 26.6); fadeIn($("wl"), 26.6);
+      // 一轮 132 个：第 0–3 行整行、第 4 行前 4 个，按发放顺序扫过
+      [0, 1, 2, 3].forEach((r) => ft($("r" + r), { scaleY: 0, transformOrigin: "50% 0" }, { scaleY: 1, duration: 0.42, ease: "none" }, 27.4 + r * 0.42));
+      ft($("r4"), { scaleY: 0, transformOrigin: "50% 0" }, { scaleY: 1, duration: 0.06, ease: "none" }, 29.08);
+      ft($("wlit"), { scaleY: 0 }, { scaleY: 1, duration: 0.42, ease: "none" }, 27.4);
+      fadeIn($("round"), 29.0);
+      fadeIn($("wneed"), 30.0);
+      // 容量条
+      fadeIn($("capt"), 31.0);
+      fadeIn($("cap"), 31.1, 0.3);
+      ft($("cy"), { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power1.in" }, 31.3);
+      ft($("ch"), { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: "power1.out" }, 31.8);
+      fadeIn($("l2t"), 32.4, 0.3); fadeIn($("l2l"), 32.5);
+      fadeIn($("ovl"), 33.0);
+      ft($("bn"), { opacity: 0, scale: 0.85, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, 33.6);
+
+      tl.set({}, {}, 36.5);
+      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [8.4, 8.4], [15.1, 15.1], [21.2, 21.2], [26.0, 28.97], [36.5, 39.96]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 39.96, duration: 39.96, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s07"] = outer; } /* /warp */
+    })();
+  </script>
+</template>

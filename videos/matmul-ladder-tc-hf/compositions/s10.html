@@ -1,0 +1,216 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; }
+    #root .s10-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .s10-abs { position: absolute; }
+    #root .s10-in { position: absolute; inset: 0; }
+    #root .s10-lbl { position: absolute; font-size: 32px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
+    /* 标题 */
+    #root #s10-ttl { top: 176px; }
+    /* 进度条 */
+    #root .kit-meter .track { overflow: hidden; }
+    #root #s10-target { position: absolute; left: 541px; top: 32px; height: 56px; border-left: 3px dashed var(--teal-t); }
+    #root .s10-mnum { position: absolute; left: 0; top: 40px; width: 200px; height: 40px; line-height: 40px; text-align: right; font-family: var(--mono); font-size: 30px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+    /* 塔 */
+    #root #s10-tower { position: absolute; left: 1180px; top: 300px; width: 640px; height: 620px; }
+    #root #s10-car { position: absolute; left: 0; top: 0; width: 44px; height: 44px; background: var(--purple); border: 2px solid var(--ink); }
+    #root .s10-tag { position: absolute; font-size: 32px; font-weight: 800; white-space: nowrap; }
+    #root #s10-osm { position: absolute; left: 1194px; top: 568px; width: 462px; height: 84px; border: 4px solid var(--purple); }
+    /* 左侧说明 */
+    #root .s10-row { position: absolute; left: 96px; font-size: 36px; font-weight: 600; color: var(--ink); white-space: nowrap; display: flex; align-items: center; gap: 16px; }
+    #root .s10-row i { display: block; width: 28px; height: 28px; }
+    #root #s10-strike { position: absolute; left: 96px; top: 382px; width: 640px; height: 4px; background: var(--red); transform-origin: 0 50%; }
+    /* 时间线 */
+    #root .s10-lane { position: absolute; left: 300px; width: 820px; height: 72px; background: var(--paper2); }
+    #root .s10-blk { position: absolute; height: 72px; line-height: 72px; text-align: center; font-size: 30px; font-weight: 700; color: #fff; white-space: nowrap; border-right: 3px solid var(--paper); }
+    #root .s10-blk.c { background: var(--teal-t); }
+    #root .s10-blk.w { background: var(--purple); }
+    /* 共享内存占用条 */
+    #root .s10-seg { position: absolute; top: 440px; height: 72px; line-height: 72px; text-align: center; font-size: 28px; font-weight: 700; color: #fff; white-space: nowrap; border-right: 3px solid var(--paper); }
+    #root .s10-seg.b { background: var(--use); }
+    #root .s10-seg.r { background: var(--purple); }
+    #root #s10-over { position: absolute; left: 891px; top: 518px; width: 101px; height: 12px; background: var(--hot); }
+    #root #s10-lim { position: absolute; left: 889px; top: 420px; height: 112px; border-left: 4px dashed var(--ink); }
+    /* 结果 */
+    #root #s10-big { position: absolute; left: 96px; top: 470px; font-family: var(--mono); font-size: 220px; line-height: 1; font-weight: 800; color: var(--teal-t); white-space: nowrap; }
+  </style>
+  <div id="root" data-composition-id="s10" data-width="1920" data-height="1080">
+
+    <!-- 0.0 标题卡：之后缩到左上角常驻 -->
+    <div id="s10-title" class="clip s10-full" data-start="0.00" data-a-start="0.0" data-duration="25.57" data-a-duration="23.8" data-track-index="1">
+      <div id="s10-chip" class="kit-chip">wgmma_tstore</div>
+      <div id="s10-ttl" class="kit-title">第 8 步：<span class="acc">TMA 写回</span></div>
+    </div>
+
+    <!-- 1.0 右上进度条：上一版 757 -->
+    <div id="s10-meter" class="clip kit-meter" data-start="1.00" data-a-start="1.0" data-duration="24.57" data-a-duration="22.8" data-track-index="2">
+      <div id="s10-mt" class="s10-in">
+        <div class="lbl">8192 阶 · BF16 · TFLOPS</div>
+        <div class="track"><div id="s10-fill" class="fill"></div></div>
+        <div class="tick"></div>
+        <div id="s10-target"></div>
+        <div class="ref">cuBLAS 781.86</div>
+        <div id="s10-n757" class="s10-mnum">757</div>
+        <div id="s10-n777" class="s10-mnum">777.6</div>
+      </div>
+    </div>
+
+    <!-- 1.0 硬件塔：结果反向写回 -->
+    <div id="s10-tw" class="clip s10-full" data-start="1.00" data-a-start="1.0" data-duration="19.45" data-a-duration="19.2" data-track-index="3">
+      <div id="s10-twin" class="s10-full">
+        <div id="s10-tower"></div>
+        <svg class="s10-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" stroke-linejoin="round">
+          <path id="s10-r1" d="M 1656 486 L 1696 486 L 1696 610 L 1656 610" style="stroke:var(--purple)" stroke-width="5" />
+          <path id="s10-r2" d="M 1656 610 L 1696 610 L 1696 876 L 1656 876" style="stroke:var(--purple)" stroke-width="12" />
+        </svg>
+        <div id="s10-osm"></div>
+        <div id="s10-tswz" class="s10-tag" style="left:1440px;top:590px;color:var(--purple-t)">换位写入</div>
+        <div id="s10-ttma" class="s10-tag" style="left:1726px;top:760px;font-family:var(--mono);color:var(--purple-t)">TMA</div>
+        <div id="s10-car"></div>
+      </div>
+    </div>
+
+    <!-- 1.0 左侧：旧写法划掉，新写法两步 -->
+    <div id="s10-steps" class="clip s10-full" data-start="1.00" data-a-start="1.0" data-duration="8.46" data-a-duration="7.9" data-track-index="4">
+      <div id="s10-stin" class="s10-full">
+        <div id="s10-old" class="s10-row" style="top:360px;color:var(--note)">旧：每个线程 64 次 4 字节零散写入</div>
+        <div id="s10-strike"></div>
+        <div id="s10-new1" class="s10-row" style="top:470px"><i style="background:var(--purple)"></i>寄存器 → 共享内存：换位写入</div>
+        <div id="s10-new2" class="s10-row" style="top:560px"><i style="background:var(--teal)"></i>一个线程发 TMA：整块写出到显存</div>
+      </div>
+    </div>
+
+    <!-- 8.5 时间线：写回移到 TMA 一轨，与下一块计算重叠 -->
+    <div id="s10-tl" class="clip s10-full" data-start="9.11" data-a-start="8.5" data-duration="4.49" data-a-duration="5.1" data-track-index="5">
+      <div id="s10-tlin" class="s10-full">
+        <div class="s10-lbl" style="left:96px;top:398px;color:var(--ink)">消费者</div>
+        <div class="s10-lbl" style="left:96px;top:518px;color:var(--ink);font-family:var(--mono)">TMA</div>
+        <div class="s10-lane" style="top:390px"></div>
+        <div class="s10-lane" style="top:510px"></div>
+        <div id="s10-c1" class="s10-blk c" style="left:300px;top:390px;width:220px">计算</div>
+        <div id="s10-w1" class="s10-blk w" style="left:520px;top:390px;width:140px">写回</div>
+        <div id="s10-c2" class="s10-blk c" style="left:660px;top:390px;width:220px">计算</div>
+        <div id="s10-w2" class="s10-blk w" style="left:880px;top:390px;width:140px">写回</div>
+        <div id="s10-c3" class="s10-blk c" style="left:740px;top:390px;width:220px">计算</div>
+        <div id="s10-ov" class="s10-lbl" style="left:300px;top:630px;color:var(--teal-t)">写回与下一块的计算重叠</div>
+      </div>
+    </div>
+
+    <!-- 13.2 共享内存占用：结果区 64 KB，缓冲 4 级 → 3 级 -->
+    <div id="s10-sm" class="clip s10-full" data-start="13.20" data-a-start="13.2" data-duration="6.97" data-a-duration="6.8" data-track-index="6">
+      <div id="s10-smin" class="s10-full">
+        <div class="s10-abs" style="left:96px;top:330px;font-size:36px;font-weight:700;color:var(--ink);white-space:nowrap">每个 block 的共享内存</div>
+        <div id="s10-limlbl" class="s10-lbl" style="left:800px;top:376px;color:var(--ink)">上限 227 KB</div>
+        <div id="s10-lim"></div>
+        <div id="s10-b1" class="s10-seg b" style="left:96px;width:168px">缓冲</div>
+        <div id="s10-b2" class="s10-seg b" style="left:264px;width:168px">缓冲</div>
+        <div id="s10-b3" class="s10-seg b" style="left:432px;width:168px">缓冲</div>
+        <div id="s10-b4" class="s10-seg b" style="left:600px;width:168px">缓冲</div>
+        <div id="s10-res" class="s10-seg r" style="left:768px;width:224px">结果区 64 KB</div>
+        <div id="s10-over"></div>
+        <div id="s10-overlbl" class="s10-lbl" style="left:900px;top:540px;color:var(--hot-t)">超出上限</div>
+        <div id="s10-fit" class="s10-abs" style="left:96px;top:560px;font-size:40px;font-weight:700;color:var(--ink);white-space:nowrap">缓冲 4 级 → <span class="acc">3 级</span>，共 208 KB</div>
+      </div>
+    </div>
+
+    <!-- 19.6 实测 777.6，99.5% -->
+    <div id="s10-res2" class="clip s10-full" data-start="19.60" data-a-start="19.6" data-duration="5.97" data-a-duration="4.2" data-track-index="7">
+      <div id="s10-cap" class="s10-abs" style="left:96px;top:390px;font-size:44px;font-weight:700;color:var(--ink);white-space:nowrap">实测 777.6 TFLOPS，为 cuBLAS 的</div>
+      <div id="s10-big">99.5%</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const $ = (k) => document.getElementById("s10-" + k);
+      const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
+      const IN = "power3.out", MOVE = "power2.inOut", OUT = "power2.in";
+      const ft = (el, a, b, t) => tl.fromTo(el, a, b, t);
+      const fadeIn = (el, t, d = 0.5) => ft(el, { opacity: 0 }, { opacity: 1, duration: d, ease: IN }, t);
+      const fadeOut = (el, t, d = 0.4) => ft(el, { opacity: 1 }, { opacity: 0, duration: d, ease: OUT }, t);
+
+      const T = kitTower($("tower"));
+      const L = T.layer, smBox = $("tower-sm");
+      const fx = (v) => (v / 781.86) * 544;
+
+      // ---------- 初始状态 ----------
+      gsap.set([L.tc, L.reg, L.smem, L.l2, L.hbm, smBox], { opacity: 0 });
+      gsap.set($("ttl"), { transformOrigin: "0 0", scale: 1 });
+      gsap.set($("fill"), { scaleX: 757 / 781.86 });
+      gsap.set([$("n757"), $("n777")], { x: fx(757) - 210 });
+      gsap.set([$("mt"), $("n777")], { opacity: 0 });
+      ["r1", "r2"].forEach((k) => { const p = $(k), n = p.getTotalLength(); p.dataset.len = n; gsap.set(p, { strokeDasharray: n, strokeDashoffset: n }); });
+      gsap.set([$("osm"), $("tswz"), $("ttma")], { opacity: 0 });
+      gsap.set($("car"), { xPercent: -50, yPercent: -50, x: 1656, y: 486, scale: 0, opacity: 0 });
+      gsap.set([$("old"), $("new1"), $("new2")], { opacity: 0 });
+      gsap.set($("strike"), { scaleX: 0 });
+      gsap.set(["#s10-tlin .s10-lbl", "#s10-tlin .s10-lane", "#s10-tlin .s10-blk"], { opacity: 0 });
+      gsap.set(["#s10-smin > div"], { opacity: 0 });
+      gsap.set([$("cap"), $("big")], { opacity: 0 });
+
+      // ---------- 1.0 标题缩到左上；塔进场；结果沿紫色路径反向写回 ----------
+      ft($("ttl"), { scale: 1 }, { scale: 0.75, duration: 0.6, ease: MOVE }, 1.0);
+      fadeIn($("mt"), 1.0);
+      ["hbm", "l2", "smem", "reg", "tc"].forEach((id, i) =>
+        ft(L[id], { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 1.05 + i * 0.08));
+      ft(smBox, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 1.4);
+      // 旧写法：出现即划掉
+      ft($("old"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 1.3);
+      ft($("strike"), { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: MOVE }, 2.3);
+      ft($("old"), { opacity: 1 }, { opacity: 0.5, duration: 0.4, ease: MOVE }, 2.8);
+      // ① 寄存器 → 共享内存：换位写入
+      ft($("car"), { opacity: 0, scale: 0 }, { opacity: 1, scale: 1, duration: 0.4, ease: IN }, 3.0);
+      ft($("new1"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 3.2);
+      tl.to($("car"), { keyframes: { "0%": { x: 1656, y: 486 }, "17%": { x: 1696, y: 486 }, "83%": { x: 1696, y: 610 }, "100%": { x: 1656, y: 610 }, easeEach: "none" }, duration: 0.9, ease: "power1.inOut" }, 3.5);
+      ft($("r1"), { strokeDashoffset: $("r1").dataset.len }, { strokeDashoffset: 0, duration: 0.9, ease: "power1.inOut" }, 3.5);
+      ft($("osm"), { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, 4.3);
+      fadeIn($("tswz"), 4.4);
+      // ② 一个线程发 TMA：整块写出到显存
+      ft($("new2"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 5.7);
+      ft($("car"), { scale: 1 }, { scale: 1.5, duration: 0.4, ease: MOVE }, 5.8);
+      tl.to($("car"), { keyframes: { "0%": { x: 1656, y: 610 }, "11%": { x: 1696, y: 610 }, "89%": { x: 1696, y: 876 }, "100%": { x: 1656, y: 876 }, easeEach: "none" }, duration: 1.1, ease: "power1.inOut" }, 6.2);
+      ft($("r2"), { strokeDashoffset: $("r2").dataset.len }, { strokeDashoffset: 0, duration: 1.1, ease: "power1.inOut" }, 6.2);
+      fadeIn($("ttma"), 6.6);
+
+      // ---------- 8.5 时间线：写回从消费者一轨移到 TMA 一轨 ----------
+      fadeOut($("stin"), 8.5);
+      fadeOut($("car"), 8.5, 0.3);
+      fadeIn(["#s10-tlin .s10-lbl:nth-child(1)", "#s10-tlin .s10-lbl:nth-child(2)"], 8.6);
+      fadeIn(document.querySelectorAll("#s10-tlin .s10-lane"), 8.6);
+      [$("c1"), $("w1"), $("c2"), $("w2")].forEach((e, i) =>
+        ft(e, { opacity: 0, clipPath: "inset(0px 100% 0px 0px)" }, { opacity: 1, clipPath: "inset(0px 0% 0px 0px)", duration: 0.4, ease: IN }, 8.8 + i * 0.12));
+      ft($("w1"), { y: 0 }, { y: 120, duration: 0.7, ease: MOVE }, 10.0);
+      ft($("c2"), { x: 0 }, { x: -140, duration: 0.7, ease: MOVE }, 10.15);
+      ft($("w2"), { x: 0, y: 0 }, { x: -140, y: 120, duration: 0.7, ease: MOVE }, 10.3);
+      ft($("c3"), { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 10.8);
+      fadeIn($("ov"), 11.2);
+
+      // ---------- 13.2 共享内存占用：64 KB 结果区挤掉一级缓冲 ----------
+      fadeOut($("tlin"), 13.2);
+      ft([$("tswz"), $("ttma"), $("r1"), $("r2")], { opacity: 1 }, { opacity: 0.25, duration: 0.4, ease: MOVE }, 13.3);
+      fadeIn(document.querySelector("#s10-smin > div:first-child"), 13.3);
+      [$("b1"), $("b2"), $("b3"), $("b4")].forEach((e, i) =>
+        ft(e, { opacity: 0, clipPath: "inset(0px 100% 0px 0px)" }, { opacity: 1, clipPath: "inset(0px 0% 0px 0px)", duration: 0.35, ease: IN }, 13.5 + i * 0.12));
+      fadeIn($("lim"), 13.8); fadeIn($("limlbl"), 13.9);
+      ft($("res"), { opacity: 0, x: 120 }, { opacity: 1, x: 0, duration: 0.6, ease: IN }, 14.4);
+      fadeIn($("over"), 15.1, 0.3);
+      fadeIn($("overlbl"), 15.2);
+      ft($("b4"), { clipPath: "inset(0px 0% 0px 0px)", opacity: 1 }, { clipPath: "inset(0px 100% 0px 0px)", opacity: 0, duration: 0.6, ease: MOVE }, 16.6);
+      ft($("res"), { x: 0 }, { x: -168, duration: 0.7, ease: MOVE }, 16.9);
+      fadeOut($("over"), 16.6, 0.3); fadeOut($("overlbl"), 16.6, 0.3);
+      ft($("fit"), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 17.4);
+
+      // ---------- 19.6 实测 777.6，cuBLAS 的 99.5% ----------
+      fadeOut($("smin"), 19.6);
+      fadeOut($("twin"), 19.6);
+      ft($("fill"), { scaleX: 757 / 781.86 }, { scaleX: 777.6 / 781.86, duration: 1.0, ease: MOVE }, 19.7);
+      ft([$("n757"), $("n777")], { x: fx(757) - 210 }, { x: fx(777.6) - 210, duration: 1.0, ease: MOVE }, 19.7);
+      fadeOut($("n757"), 19.7, 0.3);
+      fadeIn($("n777"), 20.4, 0.3);
+      ft($("cap"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 20.0);
+      ft($("big"), { opacity: 0, scale: 0.92, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.6, ease: IN }, 20.9);
+
+      tl.set({}, {}, 23.8);
+      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [8.5, 9.11], [13.2, 13.2], [19.6, 19.6], [23.8, 25.57]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 25.57, duration: 25.57, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s10"] = outer; } /* /warp */
+    })();
+  </script>
+</template>

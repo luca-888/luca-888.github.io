@@ -1,0 +1,208 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; }
+    #root .s11-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .s11-abs { position: absolute; }
+    #root .s11-lbl { position: absolute; font-size: 32px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
+    #root .s11-hd { position: absolute; left: 96px; top: 320px; font-size: 36px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+    #root .s11-num { position: absolute; font-family: var(--mono); font-size: 36px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+    #root .s11-bar { position: absolute; transform-origin: 0 50%; }
+    #root #s11-ttl { top: 100px; }
+    /* 时钟与功耗 */
+    #root .s11-ghost { position: absolute; left: 300px; width: 732px; height: 60px; border: 3px dashed var(--gray); }
+    #root .s11-col { position: absolute; top: 400px; width: 100px; height: 420px; transform-origin: 50% 100%; }
+    #root #s11-cap { position: absolute; left: 1360px; top: 398px; width: 340px; border-top: 4px dashed var(--hot); }
+    #root #s11-base { position: absolute; left: 1360px; top: 820px; width: 340px; border-top: 3px solid var(--ink2); }
+    /* 峰值对比 */
+    #root #s11-v735 { position: absolute; left: 1083px; top: 404px; height: 270px; border-left: 4px dashed var(--ink2); }
+    /* 能效 */
+    #root #s11-ehot { position: absolute; left: 867px; top: 410px; width: 168px; height: 64px; background: var(--hot); }
+    #root #s11-e081 { position: absolute; left: 866px; top: 396px; height: 200px; border-left: 3px dashed var(--ink2); }
+    /* 总结 */
+    #root .s11-sum { position: absolute; left: 160px; display: flex; align-items: center; gap: 24px; white-space: nowrap; }
+    #root .s11-sum .k { width: 220px; font-size: 32px; font-weight: 600; color: var(--note); }
+    #root .s11-sum .v { font-size: 44px; font-weight: 700; color: var(--ink2); }
+    #root .s11-sum .m { font-family: var(--mono); }
+    #root .s11-sum .a { font-size: 40px; font-weight: 700; color: var(--gray); }
+    #root .s11-sum .v.last { color: var(--teal-t); }
+  </style>
+  <div id="root" data-composition-id="s11" data-width="1920" data-height="1080">
+
+    <!-- 0.0 标题卡 -->
+    <div id="s11-title" class="clip s11-full" data-start="0.00" data-a-start="0.0" data-duration="22.69" data-a-duration="22.3" data-track-index="1">
+      <div id="s11-ttl" class="kit-title">持续运行：<span class="acc">700 W 功耗墙</span></div>
+    </div>
+
+    <!-- 1.0 时钟条：1830 → 约 1360 MHz -->
+    <div id="s11-clk" class="clip s11-full" data-start="1.00" data-a-start="1.0" data-duration="9.22" data-a-duration="8.5" data-track-index="2">
+      <div id="s11-clkin" class="s11-full">
+        <div class="s11-hd">SM 时钟</div>
+        <div class="s11-lbl" style="left:96px;top:410px;color:var(--ink)">手写版</div>
+        <div class="s11-lbl" style="left:96px;top:510px;color:var(--ink)">cuBLAS</div>
+        <div class="s11-ghost" style="top:400px"></div>
+        <div class="s11-ghost" style="top:500px"></div>
+        <div id="s11-k1" class="s11-bar" style="left:300px;top:400px;width:732px;height:60px;background:var(--teal)"></div>
+        <div id="s11-k2" class="s11-bar" style="left:300px;top:500px;width:732px;height:60px;background:var(--ink2)"></div>
+        <div id="s11-f1830" class="s11-num" style="left:1048px;top:450px">1830 MHz</div>
+        <div id="s11-f1360" class="s11-num" style="left:544px;top:576px;width:300px;text-align:right">约 1360 MHz</div>
+      </div>
+    </div>
+
+    <!-- 1.0 功耗：两者都顶到 700 W -->
+    <div id="s11-pw" class="clip s11-full" data-start="1.00" data-a-start="1.0" data-duration="9.22" data-a-duration="8.5" data-track-index="3">
+      <div id="s11-pwin" class="s11-full">
+        <div id="s11-caplbl" class="s11-abs" style="left:1360px;top:340px;font-size:36px;font-weight:800;color:var(--hot-t);white-space:nowrap">700 W 上限</div>
+        <div id="s11-p1" class="s11-col" style="left:1400px;background:var(--teal)"></div>
+        <div id="s11-p2" class="s11-col" style="left:1560px;background:var(--ink2)"></div>
+        <div id="s11-cap"></div>
+        <div id="s11-base"></div>
+        <div class="s11-lbl" style="left:1398px;top:836px">手写版</div>
+        <div class="s11-lbl" style="left:1556px;top:836px">cuBLAS</div>
+      </div>
+    </div>
+
+    <!-- 9.1 同一刻度四根条 -->
+    <div id="s11-pk" class="clip s11-full" data-start="9.82" data-a-start="9.1" data-duration="5.94" data-a-duration="5.9" data-track-index="4">
+      <div id="s11-pkin" class="s11-full">
+        <div class="s11-hd">TFLOPS</div>
+        <div id="s11-l1" class="s11-lbl" style="left:96px;top:384px">规格峰值</div>
+        <div id="s11-l2" class="s11-lbl" style="left:96px;top:464px">1360 MHz 下的峰值</div>
+        <div id="s11-l3" class="s11-lbl" style="left:96px;top:544px;color:var(--ink)">手写版 · 持续</div>
+        <div id="s11-l4" class="s11-lbl" style="left:96px;top:624px;color:var(--ink)">cuBLAS · 持续</div>
+        <div id="s11-q1" class="s11-bar" style="left:460px;top:380px;width:841px;height:56px;background:var(--line)"></div>
+        <div id="s11-q2" class="s11-bar" style="left:460px;top:460px;width:625px;height:56px;background:var(--note)"></div>
+        <div id="s11-q3" class="s11-bar" style="left:460px;top:540px;width:580px;height:56px;background:var(--teal)"></div>
+        <div id="s11-q4" class="s11-bar" style="left:460px;top:620px;width:579px;height:56px;background:var(--ink2)"></div>
+        <div id="s11-v735"></div>
+        <div id="s11-n1" class="s11-num" style="left:1330px;top:382px">989</div>
+        <div id="s11-n2" class="s11-num" style="left:1330px;top:462px">735</div>
+        <div id="s11-n3" class="s11-num" style="left:1330px;top:542px">682</div>
+        <div id="s11-n4" class="s11-num" style="left:1330px;top:622px">681</div>
+        <div id="s11-p93" class="s11-abs" style="left:1460px;top:572px;font-size:52px;font-weight:800;color:var(--teal-t);white-space:nowrap">都用到 93%</div>
+      </div>
+    </div>
+
+    <!-- 14.7 能效：1.05 pJ 对 0.81 pJ -->
+    <div id="s11-en" class="clip s11-full" data-start="15.48" data-a-start="14.7" data-duration="7.01" data-a-duration="7.4" data-track-index="5">
+      <div id="s11-enin" class="s11-full">
+        <div class="s11-hd">每次浮点运算的能耗</div>
+        <div class="s11-lbl" style="left:96px;top:420px;color:var(--ink)">手写版</div>
+        <div class="s11-lbl" style="left:96px;top:520px;color:var(--ink)">cuBLAS</div>
+        <div id="s11-e1" class="s11-bar" style="left:300px;top:410px;width:735px;height:64px;background:var(--teal)"></div>
+        <div id="s11-e2" class="s11-bar" style="left:300px;top:510px;width:567px;height:64px;background:var(--ink2)"></div>
+        <div id="s11-ehot"></div>
+        <div id="s11-e081"></div>
+        <div id="s11-en1" class="s11-num" style="left:1060px;top:420px">1.05 pJ</div>
+        <div id="s11-en2" class="s11-num" style="left:1060px;top:520px">0.81 pJ</div>
+        <div id="s11-more" class="s11-abs" style="left:1300px;top:406px;font-size:52px;font-weight:800;color:var(--hot-t);white-space:nowrap">多 29%</div>
+      </div>
+    </div>
+
+    <!-- 21.7 总结三行，由下往上 -->
+    <div id="s11-sm" class="clip s11-full" data-start="22.07" data-a-start="21.7" data-duration="7.96" data-a-duration="7.7" data-track-index="6">
+      <div id="s11-smin" class="s11-full">
+        <div id="s11-row1" class="s11-sum" style="top:640px"><span class="k">执行单位</span><span class="v m">warp</span><span class="a">→</span><span class="v m">warpgroup</span><span class="a">→</span><span class="v m last">cluster</span></div>
+        <div id="s11-row2" class="s11-sum" style="top:520px"><span class="k">数据</span><span class="v">寄存器中转</span><span class="a">→</span><span class="v last">TMA 整块搬运</span></div>
+        <div id="s11-row3" class="s11-sum" style="top:400px"><span class="k">指令</span><span class="v m">wmma</span><span class="a">→</span><span class="v m last">wgmma</span></div>
+      </div>
+    </div>
+
+    <!-- 29.0 首尾呼应：2048 个点，93% 点亮 -->
+    <div id="s11-dots" class="clip s11-abs" data-start="29.66" data-a-start="29.0" data-duration="7.54" data-a-duration="8.2" data-track-index="7" style="left:480px;top:230px;width:960px;height:480px" data-layout-ignore>
+      <svg id="s11-dg" class="s11-abs" style="left:0;top:0" width="960" height="480" viewBox="0 0 960 480" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="s11-pat-g" width="15" height="15" patternUnits="userSpaceOnUse"><circle cx="7.5" cy="7.5" r="5.6" style="fill:var(--line)" /></pattern>
+        </defs>
+        <rect x="0" y="0" width="960" height="480" fill="url(#s11-pat-g)" />
+      </svg>
+      <svg id="s11-dt" class="s11-abs" style="left:0;top:0" width="960" height="480" viewBox="0 0 960 480" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="s11-pat-t" width="15" height="15" patternUnits="userSpaceOnUse"><circle cx="7.5" cy="7.5" r="5.6" style="fill:var(--teal)" /></pattern>
+        </defs>
+        <rect x="0" y="0" width="885" height="480" fill="url(#s11-pat-t)" />
+        <rect x="885" y="0" width="15" height="240" fill="url(#s11-pat-t)" />
+      </svg>
+    </div>
+    <div id="s11-dlbl" class="clip s11-abs" data-start="29.66" data-a-start="29.0" data-duration="7.54" data-a-duration="8.2" data-track-index="8" style="left:0;top:744px;width:1920px;text-align:center">
+      <div id="s11-dlblin" style="font-size:36px;font-weight:700;color:var(--ink);white-space:nowrap">每 SM 每时钟 2048 次乘加 · 持续用到 <span class="acc">93%</span></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const $ = (k) => document.getElementById("s11-" + k);
+      const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
+      const IN = "power3.out", MOVE = "power2.inOut", OUT = "power2.in";
+      const ft = (el, a, b, t) => tl.fromTo(el, a, b, t);
+      const fadeIn = (el, t, d = 0.5) => ft(el, { opacity: 0 }, { opacity: 1, duration: d, ease: IN }, t);
+      const fadeOut = (el, t, d = 0.4) => ft(el, { opacity: 1 }, { opacity: 0, duration: d, ease: OUT }, t);
+      const grow = (el, t, d = 0.7) => ft(el, { scaleX: 0 }, { scaleX: 1, duration: d, ease: IN }, t);
+      const kids = (sel) => Array.from(document.querySelectorAll(sel));
+
+      // ---------- 初始状态 ----------
+      gsap.set($("ttl"), { transformOrigin: "0 0", scale: 1 });
+      gsap.set(kids("#s11-clkin > div, #s11-pwin > div, #s11-pkin > div, #s11-enin > div"), { opacity: 0 });
+      gsap.set(kids(".s11-sum > span"), { opacity: 0 });
+      gsap.set([$("dg"), $("dlblin")], { opacity: 0 });
+      gsap.set($("dt"), { clipPath: "inset(0px 960px 0px 0px)" });
+
+      // ---------- 1.0 功耗墙：两者顶到 700 W，时钟由 1830 降到约 1360 ----------
+      ft($("ttl"), { scale: 1 }, { scale: 0.75, duration: 0.6, ease: MOVE }, 1.0);
+      fadeIn(kids("#s11-clkin .s11-hd, #s11-clkin .s11-lbl, #s11-clkin .s11-ghost"), 1.1);
+      ft([$("k1"), $("k2")], { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.8, ease: IN }, 1.3);
+      fadeIn($("f1830"), 1.9);
+      fadeIn([$("base"), ...kids("#s11-pwin .s11-lbl")], 1.4);
+      ft([$("p1"), $("p2")], { opacity: 0, scaleY: 0 }, { opacity: 1, scaleY: 0.35, duration: 0.5, ease: IN }, 1.6);
+      ft([$("p1"), $("p2")], { scaleY: 0.35 }, { scaleY: 1, duration: 1.4, ease: MOVE }, 2.4);
+      fadeIn($("cap"), 3.6, 0.3);
+      ft($("caplbl"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 3.7);
+      ft([$("k1"), $("k2")], { scaleX: 1 }, { scaleX: 544 / 732, duration: 1.2, ease: MOVE }, 6.1);
+      ft($("f1830"), { opacity: 1 }, { opacity: 0.45, duration: 0.6, ease: MOVE }, 6.1);
+      fadeIn($("f1360"), 7.0, 0.4);
+
+      // ---------- 9.1 同一刻度：989 / 735 / 682 / 681，都用到 93% ----------
+      fadeOut([$("clkin"), $("pwin")], 9.1);
+      fadeIn(kids("#s11-pkin .s11-hd"), 9.3);
+      fadeIn([$("l1"), $("n1")], 9.3); ft($("q1"), { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.7, ease: IN }, 9.3);
+      fadeIn([$("l2"), $("n2")], 9.9); ft($("q2"), { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.7, ease: IN }, 9.9);
+      fadeIn($("v735"), 10.6);
+      fadeIn([$("l3"), $("n3")], 11.2); ft($("q3"), { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.7, ease: IN }, 11.2);
+      fadeIn([$("l4"), $("n4")], 11.4); ft($("q4"), { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.7, ease: IN }, 11.4);
+      ft($("p93"), { opacity: 0, scale: 0.92, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.6, ease: IN }, 12.2);
+
+      // ---------- 14.7 能效：1.05 pJ 对 0.81 pJ，多 29% ----------
+      fadeOut($("pkin"), 14.7);
+      fadeIn(kids("#s11-enin .s11-hd, #s11-enin .s11-lbl"), 14.9);
+      ft([$("e1"), $("e2")], { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.8, ease: IN }, 15.1);
+      fadeIn($("en1"), 18.1);
+      fadeIn($("en2"), 19.9);
+      fadeIn($("e081"), 20.3, 0.3);
+      ft($("ehot"), { opacity: 0, scaleX: 0, transformOrigin: "0 50%" }, { opacity: 1, scaleX: 1, duration: 0.5, ease: IN }, 20.4);
+      ft($("more"), { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 20.7);
+
+      // ---------- 21.7 总结：由下往上三行 ----------
+      fadeOut($("enin"), 21.7);
+      fadeOut($("ttl"), 21.7);
+      const row = (id, tK, tItems) => {
+        const s = kids("#s11-" + id + " > span");
+        ft(s[0], { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, tK);
+        let k = 0;
+        s.slice(1).forEach((e) => {
+          if (e.classList.contains("a")) { fadeIn(e, tItems[k] - 0.15, 0.3); }
+          else { ft(e, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, tItems[k]); k++; }
+        });
+      };
+      row("row1", 21.9, [22.1, 22.9, 23.7]);
+      row("row2", 24.9, [25.1, 26.0]);
+      row("row3", 27.0, [27.2, 27.8]);
+
+      // ---------- 29.0 首尾呼应：2048 个点，93% 点亮，停到结束 ----------
+      fadeOut($("smin"), 29.0);
+      ft($("dg"), { opacity: 0, scale: 0.94, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.7, ease: IN }, 29.2);
+      ft($("dt"), { clipPath: "inset(0px 960px 0px 0px)" }, { clipPath: "inset(0px 0px 0px 0px)", duration: 1.8, ease: "power1.inOut" }, 29.9);
+      fadeIn($("dlblin"), 31.0);
+
+      tl.set({}, {}, 37.2);
+      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [9.1, 9.82], [14.7, 15.48], [21.7, 22.07], [29.0, 29.66], [37.2, 37.2]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 37.2, duration: 37.2, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s11"] = outer; } /* /warp */
+    })();
+  </script>
+</template>

@@ -1,0 +1,251 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; }
+    #root .s05-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .s05-abs { position: absolute; }
+    #root .s05-in { position: absolute; inset: 0; }
+    #root .s05-lbl { position: absolute; font-size: 32px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+    #root .s05-big { font-size: 36px; font-weight: 700; }
+    /* 进度条 */
+    #root .kit-meter .track { overflow: hidden; }
+    #root .s05-mnum { position: absolute; left: 0; top: 40px; height: 40px; line-height: 40px; font-family: var(--mono); font-size: 32px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+    #root .s05-mnote { position: absolute; left: 0; top: 92px; font-size: 32px; font-weight: 700; color: var(--teal-t); white-space: nowrap; }
+    #root #s05-cap { position: absolute; top: 30px; height: 106px; border-left: 4px dashed var(--hot); }
+    #root #s05-capn { position: absolute; left: 0; top: 140px; font-size: 28px; font-weight: 700; color: var(--hot-t); white-space: nowrap; }
+    /* 槽位 */
+    #root .s05-slot { position: absolute; top: 330px; width: 300px; height: 140px; background: var(--paper2); border: 2px solid var(--line); border-radius: 4px; overflow: hidden; }
+    #root .s05-sname { position: absolute; top: 284px; width: 300px; text-align: center; font-size: 28px; font-weight: 600; color: var(--note); }
+    #root .s05-ly { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+    #root .s05-ly b { font-family: var(--mono); font-size: 36px; font-weight: 800; }
+    #root .s05-ly span { font-size: 30px; font-weight: 700; }
+    #root .s05-ly.c0 { background: var(--teal); color: #fff; }
+    #root .s05-ly.c1 { background: var(--useL); color: var(--ink); }
+    #root .s05-ly.c2 { background: var(--hotL); color: var(--ink); }
+    /* 时间线 */
+    #root .s05-lname { position: absolute; left: 96px; width: 170px; text-align: right; font-size: 32px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+    #root .s05-lane { position: absolute; left: 300px; width: 1080px; height: 60px; background: var(--paper2); }
+    #root .s05-seg { position: absolute; top: 0; width: 176px; height: 60px; line-height: 60px; text-align: center; font-family: var(--mono); font-size: 28px; font-weight: 700; }
+    #root #s05-ph { position: absolute; left: 0; top: 600px; width: 4px; height: 176px; background: var(--ink); }
+  </style>
+  <div id="root" data-composition-id="s05" data-width="1920" data-height="1080">
+
+    <!-- 0.0 标题卡，1.0 后缩到左上常驻 -->
+    <div id="s05-title" class="clip s05-full" data-start="0.00" data-a-start="0.0" data-duration="31.72" data-a-duration="31.2" data-track-index="1">
+      <div id="s05-chip" class="kit-chip">mm_mma&lt;3级&gt;</div>
+      <div id="s05-ttl" class="kit-title">第 3 步：<span class="acc">三级缓冲</span></div>
+    </div>
+
+    <!-- 右上进度条：开场 269，13.2 更新到 309，24.7 标出约 300 的上限 -->
+    <div id="s05-meter" class="clip kit-meter" data-start="1.00" data-a-start="1.0" data-duration="30.72" data-a-duration="30.2" data-track-index="2">
+      <div id="s05-mt" class="s05-in">
+        <div class="lbl">8192 阶 · BF16 · TFLOPS</div>
+        <div class="track"><div id="s05-fill" class="fill"></div></div>
+        <div class="tick"></div>
+        <div class="ref">cuBLAS 781.86</div>
+        <div id="s05-num1" class="s05-mnum">269</div>
+        <div id="s05-num2" class="s05-mnum">309</div>
+        <div id="s05-gain" class="s05-mnote">+15%</div>
+        <div id="s05-cap"></div>
+        <div id="s05-capn">mma.sync 止于约 300 ≈ 峰值的 1/3</div>
+      </div>
+    </div>
+
+    <!-- 1.0 共享内存三个槽位的环 -->
+    <div id="s05-slots" class="clip s05-full" data-start="1.00" data-a-start="1.0" data-duration="16.12" data-a-duration="15.5" data-track-index="3">
+      <div id="s05-sin" class="s05-full">
+        <div class="s05-sname" style="left:160px">槽 0</div>
+        <div class="s05-sname" style="left:500px">槽 1</div>
+        <div class="s05-sname" style="left:840px">槽 2</div>
+        <div id="s05-sl0" class="s05-slot" style="left:160px"></div>
+        <div id="s05-sl1" class="s05-slot" style="left:500px"></div>
+        <div id="s05-sl2" class="s05-slot" style="left:840px"></div>
+        <div id="s05-ring" class="s05-full">
+          <svg class="s05-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none">
+            <path d="M 990 474 V 506 H 310 V 486" style="stroke:var(--gray)" stroke-width="3" />
+            <polygon points="300,488 320,488 310,474" style="fill:var(--gray)" />
+          </svg>
+          <div class="s05-lbl" style="left:590px;top:516px;font-size:28px;color:var(--note)">循环使用</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2.4 拷贝提前两块 -->
+    <div id="s05-a1" class="clip s05-lbl s05-big" data-start="2.40" data-a-start="2.4" data-duration="14.72" data-a-duration="14.1" data-track-index="4" style="left:1200px;top:340px">
+      <div id="s05-a1in">拷贝提前<span class="acc-o">两块</span>发出</div>
+    </div>
+    <!-- 10.4 每槽 32 KB，共 96 KB -->
+    <div id="s05-a2" class="clip s05-lbl s05-big" data-start="10.40" data-a-start="10.4" data-duration="6.72" data-a-duration="6.1" data-track-index="5" style="left:1200px;top:410px">
+      <div id="s05-a2in">每槽 32 KB，共 96 KB</div>
+    </div>
+
+    <!-- 6.8 时间线：拷贝与计算重叠 -->
+    <div id="s05-tl" class="clip s05-full" data-start="6.80" data-a-start="6.8" data-duration="10.32" data-a-duration="9.7" data-track-index="6">
+      <div id="s05-tlin" class="s05-full">
+        <div class="s05-lname" style="top:626px">拷贝</div>
+        <div class="s05-lname" style="top:710px">计算</div>
+        <div id="s05-lc" class="s05-lane" style="top:616px"></div>
+        <div id="s05-lk" class="s05-lane" style="top:700px"></div>
+        <div id="s05-ph"></div>
+      </div>
+    </div>
+
+    <!-- 16.1 指令体积：一条 mma.sync = 16 × 8 × 16 -->
+    <div id="s05-cub" class="clip s05-full" data-start="16.71" data-a-start="16.1" data-duration="15.01" data-a-duration="15.1" data-track-index="7">
+      <div id="s05-cubw" class="s05-abs" style="left:200px;top:330px;width:290px;height:320px">
+        <svg width="290" height="320" viewBox="-200 -20 290 320">
+          <polygon points="0,0 69.3,40 -69.3,120 -138.6,80" style="fill:var(--teal)" />
+          <polygon points="-138.6,80 -69.3,120 -69.3,280 -138.6,240" style="fill:var(--tealD)" />
+          <polygon points="-69.3,120 69.3,40 69.3,200 -69.3,280" style="fill:var(--teal-t)" />
+          <path d="M0,0 L69.3,40 L-69.3,120 L-138.6,80 Z M-69.3,120 L-69.3,280" fill="none" style="stroke:var(--paper)" stroke-width="2" />
+          <text x="46" y="6" style="fill:var(--ink2)" font-family="JetBrains Mono" font-size="32" font-weight="700">8</text>
+          <text x="-80" y="22" text-anchor="end" style="fill:var(--ink2)" font-family="JetBrains Mono" font-size="32" font-weight="700">16</text>
+          <text x="-148" y="170" text-anchor="end" style="fill:var(--ink2)" font-family="JetBrains Mono" font-size="32" font-weight="700">16</text>
+        </svg>
+      </div>
+      <div id="s05-cl1" class="s05-lbl" style="left:150px;top:668px;font-family:var(--mono);font-weight:800;color:var(--teal-t)">mma.sync m16n8k16</div>
+      <div id="s05-cl2" class="s05-lbl s05-big" style="left:150px;top:718px">一条 = <span style="font-family:var(--mono);font-weight:800">2048</span> 次乘加</div>
+    </div>
+
+    <!-- 20.6 满载需每 SM 每个时钟发出一条 -->
+    <div id="s05-clk" class="clip s05-full" data-start="21.33" data-a-start="20.6" data-duration="10.39" data-a-duration="10.6" data-track-index="8">
+      <div id="s05-clkh" class="s05-lbl s05-big" style="left:880px;top:400px">满载：每 SM 每个时钟发一条</div>
+      <div id="s05-axis" class="s05-full">
+        <div class="s05-abs" style="left:880px;top:620px;width:880px;border-top:3px solid var(--ink2)"></div>
+        <div id="s05-ticks" class="s05-full"></div>
+        <div class="s05-lbl" style="left:880px;top:650px;font-size:28px;color:var(--note)">每格 = 1 个时钟</div>
+      </div>
+      <div id="s05-minis" class="s05-full"></div>
+    </div>
+
+    <!-- 24.7 瓶颈 -->
+    <div id="s05-bn" class="clip s05-abs" data-start="25.53" data-a-start="24.7" data-duration="6.19" data-a-duration="6.5" data-track-index="9" style="left:150px;top:800px">
+      <div id="s05-bnin"><span class="k-bottleneck">瓶颈：一条指令只有 2048 次乘加</span></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const $ = (k) => document.getElementById("s05-" + k);
+      const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
+      const IN = "power3.out", MOVE = "power2.inOut", OUT = "power2.in";
+      const ft = (el, a, b, t) => tl.fromTo(el, a, b, t);
+      const fadeIn = (el, t, d = 0.5) => ft(el, { opacity: 0 }, { opacity: 1, duration: d, ease: IN }, t);
+      const fadeOut = (el, t, d = 0.4) => ft(el, { opacity: 1 }, { opacity: 0, duration: d, ease: OUT }, t);
+
+      // ---------- 槽位状态层：0 计算中 / 1 已到 / 2 在途 ----------
+      const ST = ["计算中", "已到", "在途"];
+      const mk = (j, b, st) => {
+        const d = document.createElement("div");
+        d.className = "s05-ly c" + st;
+        d.innerHTML = `<b>块 ${b}</b><span>${ST[st]}</span>`;
+        $("sl" + j).appendChild(d);
+        return d;
+      };
+      const pre0 = mk(0, 0, 2), pre1 = mk(1, 1, 2);
+      const steps = [];       // steps[s][j]
+      for (let s = 0; s < 4; s++) {
+        steps.push([]);
+        for (let j = 0; j < 3; j++) {
+          const k = (((j - s) % 3) + 3) % 3;     // 该槽位装的是第 s + k 块
+          steps[s].push(mk(j, s + k, k));
+        }
+      }
+      // ---------- 时间线片段 ----------
+      const U = 180;
+      const cseg = [], kseg = [];
+      for (let k = 0; k < 6; k++) {
+        const d = document.createElement("div");
+        d.className = "s05-seg"; d.textContent = "块 " + k;
+        d.style.cssText += `left:${k * U + 2}px;background:var(--hotL);color:var(--ink)`;
+        $("lc").appendChild(d); cseg.push(d);
+      }
+      for (let s = 0; s < 4; s++) {
+        const d = document.createElement("div");
+        d.className = "s05-seg"; d.textContent = "块 " + s;
+        d.style.cssText += `left:${(s + 2) * U + 2}px;background:var(--teal);color:#fff`;
+        $("lk").appendChild(d); kseg.push(d);
+      }
+      // ---------- 时钟格与小长方体 ----------
+      for (let i = 0; i <= 8; i++) {
+        const t = document.createElement("div");
+        t.className = "s05-abs";
+        t.style.cssText = `left:${900 + i * 105}px;top:608px;height:26px;border-left:3px solid var(--ink2)`;
+        $("ticks").appendChild(t);
+      }
+      const svgMini = $("cubw").innerHTML.replace(/<text[\s\S]*?<\/text>/g, "").replace('width="290" height="320"', 'width="81" height="90"');
+      const minis = [];
+      for (let i = 0; i < 8; i++) {
+        const m = document.createElement("div");
+        m.className = "s05-abs";
+        m.style.cssText = `left:${900 + i * 105 + 12}px;top:518px;width:81px;height:90px`;
+        m.innerHTML = svgMini;
+        $("minis").appendChild(m); minis.push(m);
+      }
+
+      // ---------- 初始状态 ----------
+      gsap.set([$("chip"), $("ttl")], { opacity: 0 });
+      const fx = (v) => (v / 781.86) * 544;
+      gsap.set($("fill"), { scaleX: 269 / 781.86 });
+      gsap.set([$("num1"), $("num2")], { x: fx(269) + 10 });
+      gsap.set($("cap"), { x: fx(300) });
+      gsap.set([$("mt"), $("num2"), $("gain"), $("cap"), $("capn")], { opacity: 0 });
+      gsap.set(document.querySelectorAll("#s05-sin .s05-sname, #s05-sin .s05-slot"), { opacity: 0 });
+      gsap.set([$("ring"), pre0, pre1, ...steps.flat()], { opacity: 0 });
+      gsap.set([$("a1in"), $("a2in"), $("tlin")], { opacity: 0 });
+      gsap.set($("ph"), { x: 300 + 2.5 * U - 2 });
+      gsap.set([$("cubw"), $("cl1"), $("cl2"), $("clkh"), $("axis"), ...minis, $("bnin")], { opacity: 0 });
+
+      // ---------- 0.0 标题卡；1.0 缩到左上 ----------
+      ft($("chip"), { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: IN }, 0.0);
+      ft($("ttl"), { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.25, ease: IN }, 0.08);
+      ft($("ttl"), { scale: 1, y: 0, transformOrigin: "0 0" }, { scale: 0.72, y: -12, transformOrigin: "0 0", duration: 0.6, ease: MOVE }, 1.0);
+      fadeIn($("mt"), 1.1);
+
+      // ---------- 1.0 三个槽位；拷贝提前两块发出 ----------
+      document.querySelectorAll("#s05-sin .s05-slot").forEach((e, i) => ft(e, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: IN }, 1.15 + i * 0.12));
+      document.querySelectorAll("#s05-sin .s05-sname").forEach((e, i) => fadeIn(e, 1.3 + i * 0.12, 0.4));
+      fadeIn($("ring"), 1.8, 0.5);
+      fadeIn($("a1in"), 2.4);
+      ft(pre0, { opacity: 0, y: -40 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 2.6);
+      ft(pre1, { opacity: 0, y: -40 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 2.9);
+      // 第 0 块到齐、开始计算，同时发出第 2 块
+      steps[0].forEach((e) => fadeIn(e, 4.6, 0.35));
+      fadeOut(pre0, 4.95, 0.1); fadeOut(pre1, 4.95, 0.1);
+
+      // ---------- 6.8 时间线两轨；三块三色随槽位轮转 ----------
+      fadeIn($("tlin"), 6.9, 0.6);
+      [8.4, 9.6, 10.8].forEach((t, i) => {
+        const s = i + 1;
+        ft($("ph"), { x: 300 + (s + 1.5) * U - 2 }, { x: 300 + (s + 2.5) * U - 2, duration: 0.5, ease: MOVE }, t - 0.25);
+        steps[s].forEach((e) => fadeIn(e, t, 0.3));
+        steps[s - 1].forEach((e) => fadeOut(e, t + 0.3, 0.1));
+      });
+      fadeIn($("a2in"), 10.4);
+
+      // ---------- 13.2 实测 309：+15% ----------
+      ft($("fill"), { scaleX: 269 / 781.86 }, { scaleX: 309 / 781.86, duration: 1.0, ease: MOVE }, 13.3);
+      ft([$("num1"), $("num2")], { x: fx(269) + 10 }, { x: fx(309) + 10, duration: 1.0, ease: MOVE }, 13.3);
+      ft($("num1"), { opacity: 1 }, { opacity: 0, duration: 0.3, ease: OUT }, 13.35);
+      ft($("num2"), { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, 14.0);
+      ft($("gain"), { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 14.4);
+
+      // ---------- 16.1 指令体积：16 × 8 × 16 = 2048 ----------
+      fadeOut($("sin"), 16.1); fadeOut($("tlin"), 16.1); fadeOut($("a1in"), 16.1); fadeOut($("a2in"), 16.1);
+      ft($("cubw"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7, ease: IN }, 16.4);
+      fadeIn($("cl1"), 17.0);
+      fadeIn($("cl2"), 18.2);
+      // 20.6 满载：每个时钟一条
+      ft($("clkh"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.6, ease: IN }, 20.6);
+      fadeIn($("axis"), 21.0);
+      minis.forEach((m, i) => ft(m, { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.25, ease: IN }, 21.6 + i * 0.3));
+
+      // ---------- 24.7 止于约 300，峰值的 1/3；瓶颈 ----------
+      fadeOut($("gain"), 24.7, 0.3);
+      ft($("cap"), { opacity: 0, scaleY: 0, transformOrigin: "50% 0" }, { opacity: 1, scaleY: 1, duration: 0.5, ease: IN }, 24.8);
+      fadeIn($("capn"), 25.1);
+      ft($("bnin"), { opacity: 0, scale: 0.85, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, 25.5);
+
+      tl.set({}, {}, 31.2);
+      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [6.8, 6.8], [13.2, 13.2], [16.1, 16.71], [24.7, 25.53], [31.2, 31.72]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 31.72, duration: 31.72, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s05"] = outer; } /* /warp */
+    })();
+  </script>
+</template>

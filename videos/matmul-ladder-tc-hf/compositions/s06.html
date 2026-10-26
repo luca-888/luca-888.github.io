@@ -1,0 +1,335 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; }
+    #root .s06-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .s06-abs { position: absolute; }
+    #root .s06-in { position: absolute; inset: 0; }
+    #root .s06-lbl { position: absolute; font-size: 32px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+    #root .s06-mono { font-family: var(--mono); font-weight: 700; }
+    /* 标题卡：0–1.0 s 大标题，之后缩到版本名右侧常驻（缩后约 38 px） */
+    #root #s06-ttl { transform-origin: 0 0; }
+    /* 进度条（与 s03 同款：数字在填充右侧，目标虚线 777.6 常驻） */
+    #root .kit-meter .track { overflow: hidden; }
+    #root #s06-target { position: absolute; left: 541px; top: 32px; height: 56px; border-left: 3px dashed var(--teal-t); }
+    #root .s06-mnum { position: absolute; left: 0; top: 40px; height: 40px; line-height: 40px; font-family: var(--mono); font-size: 32px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+    #root .s06-mnote { position: absolute; left: 0; top: 92px; font-size: 28px; font-weight: 600; color: var(--teal-t); white-space: nowrap; }
+    /* 层级：thread → warp → warpgroup → block */
+    #root #s06-crumb { left: 280px; top: 300px; font-family: var(--mono); font-size: 36px; font-weight: 700; color: var(--note); white-space: nowrap; }
+    #root #s06-crumb .on { color: var(--ink); }
+    #root #s06-crumb .wg { color: var(--tealD); }
+    #root #s06-hz { transform-origin: 0 0; }
+    #root #s06-grid { position: absolute; left: 330px; top: 470px; width: 634px; height: 98px; }
+    #root .s06-dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; }
+    #root .s06-dot .g { position: absolute; inset: 0; border-radius: 50%; background: var(--gray); }
+    #root .s06-dot .b { position: absolute; inset: 0; border-radius: 50%; background: var(--warp); }
+    #root .s06-dot .k { position: absolute; inset: 0; border-radius: 50%; background: var(--use); }
+    #root #s06-wgf { position: absolute; left: 316px; top: 456px; width: 662px; height: 126px; border: 3px solid var(--teal); border-radius: 3px; }
+    #root #s06-blkf { position: absolute; left: 280px; top: 396px; width: 734px; height: 222px; border: 2px dashed var(--gray); }
+    #root .s06-lv { position: absolute; left: 1060px; top: 452px; font-size: 36px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+    /* TMA / mbarrier */
+    #root #s06-tower { position: absolute; left: 1180px; top: 300px; width: 640px; height: 620px; }
+    #root .s06-blk { position: absolute; width: 72px; height: 72px; }
+    #root .s06-blk .c { position: absolute; width: 8px; height: 8px; }
+    #root #s06-bar { position: absolute; left: 120px; top: 640px; width: 800px; height: 44px; background: var(--paper2); overflow: hidden; }
+    #root .s06-barf { position: absolute; top: 0; height: 44px; transform-origin: 0 50%; }
+    #root .s06-bnum { position: absolute; left: 940px; top: 640px; height: 44px; line-height: 44px; font-family: var(--mono); font-size: 36px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+    /* 体积对比 */
+    #root .s06-vl { position: absolute; font-family: var(--mono); font-size: 32px; font-weight: 700; color: var(--ink2); white-space: nowrap; }
+    /* 时间线 */
+    #root .s06-seg { position: absolute; height: 64px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 600; white-space: nowrap; }
+    #root .s06-tk { position: absolute; left: 96px; font-size: 32px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+  </style>
+  <div id="root" data-composition-id="s06" data-width="1920" data-height="1080">
+
+    <!-- 0–1.0 标题卡；之后缩到左上角常驻 -->
+    <div id="s06-title" class="clip s06-full" data-start="0.00" data-a-start="0.0" data-duration="42.71" data-a-duration="41.9" data-track-index="1">
+      <div id="s06-chip" class="kit-chip">mm_wgmma</div>
+      <div id="s06-ttl" class="kit-title">第 4 步：<span class="acc">TMA 与 wgmma</span></div>
+    </div>
+
+    <!-- 右上进度条：开场显示上一版 309，29.8 更新到 484 -->
+    <div id="s06-meter" class="clip kit-meter" data-start="1.00" data-a-start="1.0" data-duration="41.71" data-a-duration="40.9" data-track-index="2">
+      <div id="s06-mt" class="s06-in">
+        <div class="lbl">8192 阶 · BF16 · TFLOPS</div>
+        <div class="track"><div id="s06-fill" class="fill"></div></div>
+        <div class="tick"></div>
+        <div id="s06-target"></div>
+        <div class="ref">cuBLAS 781.86</div>
+        <div id="s06-n309" class="s06-mnum">309</div>
+        <div id="s06-n484" class="s06-mnum">484</div>
+        <div id="s06-gain" class="s06-mnote">1.6 倍</div>
+      </div>
+    </div>
+
+    <!-- 1.0 层级：thread → warp → warpgroup（4 × 32 个线程点）→ block；6.2 起缩到左上，留给 TMA / mbarrier -->
+    <div id="s06-hier" class="clip s06-full" data-start="1.00" data-a-start="1.0" data-duration="22.03" data-a-duration="21.9" data-track-index="3" data-layout-allow-overlap>
+      <div id="s06-hz" class="s06-full">
+        <div id="s06-crumb" class="s06-abs"><span id="s06-c0">thread</span><span id="s06-c1"> → warp</span><span id="s06-c2"> → <span class="wg">warpgroup</span></span><span id="s06-c3"> → block</span></div>
+        <div id="s06-blkf"><span id="s06-blkl" style="position:absolute;left:12px;top:2px;font-family:var(--mono);font-size:32px;font-weight:700;color:var(--note)">block</span></div>
+        <div id="s06-wgf"></div>
+        <div id="s06-grid"></div>
+        <div id="s06-lv0" class="s06-lv">thread：1 个线程</div>
+        <div id="s06-lv1" class="s06-lv">warp：32 个线程</div>
+        <div id="s06-lv2" class="s06-lv"><span class="acc">warpgroup</span>：4 个 warp</div>
+        <div id="s06-lv3" class="s06-lv" style="top:516px;font-size:32px;font-weight:600;color:var(--ink2)">128 个线程</div>
+      </div>
+      <!-- 6.2 线程 0 发 TMA（标注在缩小后的点阵下方） -->
+      <div id="s06-wgl" class="s06-lbl" style="left:110px;top:276px"><span class="acc s06-mono">warpgroup</span> · 128 个线程</div>
+      <div id="s06-t0" class="s06-lbl" style="left:120px;top:440px"><span class="acc-g">线程 0</span> 发出一条 TMA</div>
+      <!-- 14.8 mbarrier 计数 -->
+      <div id="s06-mb" class="s06-full">
+        <div class="s06-lbl" style="left:120px;top:580px"><span class="s06-mono">mbarrier</span>：已到达的字节数</div>
+        <div id="s06-bar">
+          <div id="s06-bfa" class="s06-barf" style="left:0;width:400px;background:var(--blue)"></div>
+          <div id="s06-bfw" class="s06-barf" style="left:400px;width:400px;background:var(--yel)"></div>
+        </div>
+        <div id="s06-b0" class="s06-bnum">0</div>
+        <div id="s06-b16" class="s06-bnum">16 KB</div>
+        <div id="s06-b32" class="s06-bnum">32 KB</div>
+        <div id="s06-full" class="s06-lbl" style="left:120px;top:710px"><span class="acc-g">计满</span> → 计算方开始读取</div>
+      </div>
+    </div>
+
+    <!-- 6.2 硬件塔：TMA 整块 L2 → 共享内存；22.4 共享内存 → Tensor Core 越过寄存器 -->
+    <div id="s06-tw" class="clip s06-full" data-start="6.20" data-a-start="6.2" data-duration="30.09" data-a-duration="28.0" data-track-index="4" data-layout-allow-overlap>
+      <div id="s06-tower"></div>
+      <!-- A 块（蓝）与 W 块（黄），8 × 8 个小格：L2 里未换位（同一列），到共享内存后换位成对角条纹 -->
+      <div id="s06-ba" class="s06-blk" style="left:1484px;top:716px"></div>
+      <div id="s06-bw" class="s06-blk" style="left:1572px;top:716px"></div>
+      <div id="s06-swz" class="s06-lbl" style="left:1716px;top:590px;color:var(--use-t)">换位</div>
+      <div id="s06-regx" class="s06-abs" style="left:1194px;top:444px;width:462px;height:84px;background:var(--paper);opacity:0.6"></div>
+      <div id="s06-skip" class="s06-lbl" style="left:1470px;top:466px;font-size:28px;color:var(--teal-t)">不经寄存器</div>
+    </div>
+
+    <!-- 22.4 体积对比：mma.sync m16n8k16 与 wgmma m64n128k16（同一比例，3.2 px / 元素，斜投影深度按 K） -->
+    <div id="s06-vol" class="clip s06-full" data-start="22.40" data-a-start="22.4" data-duration="9.87" data-a-duration="7.9" data-track-index="5">
+      <svg id="s06-vmma" class="s06-abs" style="left:190px;top:662px" width="80" height="108" viewBox="190 662 80 108">
+        <polygon points="200,708.8 225.6,708.8 261.8,672.6 236.2,672.6" style="fill:var(--tealD)" />
+        <polygon points="225.6,708.8 261.8,672.6 261.8,723.8 225.6,760" style="fill:var(--teal-t)" />
+        <rect x="200" y="708.8" width="25.6" height="51.2" style="fill:var(--teal)" />
+      </svg>
+      <svg id="s06-vwg" class="s06-abs" style="left:510px;top:509px" width="466" height="261" viewBox="510 509 466 261">
+        <polygon points="520,555.2 929.6,555.2 965.8,519 556.2,519" style="fill:var(--tealD)" />
+        <polygon points="929.6,555.2 965.8,519 965.8,723.8 929.6,760" style="fill:var(--teal-t)" />
+        <rect x="520" y="555.2" width="409.6" height="204.8" style="fill:var(--teal)" />
+        <path id="s06-vgrid" fill="none" style="stroke:var(--paper)" stroke-width="1.5" stroke-opacity="0.7" />
+      </svg>
+      <div id="s06-vl1" class="s06-vl" style="left:120px;top:784px">mma.sync</div>
+      <div id="s06-vl2" class="s06-vl" style="left:120px;top:830px;color:var(--ink)">2048 次</div>
+      <div id="s06-vl3" class="s06-vl" style="left:520px;top:784px">wgmma m64n128k16</div>
+      <div id="s06-vl4" class="s06-vl" style="left:520px;top:830px;color:var(--ink)">131072 次乘加</div>
+      <div id="s06-x64" class="s06-abs" style="left:640px;top:400px;font-size:72px;font-weight:800;color:var(--ink);white-space:nowrap;line-height:1.1"><span class="acc">64</span> 倍</div>
+    </div>
+
+    <!-- 33.8 一个 warpgroup 的时间线：发 TMA、等待、计算交替；Tensor Core 在两块之间空闲 -->
+    <div id="s06-tl" class="clip s06-full" data-start="35.96" data-a-start="33.8" data-duration="6.75" data-a-duration="8.1" data-track-index="6" data-layout-allow-overlap>
+      <div id="s06-tk1" class="s06-tk s06-mono" style="top:452px">warpgroup</div>
+      <div id="s06-tk2" class="s06-tk" style="top:592px">Tensor Core</div>
+      <div id="s06-lane" class="s06-full"></div>
+      <div id="s06-bn" class="s06-abs" style="left:980px;top:672px"><span class="k-bottleneck">瓶颈</span></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const $ = (k) => document.getElementById("s06-" + k);
+      const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
+      const IN = "power3.out", MOVE = "power2.inOut", OUT = "power2.in";
+      const ft = (el, a, b, t) => tl.fromTo(el, a, b, t);
+      const fadeIn = (el, t, d = 0.5) => ft(el, { opacity: 0 }, { opacity: 1, duration: d, ease: IN }, t);
+      const fadeOut = (el, t, d = 0.4, from = 1) => ft(el, { opacity: from }, { opacity: 0, duration: d, ease: OUT }, t);
+
+      // ---------- 生成的静态子元素 ----------
+      // warpgroup 点阵：4 行 × 32 个线程点，点距 20 px，行距 28 px
+      const grid = $("grid"), rows = [[], [], [], []], gLay = [], bLay = [], kLay = [];
+      for (let r = 0; r < 4; r++) for (let i = 0; i < 32; i++) {
+        const d = document.createElement("div");
+        d.className = "s06-dot";
+        d.style.left = i * 20 + "px"; d.style.top = r * 28 + "px";
+        d.innerHTML = '<i class="b"></i><i class="g"></i><i class="k"></i>';
+        grid.appendChild(d);
+        rows[r].push(d);
+        bLay.push(d.children[0]); gLay.push(d.children[1]); kLay.push(d.children[2]);
+      }
+      const dot0b = bLay[0];
+      dot0b.style.background = "var(--blue)";
+      // 8 × 8 的数据块：未换位时第 0 列着色；换位后第 r 行着色格在 0 ⊕ r = r 列（对角线）
+      const mkBlock = (el, color) => {
+        const plain = [], swz = [];
+        for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+          const q = document.createElement("i");
+          q.className = "c";
+          q.style.left = c * 9 + "px"; q.style.top = r * 9 + "px";
+          q.style.background = "var(--cell)";
+          el.appendChild(q);
+        }
+        for (let r = 0; r < 8; r++) {
+          const p = document.createElement("i");
+          p.className = "c"; p.style.left = "0px"; p.style.top = r * 9 + "px"; p.style.background = color;
+          el.appendChild(p); plain.push(p);
+          const s = document.createElement("i");
+          s.className = "c"; s.style.left = r * 9 + "px"; s.style.top = r * 9 + "px"; s.style.background = color;
+          el.appendChild(s); swz.push(s);
+        }
+        return { plain, swz };
+      };
+      const BA = mkBlock($("ba"), "var(--blue)"), BW = mkBlock($("bw"), "var(--yel-t)");
+      // wgmma 正面上画 4 × 16 格：每格正好是一条 mma.sync 的正面（16 × 8），共 64 格
+      let gd = "";
+      for (let k = 1; k < 16; k++) gd += `M${(520 + k * 25.6).toFixed(1)} 555.2V760`;
+      for (let k = 1; k < 4; k++) gd += `M520 ${(555.2 + k * 51.2).toFixed(1)}H929.6`;
+      $("vgrid").setAttribute("d", gd);
+      // 时间线：3 个周期，每周期 480 px：发 TMA 40 | 等待 120 | 计算 280 | 同步 40
+      const lane = $("lane"), X0 = 340, CY = 480;
+      const seg = (x, w, y, css, text) => {
+        const s = document.createElement("div");
+        s.className = "s06-seg";
+        s.style.cssText += `left:${x}px;top:${y}px;width:${w}px;${css}`;
+        if (text) s.textContent = text;
+        lane.appendChild(s);
+        return s;
+      };
+      for (let c = 0; c < 3; c++) {
+        const b = X0 + c * CY;
+        seg(b, 40, 440, "background:var(--use)");
+        seg(b + 40, 120, 440, "background:var(--paper2);color:var(--note)", c === 0 ? "等待" : "");
+        seg(b + 160, 280, 440, "background:var(--teal);color:var(--ink)", "计算");
+        seg(b + 440, 40, 440, "background:var(--gray)");
+        seg(b + 160, 280, 580, "background:var(--teal)");
+      }
+      [[X0, 160], [X0 + 440, 200], [X0 + 920, 200], [X0 + 1400, 40]].forEach(([x, w], i) =>
+        seg(x, w, 580, "border:3px dashed var(--hot);color:var(--hot-t)", i > 0 && i < 3 ? "空闲" : ""));
+      const tlab = (x, txt, color) => {
+        const d = document.createElement("div");
+        d.className = "s06-lbl"; d.style.cssText += `left:${x}px;top:392px;font-size:28px;color:${color}`;
+        d.textContent = txt; lane.appendChild(d);
+      };
+      tlab(X0 - 4, "发 TMA", "var(--use-t)");
+      tlab(X0 + 430, "同步", "var(--note)");
+
+      const T = kitTower($("tower"));
+      const L = T.layer, smBox = $("tower-sm");
+      const rL2 = T.route("s06-rl2", ["l2", "smem"], { color: "var(--use)" });
+      const rTC = T.route("s06-rtc", ["smem", "tc"], { color: "var(--teal)", lane: 1 });
+
+      // ---------- 初始状态 ----------
+      gsap.set([$("chip"), $("ttl")], { opacity: 0 });
+      gsap.set($("ttl"), { x: 0, y: 0, scale: 1 });
+      const fx = (v) => (v / 781.86) * 544;
+      gsap.set($("fill"), { scaleX: 309 / 781.86 });
+      gsap.set([$("n309"), $("n484")], { x: fx(309) + 10 });
+      gsap.set([$("mt"), $("n484"), $("gain")], { opacity: 0 });
+      gsap.set($("hz"), { x: 0, y: 0, scale: 1 });
+      gsap.set([$("c0"), $("c1"), $("c2"), $("c3"), $("blkf"), $("wgf"), $("lv0"), $("lv1"), $("lv2"), $("lv3")], { opacity: 0 });
+      gsap.set(grid.children, { opacity: 0 });
+      gsap.set(gLay.concat(kLay), { opacity: 0 });
+      gsap.set([$("wgl"), $("t0"), $("mb"), $("full"), $("b16"), $("b32")], { opacity: 0 });
+      gsap.set([$("bfa"), $("bfw")], { scaleX: 0 });
+      gsap.set([L.tc, L.reg, L.smem, L.l2, L.hbm, smBox], { opacity: 0 });
+      gsap.set([rL2, rTC], { strokeDashoffset: (i, el) => el.dataset.len });
+      gsap.set([$("ba"), $("bw"), $("swz"), $("regx"), $("skip")], { opacity: 0 });
+      gsap.set(BA.swz.concat(BW.swz), { opacity: 0 });
+      gsap.set([$("vmma"), $("vwg"), $("vl1"), $("vl2"), $("vl3"), $("vl4"), $("x64")], { opacity: 0 });
+      gsap.set($("vgrid"), { opacity: 0 });
+      gsap.set([$("tk1"), $("tk2"), $("bn")], { opacity: 0 });
+      gsap.set(lane, { clipPath: "inset(0px 1920px 0px 0px)" });
+
+      // ---------- 0–1.0 标题卡；1.0 缩到版本名右侧 ----------
+      ft($("chip"), { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3, ease: IN }, 0.0);
+      ft($("ttl"), { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.4, ease: IN }, 0.1);
+      ft($("ttl"), { x: 0, y: 0, scale: 1 }, { x: 224, y: -72, scale: 0.6, duration: 0.7, ease: MOVE }, 1.0);
+
+      // ---------- 1.0 层级：thread → warp → warpgroup → block ----------
+      fadeIn($("c0"), 1.05); fadeIn($("lv0"), 1.05, 0.35);
+      ft(rows[0][0], { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.4, ease: IN }, 1.05);
+      fadeIn($("c1"), 2.6);
+      fadeOut($("lv0"), 2.6, 0.25); fadeIn($("lv1"), 2.75, 0.35);
+      rows[0].slice(1).forEach((d, i) => ft(d, { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.3, ease: IN }, 2.6 + i * 0.02));
+      fadeIn($("c2"), 4.3);
+      fadeOut($("lv1"), 4.3, 0.25); fadeIn($("lv2"), 4.45);
+      for (let r = 1; r < 4; r++) rows[r].forEach((d, i) => ft(d, { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.4, ease: IN }, 4.3 + (r - 1) * 0.15 + i * 0.004));
+      ft($("wgf"), { opacity: 0, scale: 1.04 }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, 4.8);
+      fadeIn($("lv3"), 5.0);
+      fadeIn($("c3"), 5.3);
+      ft($("blkf"), { opacity: 0, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, 5.3);
+      fadeIn($("mt"), 5.5);
+
+      // ---------- 6.2 TMA：塔进场；层级缩到左上；线程 0 发出；一整块 L2 → 共享内存并换位 ----------
+      fadeOut($("mt"), 6.2, 0.3);
+      [$("c0"), $("c1"), $("c2"), $("c3"), $("lv2"), $("lv3"), $("blkf")].forEach((e) => fadeOut(e, 6.2, 0.3));
+      ft($("hz"), { x: 0, y: 0, scale: 1 }, { x: -127.5, y: -12.5, scale: 0.75, duration: 1.0, ease: MOVE }, 6.3);
+      fadeIn($("wgl"), 7.1);
+      ["hbm", "l2", "smem", "reg", "tc"].forEach((id, i) =>
+        ft(L[id], { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 6.4 + i * 0.08));
+      ft(smBox, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 6.8);
+      // 其余 127 个点变灰，只剩线程 0
+      ft(gLay.slice(1), { opacity: 0 }, { opacity: 1, duration: 0.4, ease: MOVE }, 7.6);
+      ft(rows[0][0], { scale: 1 }, { scale: 1.6, duration: 0.4, ease: IN }, 7.8);
+      fadeIn($("t0"), 7.9);
+      // A 块出现在 L2，沿 L2 → 共享内存移动，途中换位
+      ft($("ba"), { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.4, ease: IN }, 8.8);
+      ft(rL2, { strokeDashoffset: rL2.dataset.len }, { strokeDashoffset: 0, duration: 0.8, ease: MOVE }, 9.6);
+      ft($("ba"), { y: 0 }, { y: -142, duration: 1.0, ease: MOVE }, 9.6);
+      ft(BA.plain, { opacity: 1 }, { opacity: 0, duration: 0.5, ease: MOVE }, 10.3);
+      BA.swz.forEach((q, i) => ft(q, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, 10.4 + i * 0.05));
+      fadeIn($("swz"), 11.0);
+
+      // ---------- 14.8 mbarrier：清空，A、W 两块到达，字节计数 0 → 32 KB，计满后点由灰变绿 ----------
+      fadeOut($("t0"), 14.8, 0.3);
+      ft(rows[0][0], { scale: 1.6 }, { scale: 1, duration: 0.3, ease: MOVE }, 14.8);
+      ft(gLay[0], { opacity: 0 }, { opacity: 1, duration: 0.3, ease: MOVE }, 14.8);
+      fadeOut($("ba"), 14.8, 0.3); fadeOut($("swz"), 14.8, 0.3);
+      ft($("mb"), { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 15.0);
+      // A 块重新从 L2 出发
+      ft($("ba"), { opacity: 0, y: 0 }, { opacity: 1, y: 0, duration: 0.3, ease: IN }, 15.4);
+      ft(BA.plain, { opacity: 0 }, { opacity: 1, duration: 0.01 }, 15.4);
+      ft(BA.swz, { opacity: 1 }, { opacity: 0, duration: 0.01 }, 15.4);
+      ft($("ba"), { y: 0 }, { y: -142, duration: 0.9, ease: MOVE }, 15.8);
+      ft(BA.plain, { opacity: 1 }, { opacity: 0, duration: 0.3, ease: MOVE }, 16.3);
+      ft(BA.swz, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: MOVE }, 16.3);
+      ft($("bfa"), { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: MOVE }, 15.8);
+      fadeOut($("b0"), 16.6, 0.15); fadeIn($("b16"), 16.7, 0.2);
+      // W 块
+      ft($("bw"), { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, 16.9);
+      ft($("bw"), { y: 0 }, { y: -142, duration: 0.9, ease: MOVE }, 17.2);
+      ft(BW.plain, { opacity: 1 }, { opacity: 0, duration: 0.3, ease: MOVE }, 17.7);
+      ft(BW.swz, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: MOVE }, 17.7);
+      ft($("bfw"), { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: MOVE }, 17.2);
+      fadeOut($("b16"), 18.0, 0.15); fadeIn($("b32"), 18.1, 0.2);
+      // 计满：点由灰变绿
+      fadeIn($("full"), 18.6);
+      for (let r = 0; r < 4; r++) ft(kLay.slice(r * 32, r * 32 + 32), { opacity: 0 }, { opacity: 1, duration: 0.4, ease: IN }, 18.9 + r * 0.1);
+
+      // ---------- 22.4 wgmma 131072 次 = mma.sync 的 64 倍；共享内存 → Tensor Core 越过寄存器 ----------
+      fadeOut($("hz"), 22.4); fadeOut($("wgl"), 22.4); fadeOut($("mb"), 22.4);
+      fadeIn($("vmma"), 22.7); fadeIn($("vl1"), 22.75); fadeIn($("vl2"), 22.9);
+      ft($("vwg"), { opacity: 0, scale: 0.9, transformOrigin: "0% 100%" }, { opacity: 1, scale: 1, duration: 0.6, ease: IN }, 23.5);
+      fadeIn($("vl3"), 23.6); fadeIn($("vl4"), 23.8);
+      fadeIn($("vgrid"), 24.4, 0.6);
+      ft($("x64"), { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.25, ease: IN }, 25.0);
+      // 塔：共享内存里的块直接送进 Tensor Core
+      ft($("regx"), { opacity: 0 }, { opacity: 0.6, duration: 0.5, ease: MOVE }, 26.6);
+      ft(rTC, { strokeDashoffset: rTC.dataset.len }, { strokeDashoffset: 0, duration: 0.9, ease: MOVE }, 26.8);
+      ft([$("ba"), $("bw")], { y: -142 }, { y: -390, duration: 0.9, ease: MOVE }, 26.8);
+      fadeIn($("skip"), 27.4);
+
+      // ---------- 29.8 实测 484，1.6 倍 ----------
+      [$("vmma"), $("vwg"), $("vl1"), $("vl2"), $("vl3"), $("vl4"), $("x64")].forEach((e) => fadeOut(e, 29.8));
+      fadeIn($("mt"), 29.8, 0.4);
+      ft($("fill"), { scaleX: 309 / 781.86 }, { scaleX: 484 / 781.86, duration: 1.1, ease: MOVE }, 30.3);
+      ft([$("n309"), $("n484")], { x: fx(309) + 10 }, { x: fx(484) + 10, duration: 1.1, ease: MOVE }, 30.3);
+      fadeOut($("n309"), 30.35, 0.3);
+      fadeIn($("n484"), 31.1, 0.3);
+      fadeIn($("gain"), 31.5);
+
+      // ---------- 33.8 时间线：同一个 warpgroup 既发拷贝又计算，两块之间 Tensor Core 空闲 ----------
+      ["tc", "reg", "smem", "l2", "hbm"].forEach((id) => fadeOut(L[id], 33.8));
+      [smBox, $("ba"), $("bw"), $("regx"), $("skip"), rL2, rTC].forEach((e) => fadeOut(e, 33.8, 0.4, e === $("regx") ? 0.6 : 1));
+      fadeIn($("tk1"), 34.2); fadeIn($("tk2"), 34.35);
+      ft(lane, { clipPath: "inset(0px 1920px 0px 0px)" }, { clipPath: "inset(0px 0px 0px 0px)", duration: 3.0, ease: "none" }, 34.3);
+      ft($("bn"), { opacity: 0, scale: 0.85, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, 37.6);
+
+      tl.set({}, {}, 41.9);
+      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [6.2, 6.2], [14.8, 15.17], [22.4, 22.4], [29.8, 31.74], [33.8, 35.96], [41.9, 42.71]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 42.71, duration: 42.71, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s06"] = outer; } /* /warp */
+    })();
+  </script>
+</template>

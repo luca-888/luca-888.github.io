@@ -52,7 +52,7 @@
   <div id="root" data-composition-id="s03" data-width="1920" data-height="1080">
 
     <!-- 交接：三个矩阵（坐标与 s02 末帧一致） -->
-    <div id="s03-mats" class="clip s03-full" data-start="0" data-duration="9.0" data-track-index="1">
+    <div id="s03-mats" class="clip s03-full" data-start="0.00" data-a-start="0.0" data-duration="11.95" data-a-duration="9.0" data-track-index="1">
       <div id="s03-matsin" class="s03-full">
         <div id="s03-mW" class="s03-mat" style="left:760px;top:150px"><div class="bg"></div></div>
         <div id="s03-mA" class="s03-mat" style="left:400px;top:510px"><div class="bg"></div></div>
@@ -61,7 +61,7 @@
     </div>
 
     <!-- block 视图（第 0 秒被压成 A 行带 / Wᵀ 列带 / 5 px 的 block），推镜头的两级相机 -->
-    <div id="s03-bv" class="clip s03-full" data-start="0" data-duration="33.6" data-track-index="2" data-layout-allow-overflow>
+    <div id="s03-bv" class="clip s03-full" data-start="0.00" data-a-start="0.0" data-duration="38.61" data-a-duration="33.6" data-track-index="2" data-layout-allow-overflow>
       <div id="s03-cam3" class="s03-full">
         <div id="s03-cam2" class="s03-full">
           <div id="s03-as" class="s03-abs" style="left:594px;top:330px;width:130px;height:520px">
@@ -106,7 +106,7 @@
     </div>
 
     <!-- 右上进度条（s02 末帧状态：参照 781.86、目标虚线 777.6、当前 44.3） -->
-    <div id="s03-meter" class="clip kit-meter" data-start="0" data-duration="25.5" data-track-index="3">
+    <div id="s03-meter" class="clip kit-meter" data-start="0.00" data-a-start="0.0" data-duration="31.87" data-a-duration="25.5" data-track-index="3">
       <div id="s03-mt" class="s03-in">
         <div class="lbl">8192 阶 · BF16 · TFLOPS</div>
         <div class="track"><div id="s03-fill" class="fill"></div></div>
@@ -121,13 +121,13 @@
     </div>
 
     <!-- 0.5 标题 -->
-    <div id="s03-title" class="clip s03-full" data-start="0.5" data-duration="48.5" data-track-index="4">
+    <div id="s03-title" class="clip s03-full" data-start="0.50" data-a-start="0.5" data-duration="51.64" data-a-duration="48.5" data-track-index="4">
       <div id="s03-chip" class="kit-chip">wmma</div>
       <div id="s03-ttl" class="kit-title">第 1 步：换用 <span class="acc">Tensor Core</span></div>
     </div>
 
     <!-- 0.5 一个 warp 共同计算 16 × 16 × 16 -->
-    <div id="s03-cube" class="clip s03-full" data-start="0.5" data-duration="7.6" data-track-index="5">
+    <div id="s03-cube" class="clip s03-full" data-start="0.50" data-a-start="0.5" data-duration="10.38" data-a-duration="7.6" data-track-index="5">
       <div id="s03-cubew" class="s03-full">
         <svg class="s03-abs" style="left:1400px;top:316px" width="200" height="228" viewBox="1400 316 200 228">
           <polygon points="1500,320 1595.3,375 1500,430 1404.7,375" style="fill:var(--teal)" />
@@ -142,18 +142,18 @@
     </div>
 
     <!-- 7.5 block 标注 -->
-    <div id="s03-ann1" class="clip s03-lbl" data-start="8.8" data-duration="5.2" data-track-index="6" style="left:1296px;top:470px">
+    <div id="s03-ann1" class="clip s03-lbl" data-start="11.71" data-a-start="8.8" data-duration="6.10" data-a-duration="5.2" data-track-index="6" style="left:1296px;top:470px">
       <div id="s03-ann1in">一个 block：128 × 128</div>
     </div>
-    <div id="s03-ann2" class="clip s03-lbl" data-start="10.8" data-duration="3.2" data-track-index="7" style="left:1296px;top:540px">
+    <div id="s03-ann2" class="clip s03-lbl" data-start="14.09" data-a-start="10.8" data-duration="3.71" data-a-duration="3.2" data-track-index="7" style="left:1296px;top:540px">
       <div id="s03-ann2in">8 个 warp，各 64 × 32</div>
     </div>
 
     <!-- 13.5 w0 的片段与 mma_sync -->
-    <div id="s03-ann3" class="clip s03-lbl" data-start="14.3" data-duration="5.9" data-track-index="8" style="left:860px;top:236px">
+    <div id="s03-ann3" class="clip s03-lbl" data-start="18.10" data-a-start="14.3" data-duration="6.11" data-a-duration="5.9" data-track-index="8" style="left:860px;top:236px">
       <div id="s03-ann3in">w0：4 × 2 个片段，各 16 × 16</div>
     </div>
-    <div id="s03-code" class="clip s03-abs" data-start="14.5" data-duration="5.7" data-track-index="9" style="left:860px;top:304px">
+    <div id="s03-code" class="clip s03-abs" data-start="18.30" data-a-start="14.5" data-duration="5.91" data-a-duration="5.7" data-track-index="9" style="left:860px;top:304px">
       <div id="s03-codein" class="k-code">
         <div class="ln">for (int kk = 0; kk &lt; BK; kk += 16)</div>
         <div class="ln">  for (int i = 0; i &lt; 4; i++)</div>
@@ -161,12 +161,12 @@
         <div class="ln on">      mma_sync(c[i][j], a[i], b[j], c[i][j]);</div>
       </div>
     </div>
-    <div id="s03-cnt" class="clip s03-lbl" data-start="16.2" data-duration="4.0" data-track-index="10" style="left:860px;top:580px" data-layout-allow-overlap>
+    <div id="s03-cnt" class="clip s03-lbl" data-start="19.99" data-a-start="16.2" data-duration="4.23" data-a-duration="4.0" data-track-index="10" style="left:860px;top:580px" data-layout-allow-overlap>
       <div id="s03-cntin">沿 K 每 16 列：<span class="s03-stk"><b id="s03-k1">1</b><b id="s03-k2">2</b><b id="s03-k3">3</b><b id="s03-k4">4</b><b id="s03-k5">5</b><b id="s03-k6">6</b><b id="s03-k7">7</b><b id="s03-k8">8</b></span> / 8 条 mma_sync</div>
     </div>
 
     <!-- 25.0 硬件塔与折返 -->
-    <div id="s03-tw" class="clip s03-full" data-start="25.0" data-duration="24.0" data-track-index="11">
+    <div id="s03-tw" class="clip s03-full" data-start="31.46" data-a-start="25.0" data-duration="20.68" data-a-duration="24.0" data-track-index="11">
       <div id="s03-tower"></div>
       <div id="s03-oreg" class="s03-ol" style="top:364px;border-color:var(--hot)"></div>
       <div id="s03-osm" class="s03-ol" style="top:508px;border-color:var(--use)"></div>
@@ -174,7 +174,7 @@
       <div id="s03-turn2" class="s03-turn" style="top:528px">折返</div>
       <div id="s03-bn2" class="s03-abs" style="left:1664px;top:452px"><span class="k-bottleneck">瓶颈</span></div>
     </div>
-    <div id="s03-rt" class="clip s03-full" data-start="25.0" data-duration="24.0" data-track-index="12">
+    <div id="s03-rt" class="clip s03-full" data-start="31.46" data-a-start="25.0" data-duration="20.68" data-a-duration="24.0" data-track-index="12">
       <svg class="s03-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" stroke-linejoin="round">
         <path id="s03-r1" style="stroke:var(--blue)" stroke-width="5" />
         <path id="s03-r2" style="stroke:var(--blue)" stroke-width="5" />
@@ -186,7 +186,7 @@
     </div>
 
     <!-- 32.9 共享内存 bank 视图 -->
-    <div id="s03-bank" class="clip s03-full" data-start="32.9" data-duration="16.1" data-track-index="13" data-layout-allow-overlap>
+    <div id="s03-bank" class="clip s03-full" data-start="38.01" data-a-start="32.9" data-duration="14.13" data-a-duration="16.1" data-track-index="13" data-layout-allow-overlap>
       <div id="s03-bkin" class="s03-full">
         <div id="s03-bkh" class="s03-abs" style="left:104px;top:262px;font-size:36px;font-weight:700;color:var(--ink);white-space:nowrap">共享内存 · 一排 32 个 bank</div>
         <div id="s03-half" class="s03-full">
@@ -395,7 +395,7 @@
       ft($("bn2"), { opacity: 0, scale: 0.85, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, 41.05);
 
       tl.set({}, {}, 49.0);
-      window.__timelines["s03"] = tl;
+      /* warp */ { const P = [[0.0, 0.0], [0.5, 0.5], [7.5, 10.16], [13.5, 17.31], [19.7, 23.46], [25.0, 31.46], [32.9, 38.01], [40.9, 44.87], [49.0, 52.14]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 52.14, duration: 52.14, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s03"] = outer; } /* /warp */
     })();
   </script>
 </template>
