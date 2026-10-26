@@ -55,7 +55,20 @@ def synth(text):
         except Exception as e:
             if i == 4: raise
             print("  字幕下载失败，重试：", e); time.sleep(3)
-    return bytes.fromhex(res["data"]["audio"]), [[x["time_begin"] / 1000, x["time_end"] / 1000] for x in sub], res["extra_info"]["usage_characters"]
+    segs = [(x["time_begin"] / 1000, x["time_end"] / 1000, x.get("text", "")) for x in sub]
+    return bytes.fromhex(res["data"]["audio"]), segs, res["extra_info"]["usage_characters"]
+
+def group(segs, parts):   # 长句会被 MiniMax 的字幕拆成几段：按字数把字幕段归回各句
+    if len(segs) == len(parts): return [[a, b] for a, b, _ in segs]
+    n = lambda t: len(re.sub(r"[\s，。；：、,.;:！？!?<>#\d.]+", "", t))
+    out, i = [], 0
+    for k, p in enumerate(parts):
+        want, got, a = n(p), 0, segs[i][0]
+        while i < len(segs) and (got < want * 0.9 or k == len(parts) - 1):
+            got += n(segs[i][2]); b = segs[i][1]; i += 1
+        out.append([a, b])
+    assert i == len(segs), "字幕段与句子对不上"
+    return out
 
 # 缓存里每段录音按停顿标记分句，得到“送 TTS 的句子 → (录音, 人声起止, 可裁剪的前后界)”
 def segments(h):
@@ -77,8 +90,8 @@ for sc in scenes:
         chars = sum(2 if "一" <= c <= "鿿" else 1 for c in text.replace(PAUSE, ""))
         plan.append((sc["id"], len(need), chars))
         if dry: continue
-        audio, bounds, used = synth(text)
-        assert len(bounds) == len(need), (sc["id"], len(bounds), len(need))
+        audio, segs, used = synth(text)
+        bounds = group(segs, need)
         h = key(text)
         (cache / f"{h}.mp3").write_bytes(audio); (cache / f"{h}.json").write_text(json.dumps({"text": text, "bounds": bounds, "usage": used}, ensure_ascii=False))
         SENT.update(segments(h)); billed += used; print(f"  {sc['id']}: 新合成 {len(need)} 句，计费 {used} 字符")

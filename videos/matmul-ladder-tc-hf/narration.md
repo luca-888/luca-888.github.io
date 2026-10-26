@@ -26,8 +26,8 @@ ldmatrix 一次读 8 行的同一块；直接存放时，这 8 个地址都在�
 ## s04
 第三步做多级流水，即 pipeline：把 shared memory 分成 3 个 stage，组成一个环，拷贝提前两块发出。
 计算第 t 块时，后两块已在路上；算完的 stage 马上装下一块，拷贝的等待被计算盖住。
-再往下卡在指令本身：一条 mma.sync 只有 2048 次乘加，满载需每个 SM 每个时钟发一条，还要另发 ldmatrix 读片段。
-mma.sync 这条路止于峰值的三分之一。
+再往下卡在 mma.sync 本身：一条只有 2048 次乘加，喂满 Tensor Core，每个 SM 每个时钟都要发一条，还要另发 ldmatrix 把操作数读进寄存器。
+同时 shared memory 也供不上：按这一版的分块，每个时钟要读 192 字节，供给只有 128 字节；mma.sync 的各版实测都停在峰值的三分之一左右。
 
 ## s05
 第四步换上 Hopper 的三样新机制。
@@ -64,7 +64,7 @@ TMA multicast，即多播：从 L2 读一次，同时写入两个 block；每个
 ## s10
 989 TFLOPS 是规格峰值。连续满载时，两者都撞上 700 瓦的功耗上限，时钟从 1830 降到约 1360 MHz。
 按这个时钟，峰值只剩 735，手写版和 cuBLAS 都用到了其中的 93%。
-回头看这八步：用上 Tensor Core，消除 bank conflict，提前搬，搬大块，分工，少读显存，共享读取，异步写回。
+回头看这八步：换用 Tensor Core，用 swizzle 消除 bank conflict，用 pipeline 让拷贝与计算重叠，用 TMA 与 wgmma 加大每条指令的粒度，用 warp specialization 分离拷贝与计算，调整发放顺序在 L2 中复用 W，用 multicast 减少 L2 读取，用 TMA store 让写回与计算重叠。
 Tensor Core 的算力是固定的，矩阵乘法的快慢，取决于数据能不能及时送到。
 
 ## 读法

@@ -20,13 +20,14 @@
     #root #s10-w700 { position: absolute; left: 1440px; top: 214px; font-family: var(--mono); font-size: 88px; line-height: 100px; font-weight: 800; color: var(--hot-t); white-space: nowrap; }
     #root #s10-ctrk { position: absolute; left: 1440px; top: 440px; width: 384px; height: 48px; border: 3px dashed var(--gray); }
     #root #s10-cbar { position: absolute; left: 1440px; top: 440px; width: 384px; height: 48px; background: var(--ink2); transform-origin: 0 50%; }
-    #root .s10-why { position: absolute; left: 1390px; width: 440px; height: 50px; line-height: 50px; font-size: 36px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+    #root .s10-why { position: absolute; left: 920px; height: 50px; line-height: 50px; font-family: var(--mono); font-size: 34px; font-weight: 800; color: var(--teal-t); white-space: nowrap; }
+    #root .s10-dsc { position: absolute; left: 1350px; height: 50px; line-height: 50px; font-size: 32px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
     #root #s10-cnum { position: absolute; left: 1440px; top: 504px; font-family: var(--mono); font-size: 48px; line-height: 60px; font-weight: 800; color: var(--ink); white-space: nowrap; }
   </style>
   <div id="root" data-composition-id="s10" data-width="1920" data-height="1080">
 
     <!-- 阶梯：八版耗时 + cuBLAS，虚线峰值 -->
-    <div id="s10-lad" class="clip s10-full" data-start="0.00" data-a-start="0.0" data-duration="35.29" data-a-duration="34.69" data-track-index="1">
+    <div id="s10-lad" class="clip s10-full" data-start="0.00" data-a-start="0.0" data-duration="48.58" data-a-duration="48.58" data-track-index="1">
       <div id="s10-hd">8192 阶矩阵乘法 · 一次耗时</div>
       <div id="s10-zoom"></div>
       <div id="s10-r0" class="s10-rl" style="top:150px">第 1 版</div>
@@ -65,7 +66,7 @@
     </div>
 
     <!-- 3.8 功耗墙与时钟（第 1 句），18.64 淡出 -->
-    <div id="s10-pw" class="clip s10-full" data-start="5.40" data-a-start="5.4" data-duration="13.94" data-a-duration="13.9" data-track-index="2">
+    <div id="s10-pw" class="clip s10-full" data-start="5.40" data-a-start="5.4" data-duration="13.90" data-a-duration="13.9" data-track-index="2">
       <div id="s10-pwin" class="s10-full">
         <div id="s10-wl" class="s10-pt" style="top:168px">功耗上限</div>
         <div id="s10-w700">700 W</div>
@@ -77,15 +78,23 @@
     </div>
 
     <!-- 18.64 每一版右侧：这一步的原理名，随配音逐行点亮 -->
-    <div id="s10-wy" class="clip s10-full" data-start="19.66" data-a-start="19.6" data-duration="15.63" data-a-duration="15.09" data-track-index="3">
-      <div id="s10-w0" class="s10-why" style="top:150px">用上 Tensor Core</div>
-      <div id="s10-w1" class="s10-why" style="top:230px">消除 bank conflict</div>
-      <div id="s10-w2" class="s10-why" style="top:310px">提前搬</div>
-      <div id="s10-w3" class="s10-why" style="top:390px">搬大块</div>
-      <div id="s10-w4" class="s10-why" style="top:470px">分工</div>
-      <div id="s10-w5" class="s10-why" style="top:550px">少读显存</div>
-      <div id="s10-w6" class="s10-why" style="top:630px">共享读取</div>
-      <div id="s10-w7" class="s10-why" style="top:710px">异步写回</div>
+    <div id="s10-wy" class="clip s10-full" data-start="19.60" data-a-start="19.6" data-duration="28.98" data-a-duration="28.98" data-track-index="3">
+      <div id="s10-w0" class="s10-why" style="top:150px">wmma</div>
+      <div id="s10-x0" class="s10-dsc" style="top:150px">换用 Tensor Core</div>
+      <div id="s10-w1" class="s10-why" style="top:230px">swizzle + cp.async</div>
+      <div id="s10-x1" class="s10-dsc" style="top:230px">消除 bank conflict，不经寄存器</div>
+      <div id="s10-w2" class="s10-why" style="top:310px">pipeline</div>
+      <div id="s10-x2" class="s10-dsc" style="top:310px">拷贝与计算重叠</div>
+      <div id="s10-w3" class="s10-why" style="top:390px">TMA + wgmma</div>
+      <div id="s10-x3" class="s10-dsc" style="top:390px">加大每条指令的粒度</div>
+      <div id="s10-w4" class="s10-why" style="top:470px">warp specialization</div>
+      <div id="s10-x4" class="s10-dsc" style="top:470px">拷贝与计算分离</div>
+      <div id="s10-w5" class="s10-why" style="top:550px">tile 发放顺序</div>
+      <div id="s10-x5" class="s10-dsc" style="top:550px">在 L2 中复用 W</div>
+      <div id="s10-w6" class="s10-why" style="top:630px">cluster + multicast</div>
+      <div id="s10-x6" class="s10-dsc" style="top:630px">减少 L2 读取</div>
+      <div id="s10-w7" class="s10-why" style="top:710px">TMA store</div>
+      <div id="s10-x7" class="s10-dsc" style="top:710px">写回与计算重叠</div>
     </div>
   </div>
   <script>
@@ -167,26 +176,27 @@
       ft(OFF, { opacity: 1 }, { opacity: 0, duration: 0.4, ease: OUT }, 18.7);
       ft($("p93n"), { opacity: 1 }, { opacity: 0, duration: 0.4, ease: OUT }, 19.0);
       st({ m8: 1.61 }, { m8: 1.41 }, 0.8, 18.9, MOVE);
+      st({ ppm: 360, clip: 900 }, { ppm: 70, clip: 400 }, 0.9, 19.0, MOVE);
       const ROW = (i) => [$("r" + i), $("b" + i)];
       const all = [0, 1, 2, 3, 4, 5, 6, 7, 8];
       ft(all.flatMap(ROW), { opacity: 1 }, { opacity: 0.3, duration: 0.6, ease: MOVE }, 19.0);
       ft(S, { d0: 1, d1: 1, d2: 1, d3: 1, d4: 1, d5: 1, d6: 1, d7: 1, d8: 1 },
         { d0: 0.3, d1: 0.3, d2: 0.3, d3: 0.3, d4: 0.3, d5: 0.3, d6: 0.3, d7: 0.3, d8: 0.3, duration: 0.6, ease: MOVE, onUpdate: lay }, 19.0);
-      gsap.set([0, 1, 2, 3, 4, 5, 6, 7].map((i) => $("w" + i)), { opacity: 0 });
+      gsap.set([0, 1, 2, 3, 4, 5, 6, 7].flatMap((i) => [$("w" + i), $("x" + i)]), { opacity: 0 });
       // 配音里每个原理名的起点（s10-03.wav 的停顿检测）
-      const WT = [19.8, 21.1, 22.45, 23.2, 23.95, 24.5, 25.45, 26.3];
+      const WT = [1.10, 2.24, 4.61, 7.06, 11.04, 14.10, 17.06, 19.67].map((x) => 18.64 + x);
       WT.forEach((t, i) => {
         ft(ROW(i), { opacity: 0.3 }, { opacity: 1, duration: 0.4, ease: IN }, t);
         ft(S, { ["d" + i]: 0.3 }, { ["d" + i]: 1, duration: 0.4, ease: IN, onUpdate: lay }, t);
-        ft($("w" + i), { opacity: 0, x: -24, color: "#0a6f63" }, { opacity: 1, x: 0, color: "#0a6f63", duration: 0.5, ease: IN }, t);
-        ft($("w" + i), { color: "#0a6f63" }, { color: "#141414", duration: 0.4, ease: MOVE }, i < 7 ? WT[i + 1] : 27.7);
+        ft($("w" + i), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, t);
+        ft($("x" + i), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, t + 0.3);
       });
-      // 27.64 第 4 句：cuBLAS 行恢复，停住
-      ft(ROW(8), { opacity: 0.3 }, { opacity: 1, duration: 0.6, ease: MOVE }, 27.7);
-      ft(S, { d8: 0.3 }, { d8: 1, duration: 0.6, ease: MOVE, onUpdate: lay }, 27.7);
+      // 41.53 第 4 句：cuBLAS 行恢复，停住
+      ft(ROW(8), { opacity: 0.3 }, { opacity: 1, duration: 0.6, ease: MOVE }, 41.6);
+      ft(S, { d8: 0.3 }, { d8: 1, duration: 0.6, ease: MOVE, onUpdate: lay }, 41.6);
 
-      tl.set({}, {}, 34.69);
-      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [11.41, 11.41], [18.64, 18.64], [27.64, 28.24], [34.69, 35.29]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 35.29, duration: 35.29, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s10"] = outer; } /* /warp */
+      tl.set({}, {}, 48.58);
+      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [11.41, 11.41], [18.64, 18.64], [41.53, 41.53], [48.58, 48.58]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 48.58, duration: 48.58, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s10"] = outer; } /* /warp */
     })();
   </script>
 </template>
