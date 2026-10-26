@@ -1,9 +1,9 @@
 <template>
   <!--
-    s08 第 7 步：集群 + TMA 多播。节拍（幕内秒）1.0 / 7.11 / 12.8 / 23.02，幕长 30.62。
-    句 1：两个 block（两个 SM）各有共享内存，框成一个集群（整组居中，x −240）；双向箭头“可访问彼此的共享内存”。
+    s08 第 7 步：cluster + TMA multicast。节拍（幕内秒）1.0 / 7.11 / 12.8 / 23.02，幕长 30.62。
+    句 1：两个 block（两个 SM）各有shared memory，框成一个集群（整组居中，x −240）；双向箭头“可访问彼此的shared memory”。
     句 2：集群右移让出左侧；L2 里的一块 W 分前后两半，block 0 发前半、block 1 发后半。
-    句 3：TMA 多播：每半从 L2 读一次，分叉写进两个 block；15.8 耗时条 1.49 → 1.45；
+    句 3：TMA multicast：每半从 L2 读一次，分叉写进两个 block；15.8 耗时条 1.49 → 1.45；
           左下两根短条：每 block 每步从 L2 读 A 16 + W 32 = 48 KB → A 16 + W 16 = 32 KB。
     句 4：写回：每个线程零散写显存 64 次，Tensor Core 时间线空着；瓶颈标签停到幕尾。
     画面只留部件名与关键数字（≥ 36 px），不写说明文字。
@@ -22,7 +22,7 @@
     #root .s08-bname { position: absolute; left: 580px; top: 30px; font-size: 40px; font-weight: 800; color: var(--ink); white-space: nowrap; }
     #root .s08-bnote { position: absolute; left: 580px; top: 104px; font-size: 28px; font-weight: 500; color: var(--note); white-space: nowrap; }
     #root .s08-smem { position: absolute; left: 24px; top: 20px; width: 520px; height: 210px; border: 3px solid var(--use); background: var(--paper); }
-    #root .s08-smem > span { position: absolute; left: 14px; top: 78px; font-size: 36px; font-weight: 700; color: var(--use-t); white-space: nowrap; }
+    #root .s08-smem > span { position: absolute; left: 14px; top: 60px; width: 170px; font-size: 34px; line-height: 42px; font-weight: 700; color: var(--use-t); white-space: normal; }
     #root .s08-slot { position: absolute; left: 180px; width: 320px; height: 80px; border: 3px dashed var(--gray); background: var(--paper2); }
     #root .s08-slot i { position: absolute; inset: 0; background: var(--yel); transform-origin: 0 50%; }
     #root .s08-slot b { position: absolute; left: 0; right: 0; top: 14px; text-align: center; font-size: 36px; font-weight: 700; color: var(--ink); }
@@ -41,13 +41,13 @@
   <div id="root" data-composition-id="s08" data-width="1920" data-height="1080">
 
     <!-- 0–1.0 标题卡；之后缩到左上角常驻 -->
-    <div id="s08-title" class="clip s08-full" data-start="0.00" data-duration="30.62" data-track-index="1">
+    <div id="s08-title" class="clip s08-full" data-start="0.00" data-a-start="0.0" data-duration="34.56" data-a-duration="30.62" data-track-index="1">
       <div id="s08-chip" class="kit-chip">wgmma_cluster</div>
-      <div id="s08-ttl" class="kit-title">第 7 步：<span class="acc">集群 + TMA 多播</span></div>
+      <div id="s08-ttl" class="kit-title">第 7 步：<span class="acc">cluster + TMA multicast</span></div>
     </div>
 
     <!-- 耗时条：1.49 → 1.45（15.8） -->
-    <div id="s08-tb" class="clip kit-tbar" data-start="1.00" data-duration="29.62" data-track-index="2">
+    <div id="s08-tb" class="clip kit-tbar" data-start="1.00" data-a-start="1.0" data-duration="33.56" data-a-duration="29.62" data-track-index="2">
       <div id="s08-tbin" class="s08-in">
         <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
         <div class="track"><div id="s08-tbghost" class="ghost"></div><div id="s08-tbfill" class="fill"></div><div class="peak"></div></div>
@@ -58,14 +58,14 @@
     </div>
 
     <!-- 1.0 集群 → 7.11 各搬一半 → 12.8 多播 -->
-    <div id="s08-mc" class="clip s08-full" data-start="1.00" data-duration="22.50" data-track-index="3" data-layout-allow-overlap>
+    <div id="s08-mc" class="clip s08-full" data-start="1.00" data-a-start="1.0" data-duration="26.44" data-a-duration="22.5" data-track-index="3" data-layout-allow-overlap>
       <div id="s08-mcin" class="s08-full">
         <div id="s08-clg" class="s08-full">
           <div id="s08-cbox" class="s08-abs" style="left:724px;top:250px;width:952px;height:684px;border:4px dashed var(--ink2)">
-            <div class="s08-abs" style="left:22px;top:2px;font-size:36px;font-weight:800;color:var(--ink);white-space:nowrap">线程块集群</div>
+            <div class="s08-abs" style="left:22px;top:2px;font-size:36px;font-weight:800;color:var(--ink);white-space:nowrap">thread block cluster</div>
           </div>
           <div id="s08-b0" class="s08-blk" style="top:310px">
-            <div class="s08-smem"><span>共享内存</span>
+            <div class="s08-smem"><span>shared memory</span>
               <div id="s08-s0a" class="s08-slot" style="top:18px"><i></i><b>W 前半</b></div>
               <div id="s08-s0b" class="s08-slot" style="top:110px"><i></i><b>W 后半</b></div>
             </div>
@@ -73,7 +73,7 @@
             <div class="s08-bname" style="top:100px;font-size:36px;font-weight:700;color:var(--ink2)">SM 0</div>
           </div>
           <div id="s08-b1" class="s08-blk" style="top:660px">
-            <div class="s08-smem"><span>共享内存</span>
+            <div class="s08-smem"><span>shared memory</span>
               <div id="s08-s1a" class="s08-slot" style="top:18px"><i></i><b>W 前半</b></div>
               <div id="s08-s1b" class="s08-slot" style="top:110px"><i></i><b>W 后半</b></div>
             </div>
@@ -95,7 +95,7 @@
           <path id="s08-pa" d="M 476 461 H 600 V 388 H 960 M 600 461 V 738 H 960" style="stroke:var(--yel-t)" stroke-width="6" />
           <path id="s08-pb" d="M 476 561 H 660 V 480 H 960 M 660 561 V 830 H 960" style="stroke:var(--yel-t)" stroke-width="6" />
         </svg>
-        <div id="s08-mcl" class="s08-abs" style="left:96px;top:262px;font-size:40px;font-weight:800;color:var(--yel-t);white-space:nowrap"><span style="font-family:var(--mono)">TMA</span> 多播</div>
+        <div id="s08-mcl" class="s08-abs" style="left:96px;top:262px;font-size:40px;font-weight:800;color:var(--yel-t);white-space:nowrap"><span style="font-family:var(--mono)">TMA</span> multicast</div>
         <!-- 每 block 每步从 L2 读 -->
         <div id="s08-kb" class="s08-full">
           <div id="s08-kh" class="s08-abs" style="left:96px;top:680px;font-size:36px;font-weight:700;color:var(--ink);white-space:nowrap">每步读 L2</div>
@@ -106,7 +106,7 @@
             <div class="s08-kv" style="left:500px;top:752px">48 KB</div>
           </div>
           <div id="s08-kr2" class="s08-full">
-            <div class="s08-kr" style="top:830px">多播</div>
+            <div class="s08-kr" style="top:830px">现在</div>
             <div class="s08-kb" style="left:196px;top:830px;width:96px;background:var(--blue);color:#fff">A</div>
             <div id="s08-kw2" class="s08-kb" style="left:292px;top:830px;width:192px;background:var(--yel);color:var(--ink)">W</div>
             <div id="s08-kv2a" class="s08-kv" style="left:500px;top:830px">48 KB</div>
@@ -117,7 +117,7 @@
     </div>
 
     <!-- 23.02 写回：每个线程零散写显存，期间不发 wgmma -->
-    <div id="s08-wb" class="clip s08-full" data-start="23.02" data-duration="7.60" data-track-index="5" data-layout-allow-overlap>
+    <div id="s08-wb" class="clip s08-full" data-start="26.96" data-a-start="23.02" data-duration="7.60" data-a-duration="7.6" data-track-index="5" data-layout-allow-overlap>
       <svg id="s08-wsvg" class="s08-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none"></svg>
       <div id="s08-dots" class="s08-full"></div>
       <div id="s08-thl" class="s08-abs" style="left:160px;top:510px;font-size:36px;font-weight:700;color:var(--purple-t);white-space:nowrap">线程</div>
@@ -202,7 +202,7 @@
       ft($("b0"), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: IN }, 1.4);
       ft($("b1"), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: IN }, 1.55);
       ft($("cbox"), { opacity: 0, scale: 1.04, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.6, ease: IN }, 2.4);
-      // 3.61 可访问彼此的共享内存：双向箭头，一个数据块下去再上来
+      // 3.61 可访问彼此的shared memory：双向箭头，一个数据块下去再上来
       ft($("xa"), { strokeDashoffset: $("xa").dataset.len }, { strokeDashoffset: 0, duration: 0.5, ease: MOVE }, 3.7);
       fadeIn($("xh"), 4.1, 0.3);
       ft($("xd"), { opacity: 0, y: 0 }, { opacity: 1, y: 0, duration: 0.2, ease: IN }, 4.6);
@@ -216,7 +216,7 @@
       ft($("xa"), { opacity: 1 }, { opacity: 0, duration: 0.3, ease: OUT }, 7.11);
       ft($("l2"), { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.6, ease: IN }, 8.4);
 
-      // ---------- 12.8 TMA 多播：每半读一次，分叉写进两个 block ----------
+      // ---------- 12.8 TMA multicast：每半读一次，分叉写进两个 block ----------
       const draw = (p, t) => ft(p, { strokeDashoffset: p.dataset.len }, { strokeDashoffset: 0, duration: 0.8, ease: MOVE }, t);
       const slotFill = (id, t) => ft(q("#s08-" + id + " i"), { scaleX: 0 }, { scaleX: 1, duration: 0.4, ease: IN }, t);
       fadeIn($("mcl"), 12.9);
@@ -262,7 +262,7 @@
 
       tl.set({}, {}, 30.62);
       window.__timelines = window.__timelines || {};
-      window.__timelines["s08"] = tl;
+      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [7.11, 9.63], [12.8, 15.73], [23.02, 26.96], [30.62, 34.56]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 34.56, duration: 34.56, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s08"] = outer; } /* /warp */
     })();
   </script>
 </template>

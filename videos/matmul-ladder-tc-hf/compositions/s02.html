@@ -22,13 +22,13 @@
   <div id="root" data-composition-id="s02" data-width="1920" data-height="1080">
 
     <!-- 标题卡：0–1.0 居中大字，之后缩到左上常驻 -->
-    <div id="s02-title" class="clip s02-full" data-start="0.00" data-duration="36.17" data-track-index="1">
+    <div id="s02-title" class="clip s02-full" data-start="0.00" data-a-start="0.0" data-duration="44.59" data-a-duration="36.17" data-track-index="1">
       <div id="s02-chip" class="kit-chip">wmma</div>
       <div id="s02-ttl" class="kit-title">第一版：<span class="acc">wmma</span></div>
     </div>
 
     <!-- 耗时条：出现即 11.78 ms，本幕不动 -->
-    <div id="s02-tb" class="clip kit-tbar" data-start="1.00" data-duration="35.17" data-track-index="2">
+    <div id="s02-tb" class="clip kit-tbar" data-start="1.00" data-a-start="1.0" data-duration="43.59" data-a-duration="35.17" data-track-index="2">
       <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
       <div class="track"><div id="s02-tbghost" class="ghost"></div><div id="s02-tbfill" class="fill"></div><div class="peak"></div></div>
       <div id="s02-tbnum" class="num"><span id="s02-tbv1">11.78 ms</span></div>
@@ -36,7 +36,7 @@
     </div>
 
     <!-- 第 1 句（1.0）：16 × 16 × 16 立方体，一个 warp 的 32 个线程合算 -->
-    <div id="s02-cube" class="clip s02-full" data-start="1.00" data-duration="10.43" data-track-index="3">
+    <div id="s02-cube" class="clip s02-full" data-start="1.00" data-a-start="1.0" data-duration="15.14" data-a-duration="10.43" data-track-index="3">
       <svg id="s02-cubesvg" class="s02-abs" style="left:720px;top:220px" width="480" height="450" viewBox="-240 -230 480 450">
         <polygon points="0,-200 173.2,-100 0,0 -173.2,-100" style="fill:var(--teal)" />
         <polygon points="-173.2,-100 0,0 0,200 -173.2,100" style="fill:var(--tealD)" />
@@ -52,7 +52,7 @@
     </div>
 
     <!-- 第 2 句（9.29）：硬件塔，数据两次经过寄存器 -->
-    <div id="s02-tw" class="clip s02-full" data-start="10.93" data-duration="25.24" data-track-index="5">
+    <div id="s02-tw" class="clip s02-full" data-start="15.68" data-a-start="10.93" data-duration="28.91" data-a-duration="25.24" data-track-index="5">
       <div id="s02-twin" class="s02-full">
         <div id="s02-tower"></div>
         <div id="s02-oreg" class="s02-ol" style="top:440px;border-color:var(--hot)"></div>
@@ -70,7 +70,7 @@
     </div>
 
     <!-- 第 3 句（16.52）：32 个 bank；同 bank 的地址排队。第 4 句（21.99）：64 字节一行，分 4 轮 -->
-    <div id="s02-bank" class="clip s02-full" data-start="18.16" data-duration="18.01" data-track-index="7">
+    <div id="s02-bank" class="clip s02-full" data-start="22.38" data-a-start="18.16" data-duration="22.21" data-a-duration="18.01" data-track-index="7">
       <div id="s02-banks" class="s02-full"></div>
       <div id="s02-bkl" class="s02-full">
         <div class="s02-lbl" style="left:96px;top:774px;font-size:36px;color:var(--ink2)">bank 0</div>
@@ -92,7 +92,7 @@
       <div id="s02-rnd" class="s02-abs" style="left:800px;top:420px;white-space:nowrap;font-family:var(--mono);font-size:120px;font-weight:800;color:var(--hot-t);line-height:1">
         <span class="s02-stk"><b id="s02-q1">1</b><b id="s02-q2">2</b><b id="s02-q3">3</b><b id="s02-q4">4</b></span><span style="font-family:var(--zh);font-size:72px"> 轮</span>
       </div>
-      <div id="s02-bneck" class="s02-abs" style="left:96px;top:836px"><span class="k-bottleneck" style="font-size:36px;padding:6px 14px">瓶颈：bank 冲突</span></div>
+      <div id="s02-bneck" class="s02-abs" style="left:96px;top:836px"><span class="k-bottleneck" style="font-size:36px;padding:6px 14px">瓶颈：bank conflict</span></div>
     </div>
   </div>
   <script>
@@ -181,7 +181,7 @@
       });
       [$("cubesvg"), $("warpl"), $("dots"), $("wires")].forEach((e) => fadeOut(e, B[1]));
 
-      // ---------- 第 2 句：塔进场，数据先进寄存器、再写共享内存、又读回寄存器 ----------
+      // ---------- 第 2 句：塔进场，数据先进寄存器、再写shared memory、又读回寄存器 ----------
       ["hbm", "l2", "smem", "reg", "tc"].forEach((id, i) =>
         ft(L[id], { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, B[1] + 0.2 + i * 0.07));
       fadeIn(smBox, B[1] + 0.55);
@@ -213,7 +213,7 @@
       fadeOut($("twice"), B[2], 0.3);
       ft($("twin"), { x: -540 }, { x: 0, duration: 0.8, ease: MOVE }, B[2] + 0.1);
 
-      // ---------- 第 3 句：塔变暗只留共享内存；放大成 32 个 bank ----------
+      // ---------- 第 3 句：塔变暗只留shared memory；放大成 32 个 bank ----------
       const b3 = B[2];
       fadeOut($("car"), b3, 0.3);
       ["tc", "l2", "hbm"].forEach((id) => ft(L[id], { opacity: 1 }, { opacity: 0.3, duration: 0.5, ease: MOVE }, b3 + 0.1));
@@ -286,7 +286,7 @@
 
       tl.set({}, {}, DUR);
       window.__timelines = window.__timelines || {};
-      window.__timelines["s02"] = tl;
+      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [10.93, 15.68], [18.16, 22.38], [26.3, 32.57], [36.17, 44.59]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 44.59, duration: 44.59, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s02"] = outer; } /* /warp */
     })();
   </script>
 </template>

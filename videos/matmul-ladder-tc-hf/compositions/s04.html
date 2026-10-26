@@ -5,7 +5,7 @@
     #root .s04-abs { position: absolute; }
     #root .s04-lbl { position: absolute; font-size: 32px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
     #root .kit-tbar .num span { position: absolute; left: 0; top: 0; }
-    /* 第 1、2 句：显存 → 3 个槽位 → Tensor Core */
+    /* 第 1、2 句：显存 → 3 个stage → Tensor Core */
     #root #s04-hbm { position: absolute; left: 96px; top: 340px; width: 240px; height: 220px; background: var(--paper2); border: 3px solid var(--hot); border-radius: 4px; }
     #root .s04-pile { position: absolute; width: 140px; height: 140px; background: var(--hotL); border: 2px solid var(--hot); border-radius: 2px; }
     #root .s04-slot { position: absolute; top: 356px; width: 200px; height: 200px; background: var(--paper2); border: 3px dashed var(--gray); border-radius: 4px; }
@@ -27,31 +27,31 @@
   <div id="root" data-composition-id="s04" data-width="1920" data-height="1080">
 
     <!-- 标题卡 -->
-    <div id="s04-title" class="clip s04-full" data-start="0.00" data-duration="27.79" data-track-index="1">
+    <div id="s04-title" class="clip s04-full" data-start="0.00" data-a-start="0.0" data-duration="31.35" data-a-duration="27.79" data-track-index="1">
       <div id="s04-chip" class="kit-chip">mm_mma&lt;3级&gt;</div>
-      <div id="s04-ttl" class="kit-title">第 3 步：<span class="acc">三级缓冲</span></div>
+      <div id="s04-ttl" class="kit-title">第 3 步：<span class="acc">multi-stage pipeline</span></div>
     </div>
 
     <!-- 耗时条：4.09 → 3.56（第 2 句开始后 3 s） -->
-    <div id="s04-tb" class="clip kit-tbar" data-start="1.00" data-duration="26.79" data-track-index="2">
+    <div id="s04-tb" class="clip kit-tbar" data-start="1.00" data-a-start="1.0" data-duration="30.35" data-a-duration="26.79" data-track-index="2">
       <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
       <div class="track"><div id="s04-tbghost" class="ghost"></div><div id="s04-tbfill" class="fill"></div><div class="peak"></div></div>
       <div id="s04-tbnum" class="num"><span id="s04-tbv1">4.09 ms</span><span id="s04-tbv2">3.56 ms</span></div>
       <div class="ref">虚线：规格峰值 1.11 ms</div>
     </div>
 
-    <!-- 第 1 句（1.0）：三个槽位，拷贝提前两块；第 2 句：算块 t 时，t+1、t+2 在路上 -->
-    <div id="s04-stage" class="clip s04-full" data-start="1.00" data-duration="12.24" data-track-index="3">
+    <!-- 第 1 句（1.0）：三个stage，拷贝提前两块；第 2 句：算块 t 时，t+1、t+2 在路上 -->
+    <div id="s04-stage" class="clip s04-full" data-start="1.00" data-a-start="1.0" data-duration="15.80" data-a-duration="12.24" data-track-index="3">
       <div id="s04-hbm">
         <div class="s04-pile" style="left:62px;top:28px"></div>
         <div class="s04-pile" style="left:48px;top:42px"></div>
         <div class="s04-pile" style="left:34px;top:56px"></div>
       </div>
       <div id="s04-hbml" class="s04-lbl" style="left:96px;top:288px;width:240px;text-align:center;font-size:36px;font-weight:700;color:var(--hot-t)">显存</div>
-      <div id="s04-sml" class="s04-lbl" style="left:440px;top:254px;width:680px;text-align:center;font-size:36px;font-weight:700;color:var(--use-t)">共享内存 · 3 个槽位</div>
-      <div id="s04-sn0" class="s04-sname" style="left:440px">槽 0</div>
-      <div id="s04-sn1" class="s04-sname" style="left:680px">槽 1</div>
-      <div id="s04-sn2" class="s04-sname" style="left:920px">槽 2</div>
+      <div id="s04-sml" class="s04-lbl" style="left:440px;top:254px;width:680px;text-align:center;font-size:36px;font-weight:700;color:var(--use-t)">shared memory · 3 个 stage</div>
+      <div id="s04-sn0" class="s04-sname" style="left:440px">stage 0</div>
+      <div id="s04-sn1" class="s04-sname" style="left:680px">stage 1</div>
+      <div id="s04-sn2" class="s04-sname" style="left:920px">stage 2</div>
       <div id="s04-sl0" class="s04-slot" style="left:440px"></div>
       <div id="s04-sl1" class="s04-slot" style="left:680px"></div>
       <div id="s04-sl2" class="s04-slot" style="left:920px"></div>
@@ -62,7 +62,7 @@
     </div>
 
     <!-- 第 2 句（6.22）：两行时间线，拷贝条与计算条重叠 -->
-    <div id="s04-tline" class="clip s04-full" data-start="6.22" data-duration="7.02" data-track-index="4">
+    <div id="s04-tline" class="clip s04-full" data-start="9.04" data-a-start="6.22" data-duration="7.76" data-a-duration="7.02" data-track-index="4">
       <div id="s04-ln1" class="s04-lname" style="top:690px">拷贝</div>
       <div id="s04-ln2" class="s04-lname" style="top:776px">计算</div>
       <div id="s04-lane1" class="s04-lane" style="top:690px"></div>
@@ -70,7 +70,7 @@
     </div>
 
     <!-- 第 3 句（12.74）：一条 mma.sync = 2048 次乘加，每个时钟要一条，还要另发 ldmatrix -->
-    <div id="s04-ins" class="clip s04-full" data-start="12.74" data-duration="15.05" data-track-index="5">
+    <div id="s04-ins" class="clip s04-full" data-start="16.30" data-a-start="12.74" data-duration="15.05" data-a-duration="15.05" data-track-index="5">
       <div id="s04-mmaw" class="s04-abs" style="left:0;top:0;width:700px;height:700px">
       <div id="s04-sq" class="s04-abs" style="left:96px;top:420px;width:200px;height:150px;background:var(--teal);border-radius:3px;line-height:150px;text-align:center;font-family:var(--mono);font-size:36px;font-weight:800;color:#fff">mma.sync</div>
       <div id="s04-sqk" class="s04-abs" style="left:96px;top:590px;white-space:nowrap;font-size:44px;font-weight:800;color:var(--ink)"><span style="font-family:var(--mono);color:var(--teal-t)">2048</span> 次乘加</div>
@@ -84,7 +84,7 @@
     </div>
 
     <!-- 第 4 句（23.3）：止于峰值的三分之一 -->
-    <div id="s04-end" class="clip s04-full" data-start="23.30" data-duration="4.49" data-track-index="6">
+    <div id="s04-end" class="clip s04-full" data-start="26.86" data-a-start="23.3" data-duration="4.49" data-a-duration="4.49" data-track-index="6">
       <div id="s04-third" class="s04-abs" style="left:700px;top:640px;white-space:nowrap"><span style="font-size:44px;font-weight:700;color:var(--ink)">峰值的 </span><span style="font-family:var(--mono);font-size:64px;font-weight:800;color:var(--hot-t);line-height:1">1/3</span></div>
       <div id="s04-bn" class="s04-abs" style="left:700px;top:760px"><span class="k-bottleneck" style="font-size:36px;padding:6px 14px">瓶颈：指令太小</span></div>
     </div>
@@ -190,11 +190,11 @@
       ft($("tc"), { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 1.9);
       fadeIn($("tcl"), 2.0, 0.4);
 
-      // 飞行：从显存起飞，落进槽位后由橙变绿
+      // 飞行：从显存起飞，落进stage后由橙变绿
       const fly = (n, t, d = 0.8) => {
         const s = SLOT(n % 3);
         ft(blks[n], { opacity: 0 }, { opacity: 1, duration: 0.15, ease: IN }, t);
-        // 走槽位下方的走廊，飞行中缩小，不压住别的槽
+        // 走stage下方的走廊，飞行中缩小，不压住别的槽
         tl.to(blks[n], { keyframes: { "0%": { x: HBM.x, y: HBM.y, scale: 0.75 }, "20%": { x: HBM.x, y: 470, scale: 0.4 }, "80%": { x: s.x, y: 470, scale: 0.4 }, "100%": { x: s.x, y: s.y, scale: 1 }, easeEach: "none" }, duration: d, ease: "power1.inOut" }, t);
         ft(blks[n], { backgroundColor: C_HOT }, { backgroundColor: C_USE, duration: 0.2, ease: "none" }, t + d);
         const lab = blks[n].querySelector("span");
@@ -213,7 +213,7 @@
         ft(blks[t], { backgroundColor: C_USE }, { backgroundColor: C_TEAL, duration: 0.2, ease: "none" }, ts);
         for (let q = 0; q < 3; q++) {
           const p = pkts[t * 3 + q], tq = ts + 0.1 + q * 0.25;
-          // 从槽底出发，沿槽位下方的走廊进 Tensor Core
+          // 从槽底出发，沿stage下方的走廊进 Tensor Core
           gsap.set(p, { x: s.x + 70, y: s.y + 130 });
           ft(p, { opacity: 0 }, { opacity: 1, duration: 0.05, ease: "none" }, tq);
           tl.to(p, { keyframes: { "0%": { x: s.x + 70, y: s.y + 130 }, "20%": { x: s.x + 70, y: 590 }, "85%": { x: 1250, y: 590 }, "100%": { x: 1280, y: 510 }, easeEach: "none" }, duration: 0.45, ease: "power1.in" }, tq);
@@ -221,7 +221,7 @@
           ft($("tc"), { backgroundColor: C_TEAL }, { backgroundColor: C_TEALD, duration: 0.1, ease: "none", yoyo: true, repeat: 1 }, tq + 0.42);
         }
         if (t + 2 < NB) fly(t + 2, ts);
-        // 算完：槽位空出
+        // 算完：stage空出
         ft(blks[t], { opacity: 1, scale: 1 }, { opacity: 0, scale: 0.6, duration: 0.25, ease: OUT }, ts + 0.95);
       }
       // 时间线：随主循环往右展开
@@ -267,7 +267,7 @@
 
       tl.set({}, {}, DUR);
       window.__timelines = window.__timelines || {};
-      window.__timelines["s04"] = tl;
+      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [6.22, 9.04], [12.74, 16.3], [23.3, 26.86], [27.79, 31.35]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 31.35, duration: 31.35, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s04"] = outer; } /* /warp */
     })();
   </script>
 </template>

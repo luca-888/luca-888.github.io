@@ -1,4 +1,4 @@
-// 系列母题“硬件塔”：显存 HBM → L2 → 共享内存 → 寄存器 → Tensor Core 五层薄板自下而上，SM 内三层虚线框住。
+// 系列母题“硬件塔”：显存 HBM → L2 → shared memory → 寄存器 → Tensor Core 五层薄板自下而上，SM 内三层虚线框住。
 // 新建视频时复制到 assets/kit/tower.js，由 index.html 引入。用法（在幕的脚本里，建一次，之后只动画它返回的元素）：
 //   const T = kitTower(document.getElementById("s03-tower"), { layers: [...可选，覆盖默认层...] });
 //   T.layer.smem                      —— 某一层的 DOM 元素（可淡入、标橙）
@@ -10,7 +10,7 @@
   const DEFAULT = [
     { id: "tc", name: "Tensor Core", note: "", color: "var(--teal)" },
     { id: "reg", name: "寄存器", note: "", color: "var(--purple)" },
-    { id: "smem", name: "共享内存", note: "", color: "var(--use)" },
+    { id: "smem", name: "shared memory", note: "", color: "var(--use)" },
     { id: "l2", name: "L2", note: "", color: "var(--blue)" },
     { id: "hbm", name: "显存 HBM", note: "", color: "var(--hot)" },
   ];

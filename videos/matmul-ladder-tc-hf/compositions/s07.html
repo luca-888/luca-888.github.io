@@ -48,13 +48,13 @@
   <div id="root" data-composition-id="s07" data-width="1920" data-height="1080">
 
     <!-- 0–1.0 标题卡；之后缩到左上角常驻 -->
-    <div id="s07-title" class="clip s07-full" data-start="0.00" data-duration="25.05" data-track-index="1">
+    <div id="s07-title" class="clip s07-full" data-start="0.00" data-a-start="0.0" data-duration="25.05" data-a-duration="25.05" data-track-index="1">
       <div id="s07-chip" class="kit-chip">wgmma_l2</div>
       <div id="s07-ttl" class="kit-title">第 6 步：<span class="acc">tile 发放顺序</span></div>
     </div>
 
     <!-- 耗时条：2.29 → 1.49（20.48） -->
-    <div id="s07-tb" class="clip kit-tbar" data-start="1.00" data-duration="24.05" data-track-index="2">
+    <div id="s07-tb" class="clip kit-tbar" data-start="1.00" data-a-start="1.0" data-duration="24.05" data-a-duration="24.05" data-track-index="2">
       <div id="s07-tbin" class="s07-in">
         <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
         <div class="track"><div id="s07-tbghost" class="ghost"></div><div id="s07-tbfill" class="fill"></div><div class="peak"></div></div>
@@ -65,7 +65,7 @@
     </div>
 
     <!-- 1.0 tile 图：按行发放 → 16 行一组；6.93 退场；14.08 以 0.64 倍回到左上 -->
-    <div id="s07-mapc" class="clip s07-full" data-start="1.00" data-duration="19.90" data-track-index="3" data-layout-allow-overlap>
+    <div id="s07-mapc" class="clip s07-full" data-start="1.00" data-a-start="1.0" data-duration="19.90" data-a-duration="19.9" data-track-index="3" data-layout-allow-overlap>
       <div id="s07-mapin" class="s07-full">
         <div id="s07-map">
           <div id="s07-wstrip"></div>
@@ -79,7 +79,7 @@
     </div>
 
     <!-- 6.93 按行发放：W₀ 等不到 tile 32 就被挤出 L2 -->
-    <div id="s07-ev" class="clip s07-full" data-start="6.93" data-duration="7.55" data-track-index="5" data-layout-allow-overlap>
+    <div id="s07-ev" class="clip s07-full" data-start="6.93" data-a-start="6.93" data-duration="7.55" data-a-duration="7.55" data-track-index="5" data-layout-allow-overlap>
       <div id="s07-evin" class="s07-full">
         <div id="s07-l2n" class="s07-abs" style="left:96px;top:406px;font-size:48px;font-weight:800;color:var(--blue-t)">L2</div>
         <div id="s07-l2"></div>
@@ -94,7 +94,7 @@
     </div>
 
     <!-- 14.08 L2 扇出：一块 W 进 L2，被 16 个 tile 读取（停到幕尾） -->
-    <div id="s07-fan" class="clip s07-full" data-start="14.08" data-duration="10.97" data-track-index="6" data-layout-allow-overlap>
+    <div id="s07-fan" class="clip s07-full" data-start="14.08" data-a-start="14.08" data-duration="10.97" data-a-duration="10.97" data-track-index="6" data-layout-allow-overlap>
       <div id="s07-fanin" class="s07-full">
         <div id="s07-fts" class="s07-full"></div>
         <svg id="s07-fsvg" class="s07-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none"></svg>
@@ -104,7 +104,7 @@
     </div>
 
     <!-- 20.48 显存读取 6.6 → 1.3 GB -->
-    <div id="s07-res" class="clip s07-full" data-start="20.48" data-duration="4.57" data-track-index="7">
+    <div id="s07-res" class="clip s07-full" data-start="20.48" data-a-start="20.48" data-duration="4.57" data-a-duration="4.57" data-track-index="7">
       <div id="s07-rt" class="s07-abs" style="left:96px;top:330px;font-size:48px;font-weight:800;color:var(--ink);white-space:nowrap">显存读取</div>
       <div id="s07-b1g"></div>
       <div id="s07-b1"></div>
@@ -166,7 +166,7 @@
         c.className = "s07-cap"; c.style.left = TX(i) + "px";
         $("tiles").appendChild(c); return c;
       });
-      const X0 = 308, PITCH = 53, SLOTS = 20;   // 20 个槽位，新块进槽 0，过槽 19 被挤出
+      const X0 = 308, PITCH = 53, SLOTS = 20;   // 20 个stage，新块进stage 0，过stage 19 被挤出
       const S = 9.0, DT = 0.09;                 // tile i 在 S + i·DT 开始
       const STOP = S + 32 * DT;                 // tile 32 开始时传送带停住
       const wq = [];
@@ -309,7 +309,7 @@
 
       tl.set({}, {}, 25.05);
       window.__timelines = window.__timelines || {};
-      window.__timelines["s07"] = tl;
+      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [6.93, 6.93], [14.08, 14.08], [20.48, 20.48], [25.05, 25.05]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 25.05, duration: 25.05, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s07"] = outer; } /* /warp */
     })();
   </script>
 </template>

@@ -40,7 +40,7 @@
   <div id="root" data-composition-id="s01" data-width="1920" data-height="1080">
 
     <!-- 0.8 第 1 句：H100 芯片示意（SM 上下两半，中间 L2，两侧显存） -->
-    <div id="s01-A" class="clip s01-full" data-start="0.00" data-duration="10.30" data-track-index="1">
+    <div id="s01-A" class="clip s01-full" data-start="0.00" data-a-start="0.0" data-duration="10.19" data-a-duration="10.3" data-track-index="1">
       <div id="s01-Ain" class="s01-full">
         <div id="s01-die"></div>
         <div id="s01-cells"></div>
@@ -58,21 +58,21 @@
       </div>
     </div>
 
-    <!-- 9.36 第 2 句：放大一个 SM，4 个分区各有一个 Tensor Core，共用共享内存 -->
-    <div id="s01-B" class="clip s01-full" data-start="9.40" data-duration="7.40" data-track-index="2">
+    <!-- 9.36 第 2 句：放大一个 SM，4 个分区各有一个 Tensor Core，共用shared memory -->
+    <div id="s01-B" class="clip s01-full" data-start="9.40" data-a-start="9.4" data-duration="6.57" data-a-duration="7.4" data-track-index="2">
       <div id="s01-Bin" class="s01-full">
         <div id="s01-smw">
           <div id="s01-p0" class="s01-part" style="left:30px;top:70px"><div class="s01-tcb">Tensor Core</div></div>
           <div id="s01-p1" class="s01-part" style="left:510px;top:70px"><div class="s01-tcb">Tensor Core</div></div>
           <div id="s01-p2" class="s01-part" style="left:30px;top:330px"><div class="s01-tcb">Tensor Core</div></div>
           <div id="s01-p3" class="s01-part" style="left:510px;top:330px"><div class="s01-tcb">Tensor Core</div></div>
-          <div id="s01-smem">共享内存</div>
+          <div id="s01-smem">shared memory</div>
         </div>
       </div>
     </div>
 
     <!-- 16.59 第 3 句：FP32 一条指令一个乘加；Tensor Core 一条指令一整块 -->
-    <div id="s01-C" class="clip s01-full" data-start="16.50" data-duration="6.20" data-track-index="3">
+    <div id="s01-C" class="clip s01-full" data-start="15.68" data-a-start="16.5" data-duration="6.19" data-a-duration="6.2" data-track-index="3">
       <div id="s01-Cin" class="s01-full">
         <div id="s01-cl1" class="s01-t" style="left:200px;top:250px;font-size:44px">FP32 单元</div>
         <div id="s01-cl2" class="s01-t" style="left:200px;top:390px;font-family:var(--mono);font-size:88px;font-weight:800">a×b+c</div>
@@ -87,7 +87,7 @@
     </div>
 
     <!-- 22.59 第 4 句：每 SM 每时钟 128 对 2048 次乘加，同样点距，面积 16 倍 -->
-    <div id="s01-D" class="clip s01-full" data-start="22.50" data-duration="5.85" data-track-index="4">
+    <div id="s01-D" class="clip s01-full" data-start="21.67" data-a-start="22.5" data-duration="5.85" data-a-duration="5.85" data-track-index="4">
       <div id="s01-Din" class="s01-full">
         <div id="s01-dl1" class="s01-t" style="left:200px;top:300px;font-size:44px">FP32：128</div>
         <div id="s01-dots1"></div>
@@ -98,15 +98,15 @@
       </div>
     </div>
 
-    <!-- 28.25 第 5 句：数据从显存经 L2、共享内存送到 Tensor Core -->
-    <div id="s01-E" class="clip s01-full" data-start="28.20" data-duration="10.60" data-track-index="5">
+    <!-- 28.25 第 5 句：数据从显存经 L2、shared memory送到 Tensor Core -->
+    <div id="s01-E" class="clip s01-full" data-start="27.37" data-a-start="28.2" data-duration="10.95" data-a-duration="10.6" data-track-index="5">
       <div id="s01-Ein" class="s01-full">
         <div id="s01-tower"><div id="s01-blk"></div></div>
       </div>
     </div>
 
     <!-- 35.4 第 6 句：第 1 版 Tensor Core 只有 9% 的时间在算；耗时条出现并停靠右上角 -->
-    <div id="s01-F" class="clip s01-full" data-start="38.60" data-duration="9.38" data-track-index="6">
+    <div id="s01-F" class="clip s01-full" data-start="38.12" data-a-start="38.6" data-duration="9.38" data-a-duration="9.38" data-track-index="6">
       <div id="s01-Fin" class="s01-full">
         <div id="s01-bhd">第 1 版：Tensor Core 的时间</div>
         <div id="s01-btrk"></div>
@@ -184,10 +184,10 @@
       ft($("x16"), { opacity: 0, scale: 0.7, transformOrigin: "0% 50%" }, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.6)" }, 25.9);
       fadeOut($("Din"), 28.0);
 
-      // ---------- 镜头 E：显存 → L2 → 共享内存 → Tensor Core ----------
+      // ---------- 镜头 E：显存 → L2 → shared memory → Tensor Core ----------
       const T = kitTower($("tower"), { inSM: 0, layers: [
         { id: "tc", name: "Tensor Core", note: "", color: "var(--teal)" },
-        { id: "smem", name: "共享内存", note: "", color: "var(--use)" },
+        { id: "smem", name: "shared memory", note: "", color: "var(--use)" },
         { id: "l2", name: "L2", note: "", color: "var(--blue)" },
         { id: "hbm", name: "显存", note: "", color: "var(--hot)" },
       ] });
@@ -230,7 +230,7 @@
       ft($("tb"), BIG, { x: 0, y: 0, scale: 1, duration: 0.8, ease: MOVE }, 47.05);
 
       tl.set({}, {}, 47.98);
-      window.__timelines["s01"] = tl;
+      /* warp */ { const P = [[0.0, 0.0], [0.8, 0.8], [9.36, 9.36], [16.59, 15.76], [22.59, 21.76], [28.25, 27.42], [35.4, 34.92], [47.98, 47.5]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 47.5, duration: 47.5, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s01"] = outer; } /* /warp */
     })();
   </script>
 </template>

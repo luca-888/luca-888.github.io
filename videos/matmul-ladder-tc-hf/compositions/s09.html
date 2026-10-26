@@ -1,9 +1,9 @@
 <template>
   <!--
-    s09 第 8 步：TMA 写回。节拍（幕内秒）1.0 / 6.37 / 14.22 / 19.77，幕长 25.27。
-    句 1：寄存器 → 共享内存：结果块进共享内存后变成 8 × 8 小格，每行的第 0 块按 c ⊕ r 斜着错开（换位）。
+    s09 第 8 步：TMA store。节拍（幕内秒）1.0 / 6.37 / 14.22 / 19.77，幕长 25.27。
+    句 1：寄存器 → shared memory：结果块进shared memory后变成 8 × 8 小格，每行的第 0 块按 c ⊕ r 斜着错开（换位）。
     句 2：一个线程发 TMA，整块写回显存（粗箭头）；10.26 下方时间线：写回移到 TMA 一轨，与下一块计算重叠。
-    句 3：共享内存预算条（5 px/KB）：4 级缓冲 × 48 KB + 结果 64 KB = 256 KB 超出 227 KB 上限 → 减为 3 级，208 KB。
+    句 3：shared memory预算条（5 px/KB）：4 级缓冲 × 48 KB + 结果 64 KB = 256 KB 超出 227 KB 上限 → 减为 3 级，208 KB。
     句 4：耗时条 1.45 → 1.41；主画面一行“1.41 ms · cuBLAS 的 99.5%”。
     画面只留部件名与关键数字（≥ 36 px），不写说明文字。
   -->
@@ -25,20 +25,20 @@
     #root .s09-blk.c { background: var(--teal-t); }
     #root .s09-blk.w { background: var(--purple); }
     #root .s09-tk { position: absolute; left: 96px; font-size: 36px; font-weight: 700; color: var(--ink); white-space: nowrap; line-height: 72px; }
-    /* 共享内存预算 */
+    /* shared memory预算 */
     #root .s09-seg { position: absolute; top: 560px; height: 120px; line-height: 120px; text-align: center; font-size: 36px; font-weight: 700; color: #fff; white-space: nowrap; border-right: 4px solid var(--paper); }
     #root .s09-tot { position: absolute; left: 1400px; top: 560px; font-family: var(--mono); font-size: 52px; font-weight: 800; line-height: 120px; white-space: nowrap; }
   </style>
   <div id="root" data-composition-id="s09" data-width="1920" data-height="1080">
 
     <!-- 0–1.0 标题卡；之后缩到左上角常驻 -->
-    <div id="s09-title" class="clip s09-full" data-start="0.00" data-duration="25.27" data-track-index="1">
+    <div id="s09-title" class="clip s09-full" data-start="0.00" data-a-start="0.0" data-duration="27.51" data-a-duration="25.27" data-track-index="1">
       <div id="s09-chip" class="kit-chip">wgmma_tstore</div>
-      <div id="s09-ttl" class="kit-title">第 8 步：<span class="acc">TMA 写回</span></div>
+      <div id="s09-ttl" class="kit-title">第 8 步：<span class="acc">TMA store</span></div>
     </div>
 
     <!-- 耗时条：1.45 → 1.41（19.77） -->
-    <div id="s09-tb" class="clip kit-tbar" data-start="1.00" data-duration="24.27" data-track-index="2">
+    <div id="s09-tb" class="clip kit-tbar" data-start="1.00" data-a-start="1.0" data-duration="26.51" data-a-duration="24.27" data-track-index="2">
       <div id="s09-tbin" class="s09-in">
         <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
         <div class="track"><div id="s09-tbghost" class="ghost"></div><div id="s09-tbfill" class="fill"></div><div class="peak"></div></div>
@@ -48,11 +48,11 @@
       </div>
     </div>
 
-    <!-- 1.0 写回路径：寄存器 → 共享内存（换位）→ 显存 -->
-    <div id="s09-path" class="clip s09-full" data-start="1.00" data-duration="13.62" data-track-index="3" data-layout-allow-overlap>
+    <!-- 1.0 写回路径：寄存器 → shared memory（换位）→ 显存 -->
+    <div id="s09-path" class="clip s09-full" data-start="1.00" data-a-start="1.0" data-duration="14.89" data-a-duration="13.62" data-track-index="3" data-layout-allow-overlap>
       <div id="s09-pathin" class="s09-full">
         <div id="s09-breg" class="s09-box" style="left:96px;width:400px;border-color:var(--purple)"><div class="s09-bn" style="color:var(--purple-t)">寄存器</div></div>
-        <div id="s09-bsm" class="s09-box" style="left:760px;width:420px;border-color:var(--use)"><div class="s09-bn" style="color:var(--use-t)">共享内存</div></div>
+        <div id="s09-bsm" class="s09-box" style="left:760px;width:420px;border-color:var(--use)"><div class="s09-bn" style="color:var(--use-t)">shared memory</div></div>
         <div id="s09-bhb" class="s09-box" style="left:1420px;width:400px;border-color:var(--hot)"><div class="s09-bn" style="color:var(--hot-t)">显存</div></div>
         <svg class="s09-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none">
           <path id="s09-a1" d="M 500 440 H 750" style="stroke:var(--purple)" stroke-width="5" />
@@ -69,7 +69,7 @@
     </div>
 
     <!-- 10.26 时间线：写回移到 TMA 一轨，与下一块计算重叠 -->
-    <div id="s09-tl" class="clip s09-full" data-start="10.20" data-duration="4.42" data-track-index="4">
+    <div id="s09-tl" class="clip s09-full" data-start="11.08" data-a-start="10.2" data-duration="4.80" data-a-duration="4.42" data-track-index="4">
       <div id="s09-tlin" class="s09-full">
         <div class="s09-tk" style="top:636px">Tensor Core</div>
         <div class="s09-tk" style="top:746px;font-family:var(--mono)">TMA</div>
@@ -83,13 +83,13 @@
       </div>
     </div>
 
-    <!-- 14.22 共享内存预算：4 级 + 结果区超出 227 KB → 3 级，208 KB（停到幕尾） -->
-    <div id="s09-bud" class="clip s09-full" data-start="14.22" data-duration="11.05" data-track-index="5" data-layout-allow-overlap>
-      <div id="s09-bh" class="s09-abs" style="left:96px;top:420px;font-size:44px;font-weight:800;color:var(--use-t);white-space:nowrap">共享内存</div>
-      <div id="s09-g0" class="s09-seg" style="left:96px;width:240px;background:var(--use)">缓冲</div>
-      <div id="s09-g1" class="s09-seg" style="left:336px;width:240px;background:var(--use)">缓冲</div>
-      <div id="s09-g2" class="s09-seg" style="left:576px;width:240px;background:var(--use)">缓冲</div>
-      <div id="s09-g3" class="s09-seg" style="left:816px;width:240px;background:var(--use)">缓冲</div>
+    <!-- 14.22 shared memory预算：4 级 + 结果区超出 227 KB → 3 级，208 KB（停到幕尾） -->
+    <div id="s09-bud" class="clip s09-full" data-start="15.41" data-a-start="14.22" data-duration="12.10" data-a-duration="11.05" data-track-index="5" data-layout-allow-overlap>
+      <div id="s09-bh" class="s09-abs" style="left:96px;top:420px;font-size:44px;font-weight:800;color:var(--use-t);white-space:nowrap">shared memory</div>
+      <div id="s09-g0" class="s09-seg" style="left:96px;width:240px;background:var(--use)">stage</div>
+      <div id="s09-g1" class="s09-seg" style="left:336px;width:240px;background:var(--use)">stage</div>
+      <div id="s09-g2" class="s09-seg" style="left:576px;width:240px;background:var(--use)">stage</div>
+      <div id="s09-g3" class="s09-seg" style="left:816px;width:240px;background:var(--use)">stage</div>
       <div id="s09-gr" class="s09-seg" style="left:1056px;width:320px;background:var(--purple)">结果 64 KB</div>
       <div id="s09-ov" class="s09-abs" style="left:1231px;top:560px;width:145px;height:120px;background:rgba(229,50,45,0.6)"></div>
       <div id="s09-lim" class="s09-abs" style="left:1229px;top:510px;height:220px;border-left:5px dashed var(--red)"></div>
@@ -99,7 +99,7 @@
     </div>
 
     <!-- 19.77 最终结果一行 -->
-    <div id="s09-fin" class="clip s09-full" data-start="19.77" data-duration="5.50" data-track-index="6">
+    <div id="s09-fin" class="clip s09-full" data-start="22.01" data-a-start="19.77" data-duration="5.50" data-a-duration="5.5" data-track-index="6">
       <div id="s09-f1" class="s09-abs" style="left:96px;top:780px;font-size:60px;font-weight:800;color:var(--ink);white-space:nowrap"><span style="font-family:var(--mono)">1.41 ms</span></div>
       <div id="s09-f2" class="s09-abs" style="left:372px;top:780px;font-size:60px;font-weight:800;color:var(--ink);white-space:nowrap">· cuBLAS 的 <span style="font-family:var(--mono);color:var(--teal-t)">99.5%</span></div>
     </div>
@@ -136,7 +136,7 @@
       gsap.set($("tbin"), { opacity: 0 });
 
       // ---------- 初始状态 ----------
-      // 结果块：寄存器中心 (296, 440) → 共享内存小格处 → 显存中心 (1620, 440)
+      // 结果块：寄存器中心 (296, 440) → shared memory小格处 → 显存中心 (1620, 440)
       const RY = 390;
       gsap.set([$("chip"), $("ttl")], { opacity: 0 });
       gsap.set($("pathin"), { y: 180 });
@@ -162,7 +162,7 @@
       ft($("bsm"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 2.0);
       ft($("bhb"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 2.15);
 
-      // ---------- 2.98 结果换位写入共享内存 ----------
+      // ---------- 2.98 结果换位写入shared memory ----------
       ft($("a1"), { strokeDashoffset: $("a1").dataset.len }, { strokeDashoffset: 0, duration: 0.6, ease: MOVE }, 3.1);
       fadeIn($("a1h"), 3.6, 0.2);
       ft($("r0"), { x: 211 }, { x: 790, duration: 0.9, ease: MOVE }, 3.15);
@@ -191,7 +191,7 @@
       ft($("w2"), { x: 0, y: 0 }, { x: -240, y: 110, duration: 0.7, ease: MOVE }, 11.7);
       ft($("c3"), { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 12.2);
 
-      // ---------- 14.22 共享内存预算：4 级缓冲 + 结果区 → 超出上限 ----------
+      // ---------- 14.22 shared memory预算：4 级缓冲 + 结果区 → 超出上限 ----------
       fadeOut([$("pathin"), $("tlin")], 14.22);
       fadeIn($("bh"), 14.5);
       ft($("lim"), { opacity: 0, scaleY: 0.3, transformOrigin: "50% 50%" }, { opacity: 1, scaleY: 1, duration: 0.5, ease: IN }, 14.7);
@@ -220,7 +220,7 @@
 
       tl.set({}, {}, 25.27);
       window.__timelines = window.__timelines || {};
-      window.__timelines["s09"] = tl;
+      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [6.37, 6.96], [14.22, 15.41], [19.77, 22.01], [25.27, 27.51]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 27.51, duration: 27.51, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s09"] = outer; } /* /warp */
     })();
   </script>
 </template>

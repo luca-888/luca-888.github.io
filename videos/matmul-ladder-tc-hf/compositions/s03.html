@@ -31,13 +31,13 @@
   <div id="root" data-composition-id="s03" data-width="1920" data-height="1080">
 
     <!-- 标题卡 -->
-    <div id="s03-title" class="clip s03-full" data-start="0.00" data-duration="31.93" data-track-index="1">
+    <div id="s03-title" class="clip s03-full" data-start="0.00" data-a-start="0.0" data-duration="38.42" data-a-duration="31.93" data-track-index="1">
       <div id="s03-chip" class="kit-chip">mm_mma</div>
-      <div id="s03-ttl" class="kit-title">第 2 步：<span class="acc">换位存放</span> + cp.async</div>
+      <div id="s03-ttl" class="kit-title">第 2 步：<span class="acc">swizzle</span> + cp.async</div>
     </div>
 
     <!-- 耗时条：11.78 → 4.09（第 4 句开始后 3 s） -->
-    <div id="s03-tb" class="clip kit-tbar" data-start="1.00" data-duration="30.93" data-track-index="2">
+    <div id="s03-tb" class="clip kit-tbar" data-start="1.00" data-a-start="1.0" data-duration="37.42" data-a-duration="30.93" data-track-index="2">
       <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
       <div class="track"><div id="s03-tbghost" class="ghost"></div><div id="s03-tbfill" class="fill"></div><div class="peak"></div></div>
       <div id="s03-tbnum" class="num"><span id="s03-tbv1">11.78 ms</span><span id="s03-tbv2">4.09 ms</span></div>
@@ -45,24 +45,24 @@
     </div>
 
     <!-- 第 1 句（1.0）：一行加宽到 128 字节，正好 32 个 bank -->
-    <div id="s03-row" class="clip s03-full" data-start="1.00" data-duration="5.82" data-track-index="3">
+    <div id="s03-row" class="clip s03-full" data-start="1.00" data-a-start="1.0" data-duration="5.82" data-a-duration="5.82" data-track-index="3">
       <div id="s03-rowh" class="s03-abs" style="left:120px;top:380px;font-size:44px;font-weight:800;color:var(--ink);white-space:nowrap">一行 <span class="acc">128 字节</span> = <span class="acc">32 个 bank</span></div>
       <div id="s03-bigrow" class="s03-abs" style="left:120px;top:520px;width:1680px;height:170px"></div>
     </div>
 
     <!-- 第 2 句（6.22）：8 行的同一块落在同一组；第 3 句（12.22）：c ⊕ r 换位，错开到 8 组 -->
-    <div id="s03-grid" class="clip s03-full" data-start="6.22" data-duration="14.09" data-track-index="4">
+    <div id="s03-grid" class="clip s03-full" data-start="6.22" data-a-start="6.22" data-duration="18.88" data-a-duration="14.09" data-track-index="4">
       <div id="s03-heads" class="s03-full"></div>
       <div id="s03-rows" class="s03-full"></div>
       <div id="s03-cells" data-layout-allow-overlap class="s03-abs" style="left:230px;top:340px;width:896px;height:512px"></div>
       <div id="s03-colo" class="s03-abs" style="left:224px;top:334px;width:116px;height:516px;border:5px solid var(--red)"></div>
-      <div id="s03-rk1" class="s03-rk" style="top:420px"><div class="k">直接存放</div><div class="v acc-r">8<small> 轮</small></div></div>
-      <div id="s03-rk2" class="s03-rk" style="top:620px"><div class="k">换位后</div><div class="v acc-g">1<small> 轮</small></div></div>
+      <div id="s03-rk1" class="s03-rk" style="top:420px"><div class="k">不 swizzle</div><div class="v acc-r">8<small> 轮</small></div></div>
+      <div id="s03-rk2" class="s03-rk" style="top:620px"><div class="k">swizzle 后</div><div class="v acc-g">1<small> 轮</small></div></div>
       <div id="s03-xor" class="s03-abs" style="left:1250px;top:300px;white-space:nowrap;font-size:44px;font-weight:700;color:var(--ink)">块 c → 组 <span style="font-family:var(--mono);font-weight:800;color:var(--use-t)">c ⊕ r</span></div>
     </div>
 
-    <!-- 第 4 句（19.81）：cp.async，L2 直达共享内存 -->
-    <div id="s03-tw" class="clip s03-full" data-start="19.81" data-duration="6.50" data-track-index="5">
+    <!-- 第 4 句（19.81）：cp.async，L2 直达shared memory -->
+    <div id="s03-tw" class="clip s03-full" data-start="24.45" data-a-start="19.81" data-duration="8.35" data-a-duration="6.5" data-track-index="5">
       <div id="s03-twin" class="s03-full">
       <div id="s03-tower"></div>
       <svg class="s03-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" stroke-linejoin="round">
@@ -78,7 +78,7 @@
     </div>
 
     <!-- 第 5 句（25.81）：每一块仍要等拷贝完成 -->
-    <div id="s03-tl" class="clip s03-full" data-start="25.81" data-duration="6.12" data-track-index="7">
+    <div id="s03-tl" class="clip s03-full" data-start="32.30" data-a-start="25.81" data-duration="6.12" data-a-duration="6.12" data-track-index="7">
       <div class="s03-lname" style="top:440px">线程</div>
       <div class="s03-lname" style="top:600px">Tensor Core</div>
       <div id="s03-lane1" class="s03-lane" style="top:440px">
@@ -254,7 +254,7 @@
 
       tl.set({}, {}, DUR);
       window.__timelines = window.__timelines || {};
-      window.__timelines["s03"] = tl;
+      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [6.22, 6.22], [12.22, 12.22], [19.81, 24.45], [25.81, 32.3], [31.93, 38.42]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 38.42, duration: 38.42, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s03"] = outer; } /* /warp */
     })();
   </script>
 </template>

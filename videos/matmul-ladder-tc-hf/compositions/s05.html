@@ -27,7 +27,7 @@
     #root #s05-tower { position: absolute; left: 1180px; top: 300px; width: 640px; height: 620px; }
     #root .s05-sm { position: absolute; width: 72px; height: 72px; }
     #root .s05-sm i { position: absolute; width: 8px; height: 8px; }
-    /* mbarrier：一个槽位 8 格（每格 4 KB），计数器 */
+    /* mbarrier：一个stage 8 格（每格 4 KB），计数器 */
     #root .s05-cell { position: absolute; top: 420px; width: 112px; height: 100px; border: 3px dashed var(--gray); border-radius: 2px; }
     #root .s05-chk { position: absolute; top: 420px; width: 112px; height: 100px; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 30px; font-weight: 800; }
     #root #s05-ctr { position: absolute; left: 96px; top: 570px; width: 984px; height: 124px; background: var(--paper2); border: 3px solid var(--line); border-radius: 4px; overflow: hidden; }
@@ -41,13 +41,13 @@
   <div id="root" data-composition-id="s05" data-width="1920" data-height="1080">
 
     <!-- 0–1.0 标题卡；之后缩到左上角常驻 -->
-    <div id="s05-title" class="clip s05-full" data-start="0.00" data-duration="37.41" data-track-index="1">
+    <div id="s05-title" class="clip s05-full" data-start="0.00" data-a-start="0.0" data-duration="41.79" data-a-duration="37.41" data-track-index="1">
       <div id="s05-chip" class="kit-chip">mm_wgmma</div>
       <div id="s05-ttl" class="kit-title">第 4 步：<span class="acc">TMA、mbarrier 与 wgmma</span></div>
     </div>
 
     <!-- 耗时条：1.0 以 3.56 出现；23.28 缩到 2.27 -->
-    <div id="s05-tb" class="clip kit-tbar" data-start="1.00" data-duration="36.41" data-track-index="2">
+    <div id="s05-tb" class="clip kit-tbar" data-start="1.00" data-a-start="1.0" data-duration="40.79" data-a-duration="36.41" data-track-index="2">
       <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
       <div class="track"><div id="s05-tbghost" class="ghost"></div><div id="s05-tbfill" class="fill"></div><div class="peak"></div></div>
       <div id="s05-tbnum" class="num"><span id="s05-tbo" class="s05-nv">3.56 ms</span><span id="s05-tbn" class="s05-nv">2.27 ms</span></div>
@@ -55,24 +55,24 @@
     </div>
 
     <!-- 1.0 三个名字（大字）；4.29 TMA 缩成小标题；10.73 mbarrier；18.28 wgmma -->
-    <div id="s05-names" class="clip s05-full" data-start="1.00" data-duration="28.92" data-track-index="3" data-layout-allow-overlap>
+    <div id="s05-names" class="clip s05-full" data-start="1.00" data-a-start="1.0" data-duration="33.30" data-a-duration="28.92" data-track-index="3" data-layout-allow-overlap>
       <div id="s05-nt" class="s05-name" style="top:250px">TMA</div>
       <div id="s05-nm" class="s05-name" style="top:470px;color:var(--use-t)">mbarrier</div>
       <div id="s05-nw" class="s05-name" style="top:690px;color:var(--tealD)">wgmma</div>
     </div>
 
     <!-- 4.29 warpgroup 点阵：TMA 只用 1 个线程；18.28 起 4 行全部变 teal = 4 个 warp -->
-    <div id="s05-wg" class="clip s05-full" data-start="4.29" data-duration="25.63" data-track-index="4" data-layout-allow-overlap>
+    <div id="s05-wg" class="clip s05-full" data-start="4.29" data-a-start="4.29" data-duration="30.01" data-a-duration="25.63" data-track-index="4" data-layout-allow-overlap>
       <div id="s05-wgf"></div>
       <div id="s05-dots"></div>
       <div id="s05-d1" class="s05-lbl" style="left:840px;top:420px;font-size:36px;color:var(--use-t)">1 个线程</div>
       <div id="s05-d2" class="s05-lbl s05-mono" style="left:840px;top:420px;font-size:40px;color:var(--teal-t)">warpgroup</div>
     </div>
 
-    <!-- 4.29 TMA：显存里的一整块 → 共享内存，落下时换位 -->
-    <div id="s05-tma" class="clip s05-full" data-start="4.29" data-duration="6.84" data-track-index="5" data-layout-allow-overlap>
+    <!-- 4.29 TMA：显存里的一整块 → shared memory，落下时换位 -->
+    <div id="s05-tma" class="clip s05-full" data-start="4.29" data-a-start="4.29" data-duration="10.55" data-a-duration="6.84" data-track-index="5" data-layout-allow-overlap>
       <div id="s05-bl1" class="s05-lbl" style="left:96px;top:524px;font-size:36px;color:var(--hot-t)">显存</div>
-      <div id="s05-bl2" class="s05-lbl" style="left:580px;top:524px;font-size:36px;color:var(--use-t)">共享内存</div>
+      <div id="s05-bl2" class="s05-lbl" style="left:580px;top:524px;font-size:36px;color:var(--use-t)">shared memory</div>
       <div id="s05-src" class="s05-big" style="left:96px"></div>
       <svg id="s05-arr" class="s05-abs" style="left:0;top:0" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none">
         <path id="s05-arrp" d="M386 716 H548" style="stroke:var(--hot)" stroke-width="6" />
@@ -82,16 +82,16 @@
       <div id="s05-cpy" class="s05-big" style="left:96px"></div>
     </div>
 
-    <!-- 4.29 硬件塔：TMA 显存 → L2 → 共享内存；26.8 共享内存 → Tensor Core，不经寄存器 -->
-    <div id="s05-tw" class="clip s05-full" data-start="4.29" data-duration="25.63" data-track-index="6" data-layout-allow-overlap>
+    <!-- 4.29 硬件塔：TMA 显存 → L2 → shared memory；26.8 shared memory → Tensor Core，不经寄存器 -->
+    <div id="s05-tw" class="clip s05-full" data-start="4.29" data-a-start="4.29" data-duration="30.01" data-a-duration="25.63" data-track-index="6" data-layout-allow-overlap>
       <div id="s05-tower"></div>
       <div id="s05-regx" class="s05-abs" data-layout-allow-occlusion style="left:1194px;top:444px;width:462px;height:84px;background:var(--paper)"></div>
       <div id="s05-tb1" class="s05-sm"></div>
     </div>
 
-    <!-- 10.73 mbarrier：一个槽位 32 KB 分 8 批到达，计数器往上加，计满变绿，计算方开始读 -->
-    <div id="s05-mb" class="clip s05-full" data-start="10.73" data-duration="7.85" data-track-index="7" data-layout-allow-overlap>
-      <div id="s05-sl" class="s05-lbl" style="left:96px;top:360px;font-size:36px;color:var(--use-t)">槽位</div>
+    <!-- 10.73 mbarrier：一个stage 32 KB 分 8 批到达，计数器往上加，计满变绿，计算方开始读 -->
+    <div id="s05-mb" class="clip s05-full" data-start="14.41" data-a-start="10.73" data-duration="8.37" data-a-duration="7.85" data-track-index="7" data-layout-allow-overlap>
+      <div id="s05-sl" class="s05-lbl" style="left:96px;top:360px;font-size:36px;color:var(--use-t)">stage</div>
       <div id="s05-cells" class="s05-full"></div>
       <div id="s05-chks" class="s05-full"></div>
       <div id="s05-ctr">
@@ -107,7 +107,7 @@
     </div>
 
     <!-- 18.28 体积对比：mma.sync m16n8k16 与 wgmma m64n128k16（同一比例 3.2 px / 元素，正面面积 1 : 64） -->
-    <div id="s05-vol" class="clip s05-full" data-start="18.28" data-duration="11.64" data-track-index="8" data-layout-allow-overlap>
+    <div id="s05-vol" class="clip s05-full" data-start="22.48" data-a-start="18.28" data-duration="11.82" data-a-duration="11.64" data-track-index="8" data-layout-allow-overlap>
       <svg id="s05-vsv" class="s05-abs" style="left:0;top:0" width="1920" height="1080" viewBox="0 0 1920 1080">
         <g id="s05-vmma">
           <polygon points="100,768.8 125.6,768.8 161.8,732.6 136.2,732.6" style="fill:var(--tealD)" />
@@ -127,7 +127,7 @@
     </div>
 
     <!-- 29.92 同一组线程既发 TMA 又计算，两块之间 Tensor Core 空着 -->
-    <div id="s05-end" class="clip s05-full" data-start="29.92" data-duration="7.49" data-track-index="9" data-layout-allow-overlap>
+    <div id="s05-end" class="clip s05-full" data-start="34.30" data-a-start="29.92" data-duration="7.49" data-a-duration="7.49" data-track-index="9" data-layout-allow-overlap>
       <div id="s05-tk1" class="s05-tk" style="top:500px">同一组线程</div>
       <div id="s05-tk2" class="s05-tk" style="top:650px">Tensor Core</div>
       <div id="s05-lane" class="s05-full"></div>
@@ -262,7 +262,7 @@
       ["nt", "nm", "nw"].forEach((n, i) =>
         ft($(n), { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.6, ease: IN }, 1.2 + i * 0.6));
 
-      // ---------- 4.29 TMA：一个线程发出，一整块搬进共享内存，顺带换位 ----------
+      // ---------- 4.29 TMA：一个线程发出，一整块搬进shared memory，顺带换位 ----------
       const t1 = B[1];
       [$("nm"), $("nw")].forEach((e) => fadeOut(e, t1, 0.3));
       ft($("nt"), { x: 0, y: 0, scale: 1 }, { x: 0, y: 20, scale: 0.379, duration: 0.7, ease: MOVE }, t1 + 0.02);
@@ -292,7 +292,7 @@
       fadeIn($("sl"), t2 + 0.4); fadeIn($("cells"), t2 + 0.5);
       ft($("ctr"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, t2 + 1.0);
       fadeIn($("cs0"), t2 + 1.4); fadeIn($("cw"), t2 + 1.5);
-      // 塔：共享内存层提亮一下，表示这一切发生在共享内存里
+      // 塔：shared memory层提亮一下，表示这一切发生在shared memory里
       ft(L.smem, { scale: 1 }, { scale: 1.04, duration: 0.3, ease: "power2.out", yoyo: true, repeat: 1 }, t2 + 0.6);
       // 12.75 起 8 批到达（A、W 两条 TMA 交错），每到一批计数 +4 KB
       const order = [0, 4, 1, 5, 2, 6, 3, 7];
@@ -309,7 +309,7 @@
       ft($("cr"), { opacity: 0, scale: 0.85, transformOrigin: "0% 50%" }, { opacity: 1, scale: 1, duration: 0.4, ease: IN }, 16.75);
       ft(chk, { y: 0 }, { y: -10, duration: 0.25, ease: "power2.out", yoyo: true, repeat: 1, stagger: 0.04 }, 16.9);
 
-      // ---------- 18.28 wgmma：4 个 warp 一起发；一条 131072 次乘加 = 64 条 mma.sync；操作数直接读共享内存 ----------
+      // ---------- 18.28 wgmma：4 个 warp 一起发；一条 131072 次乘加 = 64 条 mma.sync；操作数直接读shared memory ----------
       const t3 = B[3];
       [$("nm"), $("sl"), $("cells"), $("chks"), $("ctr"), $("cs0"), $("cr")].forEach((e) => fadeOut(e, t3, 0.35));
       tl.set(d0, { scale: 1 }, t3);
@@ -333,7 +333,7 @@
       fadeOut($("tbo"), ts, 0.3);
       fadeIn($("tbn"), ts + 0.45, 0.4);
       fadeOut($("tbghost"), ts + 1.5, 0.5);
-      // 26.8 塔：共享内存里的块直接送进 Tensor Core，寄存器层压暗
+      // 26.8 塔：shared memory里的块直接送进 Tensor Core，寄存器层压暗
       ft($("regx"), { opacity: 0 }, { opacity: 0.92, duration: 0.5, ease: MOVE }, 26.6);
       ft(rTC, { strokeDashoffset: rTC.dataset.len }, { strokeDashoffset: 0, duration: 0.9, ease: MOVE }, 26.8);
       ft($("tb1"), { y: dySmem }, { y: dyTc, duration: 0.9, ease: MOVE }, 26.8);
@@ -356,7 +356,7 @@
 
       tl.set({}, {}, DUR);
       window.__timelines = window.__timelines || {};
-      window.__timelines["s05"] = tl;
+      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [4.29, 4.29], [10.73, 14.41], [18.28, 22.48], [29.92, 34.3], [37.41, 41.79]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 41.79, duration: 41.79, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s05"] = outer; } /* /warp */
     })();
   </script>
 </template>

@@ -4,7 +4,7 @@
 
 ## 使用规则
 
-- 默认读者熟悉领域内的常见术语，直接使用首选英文或缩写，不附中文译名，也不强制首次展开英文全称。只有非常难懂、不常见或容易误解的概念，才就近补充一次简短中文解释。文章核心术语需要建立简称对应时，可使用“英文全称（缩写）”。
+- 默认读者熟悉领域内的常见术语，直接使用首选英文或缩写，不附中文译名，也不强制首次展开英文全称。只有非常难懂、不常见或容易误解的概念，才就近补充一次简短中文解释。视频配音同样：技术术语用英文，首次出现时带一句中文含义（如词的原意），特别简单的词不用（2026-10-26 用户要求）。文章核心术语需要建立简称对应时，可使用“英文全称（缩写）”。
 - 表格、图例与自绘图沿用统一术语，优先保证视觉清晰与扫读效率，不堆叠括注或双语标签；大小写、连字符与产品名称保持一致。少见术语的必要解释放在就近正文或图注中。
 - 只有通行且含义明确的缩写才进入词表，不为缩短文字临时创造缩写。没有稳定缩写的术语保留专业英文或自然中文。
 - 耗时、显存、吞吐、序列长度、梯度累积、计算图和算子等表达使用自然中文；英文主要用于固定术语、缩写及与代码直接对应的概念。
@@ -70,6 +70,13 @@
 | memory budget | 自动重计算策略的相对显存预算 | 讨论 `activation_memory_budget` 时使用 memory budget；后续可简称“预算”。标题或图例首字母可大写，不将其写成全局显存硬上限。 |
 | saved tensors | autograd 为 backward 保存的 tensor | 讨论保存与恢复机制时使用 saved tensors；单个对象用 saved tensor，API 与源码名称保持原样。 |
 | microbatch / microbatch size | 一次 forward + backward 处理的样本批次 / 该批次的样本数 | 指批次时使用 microbatch，给出大小时使用 microbatch size，例如“microbatch size 为 4”；序列长度直接用中文，不混写 sequence。 |
+| shared memory / bank conflict | SM 内各线程共享的片上存储 / 同一轮里多个地址落在同一个 bank 而须排队 | 用户指定（2026-10-26，matmul 视频）：GPU kernel 语境保留英文，不写“共享内存”“bank 冲突”；寄存器、显存等简单词仍用中文。 |
+| swizzle | 原意“搅乱”：按规则（如 c ⊕ r）错位存放每行的块，避免 bank conflict | 保留英文，不写“换位存放”；首次出现带一句中文含义。TMA 的 `SWIZZLE_128B` 保留原文。 |
+| fragment | wmma 中一个 warp 共同持有的矩阵片段 | 保留英文，首次出现时说明“矩阵片段”。 |
+| pipeline / stage | 多级流水 / 其中一级缓冲 | 写 pipeline 与 stage，不写“三级缓冲”“槽位”；数量写“3 个 stage”。 |
+| warp specialization / producer / consumer | 按角色分工的 warp / 只发拷贝的 warpgroup / 只做计算的 warpgroup | 保留英文，不写“生产者 / 消费者”；mbarrier 的两个信号写 full / empty。 |
+| thread block cluster / multicast | Hopper 中可互访 shared memory 的一组 block / 从 L2 读一次写入多个 block | 首次写“thread block cluster，即线程块集群”，后文写 cluster；TMA 多播写 TMA multicast。 |
+| TMA / TMA store | Tensor Memory Accelerator / 用 TMA 把结果从 shared memory 写回显存 | 首次写出全称并带一句中文含义（专门搬运矩阵块的硬件）；写回方向写 TMA store。 |
 | kernel | GPU 上执行的计算程序 | GPU 执行语境中保留 kernel；ATen 算子仍称“算子”，不将一次算子调用与一次 kernel 执行混为一谈。 |
 | early stop | 所需 saved tensors 恢复齐全后提前停止重算 | 描述 non-reentrant 的该机制时使用 early stop；解释动作可以说“提前停止重算”。 |
 | params | parameters，模型参数 | 在训练显存组成、表格与图例中直接使用 params，不附中文。描述“冻结参数”“可训练参数”等动作或属性时可保留中文。 |

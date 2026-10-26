@@ -26,7 +26,7 @@
   <div id="root" data-composition-id="s10" data-width="1920" data-height="1080">
 
     <!-- 阶梯：八版耗时 + cuBLAS，虚线峰值 -->
-    <div id="s10-lad" class="clip s10-full" data-start="0.00" data-duration="34.69" data-track-index="1">
+    <div id="s10-lad" class="clip s10-full" data-start="0.00" data-a-start="0.0" data-duration="35.29" data-a-duration="34.69" data-track-index="1">
       <div id="s10-hd">8192 阶矩阵乘法 · 一次耗时</div>
       <div id="s10-zoom"></div>
       <div id="s10-r0" class="s10-rl" style="top:150px">第 1 版</div>
@@ -65,7 +65,7 @@
     </div>
 
     <!-- 3.8 功耗墙与时钟（第 1 句），18.64 淡出 -->
-    <div id="s10-pw" class="clip s10-full" data-start="5.40" data-duration="13.90" data-track-index="2">
+    <div id="s10-pw" class="clip s10-full" data-start="5.40" data-a-start="5.4" data-duration="13.94" data-a-duration="13.9" data-track-index="2">
       <div id="s10-pwin" class="s10-full">
         <div id="s10-wl" class="s10-pt" style="top:168px">功耗上限</div>
         <div id="s10-w700">700 W</div>
@@ -77,9 +77,9 @@
     </div>
 
     <!-- 18.64 每一版右侧：这一步的原理名，随配音逐行点亮 -->
-    <div id="s10-wy" class="clip s10-full" data-start="19.60" data-duration="15.09" data-track-index="3">
+    <div id="s10-wy" class="clip s10-full" data-start="19.66" data-a-start="19.6" data-duration="15.63" data-a-duration="15.09" data-track-index="3">
       <div id="s10-w0" class="s10-why" style="top:150px">用上 Tensor Core</div>
-      <div id="s10-w1" class="s10-why" style="top:230px">不冲突、不绕路</div>
+      <div id="s10-w1" class="s10-why" style="top:230px">消除 bank conflict</div>
       <div id="s10-w2" class="s10-why" style="top:310px">提前搬</div>
       <div id="s10-w3" class="s10-why" style="top:390px">搬大块</div>
       <div id="s10-w4" class="s10-why" style="top:470px">分工</div>
@@ -186,7 +186,7 @@
       ft(S, { d8: 0.3 }, { d8: 1, duration: 0.6, ease: MOVE, onUpdate: lay }, 27.7);
 
       tl.set({}, {}, 34.69);
-      window.__timelines["s10"] = tl;
+      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [11.41, 11.41], [18.64, 18.64], [27.64, 28.24], [34.69, 35.29]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 35.29, duration: 35.29, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s10"] = outer; } /* /warp */
     })();
   </script>
 </template>

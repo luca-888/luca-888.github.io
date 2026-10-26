@@ -1,6 +1,6 @@
 <template>
   <!--
-    s06 第 5 步：生产者 / 消费者（37.54 s）。节拍（幕内秒）：1.0 泳道 · 7.15 full / empty · 14.74 Tensor Core 一直有活 · 19.74 4096 快、8192 不变 · 24.96 tile 图 + L2 挤出。
+    s06 第 5 步：warp specialization（37.54 s）。节拍（幕内秒）：1.0 泳道 · 7.15 full / empty · 14.74 Tensor Core 一直有活 · 19.74 4096 快、8192 不变 · 24.96 tile 图 + L2 挤出。
     tile 图（24.96 起，s07 原位复用）：#s06-tmap left:132px; top:290px; 1216 × 608，格距 19 px（格 17 px + 2 px 缝）。
       8192 阶 C 按 128 × 256 切成 64 行 × 32 列 tile，画成转置：横向 = tile 行 m（x = 132 + 19m），纵向 = tile 列 n（y = 290 + 19n）。
       W 边条在左侧：left:96px; top:290px; 22 × 608，每 19 px 一段（对应 n）。
@@ -41,13 +41,13 @@
   <div id="root" data-composition-id="s06" data-width="1920" data-height="1080">
 
     <!-- 0–1.0 标题卡；之后缩到左上角常驻 -->
-    <div id="s06-title" class="clip s06-full" data-start="0.00" data-duration="37.54" data-track-index="1">
+    <div id="s06-title" class="clip s06-full" data-start="0.00" data-a-start="0.0" data-duration="41.54" data-a-duration="37.54" data-track-index="1">
       <div id="s06-chip" class="kit-chip">mm_wgmma_ws</div>
-      <div id="s06-ttl" class="kit-title">第 5 步：<span class="acc">生产者 / 消费者</span></div>
+      <div id="s06-ttl" class="kit-title">第 5 步：<span class="acc">warp specialization</span></div>
     </div>
 
     <!-- 耗时条：1.0 以 2.27 出现；19.9 抖一下停在 2.29，旁标红“8192 阶不变” -->
-    <div id="s06-tb" class="clip kit-tbar" data-start="1.00" data-duration="36.54" data-track-index="2" data-layout-allow-overflow>
+    <div id="s06-tb" class="clip kit-tbar" data-start="1.00" data-a-start="1.0" data-duration="40.54" data-a-duration="36.54" data-track-index="2" data-layout-allow-overflow>
       <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
       <div class="track"><div id="s06-tbghost" class="ghost"></div><div id="s06-tbfill" class="fill"></div><div class="peak"></div></div>
       <div id="s06-tbnum" class="num"><span id="s06-tbo" class="s06-nv">2.27 ms</span><span id="s06-tbn" class="s06-nv">2.29 ms</span></div>
@@ -55,11 +55,11 @@
       <div class="ref">虚线：规格峰值 1.11 ms</div>
     </div>
 
-    <!-- 1.0 三条泳道：生产者只发 TMA，两个消费者只计算；7.15 让位给 full / empty；14.74 回来并加 Tensor Core 一行 -->
-    <div id="s06-lanes" class="clip s06-full" data-start="1.00" data-duration="23.96" data-track-index="3" data-layout-allow-overlap>
-      <div id="s06-lp" class="s06-ln" style="top:322px"><b class="acc-o">生产者</b></div>
-      <div id="s06-l1" class="s06-ln" style="top:436px"><b class="acc">消费者 1</b></div>
-      <div id="s06-l2" class="s06-ln" style="top:550px"><b class="acc">消费者 2</b></div>
+    <!-- 1.0 三条泳道：producer只发 TMA，两个consumer只计算；7.15 让位给 full / empty；14.74 回来并加 Tensor Core 一行 -->
+    <div id="s06-lanes" class="clip s06-full" data-start="1.00" data-a-start="1.0" data-duration="27.96" data-a-duration="23.96" data-track-index="3" data-layout-allow-overlap>
+      <div id="s06-lp" class="s06-ln" style="top:322px"><b class="acc-o">producer</b></div>
+      <div id="s06-l1" class="s06-ln" style="top:436px"><b class="acc">consumer 1</b></div>
+      <div id="s06-l2" class="s06-ln" style="top:550px"><b class="acc">consumer 2</b></div>
       <div id="s06-lt" class="s06-ln" style="top:700px"><b>Tensor Core</b></div>
       <div id="s06-sep" class="s06-abs" style="left:96px;top:671px;width:1728px;height:2px;background:var(--line)"></div>
       <div id="s06-rp" class="s06-full"></div>
@@ -69,18 +69,18 @@
       <div id="s06-cur" class="s06-abs" style="left:420px;top:310px;width:4px;height:490px;background:var(--ink)"></div>
     </div>
 
-    <!-- 7.15 一个槽位两个 mbarrier：empty（生产者等它）、full（消费者等它）；一块数据走一遍 -->
-    <div id="s06-fe" class="clip s06-full" data-start="7.15" data-duration="7.59" data-track-index="4" data-layout-allow-overlap>
-      <div id="s06-pb" class="s06-box" style="left:96px;border:4px solid var(--hot)"><b class="acc-o">生产者</b></div>
+    <!-- 7.15 一个stage两个 mbarrier：empty（producer等它）、full（consumer等它）；一块数据走一遍 -->
+    <div id="s06-fe" class="clip s06-full" data-start="10.53" data-a-start="7.15" data-duration="8.14" data-a-duration="7.59" data-track-index="4" data-layout-allow-overlap>
+      <div id="s06-pb" class="s06-box" style="left:96px;border:4px solid var(--hot)"><b class="acc-o">producer</b></div>
       <div id="s06-cb" class="s06-box" style="left:1464px;border:4px solid var(--teal)">
         <div id="s06-cbon" class="s06-abs" style="inset:0;background:var(--teal)"></div>
-        <b id="s06-cbt" class="acc" style="position:relative">消费者</b>
+        <b id="s06-cbt" class="acc" style="position:relative">consumer</b>
       </div>
       <div id="s06-ps1" class="s06-st" style="left:96px;color:var(--note)">等 empty</div>
       <div id="s06-ps2" class="s06-st" style="left:96px;color:var(--hot-t)">发 TMA</div>
       <div id="s06-cs1" class="s06-st" style="left:1464px;color:var(--note)">等 full</div>
       <div id="s06-cs2" class="s06-st" style="left:1464px;color:var(--teal-t)">在算</div>
-      <div id="s06-sn" class="s06-lbl" style="left:800px;top:366px;width:320px;text-align:center;color:var(--use-t)">槽位</div>
+      <div id="s06-sn" class="s06-lbl" style="left:800px;top:366px;width:320px;text-align:center;color:var(--use-t)">stage</div>
       <div id="s06-slot" class="s06-abs" style="left:800px;top:420px;width:320px;height:160px;border:3px dashed var(--gray);border-radius:4px"></div>
       <svg id="s06-wire" class="s06-abs" style="left:0;top:0" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none">
         <path d="M880 580 V690 H656 M1040 580 V690 H1264" style="stroke:var(--gray)" stroke-width="3" />
@@ -96,7 +96,7 @@
     </div>
 
     <!-- 24.96 tile 图（坐标见文件头注释）+ W 边条 + 容量与挤出 -->
-    <div id="s06-map" class="clip s06-full" data-start="24.96" data-duration="12.58" data-track-index="6" data-layout-allow-overlap>
+    <div id="s06-map" class="clip s06-full" data-start="28.96" data-a-start="24.96" data-duration="12.58" data-a-duration="12.58" data-track-index="6" data-layout-allow-overlap>
       <div id="s06-ml" class="s06-lbl" style="left:160px;top:236px;color:var(--purple-t)">C 的 tile</div>
       <div id="s06-wl" class="s06-lbl s06-mono" style="left:94px;top:236px;color:var(--yel-t)">W</div>
       <div id="s06-wstrip" class="s06-abs" style="left:96px;top:290px;width:22px;height:608px">
@@ -158,7 +158,7 @@
         seg($("rp"), x + 4, 112, 322, "background:var(--hot);color:#fff", "TMA");
         seg($("r1"), x, SW - 4, 436, c1 ? "background:var(--teal);color:var(--ink)" : "background:var(--paper2);color:var(--note)", c1 ? "算" : "等数据");
         seg($("r2"), x, SW - 4, 550, !c1 ? "background:var(--teal);color:var(--ink)" : "background:var(--paper2);color:var(--note)", !c1 ? "算" : "等数据");
-        seg($("rt"), x, SW - 4, 700, "background:var(--teal);color:var(--ink)", c1 ? "消费者 1" : "消费者 2");
+        seg($("rt"), x, SW - 4, 700, "background:var(--teal);color:var(--ink)", c1 ? "consumer 1" : "consumer 2");
       }
       // tile 图的缝与 W 边条的缝
       let g = "";
@@ -203,7 +203,7 @@
       ft($("ttl"), { x: 0, y: 0, scale: 1 }, { x: 284, y: -72, scale: 0.6, duration: 0.7, ease: MOVE }, B[0]);
       fadeIn($("tb"), B[0] + 0.1, 0.5);
 
-      // ---------- 1.0 泳道：时间光标从左扫到右；生产者只发 TMA，消费者只计算 ----------
+      // ---------- 1.0 泳道：时间光标从左扫到右；producer只发 TMA，consumer只计算 ----------
       const SW0 = 1.2, SWD = 4.4;
       ft([$("rp"), $("r1"), $("r2")], { clipPath: "inset(0px 1500px 0px 0px)" }, { clipPath: "inset(0px 96px 0px 0px)", duration: SWD, ease: "none" }, SW0);
       ft($("cur"), { x: 0 }, { x: 1404, duration: SWD, ease: "none" }, SW0);
@@ -213,31 +213,31 @@
       fadeIn($("l1"), 3.4); fadeIn($("r1"), 3.4);
       fadeIn($("l2"), 3.6); fadeIn($("r2"), 3.6);
 
-      // ---------- 7.15 full / empty：生产者等 empty → 发 TMA → full 亮 → 消费者算 → empty 亮 ----------
+      // ---------- 7.15 full / empty：producer等 empty → 发 TMA → full 亮 → consumer算 → empty 亮 ----------
       const t1 = B[1];
       [$("lp"), $("l1"), $("l2"), $("rp"), $("r1"), $("r2")].forEach((e) => fadeOut(e, t1));
       fadeIn($("sn"), t1 + 0.15); fadeIn($("slot"), t1 + 0.15);
       ft($("pb"), { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, t1 + 0.3);
       ft($("cb"), { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, t1 + 0.4);
       fadeIn($("wire"), t1 + 0.6); fadeIn($("le"), t1 + 0.7); fadeIn($("lf"), t1 + 0.8);
-      // 8.0 槽位是空的：empty 亮
+      // 8.0 stage是空的：empty 亮
       fadeIn($("leon"), 8.0, 0.25);
       fadeIn($("ps1"), 8.2, 0.3); fadeIn($("cs1"), 8.2, 0.3);
-      // 第一块：8.6 生产者拿到 empty → 发 TMA；9.4 到齐 → full 亮
+      // 第一块：8.6 producer拿到 empty → 发 TMA；9.4 到齐 → full 亮
       fadeOut($("leon"), 8.6, 0.2); off($("ps1"), 8.6); on($("ps2"), 8.6);
       ft($("b1"), { opacity: 0, x: -660 }, { opacity: 1, x: -560, duration: 0.2, ease: "none" }, 8.7);
       ft($("b1"), { x: -560 }, { x: 0, duration: 0.6, ease: MOVE }, 8.9);
       fadeIn($("b1").children[0], 9.4, 0.25);
       fadeIn($("lfon"), 9.4, 0.25); fadeIn($("lfl"), 9.4);
       off($("ps2"), 9.5); on($("ps1"), 9.5);
-      // 9.8 消费者拿到 full → 在算；10.9 算完 → empty 亮
+      // 9.8 consumer拿到 full → 在算；10.9 算完 → empty 亮
       fadeOut($("lfon"), 9.8, 0.2); off($("cs1"), 9.8); on($("cs2"), 9.8);
       fadeIn($("cbon"), 9.8, 0.3);
       ft($("b1"), { x: 0 }, { x: 40, duration: 0.5, ease: "power2.out", yoyo: true, repeat: 1 }, 9.9);
       fadeOut($("b1"), 10.8, 0.3);
       fadeOut($("cbon"), 10.9, 0.3); off($("cs2"), 10.9); on($("cs1"), 10.9);
       fadeIn($("leon"), 10.9, 0.25); fadeIn($("lel"), 10.9);
-      // 第二块：11.6 发 TMA；12.4 full 亮；12.8 消费者在算
+      // 第二块：11.6 发 TMA；12.4 full 亮；12.8 consumer在算
       fadeOut($("leon"), 11.6, 0.2); off($("ps1"), 11.6); on($("ps2"), 11.6);
       ft($("b2"), { opacity: 0, x: -660 }, { opacity: 1, x: -560, duration: 0.2, ease: "none" }, 11.6);
       ft($("b2"), { x: -560 }, { x: 0, duration: 0.6, ease: MOVE }, 11.8);
@@ -247,7 +247,7 @@
       fadeOut($("lfon"), 12.8, 0.2); off($("cs1"), 12.8); on($("cs2"), 12.8);
       fadeIn($("cbon"), 12.8, 0.3);
 
-      // ---------- 14.74 泳道回来，加 Tensor Core 一行：两个消费者交替，Tensor Core 一直有活 ----------
+      // ---------- 14.74 泳道回来，加 Tensor Core 一行：两个consumer交替，Tensor Core 一直有活 ----------
       const t2 = B[2];
       [$("pb"), $("cb"), $("ps1"), $("cs2"), $("sn"), $("slot"), $("wire"), $("le"), $("lf"), $("lel"), $("lfl"), $("b2")].forEach((e) => fadeOut(e, t2, 0.35));
       [$("lp"), $("l1"), $("l2"), $("rp"), $("r1"), $("r2")].forEach((e) => fadeIn(e, t2 + 0.3));
@@ -303,7 +303,7 @@
 
       tl.set({}, {}, DUR);
       window.__timelines = window.__timelines || {};
-      window.__timelines["s06"] = tl;
+      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [7.15, 10.53], [14.74, 18.67], [19.74, 23.74], [24.96, 28.96], [37.54, 41.54]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 41.54, duration: 41.54, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s06"] = outer; } /* /warp */
     })();
   </script>
 </template>
