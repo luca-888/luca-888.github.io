@@ -41,6 +41,7 @@
 | TP / PP / DP / EP | tensor / pipeline / data / expert parallelism | 直接使用缩写，不展开也不译作“张量并行”等；“DP attention”指 attention 按请求分到各卡、与 EP 搭配的用法，普通多副本直接说 DP 或“副本”。 |
 | PD 分离 | prefill 与 decode 放在不同实例上执行 | 用户指定（2026-10-01）：写作“PD 分离”；prefill 实例与 decode 实例可简称 P、D；引用外部资料时保留其原名 disaggregated prefilling / PD disaggregation。 |
 | all-reduce | 各卡的 tensor 相加并让每张卡都拿到结果的集合通信 | 保留英文；EP 的两步通信写 dispatch 与 combine。 |
+| all-to-all / EPLB | 每对卡之间都有往来、数量各不相同的集合通信 / Expert Parallelism Load Balancer，按负载复制热门 expert 并重新摆放 | 保留英文；EP 视频（2026-10-20）采用。推理中为重叠通信把 batch 拆成两半时写 micro-batch（沿用 DeepSeek 原文），与训练语境的 microbatch 区分；框架里的名字 two-batch overlap（SGLang）、DBO（vLLM）只在引用时出现。PP 的一段写“段”或 stage，空闲写“气泡”。 |
 | expert / router | MoE 层中的一个子网络 / 为 token 选择 expert 的门控 | 保留英文，不写“专家”“路由器”；请求级的分发组件也叫 router，需要时就近说明。 |
 | TTFT / ITL | time to first token / inter-token latency | 直接使用缩写；论文中的 TPOT、TBT 在正文统一写 ITL。 |
 | structured output / constrained decoding | 用 token mask 保证输出符合 JSON schema、正则或 grammar | 功能名用 structured output（标题写作“Structured Output”），指“逐步屏蔽非法 token”这一机制时用 constrained decoding；不写“结构化输出”“约束解码”。vLLM 旧称 guided decoding 仅在引用旧资料时出现。 |
@@ -86,10 +87,14 @@
 | FLCE | Fused Linear Cross Entropy：把 lm_head 与 cross-entropy 合并、按 token 分块计算的 loss 实现 | 首次写全称 Fused Linear Cross Entropy，后文用 FLCE；指 Liger 的实现时保留其类名 `LigerFusedLinearCrossEntropyLoss`。 |
 | logits / lm_head | 词表上每个词的分数 / 把 hidden state 映射到 logits 的最后一层线性层 | 保留英文，不写“对数几率”“输出头”；lm_head 保留下划线写法。 |
 | monkey patch / patch | 在运行时替换模块中的名字、类上的方法或实例的属性，不改源码 | 保留英文，不写“猴子补丁”；动词写 patch（“patch 实例”）。2026-10-10 Liger 接入文章采用。 |
-| 线性 attention / state | 去掉 softmax、把历史累积进固定大小矩阵的 attention / 这个矩阵 | 写“线性 attention”“线性层”，不写“线性注意力”；矩阵写 state，不写“状态矩阵”“隐状态”（与 RNN 类比时除外）。2026-10-10 线性 attention 文章采用。 |
+| 线性 attention / state | 去掉 softmax、把历史累积进固定大小矩阵的 attention / 这个矩阵 | 写“线性 attention”，混合模型中的这类层写“线性 attention 层”，不写“线性层”（易与 nn.Linear 混淆，2026-10-13 用户指出）、不写“线性注意力”；矩阵写 state，不写“状态矩阵”“隐状态”（与 RNN 类比时除外）。2026-10-10 线性 attention 文章采用。 |
 | decay gate / delta rule | 每步把 state 整体乘衰减系数 α 的机制 / 先读出 key 已存的值、只写入差值的更新 | 保留英文；α 称为衰减系数，β 称为写入强度。 |
 | GDN / KDA | Gated DeltaNet / Kimi Delta Attention | 首次写全称，后文可用 GDN、KDA；Mamba2、GLA、DeltaNet 直接用原名。 |
 | chunkwise 计算 / chunk | 训练与 prefill 中按 chunk 并行、chunk 之间串行传递 state 的算法 / 序列切分的单位 | 保留英文 chunk，不写“分块”，以免与 KV cache 的 block 混淆。 |
+| arithmetic intensity / roofline / 拐点 | 每读 1 字节做的运算次数（FLOP / byte）/ 以强度为横轴、可达到的算力为纵轴的上限图（斜线为带宽，平顶为算力）/ 两段相交处，强度 = 算力 ÷ 带宽 | 保留英文 arithmetic intensity 与 roofline，不写“算术强度图”“屋顶线模型”；可简称“强度”。原论文（Williams 2009）称 operational intensity，引用原文时说明两者在 LLM 推理语境下指同一个量。ridge point 写“拐点”。2026-10-20 LLM Roofline 视频采用。 |
+| warp / lane / warpgroup | 32 个同时执行同一条指令的线程 / 线程在 warp 中的序号 / Hopper 上 4 个连续的 warp（128 个线程） | 保留英文，不写“线程束”；block、grid 同样保留英文。2026-10-21 矩阵乘法文章采用。 |
+| tile / bank 冲突 | 一个 block 负责计算的输出块（泛指数据分块时就近说明）/ 一个 warp 的共享内存读取在同一 bank 上落到不同地址、须分多轮完成 | tile 保留英文；bank 冲突写作“2 路 / 4 路冲突”。 |
+| warp 特化 / 常驻 kernel / 线程块集群 | warp specialization / persistent kernel / thread block cluster | 正文用中文写法，首次出现时附英文原名；生产者、消费者指 warp 特化中的两类 warpgroup。 |
 
 ## 维护方式
 

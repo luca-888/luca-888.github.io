@@ -8,7 +8,9 @@ COMMON = [
     # 单位：字母单位会被逐字母读，统一写成中文
     (r"(?<=\d) W\b", " 瓦"), (r" pJ", " 皮焦"), (r" ns", " 纳秒"), (r" ms", " 毫秒"),
     # 数值格式的缩写：字母与数字分开读
-    (r"\b(FP|TF|BF)(\d+)", r"\1 \2"), (r"INT8", "int 8"), (r"TFLOPS", "T FLOPS"),
+    (r"\b(FP|TF|BF)(\d+)", r"\1 \2"), (r"INT8", "int 8"),
+    # FLOPS 作一个词读，前缀字母单独读：T flops、G flops；FLOP/B 读“flop 每字节”（2026-10-21：大写 FLOPS 会被逐字母读）
+    (r"\bTFLOPS\b", "T flops"), (r"\bGFLOPS\b", "G flops"), (r"FLOP/B", "flop 每字节"), (r"\bFLOPS\b", "flops"), (r"\bFLOP\b", "flop"),
 ]
 
 
