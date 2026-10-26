@@ -44,7 +44,7 @@ body { font-family: var(--zh); color: var(--ink); }
 /* 瓶颈标签：贴在上一版自己的画面上 */
 .k-bottleneck { display: inline-block; background: var(--hot); color: #fff; font-size: 22px; font-weight: 700; padding: 3px 10px; border-radius: 2px; }
 
-/* —— 页眉（tools/sync.mjs 按 script.json 写进每幕的 kit:header 区域）—— */
+/* —— 页眉：系列名 .kit-series、版本名 .kit-chip、标题 .kit-title、出处 .kit-src、进度条 .kit-meter —— */
 .kit-hd { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
 .kit-series { position: absolute; left: 96px; top: 48px; font-size: 26px; font-weight: 600; color: var(--ink); white-space: nowrap; }
 .kit-chip { position: absolute; left: 96px; top: 96px; padding: 6px 18px 8px; background: var(--ink); color: #fff; font-family: var(--mono); font-size: 30px; font-weight: 700; border-radius: 2px; white-space: nowrap; }
@@ -59,6 +59,6 @@ body { font-family: var(--zh); color: var(--ink); }
 .kit-meter .ref { position: absolute; right: 0; top: 70px; font-size: 20px; font-weight: 600; color: var(--ink); white-space: nowrap; }
 .kit-meter .note { position: absolute; left: 0; top: 70px; font-size: 20px; font-weight: 600; color: var(--teal-t); white-space: nowrap; }
 
-/* —— 字幕（compositions/captions.html 由 tools/sync.mjs 生成）—— */
+/* —— 字幕：<div class="clip kit-sub"><span>一句配音</span></div> —— */
 .kit-sub { position: absolute; left: 0; right: 0; bottom: 64px; display: flex; justify-content: center; }
 .kit-sub span { display: block; max-width: 1500px; padding: 8px 24px; border-radius: 4px; background: var(--sub-bg); color: #fff; font-size: 36px; font-weight: 600; line-height: 1.4; text-align: center; white-space: nowrap; }

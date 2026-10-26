@@ -12,12 +12,12 @@
 | 画文章插图 | [docs/figures.md](docs/figures.md)、[docs/visual-references.md](docs/visual-references.md) |
 | 封面、头图 | [docs/covers.md](docs/covers.md) |
 | 小红书图片、竖版视频 | [docs/xiaohongshu.md](docs/xiaohongshu.md) |
-| 做视频 | [docs/video.md](docs/video.md)、[videos/_kit/README.md](videos/_kit/README.md)、[videos/EPISODES.md](videos/EPISODES.md) |
+| 做视频 | [docs/video.md](docs/video.md)，再按 HyperFrames 插件的 `/hyperframes` skill |
 | 配音（MiniMax，付费） | [docs/tts.md](docs/tts.md) |
 | GPU 实验 | [docs/gpu-experiments.md](docs/gpu-experiments.md) |
 | 某篇文章的背景、参考与实测记录 | `docs/<slug>-notes.md`（只读当前这一篇的） |
 
-不需要读的：`videos/*/build/`、`renders/`、`node_modules/`、`dist/`、`public/measurements/` 下的原始输出（要数字时只读对应的汇总文件）、其它文章的 notes、旧视频（2026-10 之前的 canvas 视频）的源码。
+不需要读的：`videos/*/build/`、`renders/`、`node_modules/`、`dist/`、`public/measurements/` 下的原始输出（要数字时只读对应的汇总文件）、其它文章的 notes、`docs/legacy/`、旧视频（2026-10 之前的 canvas 视频）的源码。
 
 ## 始终适用
 

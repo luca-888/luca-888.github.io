@@ -1,13 +1,15 @@
-"""python3 videos/_kit/tools/vo.py <视频目录> [--speed S] [--redo s01 s03 ...] [--dry-run]
-  -> assets/vo/cache/<hash>.mp3|json（每幕一段录音，按文案与语速缓存）、每句一个 assets/vo/<hash>.wav，以及 assets/vo/vo.json（每句的实测时长）。
+"""python3 videos/_kit/vo.py <视频目录> [--speed S] [--redo s01 s03 ...] [--dry-run]
+  读 narration.md（每幕一个 "## 幕 id"，每行一句；可选的 "## 读法" 一节每行 "原文 → 读法"）
+  -> assets/vo/<幕>-<句>.wav（每句一个）与 assets/vo/vo.json（每句的文字、文件、实测时长、开头静音），录音缓存在 assets/vo/cache/。
+  之后在 index.html 里按 vo.json 放 <audio>、按句写字幕（HyperFrames 的 captions 做法）。
 MiniMax TTS（音色与模型见 AGENTS.md，读法规范见 docs/tts.md）。按幕合成：一幕要新录的句子一次送出，句间插入停顿标记，返回的字幕文件按标记分句。
 缓存按句复用：改过的句子才重录，没变的沿用原录音；--redo s03 整幕重录。--dry-run 只列出要合成的句子与预计计费，不调用接口。
-读法：通用规则在 videos/lib/tts.py，本片的术语读法写在 script.json 的 "readings"（[正则, 替换] 列表）。
-key 从仓库根目录 .env.local 的 MINIMAX_API_KEY 读取。合成后运行 sync.mjs，节拍按实测时长重排。"""
+读法：通用规则在 videos/lib/tts.py，本片的术语读法写在 narration.md 的 "## 读法"（原文按字面匹配）。
+key 从仓库根目录 .env.local 的 MINIMAX_API_KEY 读取。"""
 import hashlib, json, re, subprocess, sys, time, urllib.request
 from pathlib import Path
 
-KIT = Path(__file__).resolve().parent.parent
+KIT = Path(__file__).resolve().parent
 sys.path.insert(0, str(KIT.parent / "lib"))
 from tts import say
 
@@ -20,8 +22,17 @@ here = Path(args[0]).resolve()
 speed = float(args[args.index("--speed") + 1]) if "--speed" in args else 1.15
 redo = set(args[args.index("--redo") + 1:]) - {"--dry-run"} if "--redo" in args else set()
 dry = "--dry-run" in args
-S = json.loads((here / "script.json").read_text())
-extra = [tuple(x) for x in S.get("readings", [])]
+# narration.md → 幕列表与读法
+scenes, extra, section = [], [], None
+for line in (here / "narration.md").read_text().splitlines():
+    line = line.strip()
+    if line.startswith("## "):
+        section = line[3:].strip()
+        if section != "读法": scenes.append({"id": section, "lines": []})
+    elif not line or line.startswith("#") or section is None: continue
+    elif section == "读法":
+        if "→" in line: a, b = [x.strip() for x in line.split("→", 1)]; extra.append((re.escape(a), b))
+    else: scenes[-1]["lines"].append(line)
 out = here / "assets/vo"; cache = out / "cache"; cache.mkdir(parents=True, exist_ok=True)
 key = lambda text: hashlib.sha1(f"{VOICE}|{MODEL}|{speed}|{text}".encode()).hexdigest()[:16]
 
@@ -57,8 +68,8 @@ for mf in sorted(cache.glob("*.json"), key=lambda p: p.stat().st_mtime):   # 只
     if key(json.loads(mf.read_text())["text"]) == mf.stem: SENT.update(segments(mf.stem))
 
 lines, billed, plan = {}, 0, []
-for sc in S["scenes"]:
-    texts = [b["vo"] for b in sc["beats"] if b.get("vo")]
+for sc in scenes:
+    texts = sc["lines"]
     says = [say(t, extra) for t in texts]
     need = says if sc["id"] in redo else [s for s in says if s not in SENT]
     if need:
@@ -72,17 +83,18 @@ for sc in S["scenes"]:
         (cache / f"{h}.mp3").write_bytes(audio); (cache / f"{h}.json").write_text(json.dumps({"text": text, "bounds": bounds, "usage": used}, ensure_ascii=False))
         SENT.update(segments(h)); billed += used; print(f"  {sc['id']}: 新合成 {len(need)} 句，计费 {used} 字符")
     if dry: continue
-    for t, s in zip(texts, says):
+    lines[sc["id"]] = []
+    for n, (t, s) in enumerate(zip(texts, says), 1):
         src, t0, t1, c0, c1 = SENT[s]; a, z = max(c0, t0 - .2), min(c1, t1 + .3)
-        wav = out / f"{key(s)}.wav"
+        wav = out / f"{sc['id']}-{n:02d}.wav"
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{a:.3f}", "-to", f"{z:.3f}", "-i", str(src), "-af",
             f"afade=t=in:d=0.03,afade=t=out:st={z - a - .05:.3f}:d=0.05", "-ar", "48000", "-ac", "2", str(wav)], check=True)
-        lines[t] = {"file": f"assets/vo/{wav.name}", "dur": round(t1 - t0, 2), "head": round(t0 - a, 2), "len": round(z - a, 2)}
+        lines[sc["id"]].append({"text": t, "file": f"assets/vo/{wav.name}", "dur": round(t1 - t0, 2), "head": round(t0 - a, 2), "len": round(z - a, 2)})
 
 if dry:
     total = sum(c for *_, c in plan)
     for sid, n, c in plan: print(f"  {sid}: 要合成 {n} 句，约 {c} 计费字符")
     print(f"共约 {total} 计费字符，约 {total * PRICE:.2f} 元" if plan else "全部句子都有录音，不需要合成")
     sys.exit()
-(out / "vo.json").write_text(json.dumps({"speed": speed, "voice": VOICE, "model": MODEL, "lines": lines}, ensure_ascii=False, indent=1))
-print(f"speed {speed}；{len(lines)} 句；本次计费 {billed} 字符（约 {billed * PRICE:.2f} 元）→ assets/vo/vo.json；下一步运行 sync.mjs")
+(out / "vo.json").write_text(json.dumps({"speed": speed, "voice": VOICE, "model": MODEL, "scenes": lines}, ensure_ascii=False, indent=1))
+print(f"speed {speed}；{sum(len(v) for v in lines.values())} 句；本次计费 {billed} 字符（约 {billed * PRICE:.2f} 元）→ assets/vo/vo.json")
