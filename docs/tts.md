@@ -1,6 +1,18 @@
 # 配音规范
 
-视频配音用 MiniMax TTS，音色、模型与接口见 [AGENTS.md](../AGENTS.md)。这里记的是怎样让它读对。（2026-10-08 用户要求建立）
+这里记的是配音用什么、怎样让它读对。（2026-10-08 用户要求建立）
+
+## 音色与接口
+
+配音固定用 MiniMax TTS（2026-10-07 用户选定，替代此前的 ElevenLabs）：
+
+- 音色：用户在 MiniMax Audio 用音色设计创建的音色，voice ID `ttv-voice-2026100701390026-S2EIdGRY`。
+- 模型：`speech-2.8-hd`，3.5 元/万字符，1 个汉字计 2 个字符；单次请求上限 10000 字符。
+- 调用：`POST https://api.minimaxi.com/v1/t2a_v2`，header `Authorization: Bearer <key>`；key 属于国内站，国际站 `api.minimax.io` 不可用。返回 hex 编码的音频，`subtitle_enable` 可取时间戳。
+- 计费：扣开放平台账户余额，MiniMax Audio 网页端的音贝不能用于该接口。
+- 读法与停顿：见 [配音规范](tts.md)；缩写、单位等的读法用 `videos/lib/tts.py` 的替换表固定，新发现的误读先加进表里再重录。（2026-10-08 用户要求）
+- 合成粒度：开发阶段按幕合成并缓存，改稿只重录改过的幕；定稿后再看是否有必要全片一次合成。（2026-10-08 用户要求）
+- API key：从仓库根目录的 `.env.local` 读取 `MINIMAX_API_KEY`。该文件已被 `.gitignore` 忽略；仓库是公开的，key 不写入任何会提交的文件。
 
 ## TTS 的三类问题
 
