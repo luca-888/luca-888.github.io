@@ -9,6 +9,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: 'index.html',
+        qwenVlVideoTokens: 'posts/qwen-vl-video-tokens/index.html',
         klNllCe: 'posts/kl-nll-ce/index.html',
         rmsnorm: 'posts/rmsnorm/index.html',
         cudaGraph: 'posts/cuda-graph/index.html',
@@ -26,13 +27,13 @@ export default defineConfig({
         vllmDistributed: 'posts/vllm-distributed/index.html',
         dspark: 'posts/dspark/index.html',
         attentionKvCompression: 'posts/attention-kv-compression/index.html',
+        pdScheduling: 'posts/pd-scheduling/index.html',
         sparseAttention: 'posts/sparse-attention/index.html',
         linearAttention: 'posts/linear-attention/index.html',
         bf16WeightOffset: 'posts/bf16-weight-offset/index.html',
         ligerHfPatching: 'posts/liger-hf-patching/index.html',
         semanticCacheVerification: 'posts/semantic-cache-verification/index.html',
         cudaGraphCorrectness: 'posts/cuda-graph-correctness/index.html',
-        qwenVlVideoTokens: 'posts/qwen-vl-video-tokens/index.html',
         matmulLadderFp32: 'posts/matmul-ladder-fp32/index.html',
         matmulLadderTc: 'posts/matmul-ladder-tc/index.html',
       },

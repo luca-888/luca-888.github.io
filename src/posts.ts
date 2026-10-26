@@ -30,19 +30,19 @@ export const posts: Post[] = [
     status: 'draft',
   },
   {
-    slug: 'qwen-vl-video-tokens',
-    title: 'Qwen-VL 的视频 token：采样、grid 与时间戳',
-    description: 'Qwen2-VL 与 Qwen3-VL 如何把一段视频变成 prompt 中的 token：帧采样、奇数帧补齐、smart_resize、video_grid_thw 与时间戳，以及不解码视频计算 token 数、多个视频时占位符与元数据的对应。',
-    category: '多模态',
-    tags: ['Qwen3-VL', 'Qwen2-VL', 'VLM', 'Video', 'LlamaFactory', 'transformers', 'vLLM'],
-    status: 'draft',
-  },
-  {
     slug: 'cuda-graph-correctness',
     title: 'CUDA Graph 的正确性：捕获遗漏与过期输入',
     description: 'Replay 等价于 eager 需要两个前提：每个 GPU 操作都录进图，每个随批次变化的输入都在 replay 前写入固定地址。Liger-Kernel 的 RMSNorm backward 漏捕获了 kernel，vLLM 的 EAGLE draft prefill 在 FULL 图中拿不到本批图像 embedding。',
     category: 'GPU 编程',
     tags: ['CUDA Graph', 'Stream capture', 'CuTe DSL', 'Liger-Kernel', 'vLLM', 'EAGLE', 'Speculative decoding'],
+    status: 'draft',
+  },
+  {
+    slug: 'qwen-vl-video-tokens',
+    title: 'Qwen-VL 的视频 token：采样、grid 与时间戳',
+    description: 'Qwen2-VL 与 Qwen3-VL 如何把一段视频变成 prompt 中的 token：帧采样、奇数帧补齐、smart_resize、video_grid_thw 与时间戳，以及不解码视频计算 token 数、多个视频时占位符与元数据的对应。',
+    category: '多模态',
+    tags: ['Qwen3-VL', 'Qwen2-VL', 'VLM', 'Video', 'LlamaFactory', 'transformers', 'vLLM'],
     status: 'draft',
   },
   {
@@ -85,6 +85,14 @@ export const posts: Post[] = [
     tags: ['Attention', 'Sparse attention', 'Sliding window', 'Attention sink', 'NSA', 'DSA', 'DeepSeek', 'KV cache'],
     status: 'published',
     publishedAt: '2026-10-10',
+  },
+  {
+    slug: 'pd-scheduling',
+    title: 'PD 分离的调度：路由、接纳与比例',
+    description: 'PD 分离之后，一个请求要经过四次调度决策：选哪个 P、要不要远端 prefill、D 何时接纳、P 与 D 各几个。Mooncake、SGLang、vLLM、llm-d 与 Dynamo 的做法与取舍。',
+    category: '推理系统',
+    tags: ['PD disaggregation', 'LLM serving', 'Scheduling', 'KV cache', 'vLLM', 'SGLang', 'Dynamo', 'Mooncake'],
+    status: 'draft',
   },
   {
     slug: 'attention-kv-compression',
