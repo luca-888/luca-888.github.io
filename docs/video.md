@@ -106,6 +106,8 @@
 
 一个主题只保留一个版本的视频，目录名与文章 slug 相同。（2026-10-07 用户确认）
 
+新视频用 HyperFrames 做，从 `node videos/_kit/tools/new.mjs <slug>` 开始；流程、锁死的风格与“变化轴”见 [videos/_kit/README.md](../videos/_kit/README.md)，每部完成后在 `videos/EPISODES.md` 记一行。HyperFrames 项目的成片在 `videos/<slug>/renders/`，配音在 `videos/<slug>/assets/vo/`，都不进仓库。2026-10 之前的 canvas 视频保持原样，不迁移。（2026-10-26 用户确认）
+
 | 内容 | 位置 | 是否进仓库 |
 | --- | --- | --- |
 | 源文件（HTML、JS、渲染脚本、文案） | `videos/<slug>/` | 是 |

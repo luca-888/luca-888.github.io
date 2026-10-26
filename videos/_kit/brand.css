@@ -1,0 +1,64 @@
+/* 系列视觉语言（规范见同目录 frame.md）。新建视频时复制到 <slug>/assets/brand.css，由 index.html 的 <head> 引入，全片各幕共用。
+   改这里只影响之后新建的视频；已有视频各自持有一份，互不牵连。 */
+@font-face { font-family: "PingFang SC"; font-weight: 400; src: local("PingFangSC-Regular"), local("PingFang SC"); }
+@font-face { font-family: "PingFang SC"; font-weight: 500; src: local("PingFangSC-Medium"), local("PingFang SC Medium"); }
+@font-face { font-family: "PingFang SC"; font-weight: 600 900; src: local("PingFangSC-Semibold"), local("PingFang SC Semibold"); }
+
+:root {
+  /* 底与文字 */
+  --paper: #f1ede4; --paper2: #e6e0d3; --panel: #e7e1d4; --cell: #e2ddd0; --line: #cfc8b8;
+  --ink: #141414; --ink2: #3a3a3a; --gray: #8a8474; --note: #6b6556;
+  /* 语义色：实心块用浅版，纸色底上的小字用 *-t 版（对比度 ≥ 4.5:1） */
+  --teal: #0fa391; --teal-t: #0a6f63; --tealD: #0b7d70;
+  --blue: #2350d8; --blue-t: #1f44b8; --warp: #a9c2ee;
+  --yel: #f4c21b; --yel-t: #7d5f00;
+  --purple: #7c3ff5; --purple-t: #6a32d6;
+  --hot: #c4561d; --hot-t: #a3461a; --hotL: #eeb48f;
+  --use: #2f8a57; --use-t: #24704a; --useL: #a9d6b9;
+  --red: #e5322d;
+  --sub-bg: #1d1c19;
+  --zh: "PingFang SC", "Helvetica Neue", sans-serif;
+  --mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); }
+body { font-family: var(--zh); color: var(--ink); }
+
+/* 标题里的强调词：<span class="acc">…</span>，其它语义色用 acc-b / acc-p / acc-y / acc-o / acc-g */
+.acc { color: var(--tealD); }
+.acc-b { color: var(--blue-t); } .acc-p { color: var(--purple-t); } .acc-y { color: var(--yel-t); }
+.acc-o { color: var(--hot-t); } .acc-g { color: var(--use-t); } .acc-r { color: var(--red); }
+
+/* 画面上的说明文字 */
+.k-label { font-size: 26px; font-weight: 600; color: var(--ink2); }
+.k-note { font-size: 22px; font-weight: 500; color: var(--note); }
+.k-num { font-family: var(--mono); font-weight: 800; }
+
+/* 代码框：只放改动的 3–4 行；改动行加 .add，正在讲的一行加 .on */
+.k-code { background: var(--panel); border-radius: 4px; padding: 18px 22px; font-family: var(--mono); font-size: 24px; font-weight: 500; color: var(--ink2); line-height: 1.7; }
+.k-code .file { font-size: 20px; font-weight: 700; color: var(--note); margin-bottom: 6px; }
+.k-code .ln { white-space: pre; padding: 0 8px; border-radius: 2px; }
+.k-code .ln.add::before { content: "+ "; color: var(--use-t); }
+.k-code .ln.on { background: #d6e1f5; }
+
+/* 瓶颈标签：贴在上一版自己的画面上 */
+.k-bottleneck { display: inline-block; background: var(--hot); color: #fff; font-size: 22px; font-weight: 700; padding: 3px 10px; border-radius: 2px; }
+
+/* —— 页眉（tools/sync.mjs 按 script.json 写进每幕的 kit:header 区域）—— */
+.kit-hd { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.kit-series { position: absolute; left: 96px; top: 48px; font-size: 26px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.kit-chip { position: absolute; left: 96px; top: 96px; padding: 6px 18px 8px; background: var(--ink); color: #fff; font-family: var(--mono); font-size: 30px; font-weight: 700; border-radius: 2px; white-space: nowrap; }
+.kit-title { position: absolute; left: 96px; top: 166px; font-size: 56px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+.kit-src { position: absolute; right: 96px; top: 44px; font-size: 22px; font-weight: 500; color: var(--note); text-align: right; white-space: nowrap; }
+.kit-meter { position: absolute; right: 96px; top: 82px; width: 540px; height: 104px; }
+.kit-meter .lbl { position: absolute; left: 0; top: 0; font-size: 20px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
+.kit-meter .track { position: absolute; left: 0; top: 30px; width: 524px; height: 28px; background: var(--paper2); }
+.kit-meter .fill { position: absolute; left: 0; top: 0; width: 100%; height: 28px; background: var(--teal); transform-origin: 0 50%; }
+.kit-meter .num { position: absolute; left: 0; top: 0; height: 28px; line-height: 28px; padding-right: 8px; text-align: right; font-family: var(--mono); font-size: 22px; font-weight: 800; color: #fff; white-space: nowrap; }
+.kit-meter .tick { position: absolute; right: 16px; top: 22px; height: 44px; border-left: 3px dotted var(--ink); }
+.kit-meter .ref { position: absolute; right: 0; top: 70px; font-size: 20px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.kit-meter .note { position: absolute; left: 0; top: 70px; font-size: 20px; font-weight: 600; color: var(--teal-t); white-space: nowrap; }
+
+/* —— 字幕（compositions/captions.html 由 tools/sync.mjs 生成）—— */
+.kit-sub { position: absolute; left: 0; right: 0; bottom: 64px; display: flex; justify-content: center; }
+.kit-sub span { display: block; max-width: 1500px; padding: 8px 24px; border-radius: 4px; background: var(--sub-bg); color: #fff; font-size: 36px; font-weight: 600; line-height: 1.4; text-align: center; white-space: nowrap; }

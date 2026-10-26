@@ -22,3 +22,10 @@ __pycache__/
 
 # Preview videos for local viewing only
 /public/tmp/
+
+# HyperFrames video projects: caches, renders and paid voice-over stay local
+/videos/*/.hyperframes/
+/videos/*/.thumbnails/
+/videos/*/.waveform-cache/
+/videos/*/renders/
+/videos/*/assets/vo/

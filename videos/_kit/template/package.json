@@ -1,0 +1,12 @@
+{
+  "name": "__SLUG__",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "node ../_kit/tools/sync.mjs .",
+    "vo": "python3 ../_kit/tools/vo.py .",
+    "dev": "npx --yes hyperframes@0.8.200 preview",
+    "check": "npx --yes hyperframes@0.8.200 check",
+    "render": "npx --yes hyperframes@0.8.200 render"
+  }
+}
