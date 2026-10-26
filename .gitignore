@@ -29,3 +29,7 @@ __pycache__/
 /videos/*/.waveform-cache/
 /videos/*/renders/
 /videos/*/assets/vo/
+/videos/*/review/img/
+/videos/*/review/old/
+/videos/*/review/kfsrc/
+/videos/*/review/frames.json

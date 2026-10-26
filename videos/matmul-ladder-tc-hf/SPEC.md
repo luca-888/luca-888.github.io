@@ -128,3 +128,11 @@ BANNED:  从第 0 秒摆满；所有元素同样的淡入上滑；三张卡片�
 ## QA
 
 每幕在每个起点 +2 s 截一帧，确认：没有速度大屏；每句配音对应一个原理动作；字 ≥ 28 px；同时最多两个主体；没有超过 3 s 的半屏空白；耗时条数值与表一致。
+
+## 第四版进行中（2026-10-26 暂停，下次从这里继续）
+
+- 用户觉得第三版臃肿，同意把八步按解决的问题合成三章：起点 wmma；第一章“读顺、送早”（swizzle + cp.async、pipeline、mma.sync 的 1/3 上限）；第二章“Hopper 的异步机制”（TMA、mbarrier、wgmma、warp specialization、L2 问题）；第三章“少读、晚写”（tile 发放顺序、cluster + multicast、TMA store）。幕变为 s01 开场、s02 起点、s03–s05 三章、s06 收尾。
+- `narration.md` 已是第四版配音稿（37 句），**还没录**；`beats.json`、`index.html`、compositions 仍是第三版（10 幕），正片未动。
+- 新流程：改动先出静态关键帧，用户在审核页逐张确认后才重录、做动画、渲染。审核页：`review/index.html`（预览配置 `keyframes`，端口 5181）；关键帧由 `review/build.py` 合成（旧画面 `review/old/` 叠新标题与新字幕，另有两张新画：开场 SM 图、收尾三章分组阶梯）；图片不进仓库。
+- 第三版审核意见：开场第 2 句“不要只显示 Tensor Core，这样显得没有其他硬件”——第四版的新 SM 图已按此画出寄存器、FP32 单元与 shared memory。
+- 下一步：用户审完第四版关键帧 → 按意见改关键帧 → 录音（约 0.56 元）→ 合并 compositions 为 6 幕 → check、截帧、渲染。

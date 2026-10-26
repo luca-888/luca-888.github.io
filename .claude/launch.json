@@ -22,6 +22,18 @@
         "videos"
       ],
       "port": 5180
+    },
+    {
+      "name": "keyframes",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "5181",
+        "--directory",
+        "videos/matmul-ladder-tc-hf/review"
+      ],
+      "port": 5181
     }
   ]
 }
