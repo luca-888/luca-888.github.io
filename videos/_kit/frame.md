@@ -21,19 +21,19 @@ colors:
   hot: "#c4561d"        # 从显存读取、瓶颈标签
   use: "#2f8a57"        # 片上数据（共享内存、寄存器里已就绪）
   red: "#e5322d"        # 划掉、错误
-  small-text: "纸色底上 26 px 以下的彩色字用 brand.css 的 *-t 变体（--teal-t、--hot-t 等），对比度 ≥ 4.5:1"
+  small-text: "纸色底上 32 px 以下的彩色字用 brand.css 的 *-t 变体（--teal-t、--hot-t 等），对比度 ≥ 4.5:1"
 fonts:
   zh: '"PingFang SC"（brand.css 里已按 PostScript 名声明各字重；只写 local("PingFang SC") 在无头 Chrome 里加载不到）'
   mono: '"JetBrains Mono"（HyperFrames 自带）'
 type:
   # 以下是可选组件的默认字号，用时可以按画面放大缩小
-  series-tag: { size: 26, weight: 600, color: ink }
-  version-chip: { font: mono, size: 30, weight: 700, color: "#fff", bg: ink }
-  title: { size: 56, weight: 800, color: ink, accent: tealD }
-  label: { size: 26, weight: 600, color: ink2 }
-  note: { size: 22, weight: 500, color: note }
-  code: { font: mono, size: 24, weight: 500, color: ink2, bg: panel }
-  subtitle: { size: 36, weight: 600, color: "#fff", bg: "#1d1c19", position: "底部居中，距底 64 px" }
+  series-tag: { size: 30, weight: 600, color: ink }
+  version-chip: { font: mono, size: 34, weight: 700, color: "#fff", bg: ink }
+  title: { size: 64, weight: 800, color: ink, accent: tealD }
+  label: { size: 32, weight: 600, color: ink2 }
+  note: { size: 28, weight: 500, color: note }
+  code: { font: mono, size: 30, weight: 500, color: ink2, bg: panel }
+  subtitle: { size: 40, weight: 600, color: "#fff", bg: "#1d1c19", position: "底部居中，距底 64 px" }
 ---
 
 # 系列风格
@@ -53,9 +53,14 @@ type:
 - 实测进度条（`.kit-meter`）：结果嵌在机制画面里更新，不单独占一屏。
 - 代码框（`.k-code`）、瓶颈标签（`.k-bottleneck`）、硬件塔（`kitTower()`）。
 
-## 构图的原则
+## 构图：不要满
 
-- **同一时刻只突出一个主体**；部件在配音讲到时才出场，不从第 0 秒摆满。
+原版的毛病是一开场就把硬件塔、矩阵、代码全摆出来，之后只是局部变亮，观众不知道看哪里。规则：
+
+- **开场只有一样东西。** 每幕前 3 秒画面上只出现一个主体（加字幕）。
+- **同一时刻最多两个主体**：正在讲的一个，加一个帮助定位的上下文。新部件进场时，讲完的退场或缩到角落。
+- **讲到才出现。** 部件在对应那句配音开始时进场，不先画好全图再逐块点亮。
+- **字少。** 画面上的标注每处不超过一行；代码框最多 4 行；放不下就拆到下一拍或删掉。
 - 画面单独看也能跟上：说明就近标在对象旁边。
 
 ## 视觉语言
@@ -66,6 +71,6 @@ type:
 - 实心色块加细线，不用阴影、渐变、光效、emoji；圆角 2–4 px。
 - 运动用缓入缓出，动的是机制本身（数据移动、块滑动、计数变化）；需要读的数字停留到能读完。
 
-## 字号下限
+## 字号：不要小
 
-成片会在手机上看（视频号、小红书）：要读的字不小于 22 px，关键数字与标签不小于 26 px，代码 24 px。放不下就删内容，不缩字。
+成片会在手机上看（视频号、小红书）。**最小 28 px**（HyperFrames `check` 的手机可读下限），标签 32 px，关键数字 36 px 以上，代码 30 px，字幕 40 px。`brand.css` 里的类已经按这个设好；不要写比 28 px 更小的字，放不下就删内容或拆到下一拍，不缩字。

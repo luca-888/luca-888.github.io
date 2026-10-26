@@ -5,7 +5,7 @@
 //   T.route("s03-new", ["l2", "smem", "reg", "tc"], { color: "var(--use)" })  —— 沿层画一条路径，返回 <path>，
 //       用 tl.fromTo(path, { strokeDashoffset: path.dataset.len }, { strokeDashoffset: 0 }) 逐段画出
 //   T.at("smem")                      —— 某层右侧锚点 {x, y}（容器坐标），放数据方块、标签用
-// 容器需要定宽定高（默认 520 × 600），布局全部按容器尺寸计算，确定性，无随机。
+// 容器需要定宽定高（默认 640 × 720；字号按手机可读下限，容器不要比这更小），布局全部按容器尺寸计算，确定性，无随机。
 (function () {
   const DEFAULT = [
     { id: "tc", name: "Tensor Core", note: "每 SM 4 个", color: "var(--teal)" },
@@ -16,8 +16,8 @@
   ];
   window.kitTower = function (el, opts = {}) {
     const layers = opts.layers || DEFAULT, inSM = opts.inSM ?? 3;
-    const W = el.clientWidth || 520, H = el.clientHeight || 600;
-    const n = layers.length, slabH = 64, gap = (H - n * slabH) / n, depth = 14;
+    const W = el.clientWidth || 640, H = el.clientHeight || 720;
+    const n = layers.length, slabH = 84, gap = (H - n * slabH) / n, depth = 14;
     el.style.position = el.style.position || "absolute";
     const pos = {}, layer = {};
     layers.forEach((L, i) => {
@@ -26,18 +26,18 @@
       d.className = "kit-ly";
       d.id = `${el.id}-${L.id}`;
       d.style.cssText = `position:absolute;left:${depth}px;top:${y}px;width:${W - depth * 2 - 150}px;height:${slabH}px;background:var(--paper2);border:2px solid var(--line);box-shadow:${depth}px -${depth / 2}px 0 -2px var(--cell);display:flex;align-items:center;gap:12px;padding-left:12px;`;
-      d.innerHTML = `<i style="width:8px;height:40px;background:${L.color};display:block"></i><div><div style="font-size:26px;font-weight:700;color:var(--ink)">${L.name}</div><div style="font-size:20px;font-weight:500;color:var(--ink2)">${L.note || ""}</div></div>`;
+      d.innerHTML = `<i style="width:8px;height:40px;background:${L.color};display:block"></i><div><div style="font-size:32px;font-weight:700;color:var(--ink)">${L.name}</div><div style="font-size:28px;font-weight:500;color:var(--ink2)">${L.note || ""}</div></div>`;
       el.appendChild(d);
       layer[L.id] = d;
       pos[L.id] = { x: W - depth - 150, y: y + slabH / 2, cx: (W - 150) / 2, top: y, bottom: y + slabH };
     });
     if (inSM > 0) {   // SM 框：虚线框住上面 inSM 层
-      const top = pos[layers[0].id].top - 30, bottom = pos[layers[inSM - 1].id].bottom + 10;
+      const top = pos[layers[0].id].top - 40, bottom = pos[layers[inSM - 1].id].bottom + 10;
       const b = document.createElement("div");
       b.id = `${el.id}-sm`;
       b.setAttribute("data-layout-allow-overflow", "");   // 标签故意放在框上沿外
       b.style.cssText = `position:absolute;left:0;top:${top}px;width:${W - 130}px;height:${bottom - top}px;border:2px dashed var(--gray);`;
-      b.innerHTML = `<span style="position:absolute;left:8px;top:-30px;font-size:20px;font-weight:600;color:var(--note)">一个 SM（共 132 个）</span>`;
+      b.innerHTML = `<span style="position:absolute;left:8px;top:-38px;font-size:28px;font-weight:600;color:var(--note)">一个 SM（共 132 个）</span>`;
       el.appendChild(b);
     }
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
