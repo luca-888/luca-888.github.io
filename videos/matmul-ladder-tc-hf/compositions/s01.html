@@ -2,97 +2,124 @@
   <style>
     #root { position: absolute; inset: 0; }
     #root .s01-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
-    #root .s01-abs { position: absolute; }
-    /* 镜头 A：两个 C 矩阵 */
-    #root .s01-ver { position: absolute; top: 56px; width: 560px; text-align: center; font-size: 56px; font-weight: 800; color: var(--ink); white-space: nowrap; }
-    #root #s01-slow { position: absolute; left: 760px; top: 72px; width: 400px; text-align: center; font-size: 32px; font-weight: 600; color: var(--note); white-space: nowrap; }
-    #root .s01-mat { position: absolute; top: 150px; width: 560px; height: 560px; border: 4px solid var(--purple); background: var(--cell); overflow: hidden; }
-    #root .s01-row { position: absolute; left: 0; width: 552px; height: 69px; background: var(--purple); transform-origin: 0 50%; }
-    #root .s01-grid { position: absolute; left: 0; top: 0; width: 552px; height: 552px; }
-    #root .s01-grid i { position: absolute; background: var(--paper); }
-    #root .s01-timer { position: absolute; top: 726px; width: 560px; text-align: center; font-family: var(--mono); font-size: 64px; font-weight: 800; color: var(--ink); white-space: nowrap; line-height: 76px; }
-    #root #s01-check { position: absolute; left: 1560px; top: 732px; width: 64px; height: 64px; }
-    #root .s01-tc { position: absolute; top: 826px; width: 60px; height: 60px; background: var(--teal); border-radius: 3px; }
-    #root #s01-tclbl { position: absolute; left: 704px; top: 836px; width: 512px; text-align: center; font-size: 32px; font-weight: 700; color: var(--teal-t); white-space: nowrap; }
-    /* 镜头 B：9% */
-    #root .s01-blbl { position: absolute; left: 160px; font-size: 40px; font-weight: 700; white-space: nowrap; }
-    #root .s01-bar { position: absolute; left: 160px; height: 96px; transform-origin: 0 50%; }
-    #root #s01-b2trk { position: absolute; left: 160px; top: 560px; width: 1300px; height: 96px; border: 3px dashed var(--gray); }
-    #root #s01-p9 { position: absolute; left: 1510px; top: 500px; font-size: 180px; line-height: 200px; font-weight: 800; color: var(--hot-t); white-space: nowrap; }
-    /* 镜头 C：大耗时条 + 问题 */
-    #root #s01-q { position: absolute; left: 0; top: 232px; width: 1920px; text-align: center; font-size: 96px; line-height: 120px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+    #root .s01-t { position: absolute; font-weight: 700; white-space: nowrap; color: var(--ink); }
+    /* 镜头 A：芯片示意 */
+    #root #s01-die { position: absolute; left: 460px; top: 160px; width: 1000px; height: 700px; border: 4px solid var(--ink); background: var(--paper2); }
+    #root .s01-sm { position: absolute; width: 80px; height: 42px; background: var(--cell); border: 2px solid var(--gray); }
+    #root #s01-l2 { position: absolute; left: 476px; top: 478px; width: 968px; height: 64px; line-height: 64px; background: var(--use); color: #fff; font-size: 34px; font-weight: 800; text-align: center; transform-origin: 50% 50%; }
+    #root .s01-hbm { position: absolute; width: 120px; height: 200px; background: var(--hot); border: 3px solid var(--hot-t); }
+    #root #s01-smhi { position: absolute; left: 912px; top: 268px; width: 88px; height: 50px; border: 5px solid var(--teal); }
+    /* 镜头 B：一个 SM */
+    #root #s01-smw { position: absolute; left: 460px; top: 140px; width: 1000px; height: 720px; border: 3px dashed var(--gray); }
+    #root .s01-part { position: absolute; width: 460px; height: 230px; background: var(--paper2); border: 2px solid var(--line); }
+    #root .s01-tcb { position: absolute; left: 40px; top: 35px; width: 380px; height: 160px; background: var(--teal); color: #fff; font-size: 44px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+    #root .s01-fp { position: absolute; left: 250px; top: 24px; width: 192px; height: 96px; background-image: radial-gradient(circle, var(--ink2) 6px, transparent 6.5px); background-size: 24px 24px; }
+    #root .s01-fpl { position: absolute; left: 250px; top: 128px; font-size: 28px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
+    #root .s01-reg { position: absolute; left: 20px; top: 172px; width: 420px; height: 40px; line-height: 40px; background: var(--purple); color: #fff; font-size: 28px; font-weight: 700; padding-left: 14px; box-sizing: border-box; }
+    #root #s01-smem { position: absolute; left: 30px; top: 590px; width: 940px; height: 100px; line-height: 100px; background: var(--use); color: #fff; font-size: 36px; font-weight: 800; text-align: center; transform-origin: 50% 50%; }
+    /* 镜头 C：一个乘加 vs 一整块 */
+    #root .s01-tile { position: absolute; width: 240px; height: 240px; background-image: linear-gradient(to right, var(--paper) 3px, transparent 3px), linear-gradient(to bottom, var(--paper) 3px, transparent 3px); background-size: 30px 30px; }
+    #root .s01-op { position: absolute; font-size: 80px; font-weight: 800; color: var(--ink); line-height: 240px; }
+    /* 镜头 D：每时钟乘加次数 */
+    #root #s01-dots1 { position: absolute; left: 200px; top: 420px; width: 256px; height: 128px; background-image: radial-gradient(circle, var(--ink2) 5px, transparent 5.5px); background-size: 16px 16px; }
+    #root #s01-dots2 { position: absolute; left: 720px; top: 300px; width: 1024px; height: 512px; background-image: radial-gradient(circle, var(--teal) 5px, transparent 5.5px); background-size: 16px 16px; }
+    #root #s01-cover { position: absolute; left: 712px; top: 296px; width: 1040px; height: 520px; background: var(--paper); transform-origin: 50% 100%; }
+    /* 镜头 E：数据通路 */
+    #root #s01-tower { position: absolute; left: 640px; top: 170px; width: 640px; height: 680px; }
+    #root #s01-blk { position: absolute; left: 0; top: 0; width: 44px; height: 44px; background: var(--blue); border: 2px solid var(--ink); }
+    /* 镜头 F：忙闲条 + 大耗时条 */
+    #root #s01-bhd { position: absolute; left: 260px; top: 318px; font-size: 40px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+    #root #s01-btrk { position: absolute; left: 260px; top: 400px; width: 1400px; height: 120px; border: 3px dashed var(--gray); }
+    #root #s01-busy { position: absolute; left: 260px; top: 400px; width: 126px; height: 120px; background: var(--teal); transform-origin: 0 50%; }
+    #root #s01-idle { position: absolute; left: 386px; top: 400px; width: 1274px; height: 120px; background: repeating-linear-gradient(-45deg, var(--gray) 0 6px, var(--paper2) 6px 22px); transform-origin: 0 50%; }
+    #root #s01-busyl { position: absolute; left: 260px; top: 548px; font-size: 44px; font-weight: 800; color: var(--teal-t); white-space: nowrap; }
+    #root #s01-wait { position: absolute; left: 780px; top: 540px; font-size: 150px; line-height: 180px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+    #root #s01-say { position: absolute; left: 0; top: 300px; width: 1920px; text-align: center; font-size: 72px; line-height: 96px; font-weight: 800; color: var(--ink); white-space: nowrap; }
     #root #s01-tb .ref { opacity: 0; }
   </style>
   <div id="root" data-composition-id="s01" data-width="1920" data-height="1080">
 
-    <!-- 0.0 两个 C 矩阵同时填充（放慢 1000 倍） -->
-    <div id="s01-A" class="clip s01-full" data-start="0.00" data-duration="12.50" data-track-index="1">
+    <!-- 0.8 第 1 句：H100 芯片示意（SM 上下两半，中间 L2，两侧显存） -->
+    <div id="s01-A" class="clip s01-full" data-start="0.00" data-duration="10.30" data-track-index="1">
       <div id="s01-Ain" class="s01-full">
-        <div id="s01-verL" class="s01-ver" style="left:280px">第 1 版</div>
-        <div id="s01-verR" class="s01-ver" style="left:1080px">第 8 版</div>
-        <div id="s01-slow">放慢 1000 倍</div>
-        <div id="s01-matL" class="s01-mat" style="left:280px">
-          <div id="s01-L0" class="s01-row" style="top:0px"></div>
-          <div id="s01-L1" class="s01-row" style="top:69px"></div>
-          <div id="s01-L2" class="s01-row" style="top:138px"></div>
-          <div id="s01-L3" class="s01-row" style="top:207px"></div>
-          <div id="s01-L4" class="s01-row" style="top:276px"></div>
-          <div id="s01-L5" class="s01-row" style="top:345px"></div>
-          <div id="s01-L6" class="s01-row" style="top:414px"></div>
-          <div id="s01-L7" class="s01-row" style="top:483px"></div>
-          <div class="s01-grid"></div>
-        </div>
-        <div id="s01-matR" class="s01-mat" style="left:1080px">
-          <div id="s01-R0" class="s01-row" style="top:0px"></div>
-          <div id="s01-R1" class="s01-row" style="top:69px"></div>
-          <div id="s01-R2" class="s01-row" style="top:138px"></div>
-          <div id="s01-R3" class="s01-row" style="top:207px"></div>
-          <div id="s01-R4" class="s01-row" style="top:276px"></div>
-          <div id="s01-R5" class="s01-row" style="top:345px"></div>
-          <div id="s01-R6" class="s01-row" style="top:414px"></div>
-          <div id="s01-R7" class="s01-row" style="top:483px"></div>
-          <div class="s01-grid"></div>
-        </div>
-        <div id="s01-tL" class="s01-timer" style="left:280px">0.00 ms</div>
-        <div id="s01-tR" class="s01-timer" style="left:1080px">0.00 ms</div>
-        <svg id="s01-check" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="32" cy="32" r="30" style="fill:var(--teal)" />
-          <polyline points="17,33 28,44 47,22" style="fill:none;stroke:#fff;stroke-width:7;stroke-linecap:round;stroke-linejoin:round" />
-        </svg>
-        <!-- 7.61 同一批 Tensor Core -->
-        <div id="s01-tc0" class="s01-tc" style="left:416px"></div>
-        <div id="s01-tc1" class="s01-tc" style="left:492px"></div>
-        <div id="s01-tc2" class="s01-tc" style="left:568px"></div>
-        <div id="s01-tc3" class="s01-tc" style="left:644px"></div>
-        <div id="s01-tc4" class="s01-tc" style="left:1216px"></div>
-        <div id="s01-tc5" class="s01-tc" style="left:1292px"></div>
-        <div id="s01-tc6" class="s01-tc" style="left:1368px"></div>
-        <div id="s01-tc7" class="s01-tc" style="left:1444px"></div>
-        <div id="s01-tclbl">每个 SM 4 个 Tensor Core</div>
+        <div id="s01-die"></div>
+        <div id="s01-cells"></div>
+        <div id="s01-l2">L2 · 50 MB</div>
+        <div id="s01-h0" class="s01-hbm" style="left:300px;top:175px"></div>
+        <div id="s01-h1" class="s01-hbm" style="left:300px;top:415px"></div>
+        <div id="s01-h2" class="s01-hbm" style="left:300px;top:655px"></div>
+        <div id="s01-h3" class="s01-hbm" style="left:1500px;top:175px"></div>
+        <div id="s01-h4" class="s01-hbm" style="left:1500px;top:415px"></div>
+        <div id="s01-h5" class="s01-hbm" style="left:1500px;top:655px"></div>
+        <div id="s01-hl1" class="s01-t" style="left:286px;top:104px;font-size:36px;color:var(--hot-t)">显存</div>
+        <div id="s01-hl2" class="s01-t" style="left:1486px;top:104px;font-size:36px;color:var(--hot-t)">显存</div>
+        <div id="s01-dl" class="s01-t" style="left:460px;top:96px;width:1000px;text-align:center;font-size:44px">H100 · 132 个 SM</div>
+        <div id="s01-smhi"></div>
       </div>
     </div>
 
-    <!-- 11.16 规格峰值 989 vs 第 1 版 93.3：9% -->
-    <div id="s01-B" class="clip s01-full" data-start="12.38" data-duration="5.02" data-track-index="2">
+    <!-- 9.36 第 2 句：放大一个 SM，4 个分区各有一个 Tensor Core，共用共享内存 -->
+    <div id="s01-B" class="clip s01-full" data-start="9.40" data-duration="7.40" data-track-index="2">
       <div id="s01-Bin" class="s01-full">
-        <div id="s01-bl1" class="s01-blbl" style="top:300px;color:var(--teal-t)">Tensor Core 规格峰值 989 TFLOPS（FP32 单元的 16 倍）</div>
-        <div id="s01-b1" class="s01-bar" style="top:360px;width:1300px;background:var(--teal)"></div>
-        <div id="s01-bl2" class="s01-blbl" style="top:500px;color:var(--ink)">第 1 版 93.3 TFLOPS</div>
-        <div id="s01-b2trk"></div>
-        <div id="s01-b2" class="s01-bar" style="top:560px;width:123px;background:var(--ink2)"></div>
-        <div id="s01-p9">9%</div>
+        <div id="s01-smw">
+          <div id="s01-p0" class="s01-part" style="left:30px;top:70px"><div class="s01-tcb">Tensor Core</div></div>
+          <div id="s01-p1" class="s01-part" style="left:510px;top:70px"><div class="s01-tcb">Tensor Core</div></div>
+          <div id="s01-p2" class="s01-part" style="left:30px;top:330px"><div class="s01-tcb">Tensor Core</div></div>
+          <div id="s01-p3" class="s01-part" style="left:510px;top:330px"><div class="s01-tcb">Tensor Core</div></div>
+          <div id="s01-smem">共享内存</div>
+        </div>
       </div>
     </div>
 
-    <!-- 16.97 大耗时条：11.78 ms，时间去哪了？最后停靠右上角 -->
-    <div id="s01-C" class="clip s01-full" data-start="16.97" data-duration="4.53" data-track-index="3">
-      <div id="s01-q">时间去哪了？</div>
+    <!-- 16.59 第 3 句：FP32 一条指令一个乘加；Tensor Core 一条指令一整块 -->
+    <div id="s01-C" class="clip s01-full" data-start="16.50" data-duration="6.20" data-track-index="3">
+      <div id="s01-Cin" class="s01-full">
+        <div id="s01-cl1" class="s01-t" style="left:200px;top:250px;font-size:44px">FP32 单元</div>
+        <div id="s01-cl2" class="s01-t" style="left:200px;top:390px;font-family:var(--mono);font-size:88px;font-weight:800">a×b+c</div>
+        <div id="s01-cr1" class="s01-t" style="left:900px;top:250px;font-size:44px;color:var(--teal-t)">Tensor Core</div>
+        <div id="s01-ta" class="s01-tile" style="left:900px;top:340px;background-color:var(--blue)"></div>
+        <div id="s01-tx" class="s01-op" style="left:1162px;top:340px">×</div>
+        <div id="s01-tw" class="s01-tile" style="left:1230px;top:340px;background-color:var(--yel)"></div>
+        <div id="s01-tar" class="s01-op" style="left:1492px;top:340px">→</div>
+        <div id="s01-tcw" class="s01-tile" style="left:1580px;top:340px;background-color:var(--cell)"></div>
+        <div id="s01-tc" class="s01-tile" style="left:1580px;top:340px;background-color:var(--purple)"></div>
+      </div>
+    </div>
+
+    <!-- 22.59 第 4 句：每 SM 每时钟 128 对 2048 次乘加，同样点距，面积 16 倍 -->
+    <div id="s01-D" class="clip s01-full" data-start="22.50" data-duration="5.85" data-track-index="4">
+      <div id="s01-Din" class="s01-full">
+        <div id="s01-dl1" class="s01-t" style="left:200px;top:300px;font-size:44px">FP32：128</div>
+        <div id="s01-dots1"></div>
+        <div id="s01-dl2" class="s01-t" style="left:720px;top:236px;font-size:44px;color:var(--teal-t)">Tensor Core：2048</div>
+        <div id="s01-dots2"></div>
+        <div id="s01-cover"></div>
+        <div id="s01-x16" class="s01-t" style="left:200px;top:610px;font-size:150px;line-height:180px;font-weight:800;color:var(--teal-t)">16 倍</div>
+      </div>
+    </div>
+
+    <!-- 28.25 第 5 句：数据从显存经 L2、共享内存送到 Tensor Core -->
+    <div id="s01-E" class="clip s01-full" data-start="28.20" data-duration="10.60" data-track-index="5">
+      <div id="s01-Ein" class="s01-full">
+        <div id="s01-tower"><div id="s01-blk"></div></div>
+      </div>
+    </div>
+
+    <!-- 35.4 第 6 句：第 1 版 Tensor Core 只有 9% 的时间在算；耗时条出现并停靠右上角 -->
+    <div id="s01-F" class="clip s01-full" data-start="38.60" data-duration="9.38" data-track-index="6">
+      <div id="s01-Fin" class="s01-full">
+        <div id="s01-bhd">第 1 版：Tensor Core 的时间</div>
+        <div id="s01-btrk"></div>
+        <div id="s01-busy"></div>
+        <div id="s01-idle"></div>
+        <div id="s01-busyl">在算 9%</div>
+        <div id="s01-wait">等数据</div>
+      </div>
+      <div id="s01-say">八步，改的都是<span class="acc-o">这条路</span></div>
       <div id="s01-tb" class="kit-tbar">
         <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
-        <div class="track"><div id="s01-tbghost" class="ghost" style="opacity:0"></div><div id="s01-tbfill" class="fill"></div><div id="s01-tbpeak" class="peak"></div></div>
+        <div class="track"><div id="s01-tbghost" class="ghost" style="opacity:0"></div><div id="s01-tbfill" class="fill"></div><div class="peak"></div></div>
         <div id="s01-tbnum" class="num">11.78 ms</div>
-        <div id="s01-ref1" class="ref">虚线：峰值只要 1.11 ms</div>
-        <div id="s01-ref2" class="ref">虚线：规格峰值 1.11 ms</div>
       </div>
     </div>
   </div>
@@ -104,76 +131,105 @@
       const ft = (el, a, b, t) => tl.fromTo(el, a, b, t);
       const fadeIn = (el, t, d = 0.5) => ft(el, { opacity: 0 }, { opacity: 1, duration: d, ease: IN }, t);
       const fadeOut = (el, t, d = 0.4) => ft(el, { opacity: 1 }, { opacity: 0, duration: d, ease: OUT }, t);
+      const rise = (el, t) => ft(el, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.55, ease: IN }, t);
 
-      // 装饰：tile 网格线（8 × 8），不计时
-      document.querySelectorAll("#root .s01-grid").forEach((g) => {
-        for (let k = 1; k < 8; k++) {
-          const v = document.createElement("i"); v.style.cssText = `left:${k * 69 - 2}px;top:0;width:4px;height:552px`; g.appendChild(v);
-          const h = document.createElement("i"); h.style.cssText = `left:0;top:${k * 69 - 2}px;width:552px;height:4px`; g.appendChild(h);
+      // 装饰：132 个 SM 格（上下各 66 = 6 行 × 11 列），不计时
+      const cells = $("cells"), sms = [];
+      [176, 556].forEach((y0, half) => {
+        for (let r = 0; r < 6; r++) for (let c = 0; c < 11; c++) {
+          const d = document.createElement("div");
+          d.className = "s01-sm";
+          d.style.left = 476 + c * 88 + "px"; d.style.top = y0 + r * 48 + "px";
+          cells.appendChild(d); sms.push({ el: d, k: half * 6 + r, c });
         }
       });
 
-      // ---------- 初始状态 ----------
-      const rowsL = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => $("L" + i));
-      const rowsR = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => $("R" + i));
-      gsap.set([...rowsL, ...rowsR], { scaleX: 0 });
-      gsap.set([$("check"), $("tclbl")], { opacity: 0 });
-      gsap.set([$("bl1"), $("bl2"), $("b2trk"), $("p9")], { opacity: 0 });
-      gsap.set([$("b1"), $("b2")], { scaleX: 0 });
-      gsap.set([0, 1, 2, 3, 4, 5, 6, 7].map((i) => $("tc" + i)), { opacity: 0 });
+      // ---------- 镜头 A：芯片 ----------
+      gsap.set(sms.map((s) => s.el), { opacity: 0 });
+      gsap.set([$("l2"), $("hl1"), $("hl2"), $("smhi")], { opacity: 0 });
+      gsap.set([0, 1, 2, 3, 4, 5].map((i) => $("h" + i)), { opacity: 0 });
+      gsap.set($("die"), { opacity: 1 });
+      sms.forEach((s) => ft(s.el, { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "none" }, 0.9 + (s.k * 11 + s.c) * 0.012));
+      ft($("l2"), { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.7, ease: IN }, 4.4);
+      [0, 1, 2, 3, 4, 5].forEach((i) => ft($("h" + i), { opacity: 0, x: i < 3 ? -40 : 40 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 6.2 + (i % 3) * 0.1));
+      fadeIn([$("hl1"), $("hl2")], 6.5);
+      // 选中一个 SM，镜头推进
+      ft($("smhi"), { opacity: 0, scale: 1.6, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.4, ease: IN }, 9.4);
+      ft($("Ain"), { scale: 1, opacity: 1 }, { scale: 4, opacity: 0, transformOrigin: "956px 293px", duration: 0.9, ease: "power2.in" }, 9.85);
 
-      // ---------- 0.2 填充：右 1.41 s，左 11.78 s（放慢 1000 倍，线性） ----------
-      const T0 = 0.2;
-      const fill = (rows, total, timer) => {
-        const per = total / rows.length;
-        rows.forEach((r, i) => ft(r, { scaleX: 0 }, { scaleX: 1, duration: per, ease: "none" }, T0 + i * per));
-        const st = { v: 0 };
-        ft(st, { v: 0 }, { v: total, duration: total, ease: "none", onUpdate: () => { timer.textContent = st.v.toFixed(2) + " ms"; } }, T0);
-      };
-      fill(rowsR, 1.41, $("tR"));
-      fill(rowsL, 11.78, $("tL"));
-      ft($("tR"), { color: "#141414" }, { color: "#0a6f63", duration: 0.3, ease: IN }, T0 + 1.41);
-      ft($("check"), { opacity: 0, scale: 0.4, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)" }, T0 + 1.45);
+      // ---------- 镜头 B：一个 SM ----------
+      ft($("smw"), { opacity: 0, scale: 0.09, x: -4, y: -207, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, x: 0, y: 0, duration: 0.9, ease: "power2.out" }, 9.95);
+      gsap.set([$("p0"), $("p1"), $("p2"), $("p3"), $("smem")], { opacity: 0 });
+      [0, 1, 2, 3].forEach((i) => rise($("p" + i), 11.0 + i * 0.25));
+      const tcs = Array.from(document.querySelectorAll("#s01-smw .s01-tcb"));
+      ft(tcs, { scale: 1, transformOrigin: "50% 50%" }, { scale: 1.12, duration: 0.3, ease: "power2.out", yoyo: true, repeat: 1 }, 12.9);
+      ft($("smem"), { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.7, ease: IN }, 14.0);
+      fadeOut($("Bin"), 16.4);
 
-      // ---------- 7.61 同一批 Tensor Core ----------
-      [0, 1, 2, 3].forEach((i) => {
-        ft([$("tc" + i), $("tc" + (i + 4))], { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 7.7 + i * 0.12);
-      });
-      fadeIn($("tclbl"), 8.3);
+      // ---------- 镜头 C：一个乘加 vs 一整块 ----------
+      gsap.set([$("cl1"), $("cl2"), $("cr1"), $("ta"), $("tx"), $("tw"), $("tar"), $("tcw"), $("tc")], { opacity: 0 });
+      rise($("cl1"), 16.7);
+      rise($("cl2"), 17.0);
+      rise($("cr1"), 19.0);
+      ft([$("ta"), $("tw")], { opacity: 0, scale: 0.8, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: IN, stagger: 0.15 }, 19.3);
+      fadeIn([$("tx"), $("tar"), $("tcw")], 19.6, 0.4);
+      ft($("tc"), { opacity: 0, scale: 0.9, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, 20.4);
+      fadeOut($("Cin"), 22.3);
 
-      // ---------- 12.5 矩阵退场；横条：989 vs 93.3 → 9% ----------
-      ft($("Ain"), { opacity: 1, y: 0 }, { opacity: 0, y: -30, duration: 0.35, ease: OUT }, 11.98);
-      fadeIn([$("bl1")], 12.4);
-      ft($("b1"), { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: IN }, 12.4);
-      fadeIn([$("bl2"), $("b2trk")], 13.2);
-      ft($("b2"), { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: IN }, 13.4);
-      ft($("p9"), { opacity: 0, scale: 0.7, transformOrigin: "0% 50%" }, { opacity: 1, scale: 1, duration: 0.6, ease: IN }, 14.6);
-      fadeOut($("Bin"), 16.97);
+      // ---------- 镜头 D：128 对 2048 ----------
+      gsap.set([$("dl1"), $("dots1"), $("dl2"), $("dots2"), $("x16")], { opacity: 0 });
+      rise([$("dl1"), $("dots1")], 22.8);
+      fadeIn([$("dl2"), $("dots2")], 23.8, 0.2);
+      ft($("cover"), { scaleY: 1 }, { scaleY: 0, duration: 1.6, ease: "power1.inOut" }, 23.9);
+      ft($("x16"), { opacity: 0, scale: 0.7, transformOrigin: "0% 50%" }, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.6)" }, 25.9);
+      fadeOut($("Din"), 28.0);
 
-      // ---------- 16.97 大耗时条（2 倍居中）→ 11.78 ms → 停靠右上角 ----------
-      // 停靠位：right 96 / top 84，720 宽；大画面：右上角为原点放大 2 倍，左缘 240，上缘 400
-      const BIG = { x: -144, y: 316, scale: 2 };
-      gsap.set($("tb"), { transformOrigin: "100% 0%", ...BIG });
+      // ---------- 镜头 E：显存 → L2 → 共享内存 → Tensor Core ----------
+      const T = kitTower($("tower"), { inSM: 0, layers: [
+        { id: "tc", name: "Tensor Core", note: "", color: "var(--teal)" },
+        { id: "smem", name: "共享内存", note: "", color: "var(--use)" },
+        { id: "l2", name: "L2", note: "", color: "var(--blue)" },
+        { id: "hbm", name: "显存", note: "", color: "var(--hot)" },
+      ] });
+      const path = T.route("s01-route", ["hbm", "l2", "smem", "tc"], { color: "var(--blue)", width: 6 });
+      const hops = ["hbm", "l2", "smem", "tc"].map((k) => T.at(k));
+      const lys = ["tc", "smem", "l2", "hbm"].map((k) => T.layer[k]);
+      gsap.set(lys, { opacity: 0 });
+      gsap.set($("blk"), { opacity: 0, x: hops[0].x - 22, y: hops[0].y - 22 });
+      ft($("tower"), { opacity: 0 }, { opacity: 1, duration: 0.01 }, 28.25);
+      ["hbm", "l2", "smem", "tc"].forEach((k, i) => rise(T.layer[k], 28.3 + i * 0.3));
+      ft(path, { strokeDashoffset: path.dataset.len }, { strokeDashoffset: 0, duration: 3.6, ease: "none" }, 30.0);
+      ft($("blk"), { opacity: 0 }, { opacity: 1, duration: 0.2 }, 30.0);
+      [1, 2, 3].forEach((i) => ft($("blk"), { x: hops[i - 1].x - 22, y: hops[i - 1].y - 22 }, { x: hops[i].x - 22, y: hops[i].y - 22, duration: 1.1, ease: MOVE }, 30.1 + (i - 1) * 1.2));
+      ft(T.layer.tc, { scale: 1 }, { scale: 1.05, duration: 0.25, ease: "power2.out", yoyo: true, repeat: 1, transformOrigin: "50% 50%" }, 33.7);
+      fadeOut($("Ein"), 38.4);
+
+      // ---------- 镜头 F：9% 在算，其余在等 ----------
+      gsap.set([$("bhd"), $("btrk"), $("busyl"), $("wait"), $("say")], { opacity: 0 });
+      gsap.set([$("busy"), $("idle")], { scaleX: 0 });
+      fadeIn([$("bhd"), $("btrk")], 38.9);
+      ft($("busy"), { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: IN }, 39.3);
+      rise($("busyl"), 39.6);
+      ft($("idle"), { scaleX: 0 }, { scaleX: 1, duration: 1.3, ease: "power2.out" }, 41.6);
+      ft($("wait"), { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.6, ease: IN }, 43.4);
+      fadeOut($("Fin"), 45.5);
+      // 大耗时条（2 倍居中）→ 最后停靠右上角，与 s02 一致
+      const BIG = { x: -144, y: 436, scale: 2 };
+      gsap.set($("tb"), { transformOrigin: "100% 0%", ...BIG, opacity: 0 });
       gsap.set($("tbfill"), { scaleX: 0 });
       gsap.set($("tbnum"), { x: 12 });
-      gsap.set($("q"), { opacity: 0 });
-      ft($("tb"), { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 17.15);
-      ft($("q"), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: IN }, 17.05);
+      ft($("tb"), { opacity: 0 }, { opacity: 1, duration: 0.4, ease: IN }, 45.7);
       const ms = { v: 0 };
-      ft(ms, { v: 0 }, { v: 11.78, duration: 1.2, ease: "power2.out", onUpdate: () => {
+      ft(ms, { v: 0 }, { v: 11.78, duration: 1.0, ease: "power2.out", onUpdate: () => {
         gsap.set($("tbfill"), { scaleX: ms.v / 16 });
         gsap.set($("tbnum"), { x: ms.v * 45 + 12 });
         $("tbnum").textContent = ms.v.toFixed(2) + " ms";
-      } }, 17.4);
-      fadeIn($("ref1"), 17.6);
-      ft($("tbpeak"), { scaleY: 1 }, { scaleY: 1.35, duration: 0.3, ease: "power2.out", yoyo: true, repeat: 1 }, 18.5);
-      // 最后 1.5 s：问题淡出，耗时条缩回右上角
-      fadeOut($("q"), 19.8);
-      ft($("tb"), BIG, { x: 0, y: 0, scale: 1, duration: 1.0, ease: MOVE }, 20.0);
-      fadeOut($("ref1"), 20.0, 0.3);
-      fadeIn($("ref2"), 20.4, 0.4);
+      } }, 45.8);
+      rise($("say"), 46.0);
+      fadeOut($("say"), 47.05, 0.3);
+      ft($("tb"), BIG, { x: 0, y: 0, scale: 1, duration: 0.8, ease: MOVE }, 47.05);
 
-      tl.set({}, {}, 21.5);
+      tl.set({}, {}, 47.98);
       window.__timelines["s01"] = tl;
     })();
   </script>

@@ -1,9 +1,13 @@
 <template>
   <!--
-    s07 第 6 步：tile 发放顺序。节拍（幕内秒）1.0 / 6.93 / 13.08，幕长 20.1。
-    tile 图（与 s06 同一朝向）：8192 阶 C 按 128 × 256 切成 64 行 × 32 列 tile，画成转置：
-      横向 = tile 行 m（x = 40 + 25m），纵向 = tile 列 n（y = 18n），格 23 × 16；Wᵀ 边条在 x = 0。
-      #s07-map 位于 left 96 / top 310，1640 × 576；第 2 句缩到 0.64 倍靠左上，右侧给 L2 扇出图。
+    s07 第 6 步：tile 发放顺序。节拍（幕内秒）1.0 / 6.93 / 14.08 / 20.48，幕长 25.05。
+    句 1：tile 图（与 s06 同一朝向），按行发放 → 每 16 行一组、组内按列。
+      tile 图：8192 阶 C 按 128 × 256 切成 64 行 × 32 列 tile，画成转置：横向 = tile 行 m（x = 40 + 25m），纵向 = tile 列 n（y = 18n）。
+    句 2：按行发放时编号 = 开始先后；tile 0 与 tile 32 共用 W₀。L2 画成传送带：每发一个 tile 读进一块新 W，
+      最旧的从右端被挤出；W₀ 在 tile 32 到来前已被替换，tile 32 只能再从显存读。
+    句 3：tile 图缩到左上（分组状态），右侧 L2 扇出：一块 W 读进 L2 一次，被 16 个 tile 读走。
+    句 4：左侧一根条 6.6 GB → 1.3 GB；耗时条同时 2.29 → 1.49。
+    画面只留部件名与关键数字（≥ 36 px），不写说明文字。
   -->
   <style>
     #root { position: absolute; inset: 0; }
@@ -23,26 +27,34 @@
     #root .s07-w { position: absolute; left: 0; width: 23px; height: 16px; background: var(--yel); }
     #root #s07-colbox { position: absolute; left: 36px; top: -4px; width: 406px; height: 24px; border: 4px solid var(--ink); }
     #root #s07-wcur { position: absolute; left: -4px; top: -4px; width: 31px; height: 24px; border: 4px solid var(--ink); }
-    #root #s07-runlbl { position: absolute; left: 290px; top: 560px; padding: 2px 10px; background: var(--paper); font-size: 32px; font-weight: 700; color: var(--purple-t); white-space: nowrap; }
+    #root #s07-runlbl { position: absolute; left: 290px; top: 560px; padding: 2px 10px; background: var(--paper); font-size: 36px; font-weight: 800; color: var(--purple-t); white-space: nowrap; }
+    /* 被替换：L2 传送带 + 发放顺序 */
+    #root #s07-l2 { position: absolute; left: 300px; top: 370px; width: 1080px; height: 130px; border: 4px solid var(--blue); }
+    #root .s07-wq { position: absolute; left: 0; top: 410px; width: 50px; height: 50px; background: var(--yel); font-family: var(--mono); font-size: 36px; font-weight: 800; color: var(--ink); line-height: 50px; text-align: center; }
+    #root .s07-wq.re { border: 4px solid var(--hot); line-height: 42px; }
+    #root .s07-t { position: absolute; top: 640px; width: 40px; height: 110px; background: var(--cell); }
+    #root .s07-t i { position: absolute; inset: 0; background: var(--purple); }
+    #root .s07-cap { position: absolute; top: 624px; width: 40px; height: 12px; background: var(--yel); }
     /* 扇出图 */
     #root .s07-ft { position: absolute; top: 322px; width: 30px; height: 30px; background: var(--purple); }
     #root #s07-tower { position: absolute; left: 1180px; top: 540px; width: 640px; height: 340px; }
+    #root #s07-tower .kit-ly > div > div:first-child { font-size: 36px !important; }
     #root #s07-wb { position: absolute; left: 1580px; top: 771px; width: 48px; height: 48px; background: var(--yel); border: 2px solid var(--yel-t); }
-    /* 结果 */
-    #root .s07-bar { position: absolute; left: 340px; height: 100px; transform-origin: 0 50%; background: var(--hot); }
+    /* 显存读取 */
+    #root #s07-b1 { position: absolute; left: 96px; top: 450px; width: 700px; height: 100px; transform-origin: 0 50%; background: var(--hot); }
+    #root #s07-b1g { position: absolute; left: 96px; top: 450px; width: 700px; height: 100px; border: 3px dashed var(--gray); }
     #root .s07-val { position: absolute; font-family: var(--mono); font-size: 52px; font-weight: 800; color: var(--ink); white-space: nowrap; line-height: 100px; }
-    #root .s07-rl { position: absolute; left: 96px; font-size: 36px; font-weight: 600; color: var(--ink2); white-space: nowrap; line-height: 100px; }
   </style>
   <div id="root" data-composition-id="s07" data-width="1920" data-height="1080">
 
     <!-- 0–1.0 标题卡；之后缩到左上角常驻 -->
-    <div id="s07-title" class="clip s07-full" data-start="0.00" data-duration="20.10" data-track-index="1">
+    <div id="s07-title" class="clip s07-full" data-start="0.00" data-duration="25.05" data-track-index="1">
       <div id="s07-chip" class="kit-chip">wgmma_l2</div>
       <div id="s07-ttl" class="kit-title">第 6 步：<span class="acc">tile 发放顺序</span></div>
     </div>
 
-    <!-- 耗时条：2.29 → 1.49 -->
-    <div id="s07-tb" class="clip kit-tbar" data-start="1.00" data-duration="19.10" data-track-index="2">
+    <!-- 耗时条：2.29 → 1.49（20.48） -->
+    <div id="s07-tb" class="clip kit-tbar" data-start="1.00" data-duration="24.05" data-track-index="2">
       <div id="s07-tbin" class="s07-in">
         <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
         <div class="track"><div id="s07-tbghost" class="ghost"></div><div id="s07-tbfill" class="fill"></div><div class="peak"></div></div>
@@ -52,8 +64,8 @@
       </div>
     </div>
 
-    <!-- 1.0 tile 图：按行发放 → 16 行一组；6.93 缩到左上 -->
-    <div id="s07-mapc" class="clip s07-full" data-start="1.00" data-duration="12.50" data-track-index="3" data-layout-allow-overlap>
+    <!-- 1.0 tile 图：按行发放 → 16 行一组；6.93 退场；14.08 以 0.64 倍回到左上 -->
+    <div id="s07-mapc" class="clip s07-full" data-start="1.00" data-duration="19.90" data-track-index="3" data-layout-allow-overlap>
       <div id="s07-mapin" class="s07-full">
         <div id="s07-map">
           <div id="s07-wstrip"></div>
@@ -62,46 +74,42 @@
           <div id="s07-colbox"></div>
           <div id="s07-wcur"></div>
         </div>
-        <div id="s07-runlbl">同时运行的 132 个 tile</div>
-        <div id="s07-axis" class="s07-note" style="left:96px;top:896px"><span style="color:var(--yel-t);font-weight:700">Wᵀ</span>　　C 的 tile：横向 64 行，纵向 32 列</div>
+        <div id="s07-runlbl">132 个 tile</div>
       </div>
     </div>
 
-    <!-- 每句的要点（大字） -->
-    <div id="s07-sts" class="clip s07-full" data-start="1.00" data-duration="12.50" data-track-index="4">
-      <div id="s07-sA" class="s07-st" style="top:236px">按行发放：一轮占 4 行，读<span class="acc-y">整个 W</span></div>
-      <div id="s07-sB" class="s07-st" style="top:236px">分组后：<span class="acc-p">16 行 × 8 列</span>，W 只用 9 块</div>
-      <div id="s07-sC" class="s07-st" style="top:740px;font-size:44px">共用一块 <span class="acc-y">W</span> 的 16 个 tile 同时跑</div>
-      <div id="s07-sD" class="s07-st" style="top:740px;font-size:44px"><span class="acc-y">W</span> 读进 L2 一次，被 <span class="acc-p">16 个 tile</span> 读走</div>
+    <!-- 6.93 按行发放：W₀ 等不到 tile 32 就被挤出 L2 -->
+    <div id="s07-ev" class="clip s07-full" data-start="6.93" data-duration="7.55" data-track-index="5" data-layout-allow-overlap>
+      <div id="s07-evin" class="s07-full">
+        <div id="s07-l2n" class="s07-abs" style="left:96px;top:406px;font-size:48px;font-weight:800;color:var(--blue-t)">L2</div>
+        <div id="s07-l2"></div>
+        <div id="s07-wqs" class="s07-full"></div>
+        <svg id="s07-esvg" class="s07-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none">
+          <path id="s07-brk" d="M 248 614 V 594 H 1656 V 614" style="stroke:var(--ink2)" stroke-width="3" />
+        </svg>
+        <div id="s07-tiles" class="s07-full"></div>
+        <div id="s07-tn0" class="s07-abs" style="left:168px;top:764px;width:160px;text-align:center;font-family:var(--mono);font-size:36px;font-weight:800;color:var(--purple-t)">tile 0</div>
+        <div id="s07-tn32" class="s07-abs" style="left:1556px;top:764px;width:200px;text-align:center;font-family:var(--mono);font-size:36px;font-weight:800;color:var(--purple-t)">tile 32</div>
+      </div>
     </div>
 
-    <!-- 6.93 L2 扇出：一块 W 进 L2，被 16 个 tile 读取 -->
-    <div id="s07-fan" class="clip s07-full" data-start="6.93" data-duration="6.60" data-track-index="5" data-layout-allow-overlap>
+    <!-- 14.08 L2 扇出：一块 W 进 L2，被 16 个 tile 读取（停到幕尾） -->
+    <div id="s07-fan" class="clip s07-full" data-start="14.08" data-duration="10.97" data-track-index="6" data-layout-allow-overlap>
       <div id="s07-fanin" class="s07-full">
-        <div id="s07-ftl" class="s07-lbl" style="left:1200px;top:268px">同一列的 16 个 tile</div>
         <div id="s07-fts" class="s07-full"></div>
         <svg id="s07-fsvg" class="s07-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none"></svg>
         <div id="s07-tower"></div>
         <div id="s07-wb"></div>
-        <div id="s07-once" class="s07-lbl" style="left:1676px;top:688px;color:var(--hot-t);font-weight:700">读一次</div>
       </div>
     </div>
 
-    <!-- 13.08 显存读取 6.6 → 1.3 GB；1.49 ms，+54% -->
-    <div id="s07-res" class="clip s07-full" data-start="13.08" data-duration="7.02" data-track-index="6">
-      <div id="s07-rt" class="s07-abs" style="left:96px;top:330px;font-size:48px;font-weight:800;color:var(--ink);white-space:nowrap">一次乘法的显存读取</div>
-      <div id="s07-r1" class="s07-full">
-        <div class="s07-rl" style="top:450px">按行发放</div>
-        <div id="s07-b1" class="s07-bar" style="top:450px;width:700px"></div>
-        <div id="s07-v1" class="s07-val" style="left:1064px;top:450px">6.6 GB</div>
-      </div>
-      <div id="s07-r2" class="s07-full">
-        <div class="s07-rl" style="top:640px">16 行一组</div>
-        <div id="s07-b2" class="s07-bar" style="top:640px;width:700px"></div>
-        <div id="s07-v2" class="s07-val" style="left:500px;top:640px;color:var(--use-t)">1.3 GB</div>
-      </div>
-      <div id="s07-gc" class="s07-abs" style="left:1392px;top:450px;font-size:44px;font-weight:700;color:var(--ink);white-space:nowrap">一步提速</div>
-      <div id="s07-g" class="s07-abs" style="left:1380px;top:516px;font-family:var(--mono);font-size:168px;line-height:1;font-weight:800;color:var(--teal-t);white-space:nowrap">+54%</div>
+    <!-- 20.48 显存读取 6.6 → 1.3 GB -->
+    <div id="s07-res" class="clip s07-full" data-start="20.48" data-duration="4.57" data-track-index="7">
+      <div id="s07-rt" class="s07-abs" style="left:96px;top:330px;font-size:48px;font-weight:800;color:var(--ink);white-space:nowrap">显存读取</div>
+      <div id="s07-b1g"></div>
+      <div id="s07-b1"></div>
+      <div id="s07-v1" class="s07-val" style="left:820px;top:450px">6.6 GB</div>
+      <div id="s07-v2" class="s07-val" style="left:260px;top:450px;color:var(--use-t)">1.3 GB</div>
     </div>
   </div>
   <script>
@@ -144,12 +152,40 @@
         $("run").appendChild(r); runs.push(r);
       }
 
+      // ---------- 被替换：发放顺序 0..32 + L2 传送带 ----------
+      const TX = (i) => 228 + i * 44;
+      const tiles = [];
+      for (let i = 0; i <= 32; i++) {
+        const t = document.createElement("div");
+        t.className = "s07-t"; t.style.left = TX(i) + "px";
+        const f = document.createElement("i"); t.appendChild(f);
+        $("tiles").appendChild(t); tiles.push([t, f]);
+      }
+      const caps = [0, 32].map((i) => {
+        const c = document.createElement("div");
+        c.className = "s07-cap"; c.style.left = TX(i) + "px";
+        $("tiles").appendChild(c); return c;
+      });
+      const X0 = 308, PITCH = 53, SLOTS = 20;   // 20 个槽位，新块进槽 0，过槽 19 被挤出
+      const S = 9.0, DT = 0.09;                 // tile i 在 S + i·DT 开始
+      const STOP = S + 32 * DT;                 // tile 32 开始时传送带停住
+      const wq = [];
+      for (let j = 0; j < 32; j++) {
+        const b = document.createElement("div");
+        b.className = "s07-wq";
+        if (j === 0) b.textContent = "W₀";
+        $("wqs").appendChild(b); wq.push(b);
+      }
+      const wre = document.createElement("div");
+      wre.className = "s07-wq re"; wre.textContent = "W₀";
+      $("wqs").appendChild(wre);
+
       // ---------- 扇出图 ----------
       const T = kitTower($("tower"), {
         inSM: 0,
         layers: [
-          { id: "l2", name: "L2", note: "50 MB · 全卡共享", color: "var(--blue)" },
-          { id: "hbm", name: "显存 HBM", note: "3.35 TB/s", color: "var(--hot)" },
+          { id: "l2", name: "L2", note: "", color: "var(--blue)" },
+          { id: "hbm", name: "显存", note: "", color: "var(--hot)" },
         ],
       });
       const fts = [], lines = [];
@@ -183,12 +219,17 @@
       gsap.set(cols, { opacity: 0 });
       gsap.set(ws, { opacity: 0 });
       runs.forEach((r, k) => { const p = rowPos(k); gsap.set(r, { x: p[0], y: p[1], opacity: 0 }); });
-      gsap.set([$("colbox"), $("wcur"), $("runlbl"), $("axis")], { opacity: 0 });
-      gsap.set([$("sA"), $("sB"), $("sC"), $("sD")], { opacity: 0 });
-      gsap.set([$("ftl"), $("wb"), $("once"), T.layer.l2, T.layer.hbm], { opacity: 0 });
+      gsap.set([$("colbox"), $("wcur"), $("runlbl")], { opacity: 0 });
+      gsap.set([$("l2n"), $("l2"), $("tn0"), $("tn32")], { opacity: 0 });
+      { const p = $("brk"), n = p.getTotalLength(); p.dataset.len = n; gsap.set(p, { strokeDasharray: n, strokeDashoffset: n }); }
+      tiles.forEach(([t, f]) => { gsap.set(t, { opacity: 0 }); gsap.set(f, { opacity: 0 }); });
+      gsap.set(caps, { opacity: 0 });
+      gsap.set(wq, { x: X0, opacity: 0 });
+      gsap.set(wre, { x: X0, opacity: 0 });
+      gsap.set([$("wb"), T.layer.l2, T.layer.hbm], { opacity: 0 });
       gsap.set(fts, { opacity: 0 });
-      gsap.set([$("rt"), $("r1"), $("r2"), $("v1"), $("v2"), $("gc"), $("g")], { opacity: 0 });
-      gsap.set([$("b1"), $("b2")], { scaleX: 0 });
+      gsap.set([$("rt"), $("b1g"), $("v1"), $("v2")], { opacity: 0 });
+      gsap.set($("b1"), { scaleX: 0 });
 
       // ---------- 0.0 标题卡 ----------
       ft($("chip"), { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, 0.0);
@@ -199,69 +240,74 @@
       fadeIn($("tbin"), 1.0);
       cols.forEach((c, m) => ft(c, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: IN }, 1.1 + m * 0.006));
       ws.forEach((w) => ft(w, { opacity: 0 }, { opacity: 0.3, duration: 0.4, ease: IN }, 1.3));
-      fadeIn($("axis"), 1.4);
-      // 编号流：按行发放的顺序逐个点亮
       runs.forEach((r, k) => ft(r, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: IN }, 1.6 + k * 0.009));
       fadeIn($("runlbl"), 2.2);
-      fadeIn($("sA"), 1.6);
-      // 用到整个 W：32 段全部点亮
       ws.forEach((w, n) => ft(w, { opacity: 0.3 }, { opacity: 1, duration: 0.25, ease: IN }, 2.6 + n * 0.02));
 
-      // ---------- 4.0 每 16 行一组，组内按列：编号流按新顺序收拢 ----------
-      fadeOut($("sA"), 4.0, 0.3);
+      // ---------- 4.15 每 16 行一组，组内按列：编号流按新顺序收拢 ----------
       runs.forEach((r, k) => {
         const a = rowPos(k), b = grpPos(k);
-        ft(r, { x: a[0], y: a[1] }, { x: b[0], y: b[1], duration: 0.9, ease: MOVE }, 4.05 + k * 0.006);
+        ft(r, { x: a[0], y: a[1] }, { x: b[0], y: b[1], duration: 0.9, ease: MOVE }, 4.2 + k * 0.006);
       });
-      ft($("runlbl"), { x: 0, y: 0 }, { x: 270, y: -200, duration: 0.9, ease: MOVE }, 4.3);
-      fadeIn($("sB"), 4.2);
-      ws.forEach((w, n) => { if (n >= 9) ft(w, { opacity: 1 }, { opacity: 0.3, duration: 0.5, ease: MOVE }, 5.0); });
+      ft($("runlbl"), { x: 0, y: 0 }, { x: 270, y: -200, duration: 0.9, ease: MOVE }, 4.45);
+      ws.forEach((w, n) => { if (n >= 9) ft(w, { opacity: 1 }, { opacity: 0.3, duration: 0.5, ease: MOVE }, 5.2); });
 
-      // ---------- 6.93 tile 图缩到左上；框出同一列 W 的 16 个 tile ----------
-      fadeOut($("sB"), 6.93, 0.3);
-      fadeOut($("runlbl"), 6.93, 0.3);
-      fadeOut($("axis"), 6.93, 0.3);
-      ft($("map"), { scale: 1 }, { scale: 0.64, duration: 0.8, ease: MOVE }, 7.0);
-      fadeIn($("colbox"), 7.6, 0.4);
-      fadeIn($("wcur"), 7.6, 0.4);
-      fadeIn($("sC"), 7.3);
-      fadeIn($("ftl"), 7.6);
-      fts.forEach((t, i) => ft(t, { opacity: 0 }, { opacity: 0.45, duration: 0.3, ease: IN }, 7.7 + i * 0.03));
-      ft(T.layer.l2, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 8.3);
-      ft(T.layer.hbm, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 8.2);
-      ft($("wb"), { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: IN }, 8.8);
+      // ---------- 6.93 回到按行发放，看 W₀ 为什么被替换 ----------
+      fadeOut($("mapin"), 6.93, 0.4);
+      tiles.forEach(([t], i) => ft(t, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, 7.3 + i * 0.012));
+      // 8.01 共用 W₀ 的两个 tile 编号相差 32
+      fadeIn(caps, 8.1, 0.4);
+      fadeIn([$("tn0"), $("tn32")], 8.2, 0.4);
+      ft($("brk"), { strokeDashoffset: $("brk").dataset.len }, { strokeDashoffset: 0, duration: 0.6, ease: MOVE }, 8.3);
+      // 8.6 L2 传送带；9.0 起 tile 依次开始，每个 tile 读进一块新的 W
+      ft($("l2"), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 8.5);
+      fadeIn($("l2n"), 8.5);
+      for (let i = 0; i <= 32; i++) ft(tiles[i][1], { opacity: 0 }, { opacity: 1, duration: 0.12, ease: IN }, S + i * DT);
+      wq.forEach((b, j) => {
+        const t0 = S + j * DT, t1 = Math.min(t0 + SLOTS * DT, STOP);
+        const moved = (t1 - t0) / DT;
+        ft(b, { opacity: 0 }, { opacity: 1, duration: 0.08, ease: "none" }, t0);
+        ft(b, { x: X0 }, { x: X0 + PITCH * moved, duration: t1 - t0, ease: "none" }, t0);
+        if (moved >= SLOTS - 0.001) ft(b, { opacity: 1 }, { opacity: 0, duration: DT, ease: "none" }, t0 + (SLOTS - 1) * DT);
+      });
+      // W₀ 在 S + 20·DT = 10.8 被挤出：出口前变红
+      ft(wq[0], { backgroundColor: "#f4c21b" }, { backgroundColor: "#e5322d", duration: 0.3, ease: MOVE }, S + 17 * DT);
+      // 11.88 tile 32 开始：L2 里没有 W₀，再从显存读
+      ft(wre, { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: IN }, STOP + 0.05);
+      fadeOut($("evin"), 14.08);
 
-      // ---------- 10.1 W 进 L2（读一次）；11.4 被 16 个 tile 读走 ----------
-      fadeOut($("sC"), 10.0, 0.3);
-      ft($("wb"), { y: 0 }, { y: -170, duration: 0.7, ease: MOVE }, 10.1);
-      fadeIn($("once"), 10.3);
-      fadeIn($("sD"), 10.4);
-      lines.forEach(([ln, len], i) => ft(ln, { strokeDashoffset: len }, { strokeDashoffset: 0, duration: 0.5, ease: MOVE }, 11.4 + i * 0.02));
-      fts.forEach((t, i) => ft(t, { opacity: 0.45 }, { opacity: 1, duration: 0.25, ease: IN }, 11.8 + i * 0.02));
+      // ---------- 14.08 分组：tile 图缩到左上；框出共用 W₀ 的 16 个 tile ----------
+      tl.set($("map"), { scale: 0.64 }, 14.0);
+      fadeIn($("mapin"), 14.3, 0.6);
+      fadeIn($("colbox"), 14.9, 0.4);
+      fadeIn($("wcur"), 14.9, 0.4);
+      fts.forEach((t, i) => ft(t, { opacity: 0 }, { opacity: 0.45, duration: 0.3, ease: IN }, 15.1 + i * 0.03));
+      ft(T.layer.hbm, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 15.6);
+      ft(T.layer.l2, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 15.7);
+      ft($("wb"), { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.4, ease: IN }, 16.2);
+      // 16.8 W 进 L2（读一次）；18.27 被 16 个 tile 读走
+      ft($("wb"), { y: 0 }, { y: -170, duration: 0.7, ease: MOVE }, 16.8);
+      lines.forEach(([ln, len], i) => ft(ln, { strokeDashoffset: len }, { strokeDashoffset: 0, duration: 0.5, ease: MOVE }, 18.4 + i * 0.02));
+      fts.forEach((t, i) => ft(t, { opacity: 0.45 }, { opacity: 1, duration: 0.25, ease: IN }, 18.8 + i * 0.02));
 
-      // ---------- 13.08 显存读取 6.6 → 1.3 GB；16.95 耗时条 2.29 → 1.49；18.0 +54% ----------
-      fadeOut($("mapin"), 13.08);
-      fadeOut([$("sD"), $("fanin")], 13.08);
-      fadeIn($("rt"), 13.4);
-      fadeIn($("r1"), 14.3, 0.3);
-      ft($("b1"), { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: IN }, 14.35);
-      fadeIn($("v1"), 14.8, 0.3);
-      fadeIn($("r2"), 15.2, 0.3);
-      ft($("b2"), { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: IN }, 15.2);
-      ft($("b2"), { scaleX: 1 }, { scaleX: 140 / 700, duration: 0.9, ease: MOVE }, 15.6);
-      fadeIn($("v2"), 16.3, 0.3);
+      // ---------- 20.48 显存读取 6.6 → 1.3 GB；耗时条 2.29 → 1.49 ----------
+      fadeOut($("mapin"), 20.48);
+      fadeIn($("rt"), 20.7);
+      ft($("b1"), { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: IN }, 20.9);
+      fadeIn($("v1"), 21.1, 0.3);
+      tl.set($("b1g"), { opacity: 1 }, 21.6);
+      ft($("b1"), { scaleX: 1 }, { scaleX: 140 / 700, duration: 0.9, ease: MOVE }, 21.7);
+      ft($("v1"), { color: "#141414" }, { color: "#6b6556", duration: 0.5, ease: MOVE }, 21.7);
+      fadeIn($("v2"), 22.4, 0.4);
 
-      tl.set($("tbghost"), { opacity: 1 }, 16.95);
-      ft($("tbfill"), { scaleX: 2.29 / 16 }, { scaleX: 1.49 / 16, duration: 0.9, ease: MOVE }, 16.95);
-      ft([$("tbnum"), $("tbnum2")], { x: TBX(2.29) }, { x: TBX(1.49), duration: 0.9, ease: MOVE }, 16.95);
-      fadeOut($("tbnum"), 16.95, 0.3);
-      fadeIn($("tbnum2"), 17.45, 0.4);
-      ft($("tbghost"), { opacity: 1 }, { opacity: 0, duration: 0.5, ease: OUT }, 18.45);
+      tl.set($("tbghost"), { opacity: 1 }, 20.48);
+      ft($("tbfill"), { scaleX: 2.29 / 16 }, { scaleX: 1.49 / 16, duration: 0.9, ease: MOVE }, 20.48);
+      ft([$("tbnum"), $("tbnum2")], { x: TBX(2.29) }, { x: TBX(1.49), duration: 0.9, ease: MOVE }, 20.48);
+      fadeOut($("tbnum"), 20.48, 0.3);
+      fadeIn($("tbnum2"), 20.98, 0.4);
+      ft($("tbghost"), { opacity: 1 }, { opacity: 0, duration: 0.5, ease: OUT }, 21.98);
 
-      fadeIn($("gc"), 18.0);
-      ft($("g"), { opacity: 0, scale: 0.9, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.6, ease: IN }, 18.05);
-
-      tl.set({}, {}, 20.1);
+      tl.set({}, {}, 25.05);
       window.__timelines = window.__timelines || {};
       window.__timelines["s07"] = tl;
     })();

@@ -66,10 +66,10 @@ body { font-family: var(--zh); color: var(--ink); }
 /* —— 本片：耗时条 .kit-tbar（替代进度条）。一次 8192 阶矩阵乘法的实测耗时，16 ms 满格（45 px/ms）。
    fill 用 scaleX = ms / 16；num 用 x = ms * 45 + 12；ghost 留上一版的长度。 —— */
 .kit-tbar { position: absolute; right: 96px; top: 84px; width: 720px; height: 150px; }
-.kit-tbar .lbl { position: absolute; left: 0; top: 0; font-size: 28px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
+.kit-tbar .lbl { position: absolute; left: 0; top: 0; font-size: 32px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
 .kit-tbar .track { position: absolute; left: 0; top: 44px; width: 720px; height: 44px; background: var(--paper2); }
 .kit-tbar .ghost { position: absolute; left: 0; top: 0; width: 720px; height: 44px; background: var(--line); transform-origin: 0 50%; }
 .kit-tbar .fill { position: absolute; left: 0; top: 0; width: 720px; height: 44px; background: var(--ink2); transform-origin: 0 50%; }
 .kit-tbar .peak { position: absolute; left: 50px; top: -8px; height: 60px; border-left: 3px dashed var(--teal-t); }
 .kit-tbar .num { position: absolute; left: 0; top: 44px; height: 44px; line-height: 44px; font-family: var(--mono); font-size: 32px; font-weight: 800; color: var(--ink); white-space: nowrap; }
-.kit-tbar .ref { position: absolute; left: 0; top: 104px; font-size: 28px; font-weight: 600; color: var(--teal-t); white-space: nowrap; }
+.kit-tbar .ref { display: none; position: absolute; left: 0; top: 104px; font-size: 28px; font-weight: 600; color: var(--teal-t); white-space: nowrap; }

@@ -5,55 +5,65 @@
     #root .s03-abs { position: absolute; }
     #root .s03-lbl { position: absolute; font-size: 32px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
     #root .kit-tbar .num span { position: absolute; left: 0; top: 0; }
-    /* 第 1 句：8 行 × 8 组 bank */
+    /* 第 1 句：一整行 128 字节 = 8 块 × 4 个 bank */
+    #root .s03-big { position: absolute; top: 0; width: 200px; height: 110px; background: var(--paper2); border: 3px solid var(--ink2); border-radius: 2px; }
+    #root .s03-big i { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px solid var(--gray); }
+    #root .s03-big .n { position: absolute; inset: 0; line-height: 104px; text-align: center; font-family: var(--mono); font-size: 36px; font-weight: 800; color: var(--ink2); }
+    #root .s03-bkl { position: absolute; top: 126px; width: 200px; text-align: center; font-family: var(--mono); font-size: 36px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
+    /* 第 2、3 句：8 行 × 8 组 bank */
     #root .s03-cell { position: absolute; width: 104px; height: 56px; background: var(--paper2); border: 2px solid var(--line); border-radius: 2px; }
-    #root .s03-cell .n { position: absolute; inset: 0; line-height: 52px; text-align: center; font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--note); }
-    #root .s03-cell .h { position: absolute; inset: -2px; border-radius: 2px; line-height: 56px; text-align: center; font-family: var(--mono); font-size: 28px; font-weight: 800; color: #fff; }
-    #root .s03-hd { position: absolute; top: 292px; width: 104px; text-align: center; font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--note); }
-    #root .s03-rl { position: absolute; left: 96px; width: 112px; font-size: 28px; font-weight: 600; color: var(--note); white-space: nowrap; line-height: 56px; }
+    #root .s03-cell .n { position: absolute; inset: 0; line-height: 52px; text-align: center; font-family: var(--mono); font-size: 36px; font-weight: 700; color: var(--note); }
+    #root .s03-cell .h { position: absolute; inset: -2px; border-radius: 2px; }
+    #root .s03-hd { position: absolute; top: 284px; width: 104px; text-align: center; font-size: 36px; font-weight: 700; color: var(--ink2); white-space: nowrap; }
+    #root .s03-rl { position: absolute; left: 96px; width: 120px; font-size: 36px; font-weight: 600; color: var(--ink2); white-space: nowrap; line-height: 56px; }
     #root .s03-rk { position: absolute; left: 1250px; white-space: nowrap; }
     #root .s03-rk .k { font-size: 36px; font-weight: 700; color: var(--ink); }
     #root .s03-rk .v { font-family: var(--mono); font-size: 128px; font-weight: 800; line-height: 1.05; }
     #root .s03-rk .v small { font-family: var(--zh); font-size: 64px; }
-    /* 第 2 句：塔 + 路径对比 */
+    /* 第 4 句：塔 + 路径对比 */
     #root #s03-tower { position: absolute; left: 1180px; top: 300px; width: 640px; height: 620px; }
     #root .s03-car { position: absolute; left: 0; top: 0; width: 44px; height: 44px; background: var(--blue); border: 2px solid var(--ink); }
-    #root .s03-path { position: absolute; left: 96px; white-space: nowrap; font-weight: 700; }
-    #root #s03-strike { position: absolute; height: 6px; background: var(--red); transform-origin: 0 50%; }
-    /* 第 4 句：时间线 */
+    /* 第 5 句：时间线 */
     #root .s03-lname { position: absolute; left: 96px; width: 250px; text-align: right; font-size: 36px; font-weight: 700; color: var(--ink); white-space: nowrap; line-height: 90px; }
     #root .s03-lane { position: absolute; left: 380px; height: 90px; width: 1444px; }
-    #root .s03-seg { position: absolute; top: 0; height: 90px; line-height: 90px; text-align: center; font-size: 32px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; }
+    #root .s03-seg { position: absolute; top: 0; height: 90px; line-height: 90px; text-align: center; font-size: 36px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; }
   </style>
   <div id="root" data-composition-id="s03" data-width="1920" data-height="1080">
 
     <!-- 标题卡 -->
-    <div id="s03-title" class="clip s03-full" data-start="0.00" data-duration="19.21" data-track-index="1">
+    <div id="s03-title" class="clip s03-full" data-start="0.00" data-duration="31.93" data-track-index="1">
       <div id="s03-chip" class="kit-chip">mm_mma</div>
       <div id="s03-ttl" class="kit-title">第 2 步：<span class="acc">换位存放</span> + cp.async</div>
     </div>
 
-    <!-- 耗时条：11.78 → 4.09（第 3 句） -->
-    <div id="s03-tb" class="clip kit-tbar" data-start="1.00" data-duration="18.21" data-track-index="2">
+    <!-- 耗时条：11.78 → 4.09（第 4 句开始后 3 s） -->
+    <div id="s03-tb" class="clip kit-tbar" data-start="1.00" data-duration="30.93" data-track-index="2">
       <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
       <div class="track"><div id="s03-tbghost" class="ghost"></div><div id="s03-tbfill" class="fill"></div><div class="peak"></div></div>
       <div id="s03-tbnum" class="num"><span id="s03-tbv1">11.78 ms</span><span id="s03-tbv2">4.09 ms</span></div>
       <div class="ref">虚线：规格峰值 1.11 ms</div>
     </div>
 
-    <!-- 第 1 句（1.0）：换位存放，8 个地址错开到 8 组 bank -->
-    <div id="s03-grid" class="clip s03-full" data-start="1.00" data-duration="5.40" data-track-index="3">
-      <div id="s03-gtop" class="s03-abs" style="left:230px;top:246px;font-size:32px;font-weight:600;color:var(--ink2);white-space:nowrap">一行 128 字节 = 32 个 bank，每格 4 个</div>
-      <div id="s03-heads" class="s03-full"></div>
-      <div id="s03-rows" class="s03-full"></div>
-      <div id="s03-cells" class="s03-abs" style="left:230px;top:340px;width:896px;height:512px"></div>
-      <div id="s03-colo" class="s03-abs" style="left:224px;top:334px;width:116px;height:516px;border:5px solid var(--red)"></div>
-      <div id="s03-rk1" class="s03-rk" style="top:370px"><div class="k">不换位：同一组 bank</div><div class="v acc-r">8<small> 轮</small></div></div>
-      <div id="s03-rk2" class="s03-rk" style="top:600px"><div class="k">换位后：错开到 8 组</div><div class="v acc-g">1<small> 轮</small></div></div>
+    <!-- 第 1 句（1.0）：一行加宽到 128 字节，正好 32 个 bank -->
+    <div id="s03-row" class="clip s03-full" data-start="1.00" data-duration="5.82" data-track-index="3">
+      <div id="s03-rowh" class="s03-abs" style="left:120px;top:380px;font-size:44px;font-weight:800;color:var(--ink);white-space:nowrap">一行 <span class="acc">128 字节</span> = <span class="acc">32 个 bank</span></div>
+      <div id="s03-bigrow" class="s03-abs" style="left:120px;top:520px;width:1680px;height:170px"></div>
     </div>
 
-    <!-- 第 2 句（5.96）：cp.async，L2 直达共享内存 -->
-    <div id="s03-tw" class="clip s03-full" data-start="5.96" data-duration="9.60" data-track-index="4">
+    <!-- 第 2 句（6.22）：8 行的同一块落在同一组；第 3 句（12.22）：c ⊕ r 换位，错开到 8 组 -->
+    <div id="s03-grid" class="clip s03-full" data-start="6.22" data-duration="14.09" data-track-index="4">
+      <div id="s03-heads" class="s03-full"></div>
+      <div id="s03-rows" class="s03-full"></div>
+      <div id="s03-cells" data-layout-allow-overlap class="s03-abs" style="left:230px;top:340px;width:896px;height:512px"></div>
+      <div id="s03-colo" class="s03-abs" style="left:224px;top:334px;width:116px;height:516px;border:5px solid var(--red)"></div>
+      <div id="s03-rk1" class="s03-rk" style="top:420px"><div class="k">直接存放</div><div class="v acc-r">8<small> 轮</small></div></div>
+      <div id="s03-rk2" class="s03-rk" style="top:620px"><div class="k">换位后</div><div class="v acc-g">1<small> 轮</small></div></div>
+      <div id="s03-xor" class="s03-abs" style="left:1250px;top:300px;white-space:nowrap;font-size:44px;font-weight:700;color:var(--ink)">块 c → 组 <span style="font-family:var(--mono);font-weight:800;color:var(--use-t)">c ⊕ r</span></div>
+    </div>
+
+    <!-- 第 4 句（19.81）：cp.async，L2 直达共享内存 -->
+    <div id="s03-tw" class="clip s03-full" data-start="19.81" data-duration="6.50" data-track-index="5">
+      <div id="s03-twin" class="s03-full">
       <div id="s03-tower"></div>
       <svg class="s03-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" stroke-linejoin="round">
         <path id="s03-old" d="M 1656 752 H 1700 V 486 H 1656 M 1656 486 H 1700 V 610 H 1656" style="stroke:var(--gray)" stroke-width="5" />
@@ -61,34 +71,14 @@
         <path id="s03-x2" d="M 1720 660 L 1680 700" style="stroke:var(--red)" stroke-width="7" stroke-linecap="round" />
         <path id="s03-new" d="M 1656 752 H 1748 V 610 H 1656" style="stroke:var(--use)" stroke-width="7" />
       </svg>
-      <div id="s03-cpl" class="s03-abs" style="left:1340px;top:660px;width:300px;text-align:right;font-family:var(--mono);font-size:30px;font-weight:800;color:var(--use-t);line-height:44px;white-space:nowrap">cp.async ↑</div>
+      <div id="s03-cpl" class="s03-abs" style="left:1340px;top:658px;width:300px;text-align:right;font-family:var(--mono);font-size:36px;font-weight:800;color:var(--use-t);line-height:44px;white-space:nowrap">cp.async ↑</div>
       <div id="s03-car1" class="s03-car"></div>
       <div id="s03-car2" class="s03-car"></div>
-    </div>
-    <div id="s03-cmp" class="clip s03-full" data-start="5.96" data-duration="6.80" data-track-index="5">
-      <div id="s03-po" class="s03-path" style="top:330px;font-size:44px;color:var(--note)">以前：L2 → <span id="s03-preg">寄存器 →</span> 共享内存</div>
-      <div id="s03-strike" style="left:354px;top:358px;width:186px"></div>
-      <div id="s03-pn" class="s03-path" style="top:440px;font-size:56px;color:var(--ink)">现在：L2 → <span class="acc-g">共享内存</span></div>
-      <div id="s03-code" class="s03-abs" style="left:96px;top:590px">
-        <div class="k-code">
-          <div class="file">load：每个线程发若干条 16 字节的 cp.async</div>
-          <div class="ln on">cp_async16(sa + swz(r, c),</div>
-          <div class="ln on">           Ab + (size_t)r * K + k0 + c * 8);</div>
-        </div>
       </div>
     </div>
 
-    <!-- 第 3 句（12.33）：4.09 ms，快 2.9 倍 -->
-    <div id="s03-gain" class="clip s03-abs" data-start="12.33" data-duration="3.20" data-track-index="6" style="left:96px;top:380px;white-space:nowrap">
-      <div id="s03-gainin">
-        <div><span style="font-size:72px;font-weight:800;color:var(--ink)">快 </span><span style="font-family:var(--mono);font-size:200px;font-weight:800;color:var(--teal-t);line-height:1">2.9</span><span style="font-size:72px;font-weight:800;color:var(--ink)"> 倍</span></div>
-        <div style="font-family:var(--mono);font-size:48px;font-weight:700;color:var(--ink2);margin-top:20px">11.78 ms → 4.09 ms</div>
-      </div>
-    </div>
-
-    <!-- 第 4 句（15.13）：每一块仍要等拷贝完成 -->
-    <div id="s03-tl" class="clip s03-full" data-start="15.13" data-duration="4.08" data-track-index="7">
-      <div id="s03-tlh" class="s03-abs" style="left:96px;top:300px;font-size:40px;font-weight:700;color:var(--ink);white-space:nowrap">每一块：拷贝 → 等待 → 计算</div>
+    <!-- 第 5 句（25.81）：每一块仍要等拷贝完成 -->
+    <div id="s03-tl" class="clip s03-full" data-start="25.81" data-duration="6.12" data-track-index="7">
       <div class="s03-lname" style="top:440px">线程</div>
       <div class="s03-lname" style="top:600px">Tensor Core</div>
       <div id="s03-lane1" class="s03-lane" style="top:440px">
@@ -105,10 +95,9 @@
         <div class="s03-seg" style="left:700px;width:460px;background:var(--paper2);color:var(--note)">空闲</div>
         <div class="s03-seg" style="left:1160px;width:240px;background:var(--teal)">计算</div>
       </div>
-      <div id="s03-tarr" class="s03-lbl" style="left:1660px;top:716px;font-size:28px;color:var(--note)">时间 →</div>
       <div id="s03-wait" class="s03-abs" style="left:534px;top:434px;width:312px;height:102px;border:6px solid var(--hot)"></div>
       <div id="s03-idle" class="s03-abs" style="left:374px;top:594px;width:472px;height:102px;border:6px solid var(--hot)"></div>
-      <div id="s03-bn" class="s03-abs" style="left:380px;top:730px"><span class="k-bottleneck" style="font-size:36px;padding:6px 14px">瓶颈：等拷贝</span></div>
+      <div id="s03-bn" class="s03-abs" style="left:380px;top:770px"><span class="k-bottleneck" style="font-size:36px;padding:6px 14px">瓶颈：等拷贝</span></div>
     </div>
   </div>
   <script>
@@ -119,13 +108,27 @@
       const ft = (el, a, b, t) => tl.fromTo(el, a, b, t);
       const fadeIn = (el, t, d = 0.5) => ft(el, { opacity: 0 }, { opacity: 1, duration: d, ease: IN }, t);
       const fadeOut = (el, t, d = 0.4) => ft(el, { opacity: 1 }, { opacity: 0, duration: d, ease: OUT }, t);
-      const B = [1.0, 5.96, 12.33, 15.13], DUR = 19.21;
+      const B = [1.0, 6.22, 12.22, 19.81, 25.81], DUR = 31.93;
 
-      // ---------- 网格：8 行 × 8 格（每格 16 字节 = 4 个 bank） ----------
+      // ---------- 第 1 句：大的一整行，8 块，每块 4 个 bank ----------
+      const BP = 210, bigs = [], bkls = [], ticks = [];
+      for (let j = 0; j < 8; j++) {
+        const c = document.createElement("div");
+        c.className = "s03-big"; c.style.left = (j * BP) + "px";
+        c.innerHTML = `<i style="left:50px"></i><i style="left:100px"></i><i style="left:150px"></i><span class="n">块 ${j}</span>`;
+        $("bigrow").appendChild(c); bigs.push(c);
+        c.querySelectorAll("i").forEach((t) => ticks.push(t));
+        const l = document.createElement("div");
+        l.className = "s03-bkl"; l.style.left = (j * BP) + "px";
+        l.textContent = `${4 * j}–${4 * j + 3}`;
+        $("bigrow").appendChild(l); bkls.push(l);
+      }
+
+      // ---------- 网格：8 行 × 8 格（每格 16 字节 = 1 组 = 4 个 bank） ----------
       const PX = 112, PY = 64, cells = [], reds = [], greens = [], zeros = [], heads = [], rls = [];
       for (let j = 0; j < 8; j++) {
         const h = document.createElement("div");
-        h.className = "s03-hd"; h.textContent = j;
+        h.className = "s03-hd"; h.textContent = j + " 组";
         h.style.left = (230 + j * PX) + "px";
         $("heads").appendChild(h); heads.push(h);
       }
@@ -155,14 +158,13 @@
       gsap.set($("tbghost"), { opacity: 0 });
       gsap.set($("tbnum"), { x: 11.78 * 45 + 12 });
       gsap.set([$("tb"), $("tbv2")], { opacity: 0 });
-      gsap.set([$("gtop"), $("colo"), $("rk1"), $("rk2"), ...heads, ...rls, ...reds, ...greens], { opacity: 0 });
+      gsap.set([$("rowh"), ...bigs, ...bkls, ...ticks], { opacity: 0 });
+      gsap.set([$("colo"), $("rk1"), $("rk2"), $("xor"), ...heads, ...rls, ...reds, ...greens], { opacity: 0 });
       cells.forEach((row) => gsap.set(row, { opacity: 0 }));
       gsap.set([L.tc, L.reg, L.smem, L.l2, L.hbm, smBox, $("old"), $("cpl"), $("car1"), $("car2")], { opacity: 0 });
       ["x1", "x2", "new"].forEach((k) => { const p = $(k), len = p.getTotalLength(); p.dataset.len = len; gsap.set(p, { strokeDasharray: len, strokeDashoffset: len }); });
-      gsap.set([$("po"), $("pn"), $("code")], { opacity: 0 });
-      gsap.set($("strike"), { scaleX: 0 });
-      gsap.set($("gainin"), { opacity: 0 });
-      gsap.set([$("tlh"), $("tarr"), $("wait"), $("idle"), $("bn")], { opacity: 0 });
+      gsap.set($("twin"), { x: -540 });
+      gsap.set([$("wait"), $("idle"), $("bn")], { opacity: 0 });
       gsap.set(document.querySelectorAll("#s03-tl .s03-lname"), { opacity: 0 });
       gsap.set([$("lane1"), $("lane2")], { clipPath: "inset(0px 100% 0px 0px)" });
 
@@ -172,35 +174,52 @@
       ft($("ttl"), { scale: 1, y: 0, transformOrigin: "0 0" }, { scale: 0.72, y: -12, transformOrigin: "0 0", duration: 0.6, ease: MOVE }, 1.0);
       fadeIn($("tb"), 1.05);
 
-      // ---------- 第 1 句：不换位 8 轮 → 换位后 1 轮 ----------
-      cells.forEach((row, r) => row.forEach((c, j) => ft(c, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: IN }, 1.1 + r * 0.04 + j * 0.015)));
-      rls.forEach((l, r) => fadeIn(l, 1.2 + r * 0.04, 0.35));
-      heads.forEach((h, j) => fadeIn(h, 1.3 + j * 0.03, 0.35));
-      ft($("gtop"), { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 1.4);
-      reds.forEach((e, r) => ft(e, { opacity: 0 }, { opacity: 1, duration: 0.25, ease: IN }, 1.9 + r * 0.06));
-      zeros.forEach((e, r) => ft(e, { color: "#6b6556" }, { color: "#ffffff", duration: 0.25, ease: IN }, 1.9 + r * 0.06));
-      ft($("colo"), { opacity: 0, scale: 1.08 }, { opacity: 1, scale: 1, duration: 0.35, ease: IN }, 2.4);
-      ft($("rk1"), { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 2.4);
-      // 换位：第 r 行第 c 格 → 第 c ⊕ r 格（整行一起滑）
-      fadeOut($("colo"), 3.2, 0.3);
-      cells.forEach((row, r) => row.forEach((c, j) => { const dx = ((j ^ r) - j) * PX; if (dx) ft(c, { x: 0 }, { x: dx, duration: 0.9, ease: MOVE }, 3.25); }));
-      greens.forEach((e) => ft(e, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, 4.1));
-      ft($("rk2"), { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 4.3);
-      fadeOut($("grid"), B[1]);
+      // ---------- 第 1 句：一行 128 字节 → 8 块 → 32 个 bank ----------
+      bigs.forEach((c, j) => ft(c, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.45, ease: IN }, 1.2 + j * 0.07));
+      ft($("rowh"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 1.5);
+      ticks.forEach((t, k) => fadeIn(t, 2.2 + k * 0.03, 0.25));
+      bkls.forEach((l, j) => fadeIn(l, 2.4 + j * 0.08, 0.35));
+      // 换场：这一行缩成网格第 0 行
+      fadeOut([$("rowh"), ...bkls], B[1] - 0.1, 0.3);
+      ft($("bigrow"), { x: 0, y: 0, scale: 1, transformOrigin: "0 0" }, { x: 110, y: -180, scale: 0.5333, transformOrigin: "0 0", duration: 0.6, ease: MOVE }, B[1]);
+      fadeOut($("bigrow"), B[1] + 0.5, 0.2);
 
-      // ---------- 第 2 句：塔进场；旧路径经寄存器，划掉；cp.async 直达 ----------
+      // ---------- 第 2 句：8 行；ldmatrix 读块 0 = 一列 → 同一组 bank，8 轮 ----------
+      const b2 = B[1];
+      cells.forEach((row, r) => row.forEach((c, j) => ft(c, { opacity: 0, y: r ? 10 : 0 }, { opacity: 1, y: 0, duration: 0.35, ease: IN }, (r ? b2 + 0.6 + r * 0.05 : b2 + 0.5) + j * 0.015)));
+      rls.forEach((l, r) => fadeIn(l, b2 + 0.6 + r * 0.05, 0.35));
+      heads.forEach((h, j) => fadeIn(h, b2 + 0.7 + j * 0.03, 0.35));
+      reds.forEach((e, r) => ft(e, { opacity: 0 }, { opacity: 1, duration: 0.25, ease: IN }, b2 + 1.6 + r * 0.06));
+      zeros.forEach((e, r) => ft(e, { color: "#6b6556" }, { color: "#ffffff", duration: 0.25, ease: IN }, b2 + 1.6 + r * 0.06));
+      ft($("colo"), { opacity: 0, scale: 1.08 }, { opacity: 1, scale: 1, duration: 0.35, ease: IN }, b2 + 2.2);
+      ft($("rk1"), { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, b2 + 2.4);
+      // 同一组 bank 一轮只服务一个：8 个地址逐轮读出
+      reds.forEach((e, r) => ft(cells[r][0], { scale: 1 }, { scale: 1.15, duration: 0.2, ease: "power2.out", yoyo: true, repeat: 1 }, b2 + 3.0 + r * 0.32));
+
+      // ---------- 第 3 句：换位 c ⊕ r，块 0 变成对角线 → 1 轮 ----------
+      const b3 = B[2];
+      fadeOut($("colo"), b3, 0.3);
+      fadeOut(heads, b3, 0.3);
+      ft($("xor"), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, b3 + 0.3);
+      cells.forEach((row, r) => row.forEach((c, j) => { const dx = ((j ^ r) - j) * PX; if (dx) ft(c, { x: 0 }, { x: dx, duration: 1.1, ease: MOVE }, b3 + 1.6 + r * 0.12); }));
+      greens.forEach((e) => ft(e, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, b3 + 3.8));
+      ft($("rk2"), { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, b3 + 4.0);
+      // 8 个地址同一轮读出：一起跳一下
+      ft(cells.map((row, r) => row[0]), { scale: 1 }, { scale: 1.15, duration: 0.25, ease: "power2.out", yoyo: true, repeat: 1 }, b3 + 4.8);
+      ft(cells.map((row, r) => row[0]), { scale: 1 }, { scale: 1.15, duration: 0.25, ease: "power2.out", yoyo: true, repeat: 1 }, b3 + 6.0);
+      fadeOut($("grid"), B[3]);
+
+      // ---------- 第 4 句：塔进场；旧路径经寄存器，划掉；cp.async 直达 ----------
+      const b4 = B[3];
       ["hbm", "l2", "smem", "reg", "tc"].forEach((id, i) =>
-        ft(L[id], { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, B[1] + 0.1 + i * 0.07));
-      fadeIn(smBox, B[1] + 0.45);
-      ft($("old"), { opacity: 0 }, { opacity: 0.9, duration: 0.4, ease: IN }, B[1] + 0.5);
-      ft($("po"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, B[1] + 0.4);
-      ft($("x1"), { strokeDashoffset: $("x1").dataset.len }, { strokeDashoffset: 0, duration: 0.2, ease: IN }, B[1] + 1.1);
-      ft($("x2"), { strokeDashoffset: $("x2").dataset.len }, { strokeDashoffset: 0, duration: 0.2, ease: IN }, B[1] + 1.3);
-      ft($("strike"), { scaleX: 0 }, { scaleX: 1, duration: 0.35, ease: MOVE }, B[1] + 1.15);
-      ft($("old"), { opacity: 0.9 }, { opacity: 0.25, duration: 0.4, ease: MOVE }, B[1] + 1.8);
-      ft($("pn"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, B[1] + 1.9);
-      ft($("new"), { strokeDashoffset: $("new").dataset.len }, { strokeDashoffset: 0, duration: 0.9, ease: "power1.inOut" }, B[1] + 2.0);
-      fadeIn($("cpl"), B[1] + 2.3, 0.4);
+        ft(L[id], { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, b4 + 0.2 + i * 0.07));
+      fadeIn(smBox, b4 + 0.55);
+      ft($("old"), { opacity: 0 }, { opacity: 0.9, duration: 0.4, ease: IN }, b4 + 0.6);
+      ft($("x1"), { strokeDashoffset: $("x1").dataset.len }, { strokeDashoffset: 0, duration: 0.2, ease: IN }, b4 + 1.2);
+      ft($("x2"), { strokeDashoffset: $("x2").dataset.len }, { strokeDashoffset: 0, duration: 0.2, ease: IN }, b4 + 1.4);
+      ft($("old"), { opacity: 0.9 }, { opacity: 0.25, duration: 0.4, ease: MOVE }, b4 + 1.9);
+      ft($("new"), { strokeDashoffset: $("new").dataset.len }, { strokeDashoffset: 0, duration: 0.9, ease: "power1.inOut" }, b4 + 2.1);
+      fadeIn($("cpl"), b4 + 2.4, 0.4);
       const LY = { smem: 610, l2: 752 }, RX = 1656, LX = 1748;
       const trip = (car, t, d) => {
         const pts = [[RX, LY.l2], [LX, LY.l2], [LX, LY.smem], [RX, LY.smem]];
@@ -214,29 +233,24 @@
         ft(car, { scale: 1 }, { scale: 0.6, duration: 0.3, ease: OUT }, t + d);
         ft(car, { opacity: 1 }, { opacity: 0, duration: 0.3, ease: OUT }, t + d + 0.1);
       };
-      trip($("car1"), B[1] + 2.2, 1.0);
-      trip($("car2"), B[1] + 4.0, 1.0);
-      ft($("code"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, B[1] + 3.0);
-      fadeOut($("cmp"), B[2]);
+      trip($("car1"), b4 + 2.3, 1.0);
+      trip($("car2"), b4 + 4.0, 1.0);
+      // 3 s 后：耗时条 11.78 → 4.09，安静地缩短
+      const S = b4 + 3.0;
+      ft($("tbghost"), { opacity: 0 }, { opacity: 1, duration: 0.1 }, S);
+      ft($("tbfill"), { scaleX: 11.78 / 16 }, { scaleX: 4.09 / 16, duration: 0.9, ease: MOVE }, S);
+      ft($("tbnum"), { x: 11.78 * 45 + 12 }, { x: 4.09 * 45 + 12, duration: 0.9, ease: MOVE }, S);
+      ft($("tbv1"), { opacity: 1 }, { opacity: 0, duration: 0.3, ease: OUT }, S + 0.1);
+      ft($("tbv2"), { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, S + 0.7);
+      fadeOut($("tbghost"), S + 1.5, 0.5);
+      fadeOut($("tw"), B[4]);
 
-      // ---------- 第 3 句：11.78 → 4.09 ms，快 2.9 倍 ----------
-      ft($("tbghost"), { opacity: 0 }, { opacity: 1, duration: 0.1 }, B[2]);
-      ft($("tbfill"), { scaleX: 11.78 / 16 }, { scaleX: 4.09 / 16, duration: 0.9, ease: MOVE }, B[2]);
-      ft($("tbnum"), { x: 11.78 * 45 + 12 }, { x: 4.09 * 45 + 12, duration: 0.9, ease: MOVE }, B[2]);
-      ft($("tbv1"), { opacity: 1 }, { opacity: 0, duration: 0.3, ease: OUT }, B[2] + 0.1);
-      ft($("tbv2"), { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, B[2] + 0.7);
-      fadeOut($("tbghost"), B[2] + 1.5, 0.5);
-      ft($("gainin"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: IN }, B[2] + 0.3);
-      fadeOut($("gainin"), B[3]);
-      fadeOut($("tw"), B[3]);
-
-      // ---------- 第 4 句：拷贝 → 等待 → 计算；计算前的等待 = 瓶颈 ----------
-      ft($("tlh"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, B[3] + 0.2);
-      document.querySelectorAll("#s03-tl .s03-lname").forEach((e, i) => fadeIn(e, B[3] + 0.25 + i * 0.1, 0.4));
-      ft([$("lane1"), $("lane2")], { clipPath: "inset(0px 100% 0px 0px)" }, { clipPath: "inset(0px 0% 0px 0px)", duration: 2.0, ease: "none" }, B[3] + 0.4);
-      fadeIn($("tarr"), B[3] + 0.8);
-      ft([$("wait"), $("idle")], { opacity: 0, scale: 1.06 }, { opacity: 1, scale: 1, duration: 0.4, ease: IN }, B[3] + 2.5);
-      ft($("bn"), { opacity: 0, scale: 0.85, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, B[3] + 2.6);
+      // ---------- 第 5 句：发拷贝 → 等完成 → 计算；等待时 Tensor Core 空闲 ----------
+      const b5 = B[4];
+      document.querySelectorAll("#s03-tl .s03-lname").forEach((e, i) => fadeIn(e, b5 + 0.35 + i * 0.1, 0.4));
+      ft([$("lane1"), $("lane2")], { clipPath: "inset(0px 100% 0px 0px)" }, { clipPath: "inset(0px 0% 0px 0px)", duration: 2.4, ease: "none" }, b5 + 0.5);
+      ft([$("wait"), $("idle")], { opacity: 0, scale: 1.06 }, { opacity: 1, scale: 1, duration: 0.4, ease: IN }, b5 + 3.1);
+      ft($("bn"), { opacity: 0, scale: 0.85, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, b5 + 3.4);
 
       tl.set({}, {}, DUR);
       window.__timelines = window.__timelines || {};

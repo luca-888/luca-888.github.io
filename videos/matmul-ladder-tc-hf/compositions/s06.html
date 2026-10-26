@@ -1,16 +1,17 @@
 <template>
   <!--
-    s06 第 5 步：生产者 / 消费者（26.47 s）。节拍（幕内秒）：1.0 泳道 · 7.86 4096 涨、8192 不动 · 15.45 tile 图 + L2 容量。
-    tile 图（15.45 起，s07 原位复用）：#s06-tmap left:132px; top:290px; 1216 × 608，格距 19 px（格 17 px + 2 px 缝）。
+    s06 第 5 步：生产者 / 消费者（37.54 s）。节拍（幕内秒）：1.0 泳道 · 7.15 full / empty · 14.74 Tensor Core 一直有活 · 19.74 4096 快、8192 不变 · 24.96 tile 图 + L2 挤出。
+    tile 图（24.96 起，s07 原位复用）：#s06-tmap left:132px; top:290px; 1216 × 608，格距 19 px（格 17 px + 2 px 缝）。
       8192 阶 C 按 128 × 256 切成 64 行 × 32 列 tile，画成转置：横向 = tile 行 m（x = 132 + 19m），纵向 = tile 列 n（y = 290 + 19n）。
       W 边条在左侧：left:96px; top:290px; 22 × 608，每 19 px 一段（对应 n）。
       按行发放的一轮 132 个 = 前 4 条竖带（m = 0–3 的全部 32 格）+ 第 5 条（m = 4）的前 4 格。
+    右侧容量：W 128 MB（4.4 px / MB，563 px）对 L2 50 MB（220 px），底边 y 860；L2 框里的 W 块自下而上流过，先读的从顶上被挤出。
   -->
   <style>
     #root { position: absolute; inset: 0; }
     #root .s06-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
     #root .s06-abs { position: absolute; }
-    #root .s06-lbl { position: absolute; font-size: 32px; font-weight: 600; color: var(--ink); white-space: nowrap; }
+    #root .s06-lbl { position: absolute; font-size: 36px; font-weight: 600; color: var(--ink); white-space: nowrap; }
     #root .s06-mono { font-family: var(--mono); font-weight: 700; }
     #root #s06-ttl { transform-origin: 0 0; }
     #root .s06-nv { position: absolute; left: 0; top: 0; }
@@ -18,39 +19,48 @@
     #root .s06-ln { position: absolute; left: 96px; white-space: nowrap; }
     #root .s06-ln b { display: block; font-size: 36px; font-weight: 700; line-height: 1.15; }
     #root .s06-ln span { display: block; font-size: 28px; font-weight: 500; color: var(--note); }
-    #root .s06-seg { position: absolute; height: 84px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 700; white-space: nowrap; }
-    /* 大数字行 */
-    #root .s06-rl { position: absolute; left: 96px; font-size: 56px; font-weight: 800; color: var(--ink); white-space: nowrap; line-height: 80px; }
-    #root .s06-bar { position: absolute; left: 400px; height: 64px; transform-origin: 0 50%; }
-    #root .s06-rn { position: absolute; left: 1230px; font-family: var(--mono); font-size: 72px; font-weight: 800; line-height: 80px; color: var(--ink); white-space: nowrap; }
-    /* 容量条（竖向，底边 y 898，4.4 px / MB） */
+    #root .s06-seg { position: absolute; height: 84px; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 700; white-space: nowrap; }
+    /* full / empty */
+    #root .s06-box { position: absolute; top: 400px; width: 360px; height: 200px; background: var(--paper2); border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; white-space: nowrap; }
+    #root .s06-box b { font-size: 44px; font-weight: 800; }
+    #root .s06-box span { font-size: 30px; font-weight: 500; color: var(--note); }
+    #root .s06-st { position: absolute; top: 624px; width: 360px; text-align: center; font-size: 36px; font-weight: 700; white-space: nowrap; }
+    #root .s06-lamp { position: absolute; top: 662px; width: 56px; height: 56px; border-radius: 50%; }
+    #root .s06-ll { position: absolute; top: 734px; width: 320px; text-align: center; font-size: 36px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
+    #root .s06-blk { position: absolute; left: 840px; top: 440px; width: 240px; height: 120px; border-radius: 3px; background: var(--hot); }
+    #root .s06-blk i { position: absolute; inset: 0; border-radius: 3px; background: var(--use); }
+    #root .s06-blk span { position: absolute; inset: 0; line-height: 120px; text-align: center; font-size: 36px; font-weight: 800; color: #fff; white-space: nowrap; }
+    /* 容量 */
     #root .s06-cb { position: absolute; transform-origin: 50% 100%; }
-    #root .s06-cl { position: absolute; width: 220px; text-align: center; font-size: 34px; font-weight: 700; white-space: nowrap; }
+    #root .s06-cl { position: absolute; width: 220px; text-align: center; font-size: 36px; font-weight: 700; white-space: nowrap; }
     #root .s06-call { position: absolute; padding: 4px 14px; background: var(--paper); border: 2px solid var(--line); border-radius: 3px; font-size: 40px; font-weight: 700; white-space: nowrap; }
+    #root .s06-win { position: absolute; left: 1600px; width: 110px; overflow: hidden; }
+    #root .s06-col { position: absolute; left: 0; top: 0; width: 110px; height: 563px; }
+    #root .s06-col i { position: absolute; left: 6px; width: 98px; height: 15px; }
   </style>
   <div id="root" data-composition-id="s06" data-width="1920" data-height="1080">
 
     <!-- 0–1.0 标题卡；之后缩到左上角常驻 -->
-    <div id="s06-title" class="clip s06-full" data-start="0.00" data-duration="26.47" data-track-index="1">
+    <div id="s06-title" class="clip s06-full" data-start="0.00" data-duration="37.54" data-track-index="1">
       <div id="s06-chip" class="kit-chip">mm_wgmma_ws</div>
       <div id="s06-ttl" class="kit-title">第 5 步：<span class="acc">生产者 / 消费者</span></div>
     </div>
 
-    <!-- 耗时条：1.0 以 2.27 出现；12.1 抖一下停在 2.29，旁标红“8192 阶：480” -->
-    <div id="s06-tb" class="clip kit-tbar" data-start="1.00" data-duration="25.47" data-track-index="2" data-layout-allow-overflow>
+    <!-- 耗时条：1.0 以 2.27 出现；19.9 抖一下停在 2.29，旁标红“8192 阶不变” -->
+    <div id="s06-tb" class="clip kit-tbar" data-start="1.00" data-duration="36.54" data-track-index="2" data-layout-allow-overflow>
       <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
       <div class="track"><div id="s06-tbghost" class="ghost"></div><div id="s06-tbfill" class="fill"></div><div class="peak"></div></div>
       <div id="s06-tbnum" class="num"><span id="s06-tbo" class="s06-nv">2.27 ms</span><span id="s06-tbn" class="s06-nv">2.29 ms</span></div>
-      <div id="s06-tbred" class="s06-abs" style="left:270px;top:50px;font-size:30px;font-weight:700;color:var(--red);white-space:nowrap">8192 阶：480</div>
+      <div id="s06-tbred" class="s06-abs" style="left:270px;top:46px;font-size:36px;font-weight:700;color:var(--red);white-space:nowrap">8192 阶不变</div>
       <div class="ref">虚线：规格峰值 1.11 ms</div>
     </div>
 
-    <!-- 1.0 三条泳道 + Tensor Core：生产者只发 TMA，两个消费者轮流算 -->
-    <div id="s06-lanes" class="clip s06-full" data-start="1.00" data-duration="7.30" data-track-index="3" data-layout-allow-overlap>
-      <div id="s06-lp" class="s06-ln" style="top:322px"><b class="acc-o">生产者</b><span>只发 TMA</span></div>
-      <div id="s06-l1" class="s06-ln" style="top:436px"><b class="acc">消费者 1</b><span>计算</span></div>
-      <div id="s06-l2" class="s06-ln" style="top:550px"><b class="acc">消费者 2</b><span>计算</span></div>
-      <div id="s06-lt" class="s06-ln" style="top:700px"><b>Tensor Core</b><span style="color:var(--teal-t)">一直有活</span></div>
+    <!-- 1.0 三条泳道：生产者只发 TMA，两个消费者只计算；7.15 让位给 full / empty；14.74 回来并加 Tensor Core 一行 -->
+    <div id="s06-lanes" class="clip s06-full" data-start="1.00" data-duration="23.96" data-track-index="3" data-layout-allow-overlap>
+      <div id="s06-lp" class="s06-ln" style="top:322px"><b class="acc-o">生产者</b></div>
+      <div id="s06-l1" class="s06-ln" style="top:436px"><b class="acc">消费者 1</b></div>
+      <div id="s06-l2" class="s06-ln" style="top:550px"><b class="acc">消费者 2</b></div>
+      <div id="s06-lt" class="s06-ln" style="top:700px"><b>Tensor Core</b></div>
       <div id="s06-sep" class="s06-abs" style="left:96px;top:671px;width:1728px;height:2px;background:var(--line)"></div>
       <div id="s06-rp" class="s06-full"></div>
       <div id="s06-r1" class="s06-full"></div>
@@ -59,23 +69,36 @@
       <div id="s06-cur" class="s06-abs" style="left:420px;top:310px;width:4px;height:490px;background:var(--ink)"></div>
     </div>
 
-    <!-- 7.86 两行大数字：4096 阶 481 → 635（绿），8192 阶 480 → 480（红） -->
-    <div id="s06-nums" class="clip s06-full" data-start="7.86" data-duration="8.00" data-track-index="4" data-layout-allow-overlap>
-      <div id="s06-nh" class="s06-lbl" style="left:96px;top:330px;font-size:30px;color:var(--note)">实测 TFLOPS（BF16）</div>
-      <div id="s06-a0" class="s06-rl" style="top:412px">4096 阶</div>
-      <div id="s06-ab" class="s06-bar" style="top:420px;width:601px;background:var(--ink2)"></div>
-      <div id="s06-ag" class="s06-bar" style="top:420px;left:1001px;width:193px;background:var(--use)"></div>
-      <div id="s06-an" class="s06-rn" style="top:412px">481<span id="s06-an2" style="color:var(--use-t)"> → 635</span></div>
-      <div id="s06-b0" class="s06-rl" style="top:612px">8192 阶</div>
-      <div id="s06-bb" class="s06-bar" style="top:620px;width:600px;background:var(--ink2)"></div>
-      <div id="s06-bn" class="s06-rn" style="top:612px">480<span id="s06-bn2" style="color:var(--red)"> → 480</span></div>
-      <div id="s06-still" class="s06-lbl" style="left:1230px;top:712px;font-size:48px;font-weight:800;color:var(--red)">纹丝不动</div>
+    <!-- 7.15 一个槽位两个 mbarrier：empty（生产者等它）、full（消费者等它）；一块数据走一遍 -->
+    <div id="s06-fe" class="clip s06-full" data-start="7.15" data-duration="7.59" data-track-index="4" data-layout-allow-overlap>
+      <div id="s06-pb" class="s06-box" style="left:96px;border:4px solid var(--hot)"><b class="acc-o">生产者</b></div>
+      <div id="s06-cb" class="s06-box" style="left:1464px;border:4px solid var(--teal)">
+        <div id="s06-cbon" class="s06-abs" style="inset:0;background:var(--teal)"></div>
+        <b id="s06-cbt" class="acc" style="position:relative">消费者</b>
+      </div>
+      <div id="s06-ps1" class="s06-st" style="left:96px;color:var(--note)">等 empty</div>
+      <div id="s06-ps2" class="s06-st" style="left:96px;color:var(--hot-t)">发 TMA</div>
+      <div id="s06-cs1" class="s06-st" style="left:1464px;color:var(--note)">等 full</div>
+      <div id="s06-cs2" class="s06-st" style="left:1464px;color:var(--teal-t)">在算</div>
+      <div id="s06-sn" class="s06-lbl" style="left:800px;top:366px;width:320px;text-align:center;color:var(--use-t)">槽位</div>
+      <div id="s06-slot" class="s06-abs" style="left:800px;top:420px;width:320px;height:160px;border:3px dashed var(--gray);border-radius:4px"></div>
+      <svg id="s06-wire" class="s06-abs" style="left:0;top:0" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none">
+        <path d="M880 580 V690 H656 M1040 580 V690 H1264" style="stroke:var(--gray)" stroke-width="3" />
+      </svg>
+      <div id="s06-le" class="s06-lamp" style="left:600px;background:var(--cell);border:3px solid var(--gray)"></div>
+      <div id="s06-leon" class="s06-lamp" style="left:600px;background:var(--use)"></div>
+      <div id="s06-lf" class="s06-lamp" style="left:1264px;background:var(--cell);border:3px solid var(--gray)"></div>
+      <div id="s06-lfon" class="s06-lamp" style="left:1264px;background:var(--use)"></div>
+      <div id="s06-lel" class="s06-ll" style="left:468px"><span class="s06-mono" style="color:var(--ink)">empty</span></div>
+      <div id="s06-lfl" class="s06-ll" style="left:1132px"><span class="s06-mono" style="color:var(--ink)">full</span></div>
+      <div id="s06-b1" class="s06-blk"><i></i><span>A + W</span></div>
+      <div id="s06-b2" class="s06-blk"><i></i><span>A + W</span></div>
     </div>
 
-    <!-- 15.45 tile 图（坐标见文件头注释）+ W 边条 + L2 容量条 -->
-    <div id="s06-map" class="clip s06-full" data-start="15.45" data-duration="11.02" data-track-index="5" data-layout-allow-overlap>
-      <div id="s06-ml" class="s06-lbl" style="left:160px;top:240px"><span class="acc-p">C</span> 的 2048 个 tile：横 64 行 × 纵 32 列</div>
-      <div id="s06-wl" class="s06-lbl s06-mono" style="left:96px;top:240px;color:var(--yel-t)">W</div>
+    <!-- 24.96 tile 图（坐标见文件头注释）+ W 边条 + 容量与挤出 -->
+    <div id="s06-map" class="clip s06-full" data-start="24.96" data-duration="12.58" data-track-index="6" data-layout-allow-overlap>
+      <div id="s06-ml" class="s06-lbl" style="left:160px;top:236px;color:var(--purple-t)">C 的 tile</div>
+      <div id="s06-wl" class="s06-lbl s06-mono" style="left:94px;top:236px;color:var(--yel-t)">W</div>
       <div id="s06-wstrip" class="s06-abs" style="left:96px;top:290px;width:22px;height:608px">
         <div class="s06-abs" style="left:0;top:0;width:22px;height:608px;background:var(--yel);opacity:0.3"></div>
         <div id="s06-wlit" class="s06-abs" style="left:0;top:0;width:22px;height:608px;background:var(--yel)"></div>
@@ -93,17 +116,19 @@
           <rect id="s06-head" x="0" y="0" width="19" height="19" fill="none" style="stroke:var(--ink)" stroke-width="3" />
         </svg>
       </div>
-      <div id="s06-c1" class="s06-call" style="left:250px;top:330px;color:var(--purple-t)">按行发放：同时运行 <span class="k-num">132</span> 个 tile</div>
-      <div id="s06-c2" class="s06-call" style="left:250px;top:420px;color:var(--yel-t)">合起来要读<span style="color:var(--ink)">整个 W</span></div>
-      <!-- 容量条：W 128 MB（50 MB 以内黄，超出部分橙红）vs L2 50 MB（蓝） -->
-      <div id="s06-k1" class="s06-cl" style="left:1355px;top:282px"><span class="acc-y">W</span> <span class="k-num">128 MB</span></div>
-      <div id="s06-cy" class="s06-cb" style="left:1410px;top:678px;width:110px;height:220px;background:var(--yel)"></div>
-      <div id="s06-ch" class="s06-cb" style="left:1410px;top:335px;width:110px;height:343px;background:var(--hot)"></div>
-      <div id="s06-ov" class="s06-abs" style="left:1410px;top:486px;width:110px;text-align:center;font-size:32px;font-weight:700;color:#fff">溢出</div>
-      <div id="s06-k2" class="s06-cl" style="left:1545px;top:625px">L2 <span class="k-num">50 MB</span></div>
-      <div id="s06-cl2" class="s06-cb" style="left:1600px;top:678px;width:110px;height:220px;background:var(--blue)"></div>
-      <div id="s06-dl" class="s06-abs" style="left:1390px;top:677px;width:340px;height:0;border-top:3px dashed var(--ink)"></div>
-      <div id="s06-bk" class="s06-abs" style="left:1560px;top:520px"><span class="k-bottleneck">瓶颈：L2 装不下</span></div>
+      <div id="s06-c1" class="s06-call" style="left:250px;top:330px;color:var(--purple-t)"><span class="k-num">132</span> 个 tile</div>
+      <!-- W 128 MB：随发放的波读满；L2 的 50 MB 以上部分转橙“溢出” -->
+      <div id="s06-k1" class="s06-cl" style="left:1345px;top:245px"><span class="acc-y">W</span> <span id="s06-k1n" class="k-num">128 MB</span></div>
+      <div id="s06-cw" class="s06-cb" style="left:1400px;top:297px;width:110px;height:563px;background:var(--yel)"></div>
+      <div id="s06-ch" class="s06-abs" style="left:1400px;top:297px;width:110px;height:343px;background:var(--hot)"></div>
+      <!-- L2 50 MB：框里 W 块自下而上流过，顶上挤出（红） -->
+      <div id="s06-l2b" class="s06-abs" style="left:1600px;top:640px;width:110px;height:220px;background:#d9e1f3;border:4px solid var(--blue)"></div>
+      <div id="s06-win" class="s06-win" style="top:640px;height:220px"><div id="s06-col" class="s06-col"></div></div>
+      <div id="s06-xwin" class="s06-win" style="top:586px;height:50px"><div id="s06-xcol" class="s06-col"></div></div>
+      <div id="s06-xl" class="s06-lbl" style="left:1600px;top:536px;width:110px;text-align:center;color:var(--red);font-weight:700">挤出</div>
+      <div id="s06-k2" class="s06-cl" style="left:1545px;top:866px">L2 <span class="k-num">50 MB</span></div>
+      <div id="s06-dl" class="s06-abs" style="left:1390px;top:639px;width:340px;height:0;border-top:3px dashed var(--ink)"></div>
+      <div id="s06-bk" class="s06-abs" style="left:1520px;top:430px"><span class="k-bottleneck" style="font-size:36px">瓶颈：L2 装不下</span></div>
     </div>
   </div>
   <script>
@@ -111,9 +136,12 @@
       const $ = (k) => document.getElementById("s06-" + k);
       const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
       const IN = "power3.out", MOVE = "power2.inOut", OUT = "power2.in";
+      const B = [1.0, 7.15, 14.74, 19.74, 24.96], DUR = 37.54;
       const ft = (el, a, b, t) => tl.fromTo(el, a, b, t);
       const fadeIn = (el, t, d = 0.5) => ft(el, { opacity: 0 }, { opacity: 1, duration: d, ease: IN }, t);
       const fadeOut = (el, t, d = 0.4) => ft(el, { opacity: 1 }, { opacity: 0, duration: d, ease: OUT }, t);
+      const on = (el, t) => tl.set(el, { opacity: 1 }, t);
+      const off = (el, t) => tl.set(el, { opacity: 0 }, t);
 
       // ---------- 生成的静态子元素 ----------
       // 泳道：x 420–1824，6 段 × 234 px
@@ -140,93 +168,140 @@
       let wg = "";
       for (let k = 1; k < 32; k++) wg += `M0 ${k * 19 - 1}H22`;
       $("wgap").setAttribute("d", wg);
+      // L2 框里的 W 块：32 块 × 4 MB（17.6 px），黄；挤出窗里同一列染红
+      const mkCol = (el, color) => {
+        for (let k = 0; k < 32; k++) {
+          const q = document.createElement("i");
+          q.style.top = (k * 17.6 + 1.3).toFixed(1) + "px"; q.style.background = color;
+          el.appendChild(q);
+        }
+      };
+      mkCol($("col"), "var(--yel)");
+      mkCol($("xcol"), "var(--red)");
 
       // ---------- 初始状态 ----------
       gsap.set([$("chip"), $("ttl")], { opacity: 0 });
       gsap.set($("ttl"), { x: 0, y: 0, scale: 1 });
       gsap.set([$("tbfill"), $("tbghost")], { scaleX: 2.27 / 16 });
       gsap.set($("tbnum"), { x: 2.27 * 45 + 12 });
-      gsap.set([$("tb"), $("tbn"), $("tbred")], { opacity: 0 });
+      gsap.set([$("tb"), $("tbn"), $("tbred"), $("tbghost")], { opacity: 0 });
       gsap.set([$("lp"), $("l1"), $("l2"), $("lt"), $("sep"), $("rp"), $("r1"), $("r2"), $("rt"), $("cur")], { opacity: 0 });
       gsap.set([$("rp"), $("r1"), $("r2"), $("rt")], { clipPath: "inset(0px 1500px 0px 0px)" });
-      gsap.set([$("nh"), $("a0"), $("ab"), $("ag"), $("an"), $("an2"), $("b0"), $("bb"), $("bn"), $("bn2"), $("still")], { opacity: 0 });
-      gsap.set([$("ab"), $("bb"), $("ag")], { scaleX: 0 });
-      gsap.set([$("ml"), $("wl"), $("wstrip"), $("tmap"), $("c1"), $("c2"), $("head")], { opacity: 0 });
+      gsap.set([$("pb"), $("cb"), $("cbon"), $("ps1"), $("ps2"), $("cs1"), $("cs2"), $("sn"), $("slot"), $("wire"),
+        $("le"), $("leon"), $("lf"), $("lfon"), $("lel"), $("lfl"), $("b1"), $("b2")], { opacity: 0 });
+      gsap.set([$("b1").children[0], $("b2").children[0]], { opacity: 0 });
+      gsap.set([$("ml"), $("wl"), $("wstrip"), $("tmap"), $("c1"), $("head")], { opacity: 0 });
       gsap.set([$("s0"), $("s1"), $("s2"), $("s3"), $("s4"), $("wlit")], { scaleY: 0, transformOrigin: "50% 0%" });
-      gsap.set([$("k1"), $("ov"), $("k2"), $("dl"), $("bk")], { opacity: 0 });
-      gsap.set([$("cy"), $("ch"), $("cl2")], { scaleY: 0 });
+      gsap.set([$("k1"), $("k1n"), $("ch"), $("l2b"), $("win"), $("xwin"), $("xl"), $("k2"), $("dl"), $("bk")], { opacity: 0 });
+      gsap.set($("cw"), { scaleY: 0 });
+      gsap.set($("col"), { y: 220 });
+      gsap.set($("xcol"), { y: 274 });
 
       // ---------- 0–1.0 标题卡；1.0 缩到版本名右侧 ----------
       ft($("chip"), { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, 0.0);
       ft($("ttl"), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 0.1);
-      ft($("ttl"), { x: 0, y: 0, scale: 1 }, { x: 284, y: -72, scale: 0.6, duration: 0.7, ease: MOVE }, 1.0);
-      fadeIn($("tb"), 1.1, 0.5);
+      ft($("ttl"), { x: 0, y: 0, scale: 1 }, { x: 284, y: -72, scale: 0.6, duration: 0.7, ease: MOVE }, B[0]);
+      fadeIn($("tb"), B[0] + 0.1, 0.5);
 
-      // ---------- 1.0 泳道：时间光标从左扫到右，各道在配音讲到时出现 ----------
-      const SWEEP0 = 1.2, SWEEPD = 4.4;
-      ft([$("rp"), $("r1"), $("r2"), $("rt")], { clipPath: "inset(0px 1500px 0px 0px)" }, { clipPath: "inset(0px 96px 0px 0px)", duration: SWEEPD, ease: "none" }, SWEEP0);
-      ft($("cur"), { x: 0 }, { x: 1404, duration: SWEEPD, ease: "none" }, SWEEP0);
-      fadeIn($("cur"), 1.2, 0.3);
-      fadeOut($("cur"), SWEEP0 + SWEEPD, 0.3);
+      // ---------- 1.0 泳道：时间光标从左扫到右；生产者只发 TMA，消费者只计算 ----------
+      const SW0 = 1.2, SWD = 4.4;
+      ft([$("rp"), $("r1"), $("r2")], { clipPath: "inset(0px 1500px 0px 0px)" }, { clipPath: "inset(0px 96px 0px 0px)", duration: SWD, ease: "none" }, SW0);
+      ft($("cur"), { x: 0 }, { x: 1404, duration: SWD, ease: "none" }, SW0);
+      fadeIn($("cur"), SW0, 0.3);
+      fadeOut($("cur"), SW0 + SWD, 0.3);
       fadeIn($("lp"), 1.1); fadeIn($("rp"), 1.1);
-      fadeIn($("l1"), 3.7); fadeIn($("r1"), 3.7);
-      fadeIn($("l2"), 3.9); fadeIn($("r2"), 3.9);
-      fadeIn($("sep"), 5.2); fadeIn($("lt"), 5.3); fadeIn($("rt"), 5.3);
+      fadeIn($("l1"), 3.4); fadeIn($("r1"), 3.4);
+      fadeIn($("l2"), 3.6); fadeIn($("r2"), 3.6);
 
-      // ---------- 7.86 4096 阶 481 → 635 ----------
-      [$("lp"), $("l1"), $("l2"), $("lt"), $("sep"), $("rp"), $("r1"), $("r2"), $("rt")].forEach((e) => fadeOut(e, 7.86));
-      fadeIn($("nh"), 8.1);
-      fadeIn($("a0"), 8.2);
-      ft($("ab"), { opacity: 1, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.7, ease: IN }, 8.3);
-      fadeIn($("an"), 8.8);
-      ft($("ag"), { opacity: 1, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.9, ease: MOVE }, 9.8);
-      fadeIn($("an2"), 10.4);
-      // 12.04 可 8192 阶纹丝不动：条想涨又缩回；耗时条只抖一下
-      fadeIn($("b0"), 11.4);
-      ft($("bb"), { opacity: 1, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.6, ease: IN }, 11.5);
-      fadeIn($("bn"), 11.9);
-      ft($("bb"), { scaleX: 1 }, { scaleX: 1.05, duration: 0.3, ease: "power2.out" }, 12.2);
-      ft($("bb"), { scaleX: 1.05 }, { scaleX: 1, duration: 0.5, ease: "back.out(3)" }, 12.5);
-      ft($("tbfill"), { scaleX: 2.27 / 16 }, { scaleX: 2.05 / 16, duration: 0.3, ease: "power2.out" }, 12.2);
-      ft($("tbfill"), { scaleX: 2.05 / 16 }, { scaleX: 2.29 / 16, duration: 0.5, ease: "back.out(3)" }, 12.5);
-      ft($("tbnum"), { x: 2.27 * 45 + 12 }, { x: 2.05 * 45 + 12, duration: 0.3, ease: "power2.out" }, 12.2);
-      ft($("tbnum"), { x: 2.05 * 45 + 12 }, { x: 2.29 * 45 + 12, duration: 0.5, ease: "back.out(3)" }, 12.5);
-      fadeOut($("tbo"), 12.5, 0.2); fadeIn($("tbn"), 12.7, 0.3);
-      fadeIn($("bn2"), 12.9);
-      fadeIn($("tbred"), 13.0);
-      ft($("still"), { opacity: 0, scale: 1.3, transformOrigin: "0% 50%" }, { opacity: 1, scale: 1, duration: 0.4, ease: IN }, 13.2);
-      fadeOut($("tbghost"), 14.0, 0.5);
+      // ---------- 7.15 full / empty：生产者等 empty → 发 TMA → full 亮 → 消费者算 → empty 亮 ----------
+      const t1 = B[1];
+      [$("lp"), $("l1"), $("l2"), $("rp"), $("r1"), $("r2")].forEach((e) => fadeOut(e, t1));
+      fadeIn($("sn"), t1 + 0.15); fadeIn($("slot"), t1 + 0.15);
+      ft($("pb"), { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, t1 + 0.3);
+      ft($("cb"), { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, t1 + 0.4);
+      fadeIn($("wire"), t1 + 0.6); fadeIn($("le"), t1 + 0.7); fadeIn($("lf"), t1 + 0.8);
+      // 8.0 槽位是空的：empty 亮
+      fadeIn($("leon"), 8.0, 0.25);
+      fadeIn($("ps1"), 8.2, 0.3); fadeIn($("cs1"), 8.2, 0.3);
+      // 第一块：8.6 生产者拿到 empty → 发 TMA；9.4 到齐 → full 亮
+      fadeOut($("leon"), 8.6, 0.2); off($("ps1"), 8.6); on($("ps2"), 8.6);
+      ft($("b1"), { opacity: 0, x: -660 }, { opacity: 1, x: -560, duration: 0.2, ease: "none" }, 8.7);
+      ft($("b1"), { x: -560 }, { x: 0, duration: 0.6, ease: MOVE }, 8.9);
+      fadeIn($("b1").children[0], 9.4, 0.25);
+      fadeIn($("lfon"), 9.4, 0.25); fadeIn($("lfl"), 9.4);
+      off($("ps2"), 9.5); on($("ps1"), 9.5);
+      // 9.8 消费者拿到 full → 在算；10.9 算完 → empty 亮
+      fadeOut($("lfon"), 9.8, 0.2); off($("cs1"), 9.8); on($("cs2"), 9.8);
+      fadeIn($("cbon"), 9.8, 0.3);
+      ft($("b1"), { x: 0 }, { x: 40, duration: 0.5, ease: "power2.out", yoyo: true, repeat: 1 }, 9.9);
+      fadeOut($("b1"), 10.8, 0.3);
+      fadeOut($("cbon"), 10.9, 0.3); off($("cs2"), 10.9); on($("cs1"), 10.9);
+      fadeIn($("leon"), 10.9, 0.25); fadeIn($("lel"), 10.9);
+      // 第二块：11.6 发 TMA；12.4 full 亮；12.8 消费者在算
+      fadeOut($("leon"), 11.6, 0.2); off($("ps1"), 11.6); on($("ps2"), 11.6);
+      ft($("b2"), { opacity: 0, x: -660 }, { opacity: 1, x: -560, duration: 0.2, ease: "none" }, 11.6);
+      ft($("b2"), { x: -560 }, { x: 0, duration: 0.6, ease: MOVE }, 11.8);
+      fadeIn($("b2").children[0], 12.4, 0.25);
+      fadeIn($("lfon"), 12.4, 0.25);
+      off($("ps2"), 12.5); on($("ps1"), 12.5);
+      fadeOut($("lfon"), 12.8, 0.2); off($("cs1"), 12.8); on($("cs2"), 12.8);
+      fadeIn($("cbon"), 12.8, 0.3);
 
-      // ---------- 15.45 tile 图：按行发放，一轮 132 个 tile = 4 整行 + 4 个；W 全部点亮；128 MB 对 50 MB ----------
-      [$("nh"), $("a0"), $("ab"), $("ag"), $("an"), $("b0"), $("bb"), $("bn"), $("still")].forEach((e) => fadeOut(e, 15.45));
-      ft($("tmap"), { opacity: 0, scale: 0.9, transformOrigin: "0% 0%" }, { opacity: 1, scale: 1, duration: 1.0, ease: IN }, 15.6);
-      fadeIn($("ml"), 15.9);
-      fadeIn($("wstrip"), 16.1); fadeIn($("wl"), 16.1);
-      // 发放的波：每条竖带从上往下 0.5 s，黑框标出正在发放的 tile
-      fadeIn($("head"), 16.4, 0.2);
+      // ---------- 14.74 泳道回来，加 Tensor Core 一行：两个消费者交替，Tensor Core 一直有活 ----------
+      const t2 = B[2];
+      [$("pb"), $("cb"), $("ps1"), $("cs2"), $("sn"), $("slot"), $("wire"), $("le"), $("lf"), $("lel"), $("lfl"), $("b2")].forEach((e) => fadeOut(e, t2, 0.35));
+      [$("lp"), $("l1"), $("l2"), $("rp"), $("r1"), $("r2")].forEach((e) => fadeIn(e, t2 + 0.3));
+      fadeIn($("sep"), t2 + 0.6); fadeIn($("lt"), t2 + 0.6); fadeIn($("rt"), t2 + 0.6, 0.2);
+      ft($("rt"), { clipPath: "inset(0px 1500px 0px 0px)" }, { clipPath: "inset(0px 96px 0px 0px)", duration: 2.6, ease: "none" }, t2 + 0.7);
+      ft($("cur"), { x: 0 }, { x: 1404, duration: 2.6, ease: "none" }, t2 + 0.7);
+      fadeIn($("cur"), t2 + 0.7, 0.3);
+      fadeOut($("cur"), t2 + 3.3, 0.3);
+
+      // ---------- 19.74 4096 阶变快、8192 阶不变：耗时条抖一下回原处 ----------
+      const t3 = B[3];
+      ft($("tbfill"), { scaleX: 2.27 / 16 }, { scaleX: 2.05 / 16, duration: 0.3, ease: "power2.out" }, t3 + 0.2);
+      ft($("tbfill"), { scaleX: 2.05 / 16 }, { scaleX: 2.29 / 16, duration: 0.5, ease: "back.out(3)" }, t3 + 0.5);
+      ft($("tbnum"), { x: 2.27 * 45 + 12 }, { x: 2.05 * 45 + 12, duration: 0.3, ease: "power2.out" }, t3 + 0.2);
+      ft($("tbnum"), { x: 2.05 * 45 + 12 }, { x: 2.29 * 45 + 12, duration: 0.5, ease: "back.out(3)" }, t3 + 0.5);
+      fadeOut($("tbo"), t3 + 0.5, 0.2); fadeIn($("tbn"), t3 + 0.7, 0.3);
+      fadeIn($("tbred"), t3 + 1.0);
+
+      // ---------- 24.96 tile 图：按行发放，一轮 132 个 tile = 4 整行 + 4 个，读整个 W ----------
+      const t4 = B[4];
+      [$("lp"), $("l1"), $("l2"), $("lt"), $("sep"), $("rp"), $("r1"), $("r2"), $("rt")].forEach((e) => fadeOut(e, t4 - 0.4, 0.4));
+      ft($("tmap"), { opacity: 0, scale: 0.9, transformOrigin: "0% 0%" }, { opacity: 1, scale: 1, duration: 1.0, ease: IN }, t4 + 0.15);
+      fadeIn($("ml"), t4 + 0.4);
+      fadeIn($("wstrip"), t4 + 0.6); fadeIn($("wl"), t4 + 0.6);
+      // 26.6 发放的波：每条竖带从上往下 0.5 s；W 边条与右侧 W 条同时读满
+      const tw = 26.6;
+      fadeIn($("head"), tw - 0.1, 0.2);
       [0, 1, 2, 3].forEach((m) => {
-        const t = 16.5 + m * 0.5;
+        const t = tw + m * 0.5;
         ft($("s" + m), { scaleY: 0 }, { scaleY: 1, duration: 0.5, ease: "none" }, t);
         ft($("head"), { x: m * 19, y: 0 }, { x: m * 19, y: 589, duration: 0.5, ease: "none" }, t);
       });
-      ft($("s4"), { scaleY: 0 }, { scaleY: 1, duration: 0.1, ease: "none" }, 18.5);
-      ft($("head"), { x: 76, y: 0 }, { x: 76, y: 57, duration: 0.1, ease: "none" }, 18.5);
-      ft($("wlit"), { scaleY: 0 }, { scaleY: 1, duration: 0.5, ease: "none" }, 16.5);
-      fadeOut($("head"), 18.8, 0.3);
-      ft($("c1"), { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 18.7);
-      ft($("c2"), { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 20.6);
-      ft($("wstrip"), { scaleX: 1 }, { scaleX: 1.6, duration: 0.3, ease: "power2.out", yoyo: true, repeat: 1, transformOrigin: "50% 50%" }, 20.7);
-      // 22.53 共 128 MB；L2 只有 50 MB
-      fadeIn($("k1"), 22.6);
-      ft($("cy"), { scaleY: 0 }, { scaleY: 1, duration: 0.5, ease: "power1.in" }, 22.7);
-      ft($("ch"), { scaleY: 0 }, { scaleY: 1, duration: 0.8, ease: "power1.out" }, 23.2);
-      fadeIn($("k2"), 24.1);
-      ft($("cl2"), { scaleY: 0 }, { scaleY: 1, duration: 0.5, ease: IN }, 24.2);
-      fadeIn($("dl"), 24.6, 0.3);
-      fadeIn($("ov"), 24.8);
-      ft($("bk"), { opacity: 0, scale: 0.85, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, 25.1);
+      ft($("s4"), { scaleY: 0 }, { scaleY: 1, duration: 0.1, ease: "none" }, tw + 2.0);
+      ft($("head"), { x: 76, y: 0 }, { x: 76, y: 57, duration: 0.1, ease: "none" }, tw + 2.0);
+      fadeOut($("head"), tw + 2.3, 0.3);
+      ft($("wlit"), { scaleY: 0 }, { scaleY: 1, duration: 0.5, ease: "none" }, tw);
+      fadeIn($("k1"), tw);
+      ft($("cw"), { scaleY: 0 }, { scaleY: 1, duration: 0.5, ease: "none" }, tw);
+      ft($("c1"), { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 29.0);
+      ft($("wstrip"), { scaleX: 1 }, { scaleX: 1.6, duration: 0.3, ease: "power2.out", yoyo: true, repeat: 1, transformOrigin: "50% 50%" }, 30.2);
+      // 31.3 共 128 MB；32.7 L2 只有 50 MB，超出部分溢出
+      ft($("k1n"), { opacity: 0, scale: 1.3, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.4, ease: IN }, 31.3);
+      ft($("l2b"), { opacity: 0, scaleY: 0, transformOrigin: "50% 100%" }, { opacity: 1, scaleY: 1, duration: 0.5, ease: IN }, 32.7);
+      fadeIn($("k2"), 32.8);
+      fadeIn($("dl"), 33.2, 0.3);
+      fadeIn($("ch"), 33.3, 0.4);
+      // 34.0 W 块流过 L2：先读的块从顶上被挤出（还没被下一个 tile 复用）
+      fadeIn($("win"), 33.9, 0.1); fadeIn($("xwin"), 33.9, 0.1);
+      ft($("col"), { y: 220 }, { y: -343, duration: 2.8, ease: "none" }, 34.0);
+      ft($("xcol"), { y: 274 }, { y: -289, duration: 2.8, ease: "none" }, 34.0);
+      fadeIn($("xl"), 34.9);
+      ft($("bk"), { opacity: 0, scale: 0.85, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, 35.6);
 
-      tl.set({}, {}, 26.47);
+      tl.set({}, {}, DUR);
       window.__timelines = window.__timelines || {};
       window.__timelines["s06"] = tl;
     })();

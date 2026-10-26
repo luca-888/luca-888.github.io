@@ -1,9 +1,12 @@
 <template>
   <!--
-    s08 第 7 步：集群 + TMA 多播。节拍（幕内秒）1.0 / 8.82 / 12.4，幕长 19.57。
-    句 1：两个共用 W 的 block 组成集群，W 各搬一半，TMA 多播写进双方共享内存（画面居中放大，不用塔）。
-    句 2：耗时条 1.49 → 1.45；大字“cuBLAS 的 96.9%”，下面两根条对比。
-    句 3：写回：每个线程零散写显存，Tensor Core 时间线空着；瓶颈标签停到幕尾。
+    s08 第 7 步：集群 + TMA 多播。节拍（幕内秒）1.0 / 7.11 / 12.8 / 23.02，幕长 30.62。
+    句 1：两个 block（两个 SM）各有共享内存，框成一个集群（整组居中，x −240）；双向箭头“可访问彼此的共享内存”。
+    句 2：集群右移让出左侧；L2 里的一块 W 分前后两半，block 0 发前半、block 1 发后半。
+    句 3：TMA 多播：每半从 L2 读一次，分叉写进两个 block；15.8 耗时条 1.49 → 1.45；
+          左下两根短条：每 block 每步从 L2 读 A 16 + W 32 = 48 KB → A 16 + W 16 = 32 KB。
+    句 4：写回：每个线程零散写显存 64 次，Tensor Core 时间线空着；瓶颈标签停到幕尾。
+    画面只留部件名与关键数字（≥ 36 px），不写说明文字。
   -->
   <style>
     #root { position: absolute; inset: 0; }
@@ -13,35 +16,38 @@
     #root .s08-lbl { position: absolute; font-size: 32px; font-weight: 600; color: var(--ink); white-space: nowrap; }
     #root .s08-note { position: absolute; font-size: 28px; font-weight: 500; color: var(--note); white-space: nowrap; }
     #root #s08-ttl { transform-origin: 0 0; }
-    /* 多播图 */
+    /* 集群 */
     #root .s08-box { position: absolute; border: 3px solid; background: var(--paper); }
-    #root .s08-blk { position: absolute; left: 800px; width: 980px; height: 260px; border: 3px solid var(--line); background: var(--paper); }
-    #root .s08-bname { position: absolute; left: 28px; top: 22px; font-size: 40px; font-weight: 800; color: var(--ink); white-space: nowrap; }
-    #root .s08-slot { position: absolute; left: 300px; width: 340px; height: 86px; border: 3px dashed var(--gray); background: var(--paper2); }
+    #root .s08-blk { position: absolute; left: 760px; width: 880px; height: 250px; border: 3px solid var(--line); background: var(--paper); }
+    #root .s08-bname { position: absolute; left: 580px; top: 30px; font-size: 40px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+    #root .s08-bnote { position: absolute; left: 580px; top: 104px; font-size: 28px; font-weight: 500; color: var(--note); white-space: nowrap; }
+    #root .s08-smem { position: absolute; left: 24px; top: 20px; width: 520px; height: 210px; border: 3px solid var(--use); background: var(--paper); }
+    #root .s08-smem > span { position: absolute; left: 14px; top: 78px; font-size: 36px; font-weight: 700; color: var(--use-t); white-space: nowrap; }
+    #root .s08-slot { position: absolute; left: 180px; width: 320px; height: 80px; border: 3px dashed var(--gray); background: var(--paper2); }
     #root .s08-slot i { position: absolute; inset: 0; background: var(--yel); transform-origin: 0 50%; }
-    #root .s08-slot b { position: absolute; left: 0; right: 0; top: 22px; text-align: center; font-size: 32px; font-weight: 700; color: var(--ink); }
+    #root .s08-slot b { position: absolute; left: 0; right: 0; top: 14px; text-align: center; font-size: 36px; font-weight: 700; color: var(--ink); }
     #root .s08-half { position: absolute; left: 40px; width: 300px; height: 76px; background: var(--yel); }
-    #root .s08-half b { position: absolute; left: 0; right: 0; top: 18px; text-align: center; font-size: 32px; font-weight: 700; color: var(--ink); }
-    /* 96.9% */
-    #root .s08-bar { position: absolute; left: 330px; height: 60px; transform-origin: 0 50%; }
-    #root .s08-val { position: absolute; font-family: var(--mono); font-size: 40px; font-weight: 800; color: var(--ink); white-space: nowrap; line-height: 60px; }
-    #root .s08-rl { position: absolute; left: 96px; font-size: 36px; font-weight: 600; color: var(--ink2); white-space: nowrap; line-height: 60px; }
+    #root .s08-half b { position: absolute; left: 0; right: 0; top: 14px; text-align: center; font-size: 36px; font-weight: 700; color: var(--ink); }
+    /* 48 → 32 KB */
+    #root .s08-kr { position: absolute; left: 96px; font-size: 36px; font-weight: 600; color: var(--ink2); white-space: nowrap; line-height: 52px; }
+    #root .s08-kb { position: absolute; height: 52px; transform-origin: 0 50%; font-size: 36px; font-weight: 700; line-height: 52px; text-align: center; white-space: nowrap; }
+    #root .s08-kv { position: absolute; font-family: var(--mono); font-size: 36px; font-weight: 800; color: var(--ink); white-space: nowrap; line-height: 52px; }
     /* 写回 */
     #root .s08-dot { position: absolute; top: 456px; width: 30px; height: 30px; border-radius: 50%; background: var(--purple); }
     #root .s08-mk { position: absolute; left: 0; top: 0; width: 14px; height: 14px; background: var(--purple); }
     #root .s08-seg { position: absolute; top: 0; height: 68px; transform-origin: 0 50%; }
-    #root .s08-seg b { position: absolute; left: 18px; top: 14px; font-size: 32px; font-weight: 700; white-space: nowrap; }
+    #root .s08-seg b { position: absolute; left: 18px; top: 10px; font-size: 36px; font-weight: 700; white-space: nowrap; }
   </style>
   <div id="root" data-composition-id="s08" data-width="1920" data-height="1080">
 
     <!-- 0–1.0 标题卡；之后缩到左上角常驻 -->
-    <div id="s08-title" class="clip s08-full" data-start="0.00" data-duration="19.57" data-track-index="1">
+    <div id="s08-title" class="clip s08-full" data-start="0.00" data-duration="30.62" data-track-index="1">
       <div id="s08-chip" class="kit-chip">wgmma_cluster</div>
       <div id="s08-ttl" class="kit-title">第 7 步：<span class="acc">集群 + TMA 多播</span></div>
     </div>
 
-    <!-- 耗时条：1.49 → 1.45 -->
-    <div id="s08-tb" class="clip kit-tbar" data-start="1.00" data-duration="18.57" data-track-index="2">
+    <!-- 耗时条：1.49 → 1.45（15.8） -->
+    <div id="s08-tb" class="clip kit-tbar" data-start="1.00" data-duration="29.62" data-track-index="2">
       <div id="s08-tbin" class="s08-in">
         <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
         <div class="track"><div id="s08-tbghost" class="ghost"></div><div id="s08-tbfill" class="fill"></div><div class="peak"></div></div>
@@ -51,79 +57,81 @@
       </div>
     </div>
 
-    <!-- 1.0 集群与多播 -->
-    <div id="s08-mc" class="clip s08-full" data-start="1.00" data-duration="8.30" data-track-index="3" data-layout-allow-overlap>
+    <!-- 1.0 集群 → 7.11 各搬一半 → 12.8 多播 -->
+    <div id="s08-mc" class="clip s08-full" data-start="1.00" data-duration="22.50" data-track-index="3" data-layout-allow-overlap>
       <div id="s08-mcin" class="s08-full">
-        <div id="s08-cbox" class="s08-abs" style="left:760px;top:282px;width:1060px;height:636px;border:4px dashed var(--ink2)">
-          <div class="s08-lbl" style="left:22px;top:6px;font-weight:800">线程块集群</div>
+        <div id="s08-clg" class="s08-full">
+          <div id="s08-cbox" class="s08-abs" style="left:724px;top:250px;width:952px;height:684px;border:4px dashed var(--ink2)">
+            <div class="s08-abs" style="left:22px;top:2px;font-size:36px;font-weight:800;color:var(--ink);white-space:nowrap">线程块集群</div>
+          </div>
+          <div id="s08-b0" class="s08-blk" style="top:310px">
+            <div class="s08-smem"><span>共享内存</span>
+              <div id="s08-s0a" class="s08-slot" style="top:18px"><i></i><b>W 前半</b></div>
+              <div id="s08-s0b" class="s08-slot" style="top:110px"><i></i><b>W 后半</b></div>
+            </div>
+            <div class="s08-bname">block 0</div>
+            <div class="s08-bname" style="top:100px;font-size:36px;font-weight:700;color:var(--ink2)">SM 0</div>
+          </div>
+          <div id="s08-b1" class="s08-blk" style="top:660px">
+            <div class="s08-smem"><span>共享内存</span>
+              <div id="s08-s1a" class="s08-slot" style="top:18px"><i></i><b>W 前半</b></div>
+              <div id="s08-s1b" class="s08-slot" style="top:110px"><i></i><b>W 后半</b></div>
+            </div>
+            <div class="s08-bname">block 1</div>
+            <div class="s08-bname" style="top:100px;font-size:36px;font-weight:700;color:var(--ink2)">SM 1</div>
+          </div>
+          <svg id="s08-xsvg" class="s08-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none">
+            <path id="s08-xa" d="M 1110 548 V 672" style="stroke:var(--use-t)" stroke-width="5" />
+            <path id="s08-xh" d="M 1096 560 L 1110 540 L 1124 560 Z M 1096 660 L 1110 680 L 1124 660 Z" style="fill:var(--use-t)" />
+          </svg>
+          <div id="s08-xd" class="s08-abs" style="left:1100px;top:548px;width:20px;height:20px;background:var(--use)"></div>
         </div>
-        <div id="s08-b0" class="s08-blk" style="top:338px">
-          <div class="s08-bname">block 0</div>
-          <div class="s08-note" style="left:28px;top:84px">算第 m 行的 tile</div>
-          <div class="s08-note" style="left:28px;top:200px">共享内存 →</div>
-          <div id="s08-s0a" class="s08-slot" style="top:40px;left:340px"><i></i><b>W 前半</b></div>
-          <div id="s08-s0b" class="s08-slot" style="top:142px;left:340px"><i></i><b>W 后半</b></div>
-        </div>
-        <div id="s08-b1" class="s08-blk" style="top:640px">
-          <div class="s08-bname">block 1</div>
-          <div class="s08-note" style="left:28px;top:84px">算第 m+1 行的 tile</div>
-          <div class="s08-note" style="left:28px;top:200px">共享内存 →</div>
-          <div id="s08-s1a" class="s08-slot" style="top:40px;left:340px"><i></i><b>W 前半</b></div>
-          <div id="s08-s1b" class="s08-slot" style="top:142px;left:340px"><i></i><b>W 后半</b></div>
-        </div>
-        <div id="s08-same" class="s08-lbl" style="left:1500px;top:600px;padding:0 12px;background:var(--paper);color:var(--yel-t);font-weight:800">要同一块 W</div>
-        <div id="s08-l2" class="s08-box" style="left:96px;top:400px;width:380px;height:320px;border-color:var(--blue)">
-          <div class="s08-lbl" style="left:18px;top:10px;font-weight:800">L2 里的一块 W</div>
+        <div id="s08-l2" class="s08-box" style="left:96px;top:330px;width:380px;height:320px;border-color:var(--blue)">
+          <div class="s08-abs" style="left:18px;top:8px;font-size:40px;font-weight:800;color:var(--blue-t)">L2</div>
           <div class="s08-half" style="top:90px"><b>W 前半</b></div>
           <div class="s08-half" style="top:190px"><b>W 后半</b></div>
         </div>
-        <div id="s08-who" class="s08-full">
-          <div class="s08-lbl" style="left:96px;top:744px">前半由 block 0 发出</div>
-          <div class="s08-lbl" style="left:96px;top:794px">后半由 block 1 发出</div>
-        </div>
         <svg id="s08-msvg" class="s08-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" stroke-linejoin="round">
-          <path id="s08-pa" d="M 436 528 H 590 V 424 H 1136 M 590 528 V 726 H 1136" style="stroke:var(--yel-t)" stroke-width="6" />
-          <path id="s08-pb" d="M 436 628 H 660 V 526 H 1136 M 660 628 V 828 H 1136" style="stroke:var(--yel-t)" stroke-width="6" />
+          <path id="s08-pa" d="M 476 461 H 600 V 388 H 960 M 600 461 V 738 H 960" style="stroke:var(--yel-t)" stroke-width="6" />
+          <path id="s08-pb" d="M 476 561 H 660 V 480 H 960 M 660 561 V 830 H 960" style="stroke:var(--yel-t)" stroke-width="6" />
         </svg>
-        <div id="s08-mcl" class="s08-abs" style="left:470px;top:320px;font-family:var(--mono);font-size:40px;font-weight:800;color:var(--yel-t);white-space:nowrap">TMA 多播</div>
-        <div id="s08-mcn" class="s08-lbl" style="left:470px;top:372px">读一次写两份</div>
-      </div>
-    </div>
-
-    <!-- 8.82 1.45 ms，cuBLAS 的 96.9% -->
-    <div id="s08-res" class="clip s08-full" data-start="8.82" data-duration="3.98" data-track-index="4">
-      <div id="s08-resin" class="s08-full">
-        <div id="s08-cap" class="s08-abs" style="left:96px;top:330px;font-size:56px;font-weight:700;color:var(--ink);white-space:nowrap">cuBLAS 的</div>
-        <div id="s08-big" class="s08-abs" style="left:400px;top:270px;font-family:var(--mono);font-size:220px;line-height:1;font-weight:800;color:var(--teal-t);white-space:nowrap">96.9%</div>
-        <div id="s08-rows" class="s08-full">
-          <div class="s08-rl" style="top:620px">第 7 版</div>
-          <div id="s08-bm" class="s08-bar" style="top:620px;width:1015px;background:var(--ink2)"></div>
-          <div class="s08-val" style="left:1365px;top:620px">1.45 ms</div>
-          <div class="s08-rl" style="top:710px">cuBLAS</div>
-          <div id="s08-bc" class="s08-bar" style="top:710px;width:984px;background:var(--teal)"></div>
-          <div class="s08-val" style="left:1334px;top:710px;color:var(--teal-t)">1.406 ms</div>
+        <div id="s08-mcl" class="s08-abs" style="left:96px;top:262px;font-size:40px;font-weight:800;color:var(--yel-t);white-space:nowrap"><span style="font-family:var(--mono)">TMA</span> 多播</div>
+        <!-- 每 block 每步从 L2 读 -->
+        <div id="s08-kb" class="s08-full">
+          <div id="s08-kh" class="s08-abs" style="left:96px;top:680px;font-size:36px;font-weight:700;color:var(--ink);white-space:nowrap">每步读 L2</div>
+          <div id="s08-kr1" class="s08-full">
+            <div class="s08-kr" style="top:752px">原来</div>
+            <div class="s08-kb" style="left:196px;top:752px;width:96px;background:var(--blue);color:#fff">A</div>
+            <div class="s08-kb" style="left:292px;top:752px;width:192px;background:var(--yel);color:var(--ink)">W</div>
+            <div class="s08-kv" style="left:500px;top:752px">48 KB</div>
+          </div>
+          <div id="s08-kr2" class="s08-full">
+            <div class="s08-kr" style="top:830px">多播</div>
+            <div class="s08-kb" style="left:196px;top:830px;width:96px;background:var(--blue);color:#fff">A</div>
+            <div id="s08-kw2" class="s08-kb" style="left:292px;top:830px;width:192px;background:var(--yel);color:var(--ink)">W</div>
+            <div id="s08-kv2a" class="s08-kv" style="left:500px;top:830px">48 KB</div>
+            <div id="s08-kv2b" class="s08-kv" style="left:404px;top:830px;color:var(--use-t)">32 KB</div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- 12.4 写回：每个线程零散写显存，期间不发 wgmma -->
-    <div id="s08-wb" class="clip s08-full" data-start="12.40" data-duration="7.17" data-track-index="5" data-layout-allow-overlap>
-      <div id="s08-whd" class="s08-abs" style="left:96px;top:290px;font-size:44px;font-weight:800;color:var(--ink);white-space:nowrap">剩下的一段：<span class="acc-p">写回结果</span></div>
+    <!-- 23.02 写回：每个线程零散写显存，期间不发 wgmma -->
+    <div id="s08-wb" class="clip s08-full" data-start="23.02" data-duration="7.60" data-track-index="5" data-layout-allow-overlap>
       <svg id="s08-wsvg" class="s08-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none"></svg>
       <div id="s08-dots" class="s08-full"></div>
-      <div id="s08-thl" class="s08-lbl" style="left:160px;top:510px">每个线程各自写</div>
+      <div id="s08-thl" class="s08-abs" style="left:160px;top:510px;font-size:36px;font-weight:700;color:var(--purple-t);white-space:nowrap">线程</div>
       <div id="s08-hbm" class="s08-box" style="left:1240px;top:340px;width:580px;height:280px;border-color:var(--hot);background:transparent">
-        <div class="s08-lbl" style="left:16px;top:8px;color:var(--hot-t);font-weight:800">显存</div>
+        <div class="s08-abs" style="left:16px;top:6px;font-size:40px;color:var(--hot-t);font-weight:800">显存</div>
       </div>
       <div id="s08-mks" class="s08-full"></div>
-      <div id="s08-zl" class="s08-note" style="left:1240px;top:630px">零散的小写入</div>
-      <div id="s08-tcl" class="s08-lbl" style="left:96px;top:722px;font-weight:700">Tensor Core</div>
+      <div id="s08-tcl" class="s08-abs" style="left:96px;top:716px;font-size:36px;font-weight:700;color:var(--ink);white-space:nowrap">Tensor Core</div>
       <div id="s08-trk" class="s08-abs" style="left:340px;top:706px;width:1480px;height:68px;background:var(--paper2)">
         <div id="s08-g1" class="s08-seg" style="left:0;width:440px;background:var(--teal)"><b style="color:#fff">wgmma</b></div>
-        <div id="s08-g2" class="s08-seg" style="left:440px;width:620px;border:3px dashed var(--gray)"><b style="color:var(--ink2)">写回期间：不发 wgmma</b></div>
-        <div id="s08-g3" class="s08-seg" style="left:1060px;width:420px;background:var(--teal)"><b style="color:#fff">下一块</b></div>
+        <div id="s08-g2" class="s08-seg" style="left:440px;width:620px;border:3px dashed var(--gray)"><b style="color:var(--purple-t)">写回</b></div>
+        <div id="s08-g3" class="s08-seg" style="left:1060px;width:420px;background:var(--teal)"><b style="color:#fff">wgmma</b></div>
       </div>
-      <div id="s08-btag" class="s08-abs" style="left:780px;top:800px"><span class="k-bottleneck">瓶颈：写回</span></div>
+      <div id="s08-btag" class="s08-abs" style="left:780px;top:800px"><span class="k-bottleneck" style="font-size:36px">瓶颈：写回</span></div>
     </div>
   </div>
   <script>
@@ -176,12 +184,11 @@
 
       // ---------- 初始状态 ----------
       gsap.set([$("chip"), $("ttl")], { opacity: 0 });
-      gsap.set([$("cbox"), $("b0"), $("b1"), $("same"), $("l2"), $("who"), $("mcl"), $("mcn")], { opacity: 0 });
+      gsap.set($("clg"), { x: -240 });
+      gsap.set([$("cbox"), $("b0"), $("b1"), $("xd"), $("xh"), $("l2"), $("mcl"), $("kh"), $("kr1"), $("kr2"), $("kv2b")], { opacity: 0 });
       gsap.set(document.querySelectorAll("#s08-mc .s08-slot i"), { scaleX: 0 });
-      ["pa", "pb"].forEach((k) => { const p = $(k), n = p.getTotalLength(); p.dataset.len = n; gsap.set(p, { strokeDasharray: n, strokeDashoffset: n }); });
-      gsap.set([$("cap"), $("big"), $("rows")], { opacity: 0 });
-      gsap.set([$("bm"), $("bc")], { scaleX: 0 });
-      gsap.set([$("whd"), $("thl"), $("hbm"), $("zl"), $("tcl"), $("trk"), $("btag")], { opacity: 0 });
+      ["xa", "pa", "pb"].forEach((k) => { const p = $(k), n = p.getTotalLength(); p.dataset.len = n; gsap.set(p, { strokeDasharray: n, strokeDashoffset: n }); });
+      gsap.set([$("thl"), $("hbm"), $("tcl"), $("trk"), $("btag")], { opacity: 0 });
       gsap.set(dots, { opacity: 0 });
       gsap.set([$("g1"), $("g2"), $("g3")], { opacity: 0 });
 
@@ -189,65 +196,71 @@
       ft($("chip"), { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, 0.0);
       ft($("ttl"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 0.1);
 
-      // ---------- 1.0 标题缩到左上；1.7 两个要同一块 W 的 block；3.6 组成集群 ----------
+      // ---------- 1.0 两个 block，各在一个 SM 上；2.4 框成集群 ----------
       ft($("ttl"), { x: 0, y: 0, scale: 1 }, { x: 0, y: -16, scale: 0.6, duration: 0.6, ease: MOVE }, 1.0);
       fadeIn($("tbin"), 1.0);
-      ft($("b0"), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: IN }, 1.6);
-      ft($("b1"), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: IN }, 1.75);
-      fadeIn($("same"), 2.4);
-      ft($("cbox"), { opacity: 0, scale: 1.04, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.6, ease: IN }, 3.6);
-      fadeOut($("same"), 4.4, 0.3);
+      ft($("b0"), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: IN }, 1.4);
+      ft($("b1"), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: IN }, 1.55);
+      ft($("cbox"), { opacity: 0, scale: 1.04, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.6, ease: IN }, 2.4);
+      // 3.61 可访问彼此的共享内存：双向箭头，一个数据块下去再上来
+      ft($("xa"), { strokeDashoffset: $("xa").dataset.len }, { strokeDashoffset: 0, duration: 0.5, ease: MOVE }, 3.7);
+      fadeIn($("xh"), 4.1, 0.3);
+      ft($("xd"), { opacity: 0, y: 0 }, { opacity: 1, y: 0, duration: 0.2, ease: IN }, 4.6);
+      ft($("xd"), { y: 0 }, { y: 104, duration: 0.8, ease: MOVE }, 4.8);
+      ft($("xd"), { y: 104 }, { y: 0, duration: 0.8, ease: MOVE }, 5.8);
+      fadeOut($("xd"), 6.6, 0.3);
 
-      // ---------- 4.7 W 各搬一半 ----------
-      ft($("l2"), { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.6, ease: IN }, 2.3);
-      fadeIn($("who"), 5.0);
+      // ---------- 7.11 集群右移；L2 的一块 W；两个 block 要同一块 W ----------
+      ft($("clg"), { x: -240 }, { x: 0, duration: 0.8, ease: MOVE }, 7.11);
+      fadeOut($("xh"), 7.11, 0.3);
+      ft($("xa"), { opacity: 1 }, { opacity: 0, duration: 0.3, ease: OUT }, 7.11);
+      ft($("l2"), { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.6, ease: IN }, 8.4);
 
-      // ---------- 5.9 TMA 多播：一份写进两个 block ----------
+      // ---------- 12.8 TMA 多播：每半读一次，分叉写进两个 block ----------
       const draw = (p, t) => ft(p, { strokeDashoffset: p.dataset.len }, { strokeDashoffset: 0, duration: 0.8, ease: MOVE }, t);
       const slotFill = (id, t) => ft(q("#s08-" + id + " i"), { scaleX: 0 }, { scaleX: 1, duration: 0.4, ease: IN }, t);
-      draw($("pa"), 5.9);
-      fadeIn($("mcl"), 5.95);
-      slotFill("s0a", 6.6); slotFill("s1a", 6.6);
-      draw($("pb"), 7.1);
-      fadeIn($("mcn"), 7.2);
-      slotFill("s0b", 7.8); slotFill("s1b", 7.8);
-      fadeOut($("mcin"), 8.82);
+      fadeIn($("mcl"), 12.9);
+      draw($("pa"), 13.1);
+      slotFill("s0a", 13.8); slotFill("s1a", 13.8);
+      draw($("pb"), 15.2);
+      slotFill("s0b", 15.9); slotFill("s1b", 15.9);
 
-      // ---------- 8.82 耗时条 1.49 → 1.45；10.35 cuBLAS 的 96.9% ----------
-      tl.set($("tbghost"), { opacity: 1 }, 8.82);
-      ft($("tbfill"), { scaleX: 1.49 / 16 }, { scaleX: 1.45 / 16, duration: 0.9, ease: MOVE }, 8.82);
-      ft([$("tbnum"), $("tbnum2")], { x: TBX(1.49) }, { x: TBX(1.45), duration: 0.9, ease: MOVE }, 8.82);
-      fadeOut($("tbnum"), 8.82, 0.3);
-      fadeIn($("tbnum2"), 9.32, 0.4);
-      ft($("tbghost"), { opacity: 1 }, { opacity: 0, duration: 0.5, ease: OUT }, 10.32);
+      // 15.8 耗时条 1.49 → 1.45
+      tl.set($("tbghost"), { opacity: 1 }, 15.8);
+      ft($("tbfill"), { scaleX: 1.49 / 16 }, { scaleX: 1.45 / 16, duration: 0.9, ease: MOVE }, 15.8);
+      ft([$("tbnum"), $("tbnum2")], { x: TBX(1.49) }, { x: TBX(1.45), duration: 0.9, ease: MOVE }, 15.8);
+      fadeOut($("tbnum"), 15.8, 0.3);
+      fadeIn($("tbnum2"), 16.3, 0.4);
+      ft($("tbghost"), { opacity: 1 }, { opacity: 0, duration: 0.5, ease: OUT }, 17.3);
 
-      fadeIn($("rows"), 9.2, 0.3);
-      ft($("bm"), { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: IN }, 9.25);
-      ft($("bc"), { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: IN }, 9.45);
-      fadeIn($("cap"), 10.3);
-      ft($("big"), { opacity: 0, scale: 0.92, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.6, ease: IN }, 10.4);
-      fadeOut($("resin"), 12.4);
+      // 17.27 每 block 每步从 L2 读：48 KB → 32 KB（W 只读一半）
+      fadeIn($("kh"), 17.4);
+      fadeIn($("kr1"), 17.7);
+      fadeIn($("kr2"), 18.6);
+      ft($("kw2"), { width: 192 }, { width: 96, duration: 0.9, ease: MOVE }, 19.6);
+      fadeOut($("kv2a"), 19.6, 0.3);
+      fadeIn($("kv2b"), 20.3, 0.4);
 
-      // ---------- 12.4 写回：线程零散写显存；16.35 期间不发 wgmma ----------
-      fadeIn($("whd"), 12.5);
-      fadeIn($("hbm"), 12.7);
-      dots.forEach((d, i) => ft(d, { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.3, ease: IN }, 13.0 + i * 0.03));
-      fadeIn($("thl"), 13.3);
-      const RT = [14.0, 14.8, 15.6];
+      fadeOut($("mcin"), 23.02);
+
+      // ---------- 23.02 写回：线程零散写显存；28.11 期间不发 wgmma ----------
+      fadeIn($("hbm"), 23.4);
+      dots.forEach((d, i) => ft(d, { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.3, ease: IN }, 23.7 + i * 0.03));
+      fadeIn($("thl"), 24.0);
+      const RT = [24.6, 25.4, 26.2];
       wl.forEach(([ln, len, r, i]) => {
         const t = RT[r] + ((i * 5) % 16) * 0.025;
         ft(ln, { strokeDashoffset: len }, { strokeDashoffset: 0, duration: 0.35, ease: MOVE }, t);
         ft(ln, { opacity: 1 }, { opacity: 0, duration: 0.3, ease: OUT }, t + 0.5);
       });
       mks.forEach(([m, r, i]) => fadeIn(m, RT[r] + ((i * 5) % 16) * 0.025 + 0.32, 0.15));
-      fadeIn($("zl"), 14.6);
-      fadeIn($("tcl"), 16.3); fadeIn($("trk"), 16.3);
-      fadeIn($("g1"), 16.4, 0.3);
-      ft($("g2"), { opacity: 1, clipPath: "inset(0 100% 0 0)" }, { opacity: 1, clipPath: "inset(0 0% 0 0)", duration: 1.2, ease: "none" }, 16.7);
-      fadeIn($("g3"), 17.9, 0.4);
-      ft($("btag"), { opacity: 0, scale: 0.85, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, 17.6);
+      fadeIn($("tcl"), 24.4); fadeIn($("trk"), 24.4);
+      fadeIn($("g1"), 24.6, 0.3);
+      ft($("g2"), { opacity: 1, clipPath: "inset(0 100% 0 0)" }, { opacity: 1, clipPath: "inset(0 0% 0 0)", duration: 1.2, ease: "none" }, 28.1);
+      fadeIn($("g3"), 29.3, 0.4);
+      ft($("btag"), { opacity: 0, scale: 0.85, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, 28.9);
 
-      tl.set({}, {}, 19.57);
+      tl.set({}, {}, 30.62);
       window.__timelines = window.__timelines || {};
       window.__timelines["s08"] = tl;
     })();
