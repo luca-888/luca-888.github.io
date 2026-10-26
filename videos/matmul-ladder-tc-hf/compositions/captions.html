@@ -1,0 +1,45 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; }
+  </style>
+  <!-- 无声版：字幕按估计的朗读时长排；录音后按实测重排 -->
+  <div data-hf-id="hf-bpls" id="root" data-composition-id="captions" data-width="1920" data-height="1080" data-layout-allow-caption-zone="">
+    <div data-hf-id="hf-6yx2" id="cap-s01-0-0" class="clip kit-sub" data-start="0.50" data-duration="3.05" data-track-index="1"><span data-hf-id="hf-k7ji">上一篇的 FP32 版本止于 44.3 TFLOPS</span></div>
+    <div data-hf-id="hf-v78u" id="cap-s01-0-1" class="clip kit-sub" data-start="3.55" data-duration="2.25" data-track-index="1"><span data-hf-id="hf-j9b2">FP32 单元已经用满</span></div>
+    <div data-hf-id="hf-hsca" id="cap-s01-1-0" class="clip kit-sub" data-start="5.90" data-duration="4.42" data-track-index="1"><span data-hf-id="hf-ut5n">Tensor Core 的一条指令完成一个小矩阵块的乘加</span></div>
+    <div data-hf-id="hf-21cn" id="cap-s01-1-1" class="clip kit-sub" data-start="10.32" data-duration="2.48" data-track-index="1"><span data-hf-id="hf-kczy">而不是一次标量乘加</span></div>
+    <div data-hf-id="hf-fqpn" id="cap-s01-2-0" class="clip kit-sub" data-start="12.90" data-duration="3.36" data-track-index="1"><span data-hf-id="hf-36qj">每个 SM 每个时钟完成 2048 次乘加</span></div>
+    <div data-hf-id="hf-7spv" id="cap-s01-2-1" class="clip kit-sub" data-start="16.26" data-duration="2.64" data-track-index="1"><span data-hf-id="hf-fm17">是 FP32 单元的 16 倍</span></div>
+    <div data-hf-id="hf-2psv" id="cap-s02-0-0" class="clip kit-sub" data-start="19.50" data-duration="3.18" data-track-index="1"><span data-hf-id="hf-jyto">本文计算 C 等于 A 乘 W 转置</span></div>
+    <div data-hf-id="hf-tlxw" id="cap-s02-0-1" class="clip kit-sub" data-start="22.68" data-duration="2.29" data-track-index="1"><span data-hf-id="hf-qd0t">A 与 W 都沿 K 连续</span></div>
+    <div data-hf-id="hf-8tih" id="cap-s02-0-2" class="clip kit-sub" data-start="24.98" data-duration="1.92" data-track-index="1"><span data-hf-id="hf-15h8">即 Linear 层的布局</span></div>
+    <div data-hf-id="hf-ugtx" id="cap-s02-1-0" class="clip kit-sub" data-start="27.00" data-duration="2.36" data-track-index="1"><span data-hf-id="hf-5cx0">输入为 BF16，累加用 FP32</span></div>
+    <div data-hf-id="hf-c4pb" id="cap-s02-1-1" class="clip kit-sub" data-start="29.36" data-duration="4.14" data-track-index="1"><span data-hf-id="hf-wipl">基线是同样布局的 cuBLAS，结果逐位相同</span></div>
+    <div data-hf-id="hf-sj2w" id="cap-s02-2-0" class="clip kit-sub" data-start="33.60" data-duration="3.25" data-track-index="1"><span data-hf-id="hf-hdai">峰值由硬件固定，规格为 989 TFLOPS</span></div>
+    <div data-hf-id="hf-gp3m" id="cap-s02-2-1" class="clip kit-sub" data-start="36.85" data-duration="3.55" data-track-index="1"><span data-hf-id="hf-a2gz">持续满载受功耗限制，约为 735</span></div>
+    <div data-hf-id="hf-j4wp" id="cap-s02-3-0" class="clip kit-sub" data-start="40.50" data-duration="3.51" data-track-index="1"><span data-hf-id="hf-swu0">因此每一步改动都在数据的通路上</span></div>
+    <div data-hf-id="hf-o80f" id="cap-s02-3-1" class="clip kit-sub" data-start="44.01" data-duration="3.49" data-track-index="1"><span data-hf-id="hf-ktaa">让数据更早、更快地送到 Tensor Core</span></div>
+    <div data-hf-id="hf-pdnb" id="cap-s02-4-0" class="clip kit-sub" data-start="47.60" data-duration="3.30" data-track-index="1"><span data-hf-id="hf-3g74">本文从 93.3 一步步提高到 777.6 TFLOPS</span></div>
+    <div data-hf-id="hf-gvcl" id="cap-s02-4-1" class="clip kit-sub" data-start="50.90" data-duration="2.00" data-track-index="1"><span data-hf-id="hf-rj1r">为 cuBLAS 的 99.5%</span></div>
+    <div data-hf-id="hf-h9pv" id="cap-s03-0-0" class="clip kit-sub" data-start="53.50" data-duration="1.62" data-track-index="1"><span data-hf-id="hf-uyjt">第一步改用 wmma</span></div>
+    <div data-hf-id="hf-4ja9" id="cap-s03-0-1" class="clip kit-sub" data-start="55.12" data-duration="1.41" data-track-index="1"><span data-hf-id="hf-0kv4">即 warp matrix multiply-accumulate</span></div>
+    <div data-hf-id="hf-rzz2" id="cap-s03-0-2" class="clip kit-sub" data-start="56.53" data-duration="3.87" data-track-index="1"><span data-hf-id="hf-xnqr">一个 warp 共同计算 16 × 16 × 16 的乘加</span></div>
+    <div data-hf-id="hf-7ffj" id="cap-s03-1-0" class="clip kit-sub" data-start="60.50" data-duration="3.36" data-track-index="1"><span data-hf-id="hf-csb0">一个 block 计算 C 中 128 × 128 的一块</span></div>
+    <div data-hf-id="hf-bb7n" id="cap-s03-1-1" class="clip kit-sub" data-start="63.86" data-duration="2.54" data-track-index="1"><span data-hf-id="hf-3u6e">8 个 warp 各算 64 × 32</span></div>
+    <div data-hf-id="hf-ne19" id="cap-s03-2-0" class="clip kit-sub" data-start="66.50" data-duration="2.78" data-track-index="1"><span data-hf-id="hf-ynel">每个 warp 持有 4 × 2 个片段</span></div>
+    <div data-hf-id="hf-03cv" id="cap-s03-2-1" class="clip kit-sub" data-start="69.28" data-duration="3.32" data-track-index="1"><span data-hf-id="hf-77f9">沿 K 每 16 列发出 8 条 mma_sync</span></div>
+    <div data-hf-id="hf-zrqm" id="cap-s03-3-0" class="clip kit-sub" data-start="72.70" data-duration="1.32" data-track-index="1"><span data-hf-id="hf-4ky5">实测 93.3 TFLOPS</span></div>
+    <div data-hf-id="hf-u147" id="cap-s03-3-1" class="clip kit-sub" data-start="74.02" data-duration="2.01" data-track-index="1"><span data-hf-id="hf-zn5t">是 FP32 版本的 2.1 倍</span></div>
+    <div data-hf-id="hf-4ohe" id="cap-s03-3-2" class="clip kit-sub" data-start="76.03" data-duration="1.87" data-track-index="1"><span data-hf-id="hf-syuo">只有 cuBLAS 的 11.9%</span></div>
+    <div data-hf-id="hf-zrg8" id="cap-s03-4-0" class="clip kit-sub" data-start="78.00" data-duration="3.65" data-track-index="1"><span data-hf-id="hf-qsgz">数据先读入寄存器，再写入共享内存</span></div>
+    <div data-hf-id="hf-kce2" id="cap-s03-4-1" class="clip kit-sub" data-start="81.65" data-duration="4.15" data-track-index="1"><span data-hf-id="hf-1pug">计算前又读回寄存器，两次经过寄存器</span></div>
+    <div data-hf-id="hf-f3r9" id="cap-s03-5-0" class="clip kit-sub" data-start="85.90" data-duration="2.27" data-track-index="1"><span data-hf-id="hf-if04">共享内存每行 64 字节</span></div>
+    <div data-hf-id="hf-79xb" id="cap-s03-5-1" class="clip kit-sub" data-start="88.17" data-duration="4.06" data-track-index="1"><span data-hf-id="hf-s6sg">读片段时 8 行的同一块只落在 2 组 bank</span></div>
+    <div data-hf-id="hf-t0y1" id="cap-s03-5-2" class="clip kit-sub" data-start="92.24" data-duration="1.56" data-track-index="1"><span data-hf-id="hf-mq3a">须分 4 轮</span></div>
+    <div data-hf-id="hf-42u9" id="cap-s03-6-0" class="clip kit-sub" data-start="93.90" data-duration="3.28" data-track-index="1"><span data-hf-id="hf-y532">每一块还要全体同步后才能计算</span></div>
+    <div data-hf-id="hf-2id4" id="cap-s03-6-1" class="clip kit-sub" data-start="97.18" data-duration="4.47" data-track-index="1"><span data-hf-id="hf-e7hl">下一步先解决 bank 冲突与寄存器中转</span></div>
+  </div>
+  <script>
+    window.__timelines["captions"] = gsap.timeline({ paused: true }).set({}, {}, 102.0);
+  </script>
+</template>

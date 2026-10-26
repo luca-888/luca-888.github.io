@@ -1,0 +1,76 @@
+---
+name: luca888 GPU 讲解系列
+canvas: { width: 1920, height: 1080, fps: 30 }
+css: brand.css          # 下面的颜色与字体都在 brand.css 里定义为 CSS 变量，scene 里只用变量
+colors:
+  paper: "#f1ede4"      # 全片唯一背景
+  paper2: "#e6e0d3"     # 次级面板、进度条底
+  panel: "#e7e1d4"      # 代码框底
+  ink: "#141414"        # 正文、标题
+  ink2: "#3a3a3a"       # 次要文字、代码
+  note: "#6b6556"       # 注释、单位、出处（纸色底上 4.96:1）
+  gray: "#8a8474"       # 只用于线条、虚线框、刻度，不用于要读的字（3.19:1）
+  line: "#cfc8b8"
+  cell: "#e2ddd0"
+  teal: "#0fa391"       # 系列主强调：Tensor Core、当前版本、实测进度（实心块）
+  tealD: "#0b7d70"      # 标题里的强调词（大字）
+  blue: "#2350d8"       # 矩阵 A、选中的线程
+  warp: "#a9c2ee"       # 同一 warp
+  yel: "#f4c21b"        # 矩阵 W / B
+  purple: "#7c3ff5"     # 结果 C
+  hot: "#c4561d"        # 从显存读取、瓶颈标签
+  use: "#2f8a57"        # 片上数据（共享内存、寄存器里已就绪）
+  red: "#e5322d"        # 划掉、错误
+  small-text: "纸色底上 32 px 以下的彩色字用 brand.css 的 *-t 变体（--teal-t、--hot-t 等），对比度 ≥ 4.5:1"
+fonts:
+  zh: '"PingFang SC"（brand.css 里已按 PostScript 名声明各字重；只写 local("PingFang SC") 在无头 Chrome 里加载不到）'
+  mono: '"JetBrains Mono"（HyperFrames 自带）'
+type:
+  # 以下是可选组件的默认字号，用时可以按画面放大缩小
+  series-tag: { size: 30, weight: 600, color: ink }
+  version-chip: { font: mono, size: 34, weight: 700, color: "#fff", bg: ink }
+  title: { size: 64, weight: 800, color: ink, accent: tealD }
+  label: { size: 32, weight: 600, color: ink2 }
+  note: { size: 28, weight: 500, color: note }
+  code: { font: mono, size: 30, weight: 500, color: ink2, bg: panel }
+  subtitle: { size: 40, weight: 600, color: "#fff", bg: "#1d1c19", position: "底部居中，距底 64 px" }
+---
+
+# 系列风格
+
+**固定的只有三样：配色、字体、字幕样式。** 其余——构图、版式、有没有标题、放在哪里、镜头怎么走——每部视频、每一幕按内容自己设计，可以满屏、可以不对称、可以一镜到底，不沿用上一部的版式。
+
+## 固定
+
+- 纸色底与下面的语义色、苹方 + JetBrains Mono。
+- 字幕：底部居中黑底白字（`.kit-sub`），配音一句一条，与配音同步。
+
+## 可选组件（用不用、放哪里、多大都按画面定）
+
+`assets/brand.css` 里备好了几样常用件，样式统一，位置自己摆：
+
+- 标题：黑底白字版本名色块（`.kit-chip`）、大标题（`.kit-title`，强调词用 `.acc`）、系列名（`.kit-series`）、出处（`.kit-src`）。
+- 实测进度条（`.kit-meter`）：结果嵌在机制画面里更新，不单独占一屏。
+- 代码框（`.k-code`）、瓶颈标签（`.k-bottleneck`）、硬件塔（`kitTower()`）。
+
+## 构图：不要满
+
+原版的毛病是一开场就把硬件塔、矩阵、代码全摆出来，之后只是局部变亮，观众不知道看哪里。规则：
+
+- **开场只有一样东西。** 每幕前 3 秒画面上只出现一个主体（加字幕）。
+- **同一时刻最多两个主体**：正在讲的一个，加一个帮助定位的上下文。新部件进场时，讲完的退场或缩到角落。
+- **讲到才出现。** 部件在对应那句配音开始时进场，不先画好全图再逐块点亮。
+- **字少。** 画面上的标注每处不超过一行；代码框最多 4 行；放不下就拆到下一拍或删掉。
+- 画面单独看也能跟上：说明就近标在对象旁边。
+
+## 视觉语言
+
+- 语义色全片一致：A 蓝、W 黄、C 紫；从显存读取 = 橙，片上就绪 = 绿；Tensor Core 与当前版本 = teal；瓶颈 = 橙底白字“瓶颈”标签（`.k-bottleneck`），贴在**上一版自己的画面**上。
+- 讲存储层级时可以用硬件塔（`kitTower()`：显存 → L2 → 共享内存 → 寄存器 → Tensor Core，SM 内三层虚线框住），数据画成沿真实路径移动的小方块；不是每部都要用。
+- 画矩阵时把参与的矩阵完整画出、按比例，正在用的块高亮。
+- 实心色块加细线，不用阴影、渐变、光效、emoji；圆角 2–4 px。
+- 运动用缓入缓出，动的是机制本身（数据移动、块滑动、计数变化）；需要读的数字停留到能读完。
+
+## 字号：不要小
+
+成片会在手机上看（视频号、小红书）。**最小 28 px**（HyperFrames `check` 的手机可读下限），标签 32 px，关键数字 36 px 以上，代码 30 px，字幕 40 px。`brand.css` 里的类已经按这个设好；不要写比 28 px 更小的字，放不下就删内容或拆到下一拍，不缩字。
