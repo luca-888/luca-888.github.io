@@ -10,7 +10,7 @@
 
 ## 一、Attention 的开销与稀疏性
 
-缓存中供 attention 读取的一个单元称为一个 KV entry，不做压缩时每个 token 对应一个。Decode 一步的 attention 通常受显存带宽限制，耗时与读取的数据量近似成正比。下表以一层的元素数比较缓存与 decode 每步读取的数据量，$n_{kv}$ 为 KV head 数，$d_h$ 为 head dim，$d_c$ 为 MLA 每个 token 缓存的维度，$d'$ 为 DeepSeek-V4 一个 entry 的维度，$d_I$ 为 indexer key 的维度，$n_h$ 为线性层的 head 数，$W$ 为窗口，$k$ 为选出的 entry 数：
+缓存中供 attention 读取的一个单元称为一个 KV entry，不做压缩时每个 token 对应一个。Decode 一步的 attention 通常受显存带宽限制，耗时与读取的数据量近似成正比。下表以一层的元素数比较缓存与 decode 每步读取的数据量，$n_{kv}$ 为 KV head 数，$d_h$ 为 head dim，$d_c$ 为 MLA 每个 token 缓存的维度，$d'$ 为 DeepSeek-V4 一个 entry 的维度，$d_I$ 为 indexer key 的维度，$n_h$ 为线性 attention 层的 head 数，$W$ 为窗口，$k$ 为选出的 entry 数：
 
 | 方案 | 代表模型 | 缓存 | 每步读取 |
 | --- | --- | --- | --- |
@@ -19,7 +19,7 @@
 | sliding window | Gemma 3 local 层 | $2n_{kv}d_h \cdot W$ | $2n_{kv}d_h \cdot W$ |
 | DSA | DeepSeek-V3.2 | ${(d_c + d_I) L}$ | ${d_c k + d_I L}$ |
 | CSA | DeepSeek-V4 | ${(d'{+}d_I) L/4 + d' W}$ | ${d'(k{+}W) + d_I L/4}$ |
-| 线性 attention | Qwen3-Next 线性层 | $n_h d_h^2$ | $n_h d_h^2$ |
+| 线性 attention | Qwen3-Next 线性 attention 层 | $n_h d_h^2$ | $n_h d_h^2$ |
 
 **GQA、MLA 与稀疏 attention 减少的是不同的因子。** GQA 与 MLA 减小每个 entry，读取量仍随 $L$ 增长；稀疏 attention 减少读取的 entry 数，两者可以叠加，DeepSeek-V3.2 即在 MLA 之上使用 DSA。DSA 与 CSA 的读取量中仍有一项随 $L$ 增长，即 indexer 读取的 indexer key，$d_I$ 为 128，远小于一个 entry。线性 attention 去掉 softmax，把历史累积进固定大小的 state，开销与 $L$ 无关，但 state 只能有损地保存历史，因此要与 full attention 层混合使用。
 

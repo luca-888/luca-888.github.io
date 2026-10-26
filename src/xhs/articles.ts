@@ -1,5 +1,6 @@
 import type { Components } from 'react-markdown'
 import { attentionKvCompression } from '../articles/attention-kv-compression/attention-kv-compression.blocks'
+import { matmulLadderFp32 } from '../articles/matmul-ladder-fp32/matmul-ladder-fp32.blocks'
 import { sparseAttention } from '../articles/sparse-attention/sparse-attention.blocks'
 import { vllmCpuOverhead } from '../articles/vllm-cpu-overhead/vllm-cpu-overhead.blocks'
 import { vllmDistributed } from '../articles/vllm-distributed/vllm-distributed.blocks'
@@ -20,4 +21,5 @@ export const articles: Record<string, XhsArticle> = {
   'vllm-distributed': vllmDistributed,
   'attention-kv-compression': attentionKvCompression,
   'sparse-attention': sparseAttention,
+  'matmul-ladder-fp32': matmulLadderFp32,
 }

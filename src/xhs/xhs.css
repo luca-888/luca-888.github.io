@@ -64,3 +64,16 @@ body { margin: 0; background: #e9ebee; }
 /* 五列及以上的宽表：所有列都允许折行并略缩字号，否则右侧几列会被裁掉。 */
 .xhs-body .table-scroll table:has(th:nth-child(5)) { font-size: 24px; }
 .xhs-body .table-scroll table:has(th:nth-child(5)) td, .xhs-body .table-scroll table:has(th:nth-child(5)) th { white-space: normal; padding-left: 10px; padding-right: 10px; }
+
+/* 表格超出页宽时：所有列都允许折行（放得下的表不受影响，自动布局仍按单行宽度排）。 */
+.xhs-body .table-scroll td, .xhs-body .table-scroll th { white-space: normal; }
+
+/* matmul-ladder 系列：> 引用为次要内容（小号灰字），ECharts 图放宽到接近整页宽度。 */
+.xhs-body .ml-aside { margin: 0 0 24px; font-size: 27px; line-height: 1.6; color: #8a8a8a; }
+.xhs-body .ml-aside p { margin: 0 0 8px; }
+.xhs-body .ml-aside p:last-child { margin-bottom: 0; }
+.xhs-body .ml-aside strong { color: #777; }
+.xhs-body .ml-aside :not(pre) > code { font-size: .85em; }
+.xhs-body .ml-chart-figure { margin: 4px -44px 26px; }
+.xhs-body .ml-chart { max-width: none; width: 880px; }
+.xhs-body .ml-chart-figure figcaption, .xhs-body .ml-still figcaption { max-width: none; margin-top: 10px; padding: 0 40px; font-size: 23px; line-height: 1.45; }

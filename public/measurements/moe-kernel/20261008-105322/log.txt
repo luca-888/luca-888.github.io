@@ -1,0 +1,48 @@
+[    0.1s] env {'torch': '2.13.0+cu130', 'cuda': '13.0', 'vllm': '0.31.0', 'triton': '3.7.1', 'transformers': '5.17.0', 'gpu': 'NVIDIA H100 80GB HBM3', 'nvidia_smi': 'NVIDIA H100 80GB HBM3, 580.95.05, 81559 MiB'}
+[   29.4s] model loaded, 61.1 GB on GPU
+[   39.3s] decode: 16 requests, step 20, layer 24: 65 experts active, max 10 tokens, 51 experts with 1-2 tokens
+[   39.3s] tokens at this step: ['通过', '```', ' scattering', ' function', '地说', ' wraps', '  ', '**', '例子', ' you', '工程', ' by', '游客', ' unit', '函数', 'py']
+[   45.2s] sweep text: wikitext-2-raw-v1 test 1391 paragraphs
+[   49.2s] decode active experts (layer 24 / mean of layers): {1: '8.0 / 8.0', 2: '13.9 / 14.5', 4: '23.7 / 24.7', 8: '34.6 / 37.1', 16: '49.0 / 52.5', 32: '66.6 / 67.6', 64: '79.3 / 78.9', 128: '89.0 / 87.7'}
+[   49.2s] prefill active experts (layer 24 / mean of layers): {16: '35.8 / 38.4', 64: '56.7 / 58.0', 256: '76.1 / 76.5', 1024: '92.7 / 91.9', 4096: '107.0 / 104.1'}
+[   56.9s] w1 (128, 1536, 2048) w2 (128, 2048, 768) torch.bfloat16
+[   56.9s] transformers experts implementation (default): grouped_mm
+[   58.0s]         grouped_mm 0.468 ms, 23 kernels
+[   58.0s] N=    1 active=  8  loop 1.814 ms, 108 kernels  |  fused 0.219 ms, 5 kernels  |  rel err 8.06e-03
+[   59.3s]         grouped_mm 0.461 ms, 23 kernels
+[   59.3s] N=    4 active= 16  loop 4.546 ms, 208 kernels  |  fused 0.252 ms, 5 kernels  |  rel err 6.37e-03
+[   62.2s]         grouped_mm 0.563 ms, 23 kernels
+[   62.2s] N=   16 active= 65  loop 17.580 ms, 821 kernels  |  fused 0.403 ms, 6 kernels  |  rel err 3.85e-03
+[   64.8s]         grouped_mm 0.600 ms, 23 kernels
+[   64.8s] N=   64 active= 81  loop 20.412 ms, 1021 kernels  |  fused 0.455 ms, 6 kernels  |  rel err 4.85e-03
+[   67.4s]         grouped_mm 0.608 ms, 23 kernels
+[   67.4s] N=  256 active= 69  loop 17.776 ms, 871 kernels  |  fused 0.442 ms, 6 kernels  |  rel err 5.24e-03
+[   70.3s]         grouped_mm 1.019 ms, 32 kernels
+[   70.3s] N= 1024 active= 92  loop 24.583 ms, 1250 kernels  |  fused 0.598 ms, 6 kernels  |  rel err 5.24e-03
+[   73.4s]         grouped_mm 2.193 ms, 32 kernels
+[   73.4s] N= 4096 active=107  loop 28.811 ms, 1453 kernels  |  fused 1.061 ms, 6 kernels  |  rel err 5.24e-03
+[   73.4s] trace (fused, N=16):
+------------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                                                        Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg     Self CUDA   Self CUDA %    CUDA total  CUDA time avg    # of Calls  
+------------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                                         vllm::fused_experts        29.78%     668.676us        43.57%     978.456us     978.456us     212.441us        95.20%     221.516us     221.516us             1  
+                                            fused_moe_kernel         0.00%       0.000us         0.00%       0.000us       0.000us     212.441us        95.20%     212.441us     106.220us             2  
+                                _moe_C::moe_align_block_size         3.29%      73.906us         5.41%     121.469us     121.469us       4.474us         2.00%       4.474us       4.474us             1  
+                                                    aten::to         0.76%      16.996us        55.64%       1.249ms     624.694us       0.000us         0.00%       3.260us       1.630us             2  
+                                              aten::_to_copy         1.07%      23.934us        54.88%       1.232ms       1.232ms       0.000us         0.00%       3.260us       3.260us             1  
+                                                 aten::copy_         4.38%      98.307us        50.93%       1.144ms       1.144ms       1.630us         0.73%       3.260us       3.260us             1  
+void vllm::moe::moe_align_block_size_kernel<int>(int cons...         0.00%       0.000us         0.00%       0.000us       0.000us       3.068us         1.37%       3.068us       3.068us             1  
+                                             _moe_C::moe_sum         0.38%       8.459us         0.71%      15.944us      15.944us       2.364us         1.06%       2.364us       2.364us             1  
+void vllm::moe::moe_sum_vec_kernel<c10::BFloat16, int, 8,...         0.00%       0.000us         0.00%       0.000us       0.000us       2.364us         1.06%       2.364us       2.364us             1  
+                                            _C::silu_and_mul         1.27%      28.537us         1.74%      39.178us      39.178us       2.237us         1.00%       2.237us       2.237us             1  
+void vllm::act_and_mul_kernel<c10::BFloat16, __nv_bfloat1...         0.00%       0.000us         0.00%       0.000us       0.000us       2.237us         1.00%       2.237us       2.237us             1  
+                                     Activity Buffer Request        24.28%     545.176us        24.28%     545.176us     545.176us       1.630us         0.73%       1.630us       1.630us             1  
+void at::native::unrolled_elementwise_kernel<at::native::...         0.00%       0.000us         0.00%       0.000us       0.000us       1.630us         0.73%       1.630us       1.630us             1  
+void vllm::moe::count_and_sort_expert_tokens_kernel<int>(...         0.00%       0.000us         0.00%       0.000us       0.000us       1.406us         0.63%       1.406us       1.406us             1  
+------------------------------------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+Self CPU time total: 2.246ms
+Self CUDA time total: 223.146us
+
+[   73.4s] config: {1: (16, 64, 128), 4: (16, 64, 128), 8: (16, 64, 128), 16: (16, 64, 128), 32: (16, 64, 128), 64: (32, 64, 128), 96: (32, 128, 64), 128: (64, 128, 64), 256: (64, 128, 64), 512: (64, 128, 64), 1024: (128, 128, 64), 4096: (128, 128, 64)} {'name': 'E=128,N=768,device_name=NVIDIA_H100_80GB_HBM3.json', 'tuned_M': []}
+[   73.4s] moe_align_block_size (16 tokens, block 16): 1040 rows after padding, 128 real, grid 2048 rows
+[   74.8s] done 75 s errors: 0
