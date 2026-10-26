@@ -1,265 +1,273 @@
 <template>
   <style>
     #root { position: absolute; inset: 0; }
+    #root .s02-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
     #root .s02-abs { position: absolute; }
-    #root .s02-full { position: absolute; inset: 0; }
-    /* 矩阵：浅色底（主色降不透明度），无描边；点亮的行带 / 列带 / block 用实色 */
-    #root .s02-mat { position: absolute; width: 340px; height: 340px; }
-    #root .s02-mat .bg { position: absolute; inset: 0; }
-    #root #s02-A .bg { background: var(--blue); opacity: 0.18; }
-    #root #s02-W .bg { background: var(--yel); opacity: 0.38; }
-    #root #s02-C .bg { background: var(--purple); opacity: 0.18; }
-    #root .s02-name { font-family: var(--mono); font-size: 56px; font-weight: 800; line-height: 1; white-space: nowrap; }
-    #root .s02-tag { font-family: var(--mono); font-size: 32px; font-weight: 700; color: var(--ink2); white-space: nowrap; }
-    #root .s02-tagzh { font-size: 32px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
-    #root .s02-formula { font-family: var(--mono); font-size: 76px; font-weight: 800; color: var(--ink); white-space: nowrap; }
-    #root .s02-big { font-family: var(--mono); font-size: 52px; font-weight: 800; line-height: 1.1; white-space: nowrap; }
-    #root .s02-name-zh { font-size: 44px; font-weight: 700; white-space: nowrap; line-height: 1; }
-    /* 进度条：数字随填充右移，轨道裁掉左侧溢出 */
-    #root .kit-meter .track { overflow: hidden; }
-    #root .kit-meter .num { width: 180px; }
-    #root #s02-target { position: absolute; left: 541px; top: 32px; height: 56px; border-left: 3px dashed var(--teal-t); }
+    #root .s02-lbl { position: absolute; font-size: 32px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
+    #root .kit-tbar .num span { position: absolute; left: 0; top: 0; }
+    /* 第 1 句：立方体 + 32 个线程 */
+    #root .s02-dot { position: absolute; top: 760px; width: 22px; height: 22px; border-radius: 50%; background: var(--blue); }
+    /* 第 2 句：对比条 */
+    #root .s02-bar { position: absolute; left: 330px; height: 72px; transform-origin: 0 50%; }
+    #root .s02-bname { position: absolute; left: 96px; width: 210px; font-size: 36px; font-weight: 700; color: var(--ink); white-space: nowrap; line-height: 72px; }
+    #root .s02-bnum { position: absolute; font-family: var(--mono); font-size: 40px; font-weight: 800; color: var(--ink); white-space: nowrap; line-height: 72px; }
+    /* 第 3 句：路径清单 */
+    #root .s02-row { position: absolute; left: 96px; font-size: 44px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+    #root .s02-row i { font-style: normal; display: inline-block; width: 64px; font-family: var(--mono); font-size: 36px; color: var(--note); }
+    #root .s02-trip { position: absolute; left: 760px; font-size: 32px; font-weight: 700; color: var(--hot-t); white-space: nowrap; }
+    #root #s02-tower { position: absolute; left: 1180px; top: 300px; width: 640px; height: 620px; }
+    #root #s02-car { position: absolute; left: 0; top: 0; width: 44px; height: 44px; background: var(--blue); border: 2px solid var(--ink); }
+    #root .s02-ol { position: absolute; left: 1190px; width: 470px; height: 92px; border: 5px solid; }
+    /* 第 4 句：bank */
+    #root .s02-bk { position: absolute; top: 700px; width: 28px; height: 64px; background: var(--paper2); }
+    #root .s02-req { position: absolute; width: 252px; height: 60px; background: var(--blue); color: #fff; font-size: 30px; font-weight: 700; line-height: 60px; text-align: center; border-radius: 2px; }
+    #root .s02-stk { position: relative; display: inline-block; width: 0.62em; height: 1em; vertical-align: top; }
+    #root .s02-stk b { position: absolute; left: 0; top: 0; }
   </style>
   <div id="root" data-composition-id="s02" data-width="1920" data-height="1080">
 
-    <!-- 0：承接 s01 的 Tensor Core 立方体（中心 1240,470，宽 360），缩到右上角淡出 -->
-    <div id="s02-cube" class="clip s02-full" data-start="0.00" data-a-start="0.0" data-duration="1.30" data-a-duration="1.3" data-track-index="1">
-      <svg id="s02-cube-in" class="s02-abs" style="left:1060px;top:262px" width="360" height="416" viewBox="-180 -208 360 416">
-        <!-- 与 s01 结尾的立方体同一几何（A=208，16 × 16 网格） -->
-        <polygon points="-180.1,-104.0 0.0,-208.0 180.1,-104.0 0.0,0.0" style="fill:var(--teal)" />
-        <polygon points="-180.1,-104.0 0.0,0.0 0.0,208.0 -180.1,104.0" style="fill:var(--tealD)" />
-        <polygon points="0.0,0.0 180.1,-104.0 180.1,104.0 0.0,208.0" style="fill:var(--teal-t)" />
-        <path d="M-168.9 -110.5L11.3 -6.5M-168.9 -97.5L11.3 -201.5M-157.6 -117.0L22.5 -13.0M-157.6 -91.0L22.5 -195.0M-146.4 -123.5L33.8 -19.5M-146.4 -84.5L33.8 -188.5M-135.1 -130.0L45.0 -26.0M-135.1 -78.0L45.0 -182.0M-123.8 -136.5L56.3 -32.5M-123.8 -71.5L56.3 -175.5M-112.6 -143.0L67.5 -39.0M-112.6 -65.0L67.5 -169.0M-101.3 -149.5L78.8 -45.5M-101.3 -58.5L78.8 -162.5M-90.1 -156.0L90.1 -52.0M-90.1 -52.0L90.1 -156.0M-78.8 -162.5L101.3 -58.5M-78.8 -45.5L101.3 -149.5M-67.5 -169.0L112.6 -65.0M-67.5 -39.0L112.6 -143.0M-56.3 -175.5L123.8 -71.5M-56.3 -32.5L123.8 -136.5M-45.0 -182.0L135.1 -78.0M-45.0 -26.0L135.1 -130.0M-33.8 -188.5L146.4 -84.5M-33.8 -19.5L146.4 -123.5M-22.5 -195.0L157.6 -91.0M-22.5 -13.0L157.6 -117.0M-11.3 -201.5L168.9 -97.5M-11.3 -6.5L168.9 -110.5M-168.9 -97.5L-168.9 110.5M-180.1 -91.0L0.0 13.0M-157.6 -91.0L-157.6 117.0M-180.1 -78.0L0.0 26.0M-146.4 -84.5L-146.4 123.5M-180.1 -65.0L0.0 39.0M-135.1 -78.0L-135.1 130.0M-180.1 -52.0L0.0 52.0M-123.8 -71.5L-123.8 136.5M-180.1 -39.0L0.0 65.0M-112.6 -65.0L-112.6 143.0M-180.1 -26.0L0.0 78.0M-101.3 -58.5L-101.3 149.5M-180.1 -13.0L0.0 91.0M-90.1 -52.0L-90.1 156.0M-180.1 0.0L0.0 104.0M-78.8 -45.5L-78.8 162.5M-180.1 13.0L0.0 117.0M-67.5 -39.0L-67.5 169.0M-180.1 26.0L0.0 130.0M-56.3 -32.5L-56.3 175.5M-180.1 39.0L0.0 143.0M-45.0 -26.0L-45.0 182.0M-180.1 52.0L0.0 156.0M-33.8 -19.5L-33.8 188.5M-180.1 65.0L0.0 169.0M-22.5 -13.0L-22.5 195.0M-180.1 78.0L0.0 182.0M-11.3 -6.5L-11.3 201.5M-180.1 91.0L0.0 195.0M11.3 -6.5L11.3 201.5M0.0 13.0L180.1 -91.0M22.5 -13.0L22.5 195.0M0.0 26.0L180.1 -78.0M33.8 -19.5L33.8 188.5M0.0 39.0L180.1 -65.0M45.0 -26.0L45.0 182.0M0.0 52.0L180.1 -52.0M56.3 -32.5L56.3 175.5M0.0 65.0L180.1 -39.0M67.5 -39.0L67.5 169.0M0.0 78.0L180.1 -26.0M78.8 -45.5L78.8 162.5M0.0 91.0L180.1 -13.0M90.1 -52.0L90.1 156.0M0.0 104.0L180.1 0.0M101.3 -58.5L101.3 149.5M0.0 117.0L180.1 13.0M112.6 -65.0L112.6 143.0M0.0 130.0L180.1 26.0M123.8 -71.5L123.8 136.5M0.0 143.0L180.1 39.0M135.1 -78.0L135.1 130.0M0.0 156.0L180.1 52.0M146.4 -84.5L146.4 123.5M0.0 169.0L180.1 65.0M157.6 -91.0L157.6 117.0M0.0 182.0L180.1 78.0M168.9 -97.5L168.9 110.5M0.0 195.0L180.1 91.0" fill="none" style="stroke:var(--paper)" stroke-opacity="0.35" stroke-width="1" />
-        <path d="M-180.1,-104.0L0.0,0.0L180.1,-104.0M0,0L0,208" fill="none" style="stroke:var(--paper)" stroke-width="2" />
+    <!-- 标题卡：0–1.0 居中大字，之后缩到左上常驻 -->
+    <div id="s02-title" class="clip s02-full" data-start="0.00" data-duration="21.43" data-track-index="1">
+      <div id="s02-chip" class="kit-chip">wmma</div>
+      <div id="s02-ttl" class="kit-title">第 1 步：直接用 <span class="acc">wmma</span></div>
+    </div>
+
+    <!-- 耗时条：出现即 11.78 ms，第 2 句闪一下 -->
+    <div id="s02-tb" class="clip kit-tbar" data-start="1.00" data-duration="20.43" data-track-index="2">
+      <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
+      <div class="track"><div id="s02-tbghost" class="ghost"></div><div id="s02-tbfill" class="fill"></div><div class="peak"></div></div>
+      <div id="s02-tbnum" class="num"><span id="s02-tbv1">11.78 ms</span></div>
+      <div class="ref">虚线：规格峰值 1.11 ms</div>
+    </div>
+
+    <!-- 第 1 句（1.0）：16 × 16 × 16 立方体，一个 warp 的 32 个线程合算 -->
+    <div id="s02-cube" class="clip s02-full" data-start="1.00" data-duration="5.80" data-track-index="3">
+      <svg id="s02-cubesvg" class="s02-abs" style="left:720px;top:220px" width="480" height="450" viewBox="-240 -230 480 450">
+        <polygon points="0,-200 173.2,-100 0,0 -173.2,-100" style="fill:var(--teal)" />
+        <polygon points="-173.2,-100 0,0 0,200 -173.2,100" style="fill:var(--tealD)" />
+        <polygon points="0,0 173.2,-100 173.2,100 0,200" style="fill:var(--teal-t)" />
+        <path d="M0,-200 L173.2,-100 L0,0 L-173.2,-100 Z M0,0 L0,200" fill="none" style="stroke:var(--paper)" stroke-width="3" />
+        <text x="-118" y="-168" text-anchor="end" font-family="JetBrains Mono" font-size="36" font-weight="800" style="fill:var(--ink2)">16</text>
+        <text x="118" y="-168" font-family="JetBrains Mono" font-size="36" font-weight="800" style="fill:var(--ink2)">16</text>
+        <text x="-186" y="12" text-anchor="end" font-family="JetBrains Mono" font-size="36" font-weight="800" style="fill:var(--ink2)">16</text>
       </svg>
+      <div id="s02-cubek" class="s02-abs" style="left:1210px;top:400px;white-space:nowrap">
+        <div style="font-family:var(--mono);font-size:52px;font-weight:800;color:var(--teal-t)">16 × 16 × 16</div>
+        <div style="font-size:36px;font-weight:600;color:var(--ink2);margin-top:6px">一次乘加</div>
+      </div>
+      <svg id="s02-wires" class="s02-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none"></svg>
+      <div id="s02-dots" class="s02-full"></div>
+      <div id="s02-warpl" class="s02-abs" style="left:0;top:812px;width:1920px;text-align:center;font-size:40px;font-weight:700;color:var(--ink);white-space:nowrap">一个 warp = <span class="acc-b">32 个线程</span>，合算这一块</div>
     </div>
 
-    <!-- 承接 s01 的“16 倍”：0–0.6 s 淡出 -->
-    <div id="s02-x16" class="clip s02-abs" data-start="0.00" data-a-start="0.0" data-duration="0.80" data-a-duration="0.8" data-track-index="2" style="left:150px;top:380px;font-size:180px;line-height:1;font-weight:800;color:var(--ink);white-space:nowrap">
-      <div id="s02-x16-in"><span class="acc">16</span> 倍</div>
+    <!-- 第 2 句（6.29）：只有 cuBLAS 的 12% -->
+    <div id="s02-cmp" class="clip s02-full" data-start="6.29" data-duration="4.35" data-track-index="4">
+      <div id="s02-pct" class="s02-abs" style="left:96px;top:300px;white-space:nowrap">
+        <span style="font-size:60px;font-weight:700;color:var(--ink)">只有 cuBLAS 的 </span><span style="font-family:var(--mono);font-size:180px;font-weight:800;color:var(--hot-t);line-height:1">12%</span>
+      </div>
+      <div id="s02-bn1" class="s02-bname" style="top:600px">第 1 版</div>
+      <div id="s02-bar1" class="s02-bar" style="top:600px;width:884px;background:var(--ink2)"></div>
+      <div id="s02-bv1" class="s02-bnum" style="left:1234px;top:600px">11.78 ms</div>
+      <div id="s02-bn2" class="s02-bname" style="top:700px">cuBLAS</div>
+      <div id="s02-bar2" class="s02-bar" style="top:700px;width:106px;background:var(--teal)"></div>
+      <div id="s02-bv2" class="s02-bnum" style="left:456px;top:700px">1.41 ms</div>
     </div>
 
-    <!-- 0.5：公式 -->
-    <div id="s02-formula" class="clip s02-abs" data-start="0.50" data-a-start="0.5" data-duration="14.97" data-a-duration="14.5" data-track-index="2" style="left:150px;top:230px">
-      <div id="s02-formula-in" class="s02-formula"><span class="acc-p">C</span> = <span class="acc-b">A</span> · <span class="acc-y">Wᵀ</span></div>
-    </div>
-
-    <!-- 矩阵组（交接坐标：Wᵀ 760,150；A 400,510；C 760,510；边长 340） -->
-    <div id="s02-mats" class="clip s02-full" data-start="0.90" data-a-start="0.9" data-duration="34.97" data-a-duration="33.1" data-track-index="3">
-      <div id="s02-mats-in" class="s02-full" style="transform-origin:0 0">
-        <div id="s02-A" class="clip s02-mat" data-start="0.90" data-a-start="0.9" data-duration="34.97" data-a-duration="33.1" data-track-index="4" style="left:400px;top:510px">
-          <div id="s02-A-in" class="s02-full"><div class="bg"></div></div>
-          <div id="s02-bandA" class="clip s02-abs" data-start="32.10" data-a-start="31.2" data-duration="3.77" data-a-duration="2.8" data-track-index="5" style="left:0;top:0;width:340px;height:5.3125px">
-            <div id="s02-bandA-in" class="s02-full" style="background:var(--blue);transform-origin:0 50%"></div>
-          </div>
-        </div>
-        <div id="s02-W" class="clip s02-mat" data-start="1.50" data-a-start="1.5" data-duration="34.37" data-a-duration="32.5" data-track-index="6" style="left:760px;top:150px">
-          <div id="s02-W-in" class="s02-full"><div class="bg"></div></div>
-          <div id="s02-bandW" class="clip s02-abs" data-start="32.30" data-a-start="31.35" data-duration="3.57" data-a-duration="2.65" data-track-index="7" style="left:0;top:0;width:5.3125px;height:340px">
-            <div id="s02-bandW-in" class="s02-full" style="background:var(--yel-t);transform-origin:50% 0"></div>
-          </div>
-        </div>
-        <div id="s02-C" class="clip s02-mat" data-start="2.10" data-a-start="2.1" data-duration="33.77" data-a-duration="31.9" data-track-index="8" style="left:760px;top:510px">
-          <div id="s02-C-in" class="s02-full"><div class="bg"></div></div>
-          <div id="s02-blk" class="clip s02-abs" data-start="31.83" data-a-start="31.0" data-duration="4.04" data-a-duration="3.0" data-track-index="9" style="left:0;top:0;width:5.3125px;height:5.3125px;background:var(--purple)"></div>
-        </div>
-
-        <!-- 名字（第 1 拍）与精度（第 2 拍），矩阵缩小时退场 -->
-        <div id="s02-nA" class="clip s02-abs" data-start="0.90" data-a-start="0.9" data-duration="14.57" data-a-duration="14.1" data-track-index="10" style="left:200px;top:626px;width:170px;text-align:right">
-          <div class="s02-name acc-b">A</div>
-        </div>
-        <div id="s02-nW" class="clip s02-abs" data-start="1.50" data-a-start="1.5" data-duration="13.97" data-a-duration="13.5" data-track-index="11" style="left:1130px;top:246px">
-          <div class="s02-name acc-y">Wᵀ</div>
-        </div>
-        <div id="s02-nC" class="clip s02-abs" data-start="2.10" data-a-start="2.1" data-duration="13.37" data-a-duration="12.9" data-track-index="12" style="left:1130px;top:606px">
-          <div class="s02-name acc-p">C</div>
-        </div>
-        <div id="s02-bfA" class="clip s02-abs" data-start="8.00" data-a-start="8.0" data-duration="7.47" data-a-duration="7.0" data-track-index="13" style="left:200px;top:694px;width:170px;text-align:right">
-          <div class="s02-tag">BF16</div>
-        </div>
-        <div id="s02-bfW" class="clip s02-abs" data-start="8.16" data-a-start="8.15" data-duration="7.31" data-a-duration="6.85" data-track-index="14" style="left:1130px;top:314px">
-          <div class="s02-tag">BF16</div>
-        </div>
-        <div id="s02-fpC" class="clip s02-abs" data-start="9.39" data-a-start="9.3" data-duration="6.09" data-a-duration="5.7" data-track-index="15" style="left:1130px;top:674px">
-          <div class="s02-tagzh">FP32 累加</div>
-        </div>
-
-        <!-- “沿 K 连续”：A 沿横向，Wᵀ 沿纵向 -->
-        <div id="s02-arrA" class="clip s02-abs" data-start="3.70" data-a-start="3.7" data-duration="11.77" data-a-duration="11.3" data-track-index="16" style="left:400px;top:700px;width:340px;height:130px">
-          <div id="s02-arrA-in" class="s02-full">
-            <div class="k-label s02-abs" style="left:30px;top:10px;color:var(--ink)">沿 K 连续</div>
-            <svg class="s02-abs" style="left:0;top:70px" width="340" height="40" viewBox="0 0 340 40">
-              <line x1="30" y1="20" x2="290" y2="20" stroke="var(--ink)" stroke-width="4" />
-              <polygon points="310,20 288,9 288,31" fill="var(--ink)" />
-            </svg>
-          </div>
-        </div>
-        <div id="s02-arrW" class="clip s02-abs" data-start="3.85" data-a-start="3.85" data-duration="11.62" data-a-duration="11.15" data-track-index="17" style="left:760px;top:150px;width:340px;height:340px">
-          <div id="s02-arrW-in" class="s02-full">
-            <div class="k-label s02-abs" style="left:40px;top:150px;color:var(--ink)">沿 K 连续</div>
-            <svg class="s02-abs" style="left:250px;top:0" width="60" height="340" viewBox="0 0 60 340">
-              <line x1="30" y1="30" x2="30" y2="290" stroke="var(--ink)" stroke-width="4" />
-              <polygon points="30,310 19,288 41,288" fill="var(--ink)" />
-            </svg>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 14.6：峰值刻度尺（同一基线：989 规格 / 735 持续） -->
-    <div id="s02-ruler" class="clip s02-full" data-start="15.37" data-a-start="14.9" data-duration="7.50" data-a-duration="7.0" data-track-index="18">
-      <div id="s02-rtitle" class="clip s02-abs k-label" data-start="15.37" data-a-start="14.9" data-duration="7.50" data-a-duration="7.0" data-track-index="19" style="left:760px;top:400px;font-size:36px;color:var(--ink)">Tensor Core 峰值 · TFLOPS</div>
-      <div id="s02-axis" class="clip s02-abs" data-start="15.37" data-a-start="14.9" data-duration="7.50" data-a-duration="7.0" data-track-index="20" style="left:760px;top:618px;width:1040px;height:4px">
-        <div id="s02-axis-in" class="s02-full" style="background:var(--ink);transform-origin:0 50%"></div>
-      </div>
-      <div id="s02-b989" class="clip s02-abs" data-start="15.69" data-a-start="15.2" data-duration="7.17" data-a-duration="6.7" data-track-index="21" style="left:760px;top:568px;width:989px;height:50px">
-        <div id="s02-b989-in" class="s02-full" style="border:3px solid var(--teal);border-bottom:none;transform-origin:0 50%"></div>
-      </div>
-      <div id="s02-l989" class="clip s02-abs" data-start="16.23" data-a-start="15.7" data-duration="6.63" data-a-duration="6.2" data-track-index="22" style="left:1360px;top:450px;width:400px;height:170px">
-        <div class="s02-abs" style="right:10px;top:72px;width:3px;height:98px;background:var(--ink)"></div>
-        <div class="s02-abs" style="right:24px;top:0;text-align:right">
-          <div class="s02-big" style="color:var(--ink)">989</div>
-        </div>
-        <div class="k-note s02-abs" style="right:24px;top:62px;white-space:nowrap;color:var(--ink2)">规格 · 1830 MHz</div>
-      </div>
-      <div id="s02-b735" class="clip s02-abs" data-start="18.56" data-a-start="17.85" data-duration="4.30" data-a-duration="4.05" data-track-index="23" style="left:760px;top:568px;width:735px;height:50px">
-        <div id="s02-b735-in" class="s02-full" style="background:var(--teal);transform-origin:0 50%"></div>
-      </div>
-      <div id="s02-l735" class="clip s02-abs" data-start="18.94" data-a-start="18.2" data-duration="3.92" data-a-duration="3.7" data-track-index="24" style="left:995px;top:620px;width:500px;height:170px">
-        <div class="s02-abs" style="right:0;top:0;width:3px;height:70px;background:var(--ink)"></div>
-        <div class="s02-abs" style="right:14px;top:30px;text-align:right">
-          <div class="s02-big" style="color:var(--teal-t)">735</div>
-        </div>
-        <div class="k-note s02-abs" style="right:14px;top:94px;white-space:nowrap;color:var(--ink2)">700 W 持续 · 约 1360 MHz</div>
-      </div>
-    </div>
-
-    <!-- 21.5：显存 → Tensor Core 的通路，蓝色小方块沿它走 -->
-    <div id="s02-path" class="clip s02-full" data-start="22.52" data-a-start="21.5" data-duration="6.62" data-a-duration="7.5" data-track-index="25">
-      <div id="s02-pmem" class="clip s02-abs s02-name-zh" data-start="22.52" data-a-start="21.5" data-duration="6.62" data-a-duration="7.5" data-track-index="26" style="left:110px;top:718px;color:var(--hot-t)">显存</div>
-      <div id="s02-pline" class="clip s02-abs" data-start="22.61" data-a-start="21.6" data-duration="6.53" data-a-duration="7.4" data-track-index="27" style="left:236px;top:720px;width:1300px;height:40px">
-        <svg id="s02-pline-in" class="s02-full" style="transform-origin:0 50%" width="1300" height="40" viewBox="0 0 1300 40">
-          <line x1="0" y1="20" x2="1272" y2="20" stroke="var(--ink)" stroke-width="4" />
-          <polygon points="1298,20 1270,6 1270,34" fill="var(--ink)" />
+    <!-- 第 3 句（10.24）：硬件塔，数据绕两趟寄存器 -->
+    <div id="s02-tw" class="clip s02-full" data-start="10.24" data-duration="11.19" data-track-index="5">
+      <div id="s02-twin" class="s02-full">
+        <div id="s02-tower"></div>
+        <div id="s02-oreg" class="s02-ol" style="top:440px;border-color:var(--hot)"></div>
+        <div id="s02-osm" class="s02-ol" style="top:564px;border-color:var(--use)"></div>
+        <svg class="s02-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" stroke-linejoin="round">
+          <path id="s02-r1" style="stroke:var(--blue)" stroke-width="5" />
+          <path id="s02-r2" style="stroke:var(--hot)" stroke-width="5" />
+          <path id="s02-r3" style="stroke:var(--blue)" stroke-width="5" />
+          <path id="s02-r4" style="stroke:var(--hot)" stroke-width="5" />
+          <path id="s02-r5" style="stroke:var(--teal)" stroke-width="5" />
         </svg>
+        <div id="s02-car"></div>
       </div>
-      <div id="s02-ptc" class="clip s02-abs s02-name-zh" data-start="23.12" data-a-start="22.2" data-duration="6.02" data-a-duration="6.8" data-track-index="28" style="left:1556px;top:718px;color:var(--teal-t)">Tensor Core</div>
-      <div id="s02-car" class="clip s02-abs" data-start="23.29" data-a-start="22.4" data-duration="5.85" data-a-duration="6.6" data-track-index="29" style="left:250px;top:722px;width:36px;height:36px">
-        <div id="s02-car-in" class="s02-full" style="background:var(--blue)"></div>
-      </div>
+    </div>
+    <div id="s02-path" class="clip s02-full" data-start="10.24" data-duration="7.20" data-track-index="6">
+      <div id="s02-p1" class="s02-row" style="top:300px"><i>1</i>显存 → L2</div>
+      <div id="s02-p2" class="s02-row" style="top:400px"><i>2</i>L2 → <span class="acc-o">寄存器</span></div>
+      <div id="s02-p3" class="s02-row" style="top:500px"><i>3</i>寄存器 → 共享内存</div>
+      <div id="s02-p4" class="s02-row" style="top:600px"><i>4</i>共享内存 → <span class="acc-o">寄存器</span></div>
+      <div id="s02-p5" class="s02-row" style="top:700px"><i>5</i>寄存器 → <span class="acc">Tensor Core</span></div>
+      <div id="s02-t1" class="s02-trip" style="top:410px">← 第 1 趟</div>
+      <div id="s02-t2" class="s02-trip" style="top:610px">← 第 2 趟</div>
+      <div id="s02-two" class="s02-abs" style="left:96px;top:800px;font-size:64px;font-weight:800;color:var(--hot-t);white-space:nowrap">绕了两趟寄存器</div>
     </div>
 
-    <!-- 右上进度条：10.4 出参照 cuBLAS 781.86；28.6 起涨到 777.6 再退回到 44.3（s03 从这里接），留目标虚线 -->
-    <div id="s02-meter" class="clip kit-meter" data-start="10.56" data-a-start="10.4" data-duration="25.31" data-a-duration="23.6" data-track-index="30">
-      <div id="s02-meter-in" class="s02-full">
-        <div class="lbl">8192 阶 · BF16 · TFLOPS</div>
-        <div class="track" data-layout-allow-overflow>
-          <div id="s02-fill" class="fill"></div>
-          <div id="s02-num" class="num">0.0</div>
-        </div>
-        <div class="tick"></div>
-        <div class="ref">cuBLAS 781.86</div>
-        <div id="s02-same" class="clip note" data-start="11.63" data-a-start="11.4" data-duration="3.85" data-a-duration="3.6" data-track-index="31">结果逐位相同</div>
-        <div id="s02-target" class="clip" data-start="31.43" data-a-start="30.7" data-duration="4.44" data-a-duration="3.3" data-track-index="32"></div>
-        <div id="s02-tnote" class="clip note" data-start="33.04" data-a-start="31.9" data-duration="2.83" data-a-duration="2.1" data-track-index="33">目标 777.6（99.5%）</div>
+    <!-- 第 4 句（16.83）：bank 冲突，分 4 轮 -->
+    <div id="s02-bank" class="clip s02-full" data-start="16.83" data-duration="4.60" data-track-index="7">
+      <div id="s02-bkh" class="s02-abs" style="left:96px;top:258px;font-size:40px;font-weight:700;color:var(--ink);white-space:nowrap">读共享内存：8 个请求挤在 2 组 bank</div>
+      <div id="s02-banks" class="s02-full"></div>
+      <div id="s02-bkl" class="s02-full">
+        <div class="s02-lbl" style="left:96px;top:776px;font-size:28px;color:var(--note)">bank 0</div>
+        <div class="s02-lbl" style="left:1116px;top:776px;font-size:28px;color:var(--note);transform:translateX(-100%)">bank 31</div>
       </div>
+      <div id="s02-reqs" class="s02-full"></div>
+      <div id="s02-rnd" class="s02-abs" style="left:384px;top:420px;white-space:nowrap;font-family:var(--mono);font-size:120px;font-weight:800;color:var(--hot-t);line-height:1">
+        <span class="s02-stk"><b id="s02-q1">1</b><b id="s02-q2">2</b><b id="s02-q3">3</b><b id="s02-q4">4</b></span><span style="font-family:var(--zh);font-size:72px"> 轮</span>
+      </div>
+      <div id="s02-bneck" class="s02-abs" style="left:96px;top:836px"><span class="k-bottleneck">瓶颈：bank 冲突</span></div>
     </div>
-
-    <!-- 结尾：一个 block（C 左上角，128 × 128 ≈ 5.3 px）的定位圈与引线标注 -->
-    <div id="s02-ring" class="clip s02-abs" data-start="31.83" data-a-start="31.0" data-duration="4.04" data-a-duration="3.0" data-track-index="34" style="left:740px;top:490px;width:46px;height:46px">
-      <svg id="s02-ring-in" class="s02-full" width="46" height="46" viewBox="0 0 46 46">
-        <circle cx="23" cy="23" r="19" fill="none" stroke="var(--ink)" stroke-width="3" />
-      </svg>
-    </div>
-    <div id="s02-lead" class="clip s02-abs" data-start="32.50" data-a-start="31.5" data-duration="3.37" data-a-duration="2.5" data-track-index="35" style="left:690px;top:440px;width:70px;height:70px">
-      <svg class="s02-full" width="70" height="70" viewBox="0 0 70 70">
-        <line x1="62" y1="62" x2="10" y2="10" stroke="var(--ink)" stroke-width="3" />
-      </svg>
-    </div>
-    <div id="s02-blklbl" class="clip s02-abs k-label" data-start="32.64" data-a-start="31.6" data-duration="3.23" data-a-duration="2.4" data-track-index="36" style="left:300px;top:404px;width:390px;text-align:right;color:var(--ink);white-space:nowrap">一个 block：128 × 128</div>
   </div>
   <script>
     (function () {
+      const $ = (k) => document.getElementById("s02-" + k);
       const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
       const IN = "power3.out", MOVE = "power2.inOut", OUT = "power2.in";
-      // 初始状态（时间 0）
-      gsap.set("#s02-mats-in", { scale: 1, x: 0, y: 0 });
-      gsap.set("#s02-meter-in", { opacity: 0 });
+      const ft = (el, a, b, t) => tl.fromTo(el, a, b, t);
+      const fadeIn = (el, t, d = 0.5) => ft(el, { opacity: 0 }, { opacity: 1, duration: d, ease: IN }, t);
+      const fadeOut = (el, t, d = 0.4) => ft(el, { opacity: 1 }, { opacity: 0, duration: d, ease: OUT }, t);
+      const B = [1.0, 6.29, 10.24, 16.83], DUR = 21.43;
 
-      // —— 0：立方体缩小移到右上角 (1700,150) 后淡出 ——
-      tl.fromTo("#s02-cube-in", { x: 0, y: 0, scale: 1, transformOrigin: "50% 50%" },
-        { x: 460, y: -320, scale: 0.24, duration: 0.9, ease: MOVE }, 0);
-      tl.fromTo("#s02-cube-in", { opacity: 1 }, { opacity: 0, duration: 0.45, ease: OUT }, 0.7);
-      tl.fromTo("#s02-x16-in", { opacity: 1 }, { opacity: 0, duration: 0.5, ease: OUT }, 0.1);
+      // ---------- 生成的静态子元素 ----------
+      const dots = [], wires = [];
+      const svgNS = "http://www.w3.org/2000/svg";
+      for (let i = 0; i < 32; i++) {
+        const x = 453 + i * 32;
+        const d = document.createElement("div");
+        d.className = "s02-dot"; d.style.left = x + "px";
+        $("dots").appendChild(d); dots.push(d);
+        const w = document.createElementNS(svgNS, "path");
+        w.setAttribute("d", `M ${x + 11} 758 L 960 652`);
+        w.setAttribute("stroke", "var(--warp)"); w.setAttribute("stroke-width", "2");
+        $("wires").appendChild(w); wires.push(w);
+      }
+      const banks = [];
+      for (let b = 0; b < 32; b++) {
+        const c = document.createElement("div");
+        c.className = "s02-bk"; c.style.left = (96 + b * 32) + "px";
+        $("banks").appendChild(c); banks.push(c);
+      }
+      const grpA = banks.slice(0, 8), grpB = banks.slice(16, 24);
+      // 8 个读请求：偶数行落在 bank 0–7，奇数行落在 bank 16–23，各叠 4 个
+      const reqs = [[], []];
+      for (let g = 0; g < 2; g++) for (let k = 0; k < 4; k++) {
+        const r = document.createElement("div");
+        r.className = "s02-req";
+        r.textContent = "行 " + (k * 2 + g);
+        r.style.left = (g ? 96 + 16 * 32 : 96) + "px";
+        r.style.top = (560 - 72 * k) + "px";
+        $("reqs").appendChild(r); reqs[g].push(r);
+      }
+      const T = kitTower($("tower"));
+      const L = T.layer, smBox = $("tower-sm");
 
-      // —— 0.5：公式；A → Wᵀ → C 逐个进场（A 沿 K 从左擦入，Wᵀ 沿 K 从上擦入，C 放大落定） ——
-      tl.fromTo("#s02-formula-in", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.5, ease: IN }, 0.5);
-      tl.fromTo("#s02-A-in", { clipPath: "inset(0% 100% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.7, ease: IN }, 0.9);
-      tl.fromTo("#s02-nA", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 1.05);
-      tl.fromTo("#s02-W-in", { clipPath: "inset(0% 0% 100% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.7, ease: IN }, 1.5);
-      tl.fromTo("#s02-nW", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 1.65);
-      tl.fromTo("#s02-C-in", { opacity: 0, scale: 0.9, transformOrigin: "0% 0%" }, { opacity: 1, scale: 1, duration: 0.7, ease: IN }, 2.1);
-      tl.fromTo("#s02-nC", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 2.25);
-      // 3.7：沿 K 的箭头（按箭头方向擦出）
-      tl.fromTo("#s02-arrA-in", { clipPath: "inset(0% 100% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.7, ease: IN }, 3.7);
-      tl.fromTo("#s02-arrW-in", { clipPath: "inset(0% 0% 100% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.7, ease: IN }, 3.85);
+      // ---------- 初始状态 ----------
+      gsap.set([$("chip"), $("ttl")], { opacity: 0 });
+      gsap.set($("tbfill"), { scaleX: 11.78 / 16 });
+      gsap.set($("tbghost"), { scaleX: 11.78 / 16, opacity: 0 });
+      gsap.set($("tbnum"), { x: 11.78 * 45 + 12 });
+      gsap.set($("tb"), { opacity: 0 });
+      gsap.set([$("cubesvg"), $("cubek"), $("warpl")], { opacity: 0 });
+      gsap.set([...dots, ...wires], { opacity: 0 });
+      gsap.set([$("pct"), $("bn1"), $("bn2"), $("bv1"), $("bv2")], { opacity: 0 });
+      gsap.set([$("bar1"), $("bar2")], { scaleX: 0 });
+      gsap.set([L.tc, L.reg, L.smem, L.l2, L.hbm, smBox, $("oreg"), $("osm"), $("car")], { opacity: 0 });
+      gsap.set(document.querySelectorAll("#s02-path .s02-row, #s02-path .s02-trip, #s02-two"), { opacity: 0 });
+      gsap.set([$("bkh"), $("bkl"), $("rnd"), $("bneck"), ...banks, ...reqs[0], ...reqs[1]], { opacity: 0 });
+      gsap.set([$("q1"), $("q2"), $("q3"), $("q4")], { opacity: 0 });
 
-      // —— 8.0：BF16 / FP32 累加；10.4 进度条带 cuBLAS 参照 ——
-      tl.fromTo("#s02-bfA", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 8.0);
-      tl.fromTo("#s02-bfW", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 8.15);
-      tl.fromTo("#s02-fpC", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 9.3);
-      tl.fromTo("#s02-meter-in", { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.6, ease: IN }, 10.4);
-      tl.fromTo("#s02-same", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 11.4);
+      // ---------- 0.0 标题卡；1.0 缩到左上 ----------
+      ft($("chip"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: IN }, 0.0);
+      ft($("ttl"), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4, ease: IN }, 0.08);
+      ft($("ttl"), { scale: 1, y: 0, transformOrigin: "0 0" }, { scale: 0.72, y: -12, transformOrigin: "0 0", duration: 0.6, ease: MOVE }, 1.0);
+      fadeIn($("tb"), 1.05);
 
-      // —— 14.6：文字退场，矩阵缩小靠左；进度条暂退；刻度尺进场 ——
-      tl.fromTo(["#s02-formula", "#s02-nA", "#s02-nW", "#s02-nC", "#s02-bfA", "#s02-bfW", "#s02-fpC", "#s02-arrA", "#s02-arrW"],
-        { opacity: 1 }, { opacity: 0, duration: 0.35, ease: OUT }, 14.6);
-      tl.fromTo("#s02-meter-in", { opacity: 1, x: 0 }, { opacity: 0, x: 0, duration: 0.4, ease: OUT }, 14.6);
-      tl.fromTo("#s02-mats-in", { scale: 1, x: 0, y: 0 }, { scale: 0.5, x: 0, y: 160, duration: 1.0, ease: MOVE }, 14.6);
-      tl.fromTo("#s02-rtitle", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 14.9);
-      tl.fromTo("#s02-axis-in", { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: IN }, 14.9);
-      tl.fromTo("#s02-b989-in", { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: IN }, 15.2);
-      tl.fromTo("#s02-l989", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 15.7);
-      tl.fromTo("#s02-b735-in", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: IN }, 17.85);
-      tl.fromTo("#s02-l735", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 18.2);
-      tl.fromTo("#s02-ruler", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: OUT }, 21.5);
+      // ---------- 第 1 句：16 × 16 × 16，一个 warp 合算 ----------
+      ft($("cubesvg"), { opacity: 0, scale: 0.6, transformOrigin: "240px 230px" }, { opacity: 1, scale: 1, duration: 0.7, ease: IN }, 1.15);
+      ft($("cubek"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.6, ease: IN }, 1.9);
+      dots.forEach((d, i) => ft(d, { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: IN }, 2.7 + i * 0.025));
+      wires.forEach((w, i) => ft(w, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: IN }, 3.6 + Math.abs(i - 15.5) * 0.015));
+      ft($("warpl"), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 3.7);
+      // 一起发：32 个点同时亮一下，立方体同时跳一下
+      ft(dots, { scale: 1 }, { scale: 1.5, duration: 0.25, ease: "power2.out", yoyo: true, repeat: 1 }, 4.8);
+      ft($("cubesvg"), { scale: 1 }, { scale: 1.06, duration: 0.25, ease: "power2.out", yoyo: true, repeat: 1 }, 4.85);
+      [$("cubesvg"), $("cubek"), $("warpl"), $("dots"), $("wires")].forEach((e) => fadeOut(e, B[1]));
 
-      // —— 21.5：通路箭头；小方块走两趟（第二趟更早、更快） ——
-      tl.fromTo("#s02-pmem", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 21.5);
-      tl.fromTo("#s02-pline-in", { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: MOVE }, 21.6);
-      tl.fromTo("#s02-ptc", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 22.2);
-      tl.fromTo("#s02-car-in", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, 22.4);
-      tl.fromTo("#s02-car-in", { x: 0 }, { x: 1228, duration: 2.2, ease: MOVE }, 22.8);
-      tl.fromTo("#s02-car-in", { x: 0 }, { x: 1228, duration: 1.0, ease: MOVE }, 25.2);
-      tl.fromTo("#s02-path", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: OUT }, 28.6);
+      // ---------- 第 2 句：耗时条闪一下；只有 cuBLAS 的 12% ----------
+      ft($("tbfill"), { backgroundColor: "#3a3a3a" }, { backgroundColor: "#c4561d", duration: 0.25, ease: "power2.out", yoyo: true, repeat: 3 }, B[1] + 0.1);
+      ft($("tbnum"), { scale: 1, transformOrigin: "0 50%" }, { scale: 1.25, transformOrigin: "0 50%", duration: 0.3, ease: "power2.out", yoyo: true, repeat: 1 }, B[1] + 0.1);
+      ft($("bn1"), { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, B[1] + 0.3);
+      ft($("bar1"), { scaleX: 0 }, { scaleX: 1, duration: 0.9, ease: MOVE }, B[1] + 0.4);
+      fadeIn($("bv1"), B[1] + 1.2, 0.4);
+      ft($("bn2"), { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, B[1] + 1.1);
+      ft($("bar2"), { scaleX: 0 }, { scaleX: 1, duration: 0.4, ease: MOVE }, B[1] + 1.2);
+      fadeIn($("bv2"), B[1] + 1.55, 0.4);
+      ft($("pct"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: IN }, B[1] + 1.6);
+      fadeOut($("cmp"), B[2]);
 
-      // —— 28.6：矩阵回到交接坐标；进度条 0 → 777.6 再退回，留目标虚线 ——
-      tl.fromTo("#s02-mats-in", { scale: 0.5, x: 0, y: 160 }, { scale: 1, x: 0, y: 0, duration: 1.2, ease: MOVE }, 28.7);
-      tl.fromTo("#s02-meter-in", { opacity: 0, x: 0 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 28.6);
-      const pv = { v: 0 };
-      const fill = document.getElementById("s02-fill"), num = document.getElementById("s02-num");
-      const drawMeter = () => {
-        const f = pv.v / 781.86;
-        gsap.set(fill, { scaleX: f });
-        gsap.set(num, { x: f * 544 - 180, opacity: pv.v > 120 ? 1 : 0 });
-        num.textContent = pv.v.toFixed(1);
+      // ---------- 第 3 句：塔进场，数据先进寄存器、再写共享内存、又读回寄存器 ----------
+      ["hbm", "l2", "smem", "reg", "tc"].forEach((id, i) =>
+        ft(L[id], { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, B[2] + 0.1 + i * 0.07));
+      fadeIn(smBox, B[2] + 0.45);
+      const LY = { tc: 362, reg: 486, smem: 610, l2: 752, hbm: 876 }, PX = 1656;
+      gsap.set($("car"), { xPercent: -50, yPercent: -50, x: PX, y: LY.hbm, scale: 0 });
+      ft($("car"), { opacity: 0, scale: 0 }, { opacity: 1, scale: 1, duration: 0.35, ease: IN }, B[2] + 0.5);
+      const hop = (n, from, to, lane, t, dur) => {
+        const pts = [[PX, LY[from]], [lane, LY[from]], [lane, LY[to]], [PX, LY[to]]];
+        const seg = [0];
+        for (let i = 1; i < pts.length; i++) seg.push(seg[i - 1] + Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]));
+        const len = seg[seg.length - 1], kf = { easeEach: "none" };
+        pts.forEach((p, i) => { kf[((seg[i] / len) * 100).toFixed(3) + "%"] = { x: p[0], y: p[1] }; });
+        const path = $("r" + n);
+        path.setAttribute("d", "M " + pts.map((p) => p.join(" ")).join(" L "));
+        gsap.set(path, { strokeDasharray: len, strokeDashoffset: len });
+        tl.to($("car"), { keyframes: kf, duration: dur, ease: "power1.inOut" }, t);
+        ft(path, { strokeDashoffset: len }, { strokeDashoffset: 0, duration: dur, ease: "power1.inOut" }, t);
       };
-      tl.fromTo(pv, { v: 0 }, { v: 777.6, duration: 1.7, ease: "power2.out", onUpdate: drawMeter }, 28.9);
-      tl.fromTo("#s02-target", { opacity: 0, scaleY: 0.3 }, { opacity: 1, scaleY: 1, duration: 0.5, ease: IN }, 30.7);
-      tl.fromTo(pv, { v: 777.6 }, { v: 44.3, duration: 0.8, ease: MOVE, onUpdate: drawMeter }, 31.1);
-      tl.fromTo("#s02-tnote", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 31.9);
+      const row = (k, t) => ft($("p" + k), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: IN }, t);
+      const H = [B[2] + 0.8, B[2] + 1.75, B[2] + 2.75, B[2] + 3.7, B[2] + 4.7];
+      hop(1, "hbm", "l2", 1700, H[0], 0.7); row(1, H[0]);
+      hop(2, "l2", "reg", 1700, H[1], 0.8); row(2, H[1]);
+      ft($("oreg"), { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, H[1] + 0.7);
+      fadeIn($("t1"), H[1] + 0.7, 0.4);
+      hop(3, "reg", "smem", 1728, H[2], 0.7); row(3, H[2]);
+      hop(4, "smem", "reg", 1756, H[3], 0.8); row(4, H[3]);
+      ft($("oreg"), { scale: 1 }, { scale: 1.06, duration: 0.2, ease: "power2.out", yoyo: true, repeat: 1 }, H[3] + 0.7);
+      fadeIn($("t2"), H[3] + 0.7, 0.4);
+      hop(5, "reg", "tc", 1700, H[4], 0.7); row(5, H[4]);
+      ft($("two"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, B[2] + 5.0);
+      document.querySelectorAll("#s02-path .s02-row, #s02-path .s02-trip").forEach((e) => fadeOut(e, B[3]));
+      fadeOut($("two"), B[3] + 0.5);
 
-      // —— 31.0：一个 block 点亮，对应 A 行带与 Wᵀ 列带，引线标注 ——
-      tl.fromTo("#s02-blk", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, 31.0);
-      tl.fromTo("#s02-ring-in", { opacity: 0, scale: 1.8, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.6, ease: IN }, 31.0);
-      tl.fromTo("#s02-bandA-in", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: IN }, 31.2);
-      tl.fromTo("#s02-bandW-in", { scaleY: 0 }, { scaleY: 1, duration: 0.6, ease: IN }, 31.35);
-      tl.fromTo("#s02-lead", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: IN }, 31.5);
-      tl.fromTo("#s02-blklbl", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 31.6);
+      // ---------- 第 4 句：塔缩小靠右；共享内存 bank 放大，分 4 轮 ----------
+      fadeOut($("car"), B[3], 0.3);
+      ["tc", "l2", "hbm"].forEach((id) => ft(L[id], { opacity: 1 }, { opacity: 0.3, duration: 0.5, ease: MOVE }, B[3] + 0.1));
+      ft([$("r1"), $("r2"), $("r3"), $("r4"), $("r5"), $("oreg")], { opacity: 1 }, { opacity: 0.25, duration: 0.5, ease: MOVE }, B[3] + 0.1);
+      fadeIn($("osm"), B[3] + 0.3, 0.4);
+      ft($("bkh"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, B[3] + 0.15);
+      banks.forEach((c, b) => ft(c, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, B[3] + 0.2 + b * 0.012));
+      fadeIn($("bkl"), B[3] + 0.4, 0.4);
+      ft([...grpA, ...grpB], { backgroundColor: "#e6e0d3" }, { backgroundColor: "#a9c2ee", duration: 0.3, ease: IN }, B[3] + 0.5);
+      [0, 1, 2, 3].forEach((k) => {
+        ft([reqs[0][k], reqs[1][k]], { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.3, ease: IN }, B[3] + 0.4 + k * 0.08);
+      });
+      fadeIn($("rnd"), B[3] + 0.85, 0.3);
+      // 每轮：最下面的一对请求落进 bank，其余往下挪一格
+      for (let r = 0; r < 4; r++) {
+        const t = B[3] + 0.9 + r * 0.6;
+        for (let g = 0; g < 2; g++) {
+          for (let k = r; k < 4; k++) {
+            const y0 = 72 * r;
+            if (k === r) ft(reqs[g][k], { y: y0, opacity: 1 }, { y: 140 + 72 * k, opacity: 0, duration: 0.45, ease: "power2.in" }, t);
+            else ft(reqs[g][k], { y: y0 }, { y: y0 + 72, duration: 0.45, ease: MOVE }, t);
+          }
+        }
+        ft([...grpA, ...grpB], { backgroundColor: "#a9c2ee" }, { backgroundColor: "#c4561d", duration: 0.12, ease: "none", yoyo: true, repeat: 1 }, t + 0.35);
+        if (r > 0) ft($("q" + r), { opacity: 1 }, { opacity: 0, duration: 0.05 }, t + 0.35);
+        ft($("q" + (r + 1)), { opacity: 0 }, { opacity: 1, duration: 0.05 }, t + 0.35);
+      }
+      ft($("bneck"), { opacity: 0, scale: 0.85, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, B[3] + 3.4);
 
-      drawMeter();
-      tl.set({}, {}, 34.0);
-      /* warp */ { const P = [[0.0, 0.0], [0.5, 0.5], [8.0, 8.0], [14.6, 15.04], [21.5, 22.52], [28.6, 28.6], [34.0, 35.87]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 35.87, duration: 35.87, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s02"] = outer; } /* /warp */
+      tl.set({}, {}, DUR);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["s02"] = tl;
     })();
   </script>
 </template>

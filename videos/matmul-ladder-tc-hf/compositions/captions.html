@@ -4,134 +4,74 @@
   </style>
   <!-- 由 timing.py 生成：改配音稿后重跑 -->
   <div id="root" data-composition-id="captions" data-width="1920" data-height="1080" data-layout-allow-caption-zone>
-    <div id="cap-s01-0-0" class="clip kit-sub" data-start="0.50" data-duration="3.98" data-track-index="1"><span>上一篇的 FP32 版本止于 44.3 TFLOPS</span></div>
-    <div id="cap-s01-0-1" class="clip kit-sub" data-start="4.48" data-duration="2.66" data-track-index="1"><span>FP32 单元已经用满</span></div>
-    <div id="cap-s01-1-0" class="clip kit-sub" data-start="7.24" data-duration="4.29" data-track-index="1"><span>Tensor Core 的一条指令完成一个小矩阵块的乘加</span></div>
-    <div id="cap-s01-1-1" class="clip kit-sub" data-start="11.53" data-duration="2.35" data-track-index="1"><span>而不是一次标量乘加</span></div>
-    <div id="cap-s01-2-0" class="clip kit-sub" data-start="13.98" data-duration="3.44" data-track-index="1"><span>每个 SM 每个时钟完成 2048 次乘加</span></div>
-    <div id="cap-s01-2-1" class="clip kit-sub" data-start="17.42" data-duration="2.77" data-track-index="1"><span>是 FP32 单元的 16 倍</span></div>
-    <div id="cap-s02-0-0" class="clip kit-sub" data-start="20.79" data-duration="3.17" data-track-index="1"><span>本文计算 C 等于 A 乘 W 转置</span></div>
-    <div id="cap-s02-0-1" class="clip kit-sub" data-start="23.96" data-duration="2.28" data-track-index="1"><span>A 与 W 都沿 K 连续</span></div>
-    <div id="cap-s02-0-2" class="clip kit-sub" data-start="26.24" data-duration="1.95" data-track-index="1"><span>即 Linear 层的布局</span></div>
-    <div id="cap-s02-1-0" class="clip kit-sub" data-start="28.29" data-duration="2.56" data-track-index="1"><span>输入为 BF16，累加用 FP32</span></div>
-    <div id="cap-s02-1-1" class="clip kit-sub" data-start="30.85" data-duration="4.38" data-track-index="1"><span>基线是同样布局的 cuBLAS，结果逐位相同</span></div>
-    <div id="cap-s02-2-0" class="clip kit-sub" data-start="35.33" data-duration="3.65" data-track-index="1"><span>峰值由硬件固定，规格为 989 TFLOPS</span></div>
-    <div id="cap-s02-2-1" class="clip kit-sub" data-start="38.98" data-duration="3.73" data-track-index="1"><span>持续满载受功耗限制，约为 735</span></div>
-    <div id="cap-s02-3-0" class="clip kit-sub" data-start="42.81" data-duration="2.93" data-track-index="1"><span>因此每一步改动都在数据的通路上</span></div>
-    <div id="cap-s02-3-1" class="clip kit-sub" data-start="45.74" data-duration="3.05" data-track-index="1"><span>让数据更早、更快地送到 Tensor Core</span></div>
-    <div id="cap-s02-4-0" class="clip kit-sub" data-start="48.89" data-duration="4.63" data-track-index="1"><span>本文从 93.3 一步步提高到 777.6 TFLOPS</span></div>
-    <div id="cap-s02-4-1" class="clip kit-sub" data-start="53.52" data-duration="2.54" data-track-index="1"><span>为 cuBLAS 的 99.5%</span></div>
-    <div id="cap-s03-0-0" class="clip kit-sub" data-start="56.66" data-duration="2.32" data-track-index="1"><span>第一步改用 wmma</span></div>
-    <div id="cap-s03-0-1" class="clip kit-sub" data-start="58.98" data-duration="2.01" data-track-index="1"><span>即 warp matrix multiply-accumulate</span></div>
-    <div id="cap-s03-0-2" class="clip kit-sub" data-start="60.99" data-duration="5.23" data-track-index="1"><span>一个 warp 共同计算 16 × 16 × 16 的乘加</span></div>
-    <div id="cap-s03-1-0" class="clip kit-sub" data-start="66.32" data-duration="4.12" data-track-index="1"><span>一个 block 计算 C 中 128 × 128 的一块</span></div>
-    <div id="cap-s03-1-1" class="clip kit-sub" data-start="70.44" data-duration="2.93" data-track-index="1"><span>8 个 warp 各算 64 × 32</span></div>
-    <div id="cap-s03-2-0" class="clip kit-sub" data-start="73.47" data-duration="2.85" data-track-index="1"><span>每个 warp 持有 4 × 2 个片段</span></div>
-    <div id="cap-s03-2-1" class="clip kit-sub" data-start="76.32" data-duration="3.20" data-track-index="1"><span>沿 K 每 16 列发出 8 条 mma_sync</span></div>
-    <div id="cap-s03-3-0" class="clip kit-sub" data-start="79.62" data-duration="2.10" data-track-index="1"><span>实测 93.3 TFLOPS</span></div>
-    <div id="cap-s03-3-1" class="clip kit-sub" data-start="81.72" data-duration="3.19" data-track-index="1"><span>是 FP32 版本的 2.1 倍</span></div>
-    <div id="cap-s03-3-2" class="clip kit-sub" data-start="84.92" data-duration="2.60" data-track-index="1"><span>只有 cuBLAS 的 11.9%</span></div>
-    <div id="cap-s03-4-0" class="clip kit-sub" data-start="87.62" data-duration="3.00" data-track-index="1"><span>数据先读入寄存器，再写入共享内存</span></div>
-    <div id="cap-s03-4-1" class="clip kit-sub" data-start="90.62" data-duration="3.45" data-track-index="1"><span>计算前又读回寄存器，两次经过寄存器</span></div>
-    <div id="cap-s03-5-0" class="clip kit-sub" data-start="94.17" data-duration="1.97" data-track-index="1"><span>共享内存每行 64 字节</span></div>
-    <div id="cap-s03-5-1" class="clip kit-sub" data-start="96.14" data-duration="3.52" data-track-index="1"><span>读片段时 8 行的同一块只落在 2 组 bank</span></div>
-    <div id="cap-s03-5-2" class="clip kit-sub" data-start="99.66" data-duration="1.27" data-track-index="1"><span>须分 4 轮</span></div>
-    <div id="cap-s03-6-0" class="clip kit-sub" data-start="101.03" data-duration="3.05" data-track-index="1"><span>每一块还要全体同步后才能计算</span></div>
-    <div id="cap-s03-6-1" class="clip kit-sub" data-start="104.08" data-duration="4.12" data-track-index="1"><span>下一步先解决 bank 冲突与寄存器中转</span></div>
-    <div id="cap-s04-0-0" class="clip kit-sub" data-start="109.30" data-duration="3.70" data-track-index="1"><span>为了消除 bank 冲突，第二步换位存放数据</span></div>
-    <div id="cap-s04-0-1" class="clip kit-sub" data-start="113.00" data-duration="2.76" data-track-index="1"><span>每行加宽到 128 字节</span></div>
-    <div id="cap-s04-1-0" class="clip kit-sub" data-start="115.90" data-duration="1.29" data-track-index="1"><span>ldmatrix 即 load matrix</span></div>
-    <div id="cap-s04-1-1" class="clip kit-sub" data-start="117.19" data-duration="2.30" data-track-index="1"><span>一次读取 8 行的同一块</span></div>
-    <div id="cap-s04-1-2" class="clip kit-sub" data-start="119.48" data-duration="3.37" data-track-index="1"><span>不换位时，8 个地址落在同一组 bank</span></div>
-    <div id="cap-s04-1-3" class="clip kit-sub" data-start="122.85" data-duration="1.93" data-track-index="1"><span>须分 8 轮</span></div>
-    <div id="cap-s04-2-0" class="clip kit-sub" data-start="124.90" data-duration="4.53" data-track-index="1"><span>换位存放把第 r 行的第 c 块移到 c 与 r 异或的位置</span></div>
-    <div id="cap-s04-2-1" class="clip kit-sub" data-start="129.43" data-duration="3.23" data-track-index="1"><span>8 个地址分散开，一轮读完</span></div>
-    <div id="cap-s04-3-0" class="clip kit-sub" data-start="133.70" data-duration="3.19" data-track-index="1"><span>搬运改用 cp.async，即异步拷贝</span></div>
-    <div id="cap-s04-3-1" class="clip kit-sub" data-start="136.89" data-duration="3.53" data-track-index="1"><span>数据由 L2 直接写入共享内存</span></div>
-    <div id="cap-s04-3-2" class="clip kit-sub" data-start="140.41" data-duration="2.41" data-track-index="1"><span>计算改用 mma.sync 指令</span></div>
-    <div id="cap-s04-4-0" class="clip kit-sub" data-start="142.92" data-duration="2.23" data-track-index="1"><span>实测 269 TFLOPS</span></div>
-    <div id="cap-s04-4-1" class="clip kit-sub" data-start="145.15" data-duration="2.74" data-track-index="1"><span>是 wmma 的 2.9 倍</span></div>
-    <div id="cap-s04-5-0" class="clip kit-sub" data-start="147.99" data-duration="1.55" data-track-index="1"><span>mma 版本的问题是</span></div>
-    <div id="cap-s04-5-1" class="clip kit-sub" data-start="149.54" data-duration="3.73" data-track-index="1"><span>每一块须等待拷贝完成后才能计算</span></div>
-    <div id="cap-s05-0-0" class="clip kit-sub" data-start="154.37" data-duration="5.20" data-track-index="1"><span>第三步把共享内存分为三个槽位，拷贝提前两块发出</span></div>
-    <div id="cap-s05-1-0" class="clip kit-sub" data-start="160.17" data-duration="3.10" data-track-index="1"><span>计算第 t 块时，后两块已在途</span></div>
-    <div id="cap-s05-1-1" class="clip kit-sub" data-start="163.27" data-duration="3.20" data-track-index="1"><span>每个槽位 32 KB，共 96 KB</span></div>
-    <div id="cap-s05-2-0" class="clip kit-sub" data-start="166.57" data-duration="3.41" data-track-index="1"><span>实测 309 TFLOPS，提高 15%</span></div>
-    <div id="cap-s05-3-0" class="clip kit-sub" data-start="170.08" data-duration="2.71" data-track-index="1"><span>这一版的问题在指令本身</span></div>
-    <div id="cap-s05-3-1" class="clip kit-sub" data-start="172.79" data-duration="2.49" data-track-index="1"><span>一条 mma.sync 只有 2048 次乘加</span></div>
-    <div id="cap-s05-3-2" class="clip kit-sub" data-start="175.27" data-duration="3.53" data-track-index="1"><span>满载需每 SM 每个时钟发出一条</span></div>
-    <div id="cap-s05-4-0" class="clip kit-sub" data-start="178.90" data-duration="3.00" data-track-index="1"><span>mma.sync 的各版都止于约 300 TFLOPS</span></div>
-    <div id="cap-s05-4-1" class="clip kit-sub" data-start="181.90" data-duration="3.09" data-track-index="1"><span>只有峰值的三分之一</span></div>
-    <div id="cap-s06-0-0" class="clip kit-sub" data-start="186.09" data-duration="3.50" data-track-index="1"><span>第四步把执行单位由 warp 升到 warpgroup</span></div>
-    <div id="cap-s06-0-1" class="clip kit-sub" data-start="189.59" data-duration="1.60" data-track-index="1"><span>即 4 个 warp</span></div>
-    <div id="cap-s06-1-0" class="clip kit-sub" data-start="191.29" data-duration="1.83" data-track-index="1"><span>TMA 即 Tensor Memory Accelerator</span></div>
-    <div id="cap-s06-1-1" class="clip kit-sub" data-start="193.12" data-duration="5.48" data-track-index="1"><span>一个线程发出一条指令，把一整块矩阵搬入共享内存</span></div>
-    <div id="cap-s06-1-2" class="clip kit-sub" data-start="198.59" data-duration="1.57" data-track-index="1"><span>并完成换位</span></div>
-    <div id="cap-s06-2-0" class="clip kit-sub" data-start="200.26" data-duration="2.35" data-track-index="1"><span>mbarrier 是共享内存中的计数器</span></div>
-    <div id="cap-s06-2-1" class="clip kit-sub" data-start="202.61" data-duration="1.68" data-track-index="1"><span>记录到达的字节数</span></div>
-    <div id="cap-s06-2-2" class="clip kit-sub" data-start="204.29" data-duration="3.06" data-track-index="1"><span>计满后，计算方开始读取</span></div>
-    <div id="cap-s06-3-0" class="clip kit-sub" data-start="207.49" data-duration="3.12" data-track-index="1"><span>一条 wgmma 完成 131072 次乘加</span></div>
-    <div id="cap-s06-3-1" class="clip kit-sub" data-start="210.61" data-duration="1.96" data-track-index="1"><span>是 mma.sync 的 64 倍</span></div>
-    <div id="cap-s06-3-2" class="clip kit-sub" data-start="212.57" data-duration="4.16" data-track-index="1"><span>并直接从共享内存读取操作数</span></div>
-    <div id="cap-s06-4-0" class="clip kit-sub" data-start="216.83" data-duration="1.50" data-track-index="1"><span>实测 484 TFLOPS</span></div>
-    <div id="cap-s06-4-1" class="clip kit-sub" data-start="218.33" data-duration="2.62" data-track-index="1"><span>是三级缓冲的 1.6 倍</span></div>
-    <div id="cap-s06-5-0" class="clip kit-sub" data-start="221.05" data-duration="1.53" data-track-index="1"><span>这一版的问题是</span></div>
-    <div id="cap-s06-5-1" class="clip kit-sub" data-start="222.58" data-duration="2.43" data-track-index="1"><span>同一个 warpgroup 既发拷贝又计算</span></div>
-    <div id="cap-s06-5-2" class="clip kit-sub" data-start="225.01" data-duration="2.69" data-track-index="1"><span>两块之间 Tensor Core 空闲</span></div>
-    <div id="cap-s07-0-0" class="clip kit-sub" data-start="228.80" data-duration="3.40" data-track-index="1"><span>第五步把 warpgroup 分成生产者与消费者</span></div>
-    <div id="cap-s07-0-1" class="clip kit-sub" data-start="232.20" data-duration="3.90" data-track-index="1"><span>一个生产者发 TMA，两个消费者计算</span></div>
-    <div id="cap-s07-1-0" class="clip kit-sub" data-start="236.20" data-duration="2.09" data-track-index="1"><span>每个槽位有两个 mbarrier</span></div>
-    <div id="cap-s07-1-1" class="clip kit-sub" data-start="238.29" data-duration="1.87" data-track-index="1"><span>full 表示数据已到</span></div>
-    <div id="cap-s07-1-2" class="clip kit-sub" data-start="240.16" data-duration="2.64" data-track-index="1"><span>empty 表示消费者已用完</span></div>
-    <div id="cap-s07-2-0" class="clip kit-sub" data-start="242.90" data-duration="2.28" data-track-index="1"><span>两个消费者交替使用 Tensor Core</span></div>
-    <div id="cap-s07-2-1" class="clip kit-sub" data-start="245.18" data-duration="3.10" data-track-index="1"><span>一个等待时，另一个在计算</span></div>
-    <div id="cap-s07-3-0" class="clip kit-sub" data-start="249.00" data-duration="4.81" data-track-index="1"><span>4096 阶由 481 提高到 635 TFLOPS</span></div>
-    <div id="cap-s07-3-1" class="clip kit-sub" data-start="253.81" data-duration="2.86" data-track-index="1"><span>8192 阶仍为 480</span></div>
-    <div id="cap-s07-4-0" class="clip kit-sub" data-start="256.77" data-duration="3.19" data-track-index="1"><span>原因是 L2 容量：按行发放时</span></div>
-    <div id="cap-s07-4-1" class="clip kit-sub" data-start="259.96" data-duration="3.76" data-track-index="1"><span>同时运行的 132 个 tile 需要整个 W</span></div>
-    <div id="cap-s07-4-2" class="clip kit-sub" data-start="263.72" data-duration="3.94" data-track-index="1"><span>共 128 MB，远超 50 MB 的 L2</span></div>
-    <div id="cap-s08-0-0" class="clip kit-sub" data-start="268.76" data-duration="3.34" data-track-index="1"><span>第六步只改 tile 的发放顺序：每 16 行一组</span></div>
-    <div id="cap-s08-0-1" class="clip kit-sub" data-start="272.10" data-duration="2.08" data-track-index="1"><span>组内按列发放</span></div>
-    <div id="cap-s08-1-0" class="clip kit-sub" data-start="274.86" data-duration="6.57" data-track-index="1"><span>一轮 132 个 tile 需要的数据由 136 MB 减为 65 MB</span></div>
-    <div id="cap-s08-2-0" class="clip kit-sub" data-start="281.53" data-duration="2.69" data-track-index="1"><span>共用同一块 W 的 tile 同时运行</span></div>
-    <div id="cap-s08-2-1" class="clip kit-sub" data-start="284.22" data-duration="3.36" data-track-index="1"><span>W 读入 L2 后随即被 16 个 tile 读取</span></div>
-    <div id="cap-s08-3-0" class="clip kit-sub" data-start="287.68" data-duration="4.23" data-track-index="1"><span>显存读取量由 6.6 GB 降到 1.3 GB</span></div>
-    <div id="cap-s08-3-1" class="clip kit-sub" data-start="291.91" data-duration="3.71" data-track-index="1"><span>L2 命中率由 48% 提高到 79%</span></div>
-    <div id="cap-s08-4-0" class="clip kit-sub" data-start="295.72" data-duration="1.92" data-track-index="1"><span>实测 740 TFLOPS</span></div>
-    <div id="cap-s08-4-1" class="clip kit-sub" data-start="297.64" data-duration="2.90" data-track-index="1"><span>是上一版的 1.54 倍</span></div>
-    <div id="cap-s08-5-0" class="clip kit-sub" data-start="300.64" data-duration="1.59" data-track-index="1"><span>这一版的问题是</span></div>
-    <div id="cap-s08-5-1" class="clip kit-sub" data-start="302.23" data-duration="3.69" data-track-index="1"><span>每个 block 各自从 L2 读取整块 W</span></div>
-    <div id="cap-s09-0-0" class="clip kit-sub" data-start="307.02" data-duration="6.08" data-track-index="1"><span>第七步让相邻两行、共用同一块 W 的两个 block 组成线程块集群</span></div>
-    <div id="cap-s09-1-0" class="clip kit-sub" data-start="313.20" data-duration="3.28" data-track-index="1"><span>集群内的 block 可以访问彼此的共享内存</span></div>
-    <div id="cap-s09-1-1" class="clip kit-sub" data-start="316.48" data-duration="4.37" data-track-index="1"><span>两者各搬 W 的一半，用 TMA 多播写入双方</span></div>
-    <div id="cap-s09-2-0" class="clip kit-sub" data-start="321.32" data-duration="6.20" data-track-index="1"><span>每个 block 每步从 L2 读取的数据由 48 KB 降到 32 KB</span></div>
-    <div id="cap-s09-3-0" class="clip kit-sub" data-start="327.62" data-duration="2.28" data-track-index="1"><span>集群以常驻 kernel 为前提</span></div>
-    <div id="cap-s09-3-1" class="clip kit-sub" data-start="329.90" data-duration="3.36" data-track-index="1"><span>只启动 132 个 block，循环领取 tile</span></div>
-    <div id="cap-s09-4-0" class="clip kit-sub" data-start="333.36" data-duration="2.60" data-track-index="1"><span>实测 757 TFLOPS</span></div>
-    <div id="cap-s09-4-1" class="clip kit-sub" data-start="335.96" data-duration="2.67" data-track-index="1"><span>为 cuBLAS 的 96.9%</span></div>
-    <div id="cap-s09-5-0" class="clip kit-sub" data-start="338.73" data-duration="5.87" data-track-index="1"><span>这一版的问题在写回：每个线程零散写显存 64 次</span></div>
-    <div id="cap-s09-5-1" class="clip kit-sub" data-start="344.60" data-duration="2.38" data-track-index="1"><span>期间不发 wgmma</span></div>
-    <div id="cap-s10-0-0" class="clip kit-sub" data-start="348.08" data-duration="5.15" data-track-index="1"><span>第八步改由 TMA 写回：结果先换位写入共享内存</span></div>
-    <div id="cap-s10-0-1" class="clip kit-sub" data-start="353.23" data-duration="2.86" data-track-index="1"><span>再由一个线程整块写出</span></div>
-    <div id="cap-s10-1-0" class="clip kit-sub" data-start="356.19" data-duration="3.99" data-track-index="1"><span>消费者随即开始下一块，写回与计算重叠</span></div>
-    <div id="cap-s10-2-0" class="clip kit-sub" data-start="360.28" data-duration="3.06" data-track-index="1"><span>代价是共享内存：结果区占 64 KB</span></div>
-    <div id="cap-s10-2-1" class="clip kit-sub" data-start="363.34" data-duration="2.99" data-track-index="1"><span>缓冲由 4 级减为 3 级</span></div>
-    <div id="cap-s10-3-0" class="clip kit-sub" data-start="366.68" data-duration="2.65" data-track-index="1"><span>实测 777.6 TFLOPS</span></div>
-    <div id="cap-s10-3-1" class="clip kit-sub" data-start="369.33" data-duration="3.22" data-track-index="1"><span>为 cuBLAS 的 99.5%</span></div>
-    <div id="cap-s11-0-0" class="clip kit-sub" data-start="373.65" data-duration="1.42" data-track-index="1"><span>连续运行时</span></div>
-    <div id="cap-s11-0-1" class="clip kit-sub" data-start="375.07" data-duration="4.28" data-track-index="1"><span>手写版与 cuBLAS 都达到 700 W 的功耗上限</span></div>
-    <div id="cap-s11-0-2" class="clip kit-sub" data-start="379.35" data-duration="3.02" data-track-index="1"><span>时钟由 1830 降到约 1360 MHz</span></div>
-    <div id="cap-s11-1-0" class="clip kit-sub" data-start="382.47" data-duration="2.93" data-track-index="1"><span>按这一时钟，峰值为 735 TFLOPS</span></div>
-    <div id="cap-s11-1-1" class="clip kit-sub" data-start="385.40" data-duration="2.63" data-track-index="1"><span>两者都用到其中的 93%</span></div>
-    <div id="cap-s11-2-0" class="clip kit-sub" data-start="388.13" data-duration="3.27" data-track-index="1"><span>剩下的差距在能效：每次浮点运算</span></div>
-    <div id="cap-s11-2-1" class="clip kit-sub" data-start="391.40" data-duration="1.64" data-track-index="1"><span>手写版约 1.05 pJ</span></div>
-    <div id="cap-s11-2-2" class="clip kit-sub" data-start="393.04" data-duration="1.58" data-track-index="1"><span>cuBLAS 约 0.81 pJ</span></div>
-    <div id="cap-s11-3-0" class="clip kit-sub" data-start="394.72" data-duration="3.40" data-track-index="1"><span>执行单位由 warp 升到 warpgroup 再到 cluster</span></div>
-    <div id="cap-s11-3-1" class="clip kit-sub" data-start="398.12" data-duration="4.09" data-track-index="1"><span>数据由寄存器中转变为 TMA 整块搬运</span></div>
-    <div id="cap-s11-4-0" class="clip kit-sub" data-start="402.31" data-duration="2.03" data-track-index="1"><span>计算单元的峰值是固定的</span></div>
-    <div id="cap-s11-4-1" class="clip kit-sub" data-start="404.34" data-duration="4.13" data-track-index="1"><span>矩阵乘法的速度取决于数据能否及时送达</span></div>
+    <div id="cap-s01-0-0" class="clip kit-sub" data-start="0.80" data-duration="3.59" data-track-index="1"><span>同一块 H100，同一个 8192 阶矩阵乘法</span></div>
+    <div id="cap-s01-0-1" class="clip kit-sub" data-start="4.39" data-duration="3.12" data-track-index="1"><span>左边 11.8 毫秒，右边 1.4 毫秒</span></div>
+    <div id="cap-s01-1-0" class="clip kit-sub" data-start="7.61" data-duration="2.02" data-track-index="1"><span>两边用的是同一批 Tensor Core</span></div>
+    <div id="cap-s01-1-1" class="clip kit-sub" data-start="9.63" data-duration="1.43" data-track-index="1"><span>算力一点没多</span></div>
+    <div id="cap-s01-2-0" class="clip kit-sub" data-start="11.16" data-duration="2.99" data-track-index="1"><span>Tensor Core 的吞吐是 FP32 单元的 16 倍</span></div>
+    <div id="cap-s01-2-1" class="clip kit-sub" data-start="14.15" data-duration="2.72" data-track-index="1"><span>可第一版只用到峰值的 9%</span></div>
+    <div id="cap-s01-3-0" class="clip kit-sub" data-start="16.97" data-duration="4.43" data-track-index="1"><span>时间去哪了？八步改动，每一步砍掉一段等待</span></div>
+    <div id="cap-s02-0-0" class="clip kit-sub" data-start="22.50" data-duration="1.81" data-track-index="1"><span>第一步直接用 wmma</span></div>
+    <div id="cap-s02-0-1" class="clip kit-sub" data-start="24.31" data-duration="3.38" data-track-index="1"><span>一个 warp 合算一块 16 × 16 的乘加</span></div>
+    <div id="cap-s02-1-0" class="clip kit-sub" data-start="27.79" data-duration="1.75" data-track-index="1"><span>一次 11.8 毫秒</span></div>
+    <div id="cap-s02-1-1" class="clip kit-sub" data-start="29.54" data-duration="2.10" data-track-index="1"><span>只有 cuBLAS 的 12%</span></div>
+    <div id="cap-s02-2-0" class="clip kit-sub" data-start="31.74" data-duration="5.22" data-track-index="1"><span>数据先进寄存器，再写共享内存，算之前又读回寄存器</span></div>
+    <div id="cap-s02-2-1" class="clip kit-sub" data-start="36.96" data-duration="1.27" data-track-index="1"><span>绕了两趟</span></div>
+    <div id="cap-s02-3-0" class="clip kit-sub" data-start="38.33" data-duration="2.05" data-track-index="1"><span>读共享内存还有 bank 冲突</span></div>
+    <div id="cap-s02-3-1" class="clip kit-sub" data-start="40.38" data-duration="2.45" data-track-index="1"><span>一次读取要分 4 轮</span></div>
+    <div id="cap-s03-0-0" class="clip kit-sub" data-start="43.93" data-duration="3.73" data-track-index="1"><span>第二步换位存放，8 个地址错开到不同的 bank</span></div>
+    <div id="cap-s03-0-1" class="clip kit-sub" data-start="47.66" data-duration="1.13" data-track-index="1"><span>一轮读完</span></div>
+    <div id="cap-s03-1-0" class="clip kit-sub" data-start="48.89" data-duration="1.50" data-track-index="1"><span>拷贝改用 cp.async</span></div>
+    <div id="cap-s03-1-1" class="clip kit-sub" data-start="50.39" data-duration="4.77" data-track-index="1"><span>从 L2 直接写进共享内存，不再经过寄存器</span></div>
+    <div id="cap-s03-2-0" class="clip kit-sub" data-start="55.26" data-duration="2.70" data-track-index="1"><span>4.1 毫秒，快了将近 3 倍</span></div>
+    <div id="cap-s03-3-0" class="clip kit-sub" data-start="58.06" data-duration="3.98" data-track-index="1"><span>但每一块仍要等拷贝完成，才能开始算</span></div>
+    <div id="cap-s04-0-0" class="clip kit-sub" data-start="63.14" data-duration="4.21" data-track-index="1"><span>第三步分出三个槽位，拷贝提前两块发出，算这一块时</span></div>
+    <div id="cap-s04-0-1" class="clip kit-sub" data-start="67.35" data-duration="1.62" data-track-index="1"><span>后两块已在路上</span></div>
+    <div id="cap-s04-1-0" class="clip kit-sub" data-start="69.07" data-duration="1.22" data-track-index="1"><span>3.6 毫秒</span></div>
+    <div id="cap-s04-2-0" class="clip kit-sub" data-start="70.39" data-duration="2.23" data-track-index="1"><span>再往下卡在指令本身</span></div>
+    <div id="cap-s04-2-1" class="clip kit-sub" data-start="72.62" data-duration="2.47" data-track-index="1"><span>一条 mma.sync 只算 2048 次乘加</span></div>
+    <div id="cap-s04-2-2" class="clip kit-sub" data-start="75.09" data-duration="3.39" data-track-index="1"><span>喂满 Tensor Core 要每个时钟发一条</span></div>
+    <div id="cap-s04-3-0" class="clip kit-sub" data-start="78.58" data-duration="3.20" data-track-index="1"><span>这条路止于峰值的三分之一</span></div>
+    <div id="cap-s05-0-0" class="clip kit-sub" data-start="82.88" data-duration="2.63" data-track-index="1"><span>第四步换上 Hopper 的两条新指令</span></div>
+    <div id="cap-s05-1-0" class="clip kit-sub" data-start="85.61" data-duration="3.85" data-track-index="1"><span>TMA 由一个线程发出，把一整块矩阵搬进共享内存</span></div>
+    <div id="cap-s05-1-1" class="clip kit-sub" data-start="89.46" data-duration="1.45" data-track-index="1"><span>顺带完成换位</span></div>
+    <div id="cap-s05-2-0" class="clip kit-sub" data-start="91.01" data-duration="2.57" data-track-index="1"><span>wgmma 由 4 个 warp 一起发</span></div>
+    <div id="cap-s05-2-1" class="clip kit-sub" data-start="93.58" data-duration="3.19" data-track-index="1"><span>一条的计算量是 mma.sync 的 64 倍</span></div>
+    <div id="cap-s05-2-2" class="clip kit-sub" data-start="96.76" data-duration="3.15" data-track-index="1"><span>操作数直接从共享内存读</span></div>
+    <div id="cap-s05-3-0" class="clip kit-sub" data-start="100.01" data-duration="0.76" data-track-index="1"><span>2.3 毫秒</span></div>
+    <div id="cap-s05-3-1" class="clip kit-sub" data-start="100.77" data-duration="2.32" data-track-index="1"><span>但同一组线程既搬又算</span></div>
+    <div id="cap-s05-3-2" class="clip kit-sub" data-start="103.10" data-duration="2.86" data-track-index="1"><span>两块之间 Tensor Core 空着</span></div>
+    <div id="cap-s06-0-0" class="clip kit-sub" data-start="107.06" data-duration="2.69" data-track-index="1"><span>第五步分工：一个 warpgroup 只发 TMA</span></div>
+    <div id="cap-s06-0-1" class="clip kit-sub" data-start="109.75" data-duration="4.07" data-track-index="1"><span>两个轮流计算，一个等数据时，另一个在算</span></div>
+    <div id="cap-s06-1-0" class="clip kit-sub" data-start="113.92" data-duration="4.18" data-track-index="1"><span>4096 阶从 481 涨到 635 TFLOPS</span></div>
+    <div id="cap-s06-1-1" class="clip kit-sub" data-start="118.10" data-duration="3.31" data-track-index="1"><span>可 8192 阶纹丝不动</span></div>
+    <div id="cap-s06-2-0" class="clip kit-sub" data-start="121.51" data-duration="3.10" data-track-index="1"><span>问题出在 L2：按行发放时</span></div>
+    <div id="cap-s06-2-1" class="clip kit-sub" data-start="124.61" data-duration="3.97" data-track-index="1"><span>同时运行的 132 个 tile 要读整个 W</span></div>
+    <div id="cap-s06-2-2" class="clip kit-sub" data-start="128.59" data-duration="3.84" data-track-index="1"><span>共 128 MB，L2 只有 50 MB</span></div>
+    <div id="cap-s07-0-0" class="clip kit-sub" data-start="133.53" data-duration="3.15" data-track-index="1"><span>第六步计算不动，只改 tile 的发放顺序</span></div>
+    <div id="cap-s07-0-1" class="clip kit-sub" data-start="136.68" data-duration="2.68" data-track-index="1"><span>每 16 行一组，组内按列发放</span></div>
+    <div id="cap-s07-1-0" class="clip kit-sub" data-start="139.46" data-duration="2.82" data-track-index="1"><span>共用同一块 W 的 tile 同时运行</span></div>
+    <div id="cap-s07-1-1" class="clip kit-sub" data-start="142.28" data-duration="3.23" data-track-index="1"><span>W 进了 L2，就被 16 个 tile 读走</span></div>
+    <div id="cap-s07-2-0" class="clip kit-sub" data-start="145.61" data-duration="3.53" data-track-index="1"><span>显存读取从 6.6 GB 降到 1.3 GB</span></div>
+    <div id="cap-s07-2-1" class="clip kit-sub" data-start="149.14" data-duration="3.39" data-track-index="1"><span>1.49 毫秒，一步提速 54%</span></div>
+    <div id="cap-s08-0-0" class="clip kit-sub" data-start="153.63" data-duration="3.66" data-track-index="1"><span>第七步让共用 W 的两个 block 组成集群</span></div>
+    <div id="cap-s08-0-1" class="clip kit-sub" data-start="157.29" data-duration="4.06" data-track-index="1"><span>W 各搬一半，用 TMA 多播同时写给双方</span></div>
+    <div id="cap-s08-1-0" class="clip kit-sub" data-start="161.45" data-duration="3.48" data-track-index="1"><span>1.45 毫秒，cuBLAS 的 96.9%</span></div>
+    <div id="cap-s08-2-0" class="clip kit-sub" data-start="165.03" data-duration="4.62" data-track-index="1"><span>剩下的一段在写回：每个线程零散地写显存</span></div>
+    <div id="cap-s08-2-1" class="clip kit-sub" data-start="169.65" data-duration="2.45" data-track-index="1"><span>这期间不发 wgmma</span></div>
+    <div id="cap-s09-0-0" class="clip kit-sub" data-start="173.20" data-duration="3.57" data-track-index="1"><span>第八步写回也交给 TMA：结果先进共享内存</span></div>
+    <div id="cap-s09-0-1" class="clip kit-sub" data-start="176.77" data-duration="3.73" data-track-index="1"><span>由一个线程整块写出，计算接着做下一块</span></div>
+    <div id="cap-s09-1-0" class="clip kit-sub" data-start="180.60" data-duration="3.30" data-track-index="1"><span>1.41 毫秒，777.6 TFLOPS</span></div>
+    <div id="cap-s09-1-1" class="clip kit-sub" data-start="183.90" data-duration="2.57" data-track-index="1"><span>cuBLAS 的 99.5%</span></div>
+    <div id="cap-s10-0-0" class="clip kit-sub" data-start="187.57" data-duration="2.12" data-track-index="1"><span>989 TFLOPS 是规格峰值</span></div>
+    <div id="cap-s10-0-1" class="clip kit-sub" data-start="189.69" data-duration="5.00" data-track-index="1"><span>连续满载时，两者都撞上 700 瓦的功耗上限</span></div>
+    <div id="cap-s10-0-2" class="clip kit-sub" data-start="194.69" data-duration="3.19" data-track-index="1"><span>时钟从 1830 降到约 1360 MHz</span></div>
+    <div id="cap-s10-1-0" class="clip kit-sub" data-start="197.98" data-duration="3.09" data-track-index="1"><span>按这个时钟，峰值只剩 735</span></div>
+    <div id="cap-s10-1-1" class="clip kit-sub" data-start="201.07" data-duration="4.04" data-track-index="1"><span>手写版和 cuBLAS 都用到了其中的 93%</span></div>
+    <div id="cap-s10-2-0" class="clip kit-sub" data-start="205.21" data-duration="2.14" data-track-index="1"><span>Tensor Core 的算力是固定的</span></div>
+    <div id="cap-s10-2-1" class="clip kit-sub" data-start="207.35" data-duration="4.81" data-track-index="1"><span>矩阵乘法的快慢，取决于数据能不能及时送到</span></div>
   </div>
   <script>
-    window.__timelines["captions"] = gsap.timeline({ paused: true }).set({}, {}, 409.85);
+    window.__timelines["captions"] = gsap.timeline({ paused: true }).set({}, {}, 212.26);
   </script>
 </template>

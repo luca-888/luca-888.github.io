@@ -3,206 +3,112 @@
     #root { position: absolute; inset: 0; }
     #root .s03-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
     #root .s03-abs { position: absolute; }
-    #root .s03-in { position: absolute; inset: 0; }
-    /* 矩阵：与 s02 末帧同款（主色降不透明度，无描边） */
-    #root .s03-mat { position: absolute; width: 340px; height: 340px; }
-    #root .s03-mat .bg { position: absolute; inset: 0; }
-    #root #s03-mA .bg { background: var(--blue); opacity: 0.18; }
-    #root #s03-mW .bg { background: var(--yel); opacity: 0.38; }
-    #root #s03-mC .bg { background: var(--purple); opacity: 0.18; }
-    /* 进度条：与 s02 同款；数字放在填充右侧 */
-    #root .kit-meter .track { overflow: hidden; }
-    #root #s03-target { position: absolute; left: 541px; top: 32px; height: 56px; border-left: 3px dashed var(--teal-t); }
-    #root .s03-mnum { position: absolute; left: 0; top: 40px; height: 40px; line-height: 40px; font-family: var(--mono); font-size: 32px; font-weight: 800; color: var(--ink); white-space: nowrap; }
-    #root .s03-mnote { position: absolute; left: 0; top: 92px; font-size: 28px; font-weight: 600; color: var(--teal-t); white-space: nowrap; }
-    #root #s03-gain { top: 132px; font-size: 32px; font-weight: 700; }
-    /* 标题 */
-    #root #s03-ttl { top: 166px; font-size: 48px; }
-    /* block 视图 */
-    #root .s03-fill { position: absolute; inset: 0; }
-    #root .s03-bord { position: absolute; inset: 0; border: 3px solid; }
-    #root .s03-fa { position: absolute; width: 65px; height: 65px; border: 2px solid var(--blue); }
-    #root .s03-fa i { position: absolute; inset: 0; background: var(--blue); opacity: 0.35; }
-    #root .s03-fb { position: absolute; width: 65px; height: 65px; border: 2px solid var(--yel-t); }
-    #root .s03-fb i { position: absolute; inset: 0; background: var(--yel); opacity: 0.7; }
-    #root .s03-cell { position: absolute; width: 130px; height: 260px; border: 2px solid var(--purple); }
-    #root .s03-cell i { position: absolute; inset: 0; background: var(--purple); opacity: 0.1; }
-    #root #s03-w0 i { opacity: 0.28; }
-    #root .s03-wl { position: absolute; left: 0; right: 0; top: 108px; text-align: center; font-family: var(--mono); font-size: 32px; font-weight: 700; color: var(--purple-t); }
-    #root .s03-cf { position: absolute; width: 65px; height: 65px; border: 2px solid var(--purple); }
-    #root .s03-cf i { position: absolute; inset: 0; background: var(--purple); }
-    #root .s03-cur { position: absolute; width: 65px; height: 65px; border: 3px solid var(--ink); }
-    #root .s03-lbl { position: absolute; font-size: 32px; font-weight: 600; color: var(--ink); white-space: nowrap; }
-    #root .s03-stk { position: relative; display: inline-block; width: 0.7em; height: 1em; vertical-align: -0.12em; }
-    #root .s03-stk b { position: absolute; left: 0; top: -0.12em; font-family: var(--mono); font-size: 40px; font-weight: 800; color: var(--teal-t); line-height: 1.2; }
-    /* 塔与折返 */
-    #root #s03-tower { position: absolute; left: 1060px; top: 190px; width: 640px; height: 720px; }
-    #root .s03-ol { position: absolute; left: 1074px; width: 462px; height: 84px; border: 4px solid; }
-    #root .s03-turn { position: absolute; left: 1664px; font-size: 32px; font-weight: 800; color: var(--hot-t); white-space: nowrap; }
-    #root #s03-car { position: absolute; left: 0; top: 0; width: 44px; height: 44px; background: var(--blue); border: 2px solid var(--ink); }
-    /* 共享内存 bank 视图 */
-    #root #s03-grid { position: absolute; left: 104px; top: 376px; width: 894px; height: 276px; }
-    #root .s03-bc { position: absolute; width: 26px; height: 60px; background: var(--paper2); }
-    #root .s03-bc .w { position: absolute; inset: 0; background: var(--warp); }
-    #root .s03-bc .l { position: absolute; inset: 0; background: var(--blue); }
-    #root .s03-rl { position: absolute; font-size: 28px; font-weight: 600; color: var(--note); white-space: nowrap; }
-    #root .s03-brk { position: absolute; border: 3px solid var(--hot); border-top: none; height: 14px; }
-    #root .s03-brk.up { border-top: 3px solid var(--ink2); border-bottom: none; border-color: var(--ink2); }
+    #root .s03-lbl { position: absolute; font-size: 32px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
+    #root .kit-tbar .num span { position: absolute; left: 0; top: 0; }
+    /* 第 1 句：8 行 × 8 组 bank */
+    #root .s03-cell { position: absolute; width: 104px; height: 56px; background: var(--paper2); border: 2px solid var(--line); border-radius: 2px; }
+    #root .s03-cell .n { position: absolute; inset: 0; line-height: 52px; text-align: center; font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--note); }
+    #root .s03-cell .h { position: absolute; inset: -2px; border-radius: 2px; line-height: 56px; text-align: center; font-family: var(--mono); font-size: 28px; font-weight: 800; color: #fff; }
+    #root .s03-hd { position: absolute; top: 292px; width: 104px; text-align: center; font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--note); }
+    #root .s03-rl { position: absolute; left: 96px; width: 112px; font-size: 28px; font-weight: 600; color: var(--note); white-space: nowrap; line-height: 56px; }
+    #root .s03-rk { position: absolute; left: 1250px; white-space: nowrap; }
+    #root .s03-rk .k { font-size: 36px; font-weight: 700; color: var(--ink); }
+    #root .s03-rk .v { font-family: var(--mono); font-size: 128px; font-weight: 800; line-height: 1.05; }
+    #root .s03-rk .v small { font-family: var(--zh); font-size: 64px; }
+    /* 第 2 句：塔 + 路径对比 */
+    #root #s03-tower { position: absolute; left: 1180px; top: 300px; width: 640px; height: 620px; }
+    #root .s03-car { position: absolute; left: 0; top: 0; width: 44px; height: 44px; background: var(--blue); border: 2px solid var(--ink); }
+    #root .s03-path { position: absolute; left: 96px; white-space: nowrap; font-weight: 700; }
+    #root #s03-strike { position: absolute; height: 6px; background: var(--red); transform-origin: 0 50%; }
+    /* 第 4 句：时间线 */
+    #root .s03-lname { position: absolute; left: 96px; width: 250px; text-align: right; font-size: 36px; font-weight: 700; color: var(--ink); white-space: nowrap; line-height: 90px; }
+    #root .s03-lane { position: absolute; left: 380px; height: 90px; width: 1444px; }
+    #root .s03-seg { position: absolute; top: 0; height: 90px; line-height: 90px; text-align: center; font-size: 32px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; }
   </style>
   <div id="root" data-composition-id="s03" data-width="1920" data-height="1080">
 
-    <!-- 交接：三个矩阵（坐标与 s02 末帧一致） -->
-    <div id="s03-mats" class="clip s03-full" data-start="0.00" data-a-start="0.0" data-duration="11.95" data-a-duration="9.0" data-track-index="1">
-      <div id="s03-matsin" class="s03-full">
-        <div id="s03-mW" class="s03-mat" style="left:760px;top:150px"><div class="bg"></div></div>
-        <div id="s03-mA" class="s03-mat" style="left:400px;top:510px"><div class="bg"></div></div>
-        <div id="s03-mC" class="s03-mat" style="left:760px;top:510px"><div class="bg"></div></div>
-      </div>
+    <!-- 标题卡 -->
+    <div id="s03-title" class="clip s03-full" data-start="0.00" data-duration="19.21" data-track-index="1">
+      <div id="s03-chip" class="kit-chip">mm_mma</div>
+      <div id="s03-ttl" class="kit-title">第 2 步：<span class="acc">换位存放</span> + cp.async</div>
     </div>
 
-    <!-- block 视图（第 0 秒被压成 A 行带 / Wᵀ 列带 / 5 px 的 block），推镜头的两级相机 -->
-    <div id="s03-bv" class="clip s03-full" data-start="0.00" data-a-start="0.0" data-duration="38.61" data-a-duration="33.6" data-track-index="2" data-layout-allow-overflow>
-      <div id="s03-cam3" class="s03-full">
-        <div id="s03-cam2" class="s03-full">
-          <div id="s03-as" class="s03-abs" style="left:594px;top:330px;width:130px;height:520px">
-            <div id="s03-asf" class="s03-fill" style="background:var(--blue)"></div>
-            <div id="s03-asb" class="s03-bord" style="border-color:var(--blue);border-width:2px"></div>
-            <div id="s03-a1" class="s03-fa" style="left:0;top:65px"><i></i></div>
-            <div id="s03-a2" class="s03-fa" style="left:0;top:130px"><i></i></div>
-            <div id="s03-a3" class="s03-fa" style="left:0;top:195px"><i></i></div>
-            <div id="s03-a0" class="s03-abs" style="left:0;top:0;width:65px;height:65px;background:var(--blue)"></div>
-          </div>
-          <div id="s03-ws" class="s03-abs" style="left:740px;top:184px;width:520px;height:130px">
-            <div id="s03-wsy" class="s03-fill" style="background:var(--yel);opacity:0"></div>
-            <div id="s03-wsf" class="s03-fill" style="background:var(--yel-t)"></div>
-            <div id="s03-wsb" class="s03-bord" style="border-color:var(--yel-t);border-width:2px"></div>
-            <div id="s03-b0" class="s03-fb" style="left:0;top:0"><i></i></div>
-            <div id="s03-b1" class="s03-fb" style="left:65px;top:0"><i></i></div>
-          </div>
-          <div id="s03-blk" class="s03-abs" style="left:740px;top:330px;width:520px;height:520px">
-            <div id="s03-bkf" class="s03-fill" style="background:var(--purple)"></div>
-            <div id="s03-bkb" class="s03-bord" style="border-color:var(--purple)"></div>
-            <div id="s03-w0" class="s03-cell" style="left:0;top:0"><i></i><div class="s03-wl">w0</div></div>
-            <div id="s03-w1" class="s03-cell" style="left:130px;top:0"><i></i><div class="s03-wl">w1</div></div>
-            <div id="s03-w2" class="s03-cell" style="left:260px;top:0"><i></i><div class="s03-wl">w2</div></div>
-            <div id="s03-w3" class="s03-cell" style="left:390px;top:0"><i></i><div class="s03-wl">w3</div></div>
-            <div id="s03-w4" class="s03-cell" style="left:0;top:260px"><i></i><div class="s03-wl">w4</div></div>
-            <div id="s03-w5" class="s03-cell" style="left:130px;top:260px"><i></i><div class="s03-wl">w5</div></div>
-            <div id="s03-w6" class="s03-cell" style="left:260px;top:260px"><i></i><div class="s03-wl">w6</div></div>
-            <div id="s03-w7" class="s03-cell" style="left:390px;top:260px"><i></i><div class="s03-wl">w7</div></div>
-            <div id="s03-c00" class="s03-cf" style="left:0;top:0"><i></i></div>
-            <div id="s03-c01" class="s03-cf" style="left:65px;top:0"><i></i></div>
-            <div id="s03-c10" class="s03-cf" style="left:0;top:65px"><i></i></div>
-            <div id="s03-c11" class="s03-cf" style="left:65px;top:65px"><i></i></div>
-            <div id="s03-c20" class="s03-cf" style="left:0;top:130px"><i></i></div>
-            <div id="s03-c21" class="s03-cf" style="left:65px;top:130px"><i></i></div>
-            <div id="s03-c30" class="s03-cf" style="left:0;top:195px"><i></i></div>
-            <div id="s03-c31" class="s03-cf" style="left:65px;top:195px"><i></i></div>
-          </div>
-          <div id="s03-acur" class="s03-cur" style="left:594px;top:330px"></div>
-          <div id="s03-bcur" class="s03-cur" style="left:740px;top:184px"></div>
-        </div>
-      </div>
+    <!-- 耗时条：11.78 → 4.09（第 3 句） -->
+    <div id="s03-tb" class="clip kit-tbar" data-start="1.00" data-duration="18.21" data-track-index="2">
+      <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
+      <div class="track"><div id="s03-tbghost" class="ghost"></div><div id="s03-tbfill" class="fill"></div><div class="peak"></div></div>
+      <div id="s03-tbnum" class="num"><span id="s03-tbv1">11.78 ms</span><span id="s03-tbv2">4.09 ms</span></div>
+      <div class="ref">虚线：规格峰值 1.11 ms</div>
     </div>
 
-    <!-- 右上进度条（s02 末帧状态：参照 781.86、目标虚线 777.6、当前 44.3） -->
-    <div id="s03-meter" class="clip kit-meter" data-start="0.00" data-a-start="0.0" data-duration="31.87" data-a-duration="25.5" data-track-index="3">
-      <div id="s03-mt" class="s03-in">
-        <div class="lbl">8192 阶 · BF16 · TFLOPS</div>
-        <div class="track"><div id="s03-fill" class="fill"></div></div>
-        <div class="tick"></div>
-        <div id="s03-target"></div>
-        <div class="ref">cuBLAS 781.86</div>
-        <div id="s03-tnote" class="s03-mnote">目标 777.6（99.5%）</div>
-        <div id="s03-num44" class="s03-mnum">44.3</div>
-        <div id="s03-num93" class="s03-mnum">93.3</div>
-        <div id="s03-gain" class="s03-mnote"><span id="s03-g1">2.1 倍</span><span id="s03-g2"> · cuBLAS 的 11.9%</span></div>
-      </div>
+    <!-- 第 1 句（1.0）：换位存放，8 个地址错开到 8 组 bank -->
+    <div id="s03-grid" class="clip s03-full" data-start="1.00" data-duration="5.40" data-track-index="3">
+      <div id="s03-gtop" class="s03-abs" style="left:230px;top:246px;font-size:32px;font-weight:600;color:var(--ink2);white-space:nowrap">一行 128 字节 = 32 个 bank，每格 4 个</div>
+      <div id="s03-heads" class="s03-full"></div>
+      <div id="s03-rows" class="s03-full"></div>
+      <div id="s03-cells" class="s03-abs" style="left:230px;top:340px;width:896px;height:512px"></div>
+      <div id="s03-colo" class="s03-abs" style="left:224px;top:334px;width:116px;height:516px;border:5px solid var(--red)"></div>
+      <div id="s03-rk1" class="s03-rk" style="top:370px"><div class="k">不换位：同一组 bank</div><div class="v acc-r">8<small> 轮</small></div></div>
+      <div id="s03-rk2" class="s03-rk" style="top:600px"><div class="k">换位后：错开到 8 组</div><div class="v acc-g">1<small> 轮</small></div></div>
     </div>
 
-    <!-- 0.5 标题 -->
-    <div id="s03-title" class="clip s03-full" data-start="0.50" data-a-start="0.5" data-duration="51.64" data-a-duration="48.5" data-track-index="4">
-      <div id="s03-chip" class="kit-chip">wmma</div>
-      <div id="s03-ttl" class="kit-title">第 1 步：换用 <span class="acc">Tensor Core</span></div>
-    </div>
-
-    <!-- 0.5 一个 warp 共同计算 16 × 16 × 16 -->
-    <div id="s03-cube" class="clip s03-full" data-start="0.50" data-a-start="0.5" data-duration="10.38" data-a-duration="7.6" data-track-index="5">
-      <div id="s03-cubew" class="s03-full">
-        <svg class="s03-abs" style="left:1400px;top:316px" width="200" height="228" viewBox="1400 316 200 228">
-          <polygon points="1500,320 1595.3,375 1500,430 1404.7,375" style="fill:var(--teal)" />
-          <polygon points="1404.7,375 1500,430 1500,540 1404.7,485" style="fill:var(--tealD)" />
-          <polygon points="1500,430 1595.3,375 1595.3,485 1500,540" style="fill:var(--teal-t)" />
-          <path d="M1500,320 L1595.3,375 L1500,430 L1404.7,375 Z M1500,430 L1500,540" fill="none" style="stroke:var(--paper)" stroke-width="2" />
-        </svg>
-      </div>
-      <div id="s03-cubesz" class="s03-abs" style="left:1200px;top:560px;width:600px;text-align:center;font-family:var(--mono);font-size:36px;font-weight:800;color:var(--teal-t)">16 × 16 × 16</div>
-      <div id="s03-dots" class="s03-abs" style="left:1198px;top:634px;width:603px;height:14px"></div>
-      <div id="s03-cubelbl" class="s03-abs s03-lbl" style="left:1200px;top:668px;width:600px;text-align:center">一个 warp 共同计算</div>
-    </div>
-
-    <!-- 7.5 block 标注 -->
-    <div id="s03-ann1" class="clip s03-lbl" data-start="11.71" data-a-start="8.8" data-duration="6.10" data-a-duration="5.2" data-track-index="6" style="left:1296px;top:470px">
-      <div id="s03-ann1in">一个 block：128 × 128</div>
-    </div>
-    <div id="s03-ann2" class="clip s03-lbl" data-start="14.09" data-a-start="10.8" data-duration="3.71" data-a-duration="3.2" data-track-index="7" style="left:1296px;top:540px">
-      <div id="s03-ann2in">8 个 warp，各 64 × 32</div>
-    </div>
-
-    <!-- 13.5 w0 的片段与 mma_sync -->
-    <div id="s03-ann3" class="clip s03-lbl" data-start="18.10" data-a-start="14.3" data-duration="6.11" data-a-duration="5.9" data-track-index="8" style="left:860px;top:236px">
-      <div id="s03-ann3in">w0：4 × 2 个片段，各 16 × 16</div>
-    </div>
-    <div id="s03-code" class="clip s03-abs" data-start="18.30" data-a-start="14.5" data-duration="5.91" data-a-duration="5.7" data-track-index="9" style="left:860px;top:304px">
-      <div id="s03-codein" class="k-code">
-        <div class="ln">for (int kk = 0; kk &lt; BK; kk += 16)</div>
-        <div class="ln">  for (int i = 0; i &lt; 4; i++)</div>
-        <div class="ln">    for (int j = 0; j &lt; 2; j++)</div>
-        <div class="ln on">      mma_sync(c[i][j], a[i], b[j], c[i][j]);</div>
-      </div>
-    </div>
-    <div id="s03-cnt" class="clip s03-lbl" data-start="19.99" data-a-start="16.2" data-duration="4.23" data-a-duration="4.0" data-track-index="10" style="left:860px;top:580px" data-layout-allow-overlap>
-      <div id="s03-cntin">沿 K 每 16 列：<span class="s03-stk"><b id="s03-k1">1</b><b id="s03-k2">2</b><b id="s03-k3">3</b><b id="s03-k4">4</b><b id="s03-k5">5</b><b id="s03-k6">6</b><b id="s03-k7">7</b><b id="s03-k8">8</b></span> / 8 条 mma_sync</div>
-    </div>
-
-    <!-- 25.0 硬件塔与折返 -->
-    <div id="s03-tw" class="clip s03-full" data-start="31.46" data-a-start="25.0" data-duration="20.68" data-a-duration="24.0" data-track-index="11">
+    <!-- 第 2 句（5.96）：cp.async，L2 直达共享内存 -->
+    <div id="s03-tw" class="clip s03-full" data-start="5.96" data-duration="9.60" data-track-index="4">
       <div id="s03-tower"></div>
-      <div id="s03-oreg" class="s03-ol" style="top:364px;border-color:var(--hot)"></div>
-      <div id="s03-osm" class="s03-ol" style="top:508px;border-color:var(--use)"></div>
-      <div id="s03-turn1" class="s03-turn" style="top:384px">折返</div>
-      <div id="s03-turn2" class="s03-turn" style="top:528px">折返</div>
-      <div id="s03-bn2" class="s03-abs" style="left:1664px;top:452px"><span class="k-bottleneck">瓶颈</span></div>
-    </div>
-    <div id="s03-rt" class="clip s03-full" data-start="31.46" data-a-start="25.0" data-duration="20.68" data-a-duration="24.0" data-track-index="12">
       <svg class="s03-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" stroke-linejoin="round">
-        <path id="s03-r1" style="stroke:var(--blue)" stroke-width="5" />
-        <path id="s03-r2" style="stroke:var(--blue)" stroke-width="5" />
-        <path id="s03-r3" style="stroke:var(--hot)" stroke-width="5" />
-        <path id="s03-r4" style="stroke:var(--hot)" stroke-width="5" />
-        <path id="s03-r5" style="stroke:var(--blue)" stroke-width="5" />
+        <path id="s03-old" d="M 1656 752 H 1700 V 486 H 1656 M 1656 486 H 1700 V 610 H 1656" style="stroke:var(--gray)" stroke-width="5" />
+        <path id="s03-x1" d="M 1680 660 L 1720 700" style="stroke:var(--red)" stroke-width="7" stroke-linecap="round" />
+        <path id="s03-x2" d="M 1720 660 L 1680 700" style="stroke:var(--red)" stroke-width="7" stroke-linecap="round" />
+        <path id="s03-new" d="M 1656 752 H 1748 V 610 H 1656" style="stroke:var(--use)" stroke-width="7" />
       </svg>
-      <div id="s03-car"></div>
+      <div id="s03-cpl" class="s03-abs" style="left:1340px;top:660px;width:300px;text-align:right;font-family:var(--mono);font-size:30px;font-weight:800;color:var(--use-t);line-height:44px;white-space:nowrap">cp.async ↑</div>
+      <div id="s03-car1" class="s03-car"></div>
+      <div id="s03-car2" class="s03-car"></div>
+    </div>
+    <div id="s03-cmp" class="clip s03-full" data-start="5.96" data-duration="6.80" data-track-index="5">
+      <div id="s03-po" class="s03-path" style="top:330px;font-size:44px;color:var(--note)">以前：L2 → <span id="s03-preg">寄存器 →</span> 共享内存</div>
+      <div id="s03-strike" style="left:354px;top:358px;width:186px"></div>
+      <div id="s03-pn" class="s03-path" style="top:440px;font-size:56px;color:var(--ink)">现在：L2 → <span class="acc-g">共享内存</span></div>
+      <div id="s03-code" class="s03-abs" style="left:96px;top:590px">
+        <div class="k-code">
+          <div class="file">load：每个线程发若干条 16 字节的 cp.async</div>
+          <div class="ln on">cp_async16(sa + swz(r, c),</div>
+          <div class="ln on">           Ab + (size_t)r * K + k0 + c * 8);</div>
+        </div>
+      </div>
     </div>
 
-    <!-- 32.9 共享内存 bank 视图 -->
-    <div id="s03-bank" class="clip s03-full" data-start="38.01" data-a-start="32.9" data-duration="14.13" data-a-duration="16.1" data-track-index="13" data-layout-allow-overlap>
-      <div id="s03-bkin" class="s03-full">
-        <div id="s03-bkh" class="s03-abs" style="left:104px;top:262px;font-size:36px;font-weight:700;color:var(--ink);white-space:nowrap">共享内存 · 一排 32 个 bank</div>
-        <div id="s03-half" class="s03-full">
-          <div class="s03-brk up" style="left:104px;top:360px;width:446px"></div>
-          <div class="s03-rl" style="left:104px;top:318px;font-size:32px;color:var(--ink2)">一行 64 字节 = 半排</div>
-        </div>
-        <div id="s03-grid"></div>
-        <div id="s03-conn" class="s03-abs" style="left:1006px;top:549px;width:64px;border-top:3px dashed var(--gray)"></div>
-        <div id="s03-grp" class="s03-full">
-          <div class="s03-brk" style="left:104px;top:660px;width:222px"></div>
-          <div class="s03-brk" style="left:552px;top:660px;width:222px"></div>
-          <div class="s03-lbl" style="left:104px;top:686px">8 行的同一块只落在 2 组 bank</div>
-        </div>
-        <div id="s03-rnd" class="s03-lbl" style="left:104px;top:760px">读取轮次 <span class="s03-stk"><b id="s03-q1">1</b><b id="s03-q2">2</b><b id="s03-q3">3</b><b id="s03-q4">4</b></span> <span class="acc-o">/ 4 轮</span></div>
-        <div id="s03-bn1" class="s03-abs" style="left:560px;top:762px"><span class="k-bottleneck">瓶颈：bank 冲突</span></div>
+    <!-- 第 3 句（12.33）：4.09 ms，快 2.9 倍 -->
+    <div id="s03-gain" class="clip s03-abs" data-start="12.33" data-duration="3.20" data-track-index="6" style="left:96px;top:380px;white-space:nowrap">
+      <div id="s03-gainin">
+        <div><span style="font-size:72px;font-weight:800;color:var(--ink)">快 </span><span style="font-family:var(--mono);font-size:200px;font-weight:800;color:var(--teal-t);line-height:1">2.9</span><span style="font-size:72px;font-weight:800;color:var(--ink)"> 倍</span></div>
+        <div style="font-family:var(--mono);font-size:48px;font-weight:700;color:var(--ink2);margin-top:20px">11.78 ms → 4.09 ms</div>
       </div>
+    </div>
+
+    <!-- 第 4 句（15.13）：每一块仍要等拷贝完成 -->
+    <div id="s03-tl" class="clip s03-full" data-start="15.13" data-duration="4.08" data-track-index="7">
+      <div id="s03-tlh" class="s03-abs" style="left:96px;top:300px;font-size:40px;font-weight:700;color:var(--ink);white-space:nowrap">每一块：拷贝 → 等待 → 计算</div>
+      <div class="s03-lname" style="top:440px">线程</div>
+      <div class="s03-lname" style="top:600px">Tensor Core</div>
+      <div id="s03-lane1" class="s03-lane" style="top:440px">
+        <div class="s03-seg" style="left:0;width:160px;background:var(--hot)">拷贝</div>
+        <div class="s03-seg" style="left:160px;width:300px;background:var(--line);color:var(--ink2)">等待</div>
+        <div class="s03-seg" style="left:460px;width:240px;background:var(--teal)">计算</div>
+        <div class="s03-seg" style="left:700px;width:160px;background:var(--hot)">拷贝</div>
+        <div class="s03-seg" style="left:860px;width:300px;background:var(--line);color:var(--ink2)">等待</div>
+        <div class="s03-seg" style="left:1160px;width:240px;background:var(--teal)">计算</div>
+      </div>
+      <div id="s03-lane2" class="s03-lane" style="top:600px">
+        <div class="s03-seg" style="left:0;width:460px;background:var(--paper2);color:var(--note)">空闲</div>
+        <div class="s03-seg" style="left:460px;width:240px;background:var(--teal)">计算</div>
+        <div class="s03-seg" style="left:700px;width:460px;background:var(--paper2);color:var(--note)">空闲</div>
+        <div class="s03-seg" style="left:1160px;width:240px;background:var(--teal)">计算</div>
+      </div>
+      <div id="s03-tarr" class="s03-lbl" style="left:1660px;top:716px;font-size:28px;color:var(--note)">时间 →</div>
+      <div id="s03-wait" class="s03-abs" style="left:534px;top:434px;width:312px;height:102px;border:6px solid var(--hot)"></div>
+      <div id="s03-idle" class="s03-abs" style="left:374px;top:594px;width:472px;height:102px;border:6px solid var(--hot)"></div>
+      <div id="s03-bn" class="s03-abs" style="left:380px;top:730px"><span class="k-bottleneck" style="font-size:36px;padding:6px 14px">瓶颈：等拷贝</span></div>
     </div>
   </div>
   <script>
@@ -213,189 +119,128 @@
       const ft = (el, a, b, t) => tl.fromTo(el, a, b, t);
       const fadeIn = (el, t, d = 0.5) => ft(el, { opacity: 0 }, { opacity: 1, duration: d, ease: IN }, t);
       const fadeOut = (el, t, d = 0.4) => ft(el, { opacity: 1 }, { opacity: 0, duration: d, ease: OUT }, t);
+      const B = [1.0, 5.96, 12.33, 15.13], DUR = 19.21;
 
-      // ---------- 生成的静态子元素 ----------
-      const dots = $("dots");
-      for (let i = 0; i < 32; i++) {
-        const d = document.createElement("div");
-        d.className = "s03-dot";
-        d.style.cssText = `position:absolute;left:${i * 19}px;top:0;width:14px;height:14px;border-radius:50%;background:var(--blue)`;
-        dots.appendChild(d);
-      }
-      const grid = $("grid"), wCells = [[], [], [], []], lCells = [[], [], [], []];
-      for (let r = 0; r < 4; r++) for (let b = 0; b < 32; b++) {
-        const c = document.createElement("div");
-        c.className = "s03-bc";
-        c.style.left = b * 28 + "px"; c.style.top = r * 72 + "px";
-        const inFrag = (b % 16) < 8;
-        if (inFrag) {
-          const w = document.createElement("i"); w.className = "w"; c.appendChild(w); wCells[r].push(w);
-          const l = document.createElement("i"); l.className = "l"; c.appendChild(l); lCells[r].push(l);
-        }
-        grid.appendChild(c);
+      // ---------- 网格：8 行 × 8 格（每格 16 字节 = 4 个 bank） ----------
+      const PX = 112, PY = 64, cells = [], reds = [], greens = [], zeros = [], heads = [], rls = [];
+      for (let j = 0; j < 8; j++) {
+        const h = document.createElement("div");
+        h.className = "s03-hd"; h.textContent = j;
+        h.style.left = (230 + j * PX) + "px";
+        $("heads").appendChild(h); heads.push(h);
       }
       for (let r = 0; r < 8; r++) {
-        const t = document.createElement("div");
-        t.className = "s03-rl";
-        t.textContent = "行 " + r;
-        t.style.left = ((r % 2) * 448 + 8 * 28 + 14) + "px";
-        t.style.top = (Math.floor(r / 2) * 72 + 12) + "px";
-        grid.appendChild(t);
+        const l = document.createElement("div");
+        l.className = "s03-rl"; l.textContent = "行 " + r;
+        l.style.top = (340 + r * PY) + "px";
+        $("rows").appendChild(l); rls.push(l);
+        cells.push([]);
+        for (let j = 0; j < 8; j++) {
+          const c = document.createElement("div");
+          c.className = "s03-cell";
+          c.style.left = (j * PX) + "px"; c.style.top = (r * PY) + "px";
+          if (j === 0) {
+            c.innerHTML = `<i class="h" style="background:var(--red)"></i><i class="h" style="background:var(--use)"></i><span class="n">0</span>`;
+            const hs = c.querySelectorAll(".h"); reds.push(hs[0]); greens.push(hs[1]); zeros.push(c.querySelector(".n"));
+          } else c.innerHTML = `<span class="n">${j}</span>`;
+          $("cells").appendChild(c); cells[r].push(c);
+        }
       }
       const T = kitTower($("tower"));
       const L = T.layer, smBox = $("tower-sm");
-      gsap.set([L.tc, L.reg, L.smem, L.l2, L.hbm, smBox], { opacity: 0 });
 
-      // ---------- 时间 0：交接画面 ----------
-      gsap.set($("matsin"), { transformOrigin: "760px 510px", scale: 1, opacity: 1 });
-      gsap.set([$("as"), $("ws"), $("blk")], { transformOrigin: "0 0" });
-      gsap.set($("as"), { x: -194, y: 180, scaleX: 340 / 130, scaleY: 5.3125 / 520 });   // A 行带 (400,510) 340 × 5.3
-      gsap.set($("ws"), { x: 20, y: -34, scaleX: 5.3125 / 520, scaleY: 340 / 130 });    // Wᵀ 列带 (760,150) 5.3 × 340
-      gsap.set($("blk"), { x: 20, y: 180, scale: 5.3125 / 520 });                         // block (760,510) 5.3 px
-      gsap.set([$("asb"), $("wsb"), $("bkb"), $("a1"), $("a2"), $("a3"), $("b0"), $("b1"), $("acur"), $("bcur")], { opacity: 0 });
-      gsap.set(document.querySelectorAll("#s03-blk .s03-cell, #s03-blk .s03-wl, #s03-blk .s03-cf, #s03-blk .s03-cf i"), { opacity: 0 });
-      gsap.set([$("cam2"), $("cam3")], { transformOrigin: "0 0", x: 0, y: 0, scale: 1 });
-      gsap.set($("cam3"), { transformOrigin: "126px 236px" });
-      // 进度条：当前 44.3
-      const fx = (v) => (v / 781.86) * 544;
-      gsap.set($("fill"), { scaleX: 44.3 / 781.86 });
-      gsap.set([$("num44"), $("num93")], { x: fx(44.3) + 10 });
-      gsap.set([$("num93"), $("g1"), $("g2"), $("gain")], { opacity: 0 });
-      gsap.set($("gain"), { opacity: 1 });
-      // 其余部件初始隐藏
-      gsap.set([$("chip"), $("ttl"), $("cubew"), $("cubesz"), $("cubelbl"), $("ann1in"), $("ann2in"), $("ann3in"), $("codein"), $("cntin")], { opacity: 0 });
-      gsap.set(dots.children, { opacity: 0 });
-      gsap.set(document.querySelectorAll("#s03-cnt .s03-stk b, #s03-rnd .s03-stk b"), { opacity: 0 });
-      gsap.set([$("oreg"), $("osm"), $("turn1"), $("turn2"), $("bn2"), $("bn1")], { opacity: 0 });
-      gsap.set($("car"), { xPercent: -50, yPercent: -50, x: 1500, y: 856, scale: 0, opacity: 0 });
-      gsap.set([$("bkh"), $("half"), $("conn"), $("grp"), $("rnd")], { opacity: 0 });
-      gsap.set(grid.children, { opacity: 0 });
-      gsap.set([].concat(...wCells, ...lCells), { opacity: 0 });
+      // ---------- 初始状态 ----------
+      gsap.set([$("chip"), $("ttl")], { opacity: 0 });
+      gsap.set([$("tbfill"), $("tbghost")], { scaleX: 11.78 / 16 });
+      gsap.set($("tbghost"), { opacity: 0 });
+      gsap.set($("tbnum"), { x: 11.78 * 45 + 12 });
+      gsap.set([$("tb"), $("tbv2")], { opacity: 0 });
+      gsap.set([$("gtop"), $("colo"), $("rk1"), $("rk2"), ...heads, ...rls, ...reds, ...greens], { opacity: 0 });
+      cells.forEach((row) => gsap.set(row, { opacity: 0 }));
+      gsap.set([L.tc, L.reg, L.smem, L.l2, L.hbm, smBox, $("old"), $("cpl"), $("car1"), $("car2")], { opacity: 0 });
+      ["x1", "x2", "new"].forEach((k) => { const p = $(k), len = p.getTotalLength(); p.dataset.len = len; gsap.set(p, { strokeDasharray: len, strokeDashoffset: len }); });
+      gsap.set([$("po"), $("pn"), $("code")], { opacity: 0 });
+      gsap.set($("strike"), { scaleX: 0 });
+      gsap.set($("gainin"), { opacity: 0 });
+      gsap.set([$("tlh"), $("tarr"), $("wait"), $("idle"), $("bn")], { opacity: 0 });
+      gsap.set(document.querySelectorAll("#s03-tl .s03-lname"), { opacity: 0 });
+      gsap.set([$("lane1"), $("lane2")], { clipPath: "inset(0px 100% 0px 0px)" });
 
-      // ---------- 0.5 标题 + warp 立方体 ----------
-      ft($("chip"), { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.4, ease: IN }, 0.5);
-      ft($("ttl"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.6, ease: IN }, 0.62);
-      ft($("cubew"), { opacity: 0, scale: 0.6, transformOrigin: "1500px 430px" }, { opacity: 1, scale: 1, duration: 0.6, ease: IN }, 0.65);
-      fadeIn($("cubesz"), 3.5);
-      dots.querySelectorAll(".s03-dot").forEach((d, i) => ft(d, { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.3, ease: IN }, 3.65 + i * 0.03));
-      fadeIn($("cubelbl"), 4.0);
+      // ---------- 标题卡 ----------
+      ft($("chip"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: IN }, 0.0);
+      ft($("ttl"), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4, ease: IN }, 0.08);
+      ft($("ttl"), { scale: 1, y: 0, transformOrigin: "0 0" }, { scale: 0.72, y: -12, transformOrigin: "0 0", duration: 0.6, ease: MOVE }, 1.0);
+      fadeIn($("tb"), 1.05);
 
-      // ---------- 7.5 推镜头进 block：128 × 128，8 个 warp 各 64 × 32 ----------
-      fadeOut($("cubew"), 7.5); fadeOut($("cubesz"), 7.5); fadeOut($("cubelbl"), 7.5); fadeOut(dots, 7.5);
-      ft($("matsin"), { scale: 1, opacity: 1 }, { scale: 5, opacity: 0, duration: 1.3, ease: MOVE }, 7.6);
-      ft($("blk"), { x: 20, y: 180, scale: 5.3125 / 520 }, { x: 0, y: 0, scale: 1, duration: 1.3, ease: MOVE }, 7.6);
-      ft($("as"), { x: -194, y: 180, scaleX: 340 / 130, scaleY: 5.3125 / 520 }, { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 1.3, ease: MOVE }, 7.6);
-      ft($("ws"), { x: 20, y: -34, scaleX: 5.3125 / 520, scaleY: 340 / 130 }, { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 1.3, ease: MOVE }, 7.6);
-      ft($("bkf"), { opacity: 1 }, { opacity: 0.08, duration: 0.8, ease: MOVE }, 8.1);
-      ft($("asf"), { opacity: 1 }, { opacity: 0.2, duration: 0.8, ease: MOVE }, 8.1);
-      ft($("wsf"), { opacity: 1 }, { opacity: 0, duration: 0.8, ease: MOVE }, 8.1);
-      ft($("wsy"), { opacity: 0 }, { opacity: 0.38, duration: 0.8, ease: MOVE }, 8.1);
-      [$("bkb"), $("asb"), $("wsb")].forEach((e) => fadeIn(e, 8.5));
-      fadeIn($("ann1in"), 8.8);
-      const cells = [0, 1, 2, 3, 4, 5, 6, 7].map((k) => $("w" + k));
-      cells.forEach((c, k) => ft(c, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: IN }, 9.3 + k * 0.07));
-      const wl = document.querySelectorAll("#s03-blk .s03-wl");
-      wl.forEach((w, k) => ft(w, { opacity: 0 }, { opacity: 1, duration: 0.35, ease: IN }, 10.9 + k * 0.12));
-      fadeIn($("ann2in"), 10.8);
+      // ---------- 第 1 句：不换位 8 轮 → 换位后 1 轮 ----------
+      cells.forEach((row, r) => row.forEach((c, j) => ft(c, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35, ease: IN }, 1.1 + r * 0.04 + j * 0.015)));
+      rls.forEach((l, r) => fadeIn(l, 1.2 + r * 0.04, 0.35));
+      heads.forEach((h, j) => fadeIn(h, 1.3 + j * 0.03, 0.35));
+      ft($("gtop"), { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 1.4);
+      reds.forEach((e, r) => ft(e, { opacity: 0 }, { opacity: 1, duration: 0.25, ease: IN }, 1.9 + r * 0.06));
+      zeros.forEach((e, r) => ft(e, { color: "#6b6556" }, { color: "#ffffff", duration: 0.25, ease: IN }, 1.9 + r * 0.06));
+      ft($("colo"), { opacity: 0, scale: 1.08 }, { opacity: 1, scale: 1, duration: 0.35, ease: IN }, 2.4);
+      ft($("rk1"), { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 2.4);
+      // 换位：第 r 行第 c 格 → 第 c ⊕ r 格（整行一起滑）
+      fadeOut($("colo"), 3.2, 0.3);
+      cells.forEach((row, r) => row.forEach((c, j) => { const dx = ((j ^ r) - j) * PX; if (dx) ft(c, { x: 0 }, { x: dx, duration: 0.9, ease: MOVE }, 3.25); }));
+      greens.forEach((e) => ft(e, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, 4.1));
+      ft($("rk2"), { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 4.3);
+      fadeOut($("grid"), B[1]);
 
-      // ---------- 13.5 再推进 w0：4 × 2 个片段，8 条 mma_sync ----------
-      fadeOut($("ann1in"), 13.5); fadeOut($("ann2in"), 13.5);
-      [$("asf"), $("asb"), $("wsy"), $("wsb"), $("bkf"), $("bkb")].forEach((e) =>
-        ft(e, { opacity: e === $("asf") ? 0.2 : e === $("wsy") ? 0.38 : e === $("bkf") ? 0.08 : 1 }, { opacity: 0, duration: 0.4, ease: OUT }, 13.5));
-      cells.slice(1).forEach((c) => fadeOut(c, 13.5));
-      fadeOut(wl[0], 13.5);
-      ft($("cam2"), { x: 0, y: 0, scale: 1 }, { x: -824, y: -58, scale: 1.6, duration: 1.3, ease: MOVE }, 13.6);
-      [$("a1"), $("a2"), $("a3"), $("b0"), $("b1")].forEach((e, i) => fadeIn(e, 14.2 + i * 0.06, 0.4));
-      document.querySelectorAll("#s03-blk .s03-cf").forEach((e, i) => fadeIn(e, 14.4 + i * 0.04, 0.4));
-      fadeIn($("ann3in"), 14.3);
-      ft($("codein"), { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.6, ease: IN }, 14.5);
-      fadeIn($("cntin"), 16.2, 0.4);
-      fadeIn($("acur"), 16.25, 0.25); fadeIn($("bcur"), 16.25, 0.25);
-      const cfLit = Array.from(document.querySelectorAll("#s03-blk .s03-cf i"));
-      for (let k = 0; k < 8; k++) {
-        const i = k >> 1, j = k & 1, t = 16.3 + k * 0.4;
-        if (k > 0) {
-          const pi = (k - 1) >> 1, pj = (k - 1) & 1;
-          if (pi !== i) ft($("acur"), { y: pi * 65 }, { y: i * 65, duration: 0.2, ease: MOVE }, t - 0.05);
-          ft($("bcur"), { x: pj * 65 }, { x: j * 65, duration: 0.2, ease: MOVE }, t - 0.05);
-          ft($("k" + k), { opacity: 1 }, { opacity: 0, duration: 0.05 }, t);
-        }
-        ft($("k" + (k + 1)), { opacity: 0 }, { opacity: 1, duration: 0.05 }, t);
-        ft(cfLit[i * 2 + j], { opacity: 0 }, { opacity: 1, duration: 0.25, ease: IN }, t);
-      }
-
-      // ---------- 19.7 实测 93.3：2.1 倍，cuBLAS 的 11.9% ----------
-      fadeOut($("codein"), 19.7); fadeOut($("cntin"), 19.7); fadeOut($("ann3in"), 19.7);
-      fadeOut($("acur"), 19.7, 0.3); fadeOut($("bcur"), 19.7, 0.3);
-      ft($("fill"), { scaleX: 44.3 / 781.86 }, { scaleX: 93.3 / 781.86, duration: 1.1, ease: MOVE }, 19.8);
-      ft([$("num44"), $("num93")], { x: fx(44.3) + 10 }, { x: fx(93.3) + 10, duration: 1.1, ease: MOVE }, 19.8);
-      ft($("num44"), { opacity: 1 }, { opacity: 0, duration: 0.3, ease: OUT }, 19.85);
-      ft($("num93"), { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, 20.6);
-      fadeOut($("tnote"), 20.6, 0.3);
-      fadeIn($("g1"), 21.0);
-      fadeIn($("g2"), 23.0);
-
-      // ---------- 25.0 片段退到左边缩小；硬件塔进场；carrier 上塔、两次经过寄存器 ----------
-      fadeOut($("mt"), 25.0, 0.3);
-      ft($("cam3"), { scale: 1 }, { scale: 0.6, duration: 1.0, ease: MOVE }, 25.0);
+      // ---------- 第 2 句：塔进场；旧路径经寄存器，划掉；cp.async 直达 ----------
       ["hbm", "l2", "smem", "reg", "tc"].forEach((id, i) =>
-        ft(L[id], { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 25.15 + i * 0.08));
-      ft(smBox, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 25.5);
-      ft($("car"), { opacity: 0, scale: 0 }, { opacity: 1, scale: 1, duration: 0.4, ease: IN }, 25.8);
-      const LY = { tc: 262, reg: 406, smem: 550, l2: 712, hbm: 856 }, PX = 1500;
-      const hop = (n, from, to, lane, t, dur) => {
-        const pts = [[PX, LY[from]], [lane, LY[from]], [lane, LY[to]], [PX, LY[to]]];
+        ft(L[id], { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, B[1] + 0.1 + i * 0.07));
+      fadeIn(smBox, B[1] + 0.45);
+      ft($("old"), { opacity: 0 }, { opacity: 0.9, duration: 0.4, ease: IN }, B[1] + 0.5);
+      ft($("po"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, B[1] + 0.4);
+      ft($("x1"), { strokeDashoffset: $("x1").dataset.len }, { strokeDashoffset: 0, duration: 0.2, ease: IN }, B[1] + 1.1);
+      ft($("x2"), { strokeDashoffset: $("x2").dataset.len }, { strokeDashoffset: 0, duration: 0.2, ease: IN }, B[1] + 1.3);
+      ft($("strike"), { scaleX: 0 }, { scaleX: 1, duration: 0.35, ease: MOVE }, B[1] + 1.15);
+      ft($("old"), { opacity: 0.9 }, { opacity: 0.25, duration: 0.4, ease: MOVE }, B[1] + 1.8);
+      ft($("pn"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, B[1] + 1.9);
+      ft($("new"), { strokeDashoffset: $("new").dataset.len }, { strokeDashoffset: 0, duration: 0.9, ease: "power1.inOut" }, B[1] + 2.0);
+      fadeIn($("cpl"), B[1] + 2.3, 0.4);
+      const LY = { smem: 610, l2: 752 }, RX = 1656, LX = 1748;
+      const trip = (car, t, d) => {
+        const pts = [[RX, LY.l2], [LX, LY.l2], [LX, LY.smem], [RX, LY.smem]];
         const seg = [0];
         for (let i = 1; i < pts.length; i++) seg.push(seg[i - 1] + Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]));
         const len = seg[seg.length - 1], kf = { easeEach: "none" };
         pts.forEach((p, i) => { kf[((seg[i] / len) * 100).toFixed(3) + "%"] = { x: p[0], y: p[1] }; });
-        const path = $("r" + n);
-        path.setAttribute("d", "M " + pts.map((p) => p.join(" ")).join(" L "));
-        gsap.set(path, { strokeDasharray: len, strokeDashoffset: len });
-        tl.to($("car"), { keyframes: kf, duration: dur, ease: "power1.inOut" }, t);
-        ft(path, { strokeDashoffset: len }, { strokeDashoffset: 0, duration: dur, ease: "power1.inOut" }, t);
+        gsap.set(car, { xPercent: -50, yPercent: -50, x: RX, y: LY.l2 });
+        fadeIn(car, t - 0.3, 0.3);
+        tl.to(car, { keyframes: kf, duration: d, ease: "power1.inOut" }, t);
+        ft(car, { scale: 1 }, { scale: 0.6, duration: 0.3, ease: OUT }, t + d);
+        ft(car, { opacity: 1 }, { opacity: 0, duration: 0.3, ease: OUT }, t + d + 0.1);
       };
-      hop(1, "hbm", "l2", 1580, 26.2, 0.7);     // 显存 → L2
-      hop(2, "l2", "reg", 1580, 27.0, 0.8);     // L2 → 寄存器（经过共享内存那层不进）
-      ft($("oreg"), { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, 27.75);
-      fadeIn($("turn1"), 27.8);
-      hop(3, "reg", "smem", 1608, 28.0, 0.7);   // 寄存器 → 共享内存（折返）
-      fadeIn($("turn2"), 28.7);
-      hop(4, "smem", "reg", 1636, 28.9, 0.9);   // 共享内存 → 寄存器（第二次）
-      hop(5, "reg", "tc", 1580, 30.1, 0.8);     // 寄存器 → Tensor Core
+      trip($("car1"), B[1] + 2.2, 1.0);
+      trip($("car2"), B[1] + 4.0, 1.0);
+      ft($("code"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, B[1] + 3.0);
+      fadeOut($("cmp"), B[2]);
 
-      // ---------- 32.9 塔退为背景，共享内存放大：2 组 bank，4 轮 ----------
-      fadeOut($("cam3"), 32.9);
-      ["tc", "l2", "hbm"].forEach((id) => ft(L[id], { opacity: 1 }, { opacity: 0.3, duration: 0.5, ease: MOVE }, 33.0));
-      ft($("osm"), { opacity: 0 }, { opacity: 1, duration: 0.4, ease: IN }, 33.0);
-      ft($("bkh"), { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.6, ease: IN }, 33.0);
-      const gch = Array.from(grid.children);
-      gch.forEach((c, i) => {
-        const isLbl = c.classList.contains("s03-rl");
-        const row = isLbl ? Math.floor(parseInt(c.style.top) / 72) : Math.floor(parseInt(c.style.top) / 72);
-        ft(c, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: IN }, 33.3 + row * 0.12 + (isLbl ? 0.2 : 0));
-      });
-      fadeIn($("conn"), 33.4);
-      fadeIn($("half"), 33.8);
-      wCells.forEach((arr, r) => ft(arr, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: IN }, 35.2 + r * 0.15));
-      fadeIn($("grp"), 36.0);
-      fadeIn($("rnd"), 36.9, 0.4);
-      for (let r = 0; r < 4; r++) {
-        const t = 37.0 + r * 0.6;
-        ft(lCells[r], { opacity: 0 }, { opacity: 1, duration: 0.2, ease: IN }, t);
-        if (r > 0) {
-          ft(lCells[r - 1], { opacity: 1 }, { opacity: 0.35, duration: 0.2, ease: OUT }, t);
-          ft($("q" + r), { opacity: 1 }, { opacity: 0, duration: 0.05 }, t);
-        }
-        ft($("q" + (r + 1)), { opacity: 0 }, { opacity: 1, duration: 0.05 }, t);
-      }
+      // ---------- 第 3 句：11.78 → 4.09 ms，快 2.9 倍 ----------
+      ft($("tbghost"), { opacity: 0 }, { opacity: 1, duration: 0.1 }, B[2]);
+      ft($("tbfill"), { scaleX: 11.78 / 16 }, { scaleX: 4.09 / 16, duration: 0.9, ease: MOVE }, B[2]);
+      ft($("tbnum"), { x: 11.78 * 45 + 12 }, { x: 4.09 * 45 + 12, duration: 0.9, ease: MOVE }, B[2]);
+      ft($("tbv1"), { opacity: 1 }, { opacity: 0, duration: 0.3, ease: OUT }, B[2] + 0.1);
+      ft($("tbv2"), { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, B[2] + 0.7);
+      fadeOut($("tbghost"), B[2] + 1.5, 0.5);
+      ft($("gainin"), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: IN }, B[2] + 0.3);
+      fadeOut($("gainin"), B[3]);
+      fadeOut($("tw"), B[3]);
 
-      // ---------- 40.9 瓶颈标签，停住 ----------
-      ft($("bn1"), { opacity: 0, scale: 0.85, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, 40.9);
-      ft($("bn2"), { opacity: 0, scale: 0.85, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, 41.05);
+      // ---------- 第 4 句：拷贝 → 等待 → 计算；计算前的等待 = 瓶颈 ----------
+      ft($("tlh"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, B[3] + 0.2);
+      document.querySelectorAll("#s03-tl .s03-lname").forEach((e, i) => fadeIn(e, B[3] + 0.25 + i * 0.1, 0.4));
+      ft([$("lane1"), $("lane2")], { clipPath: "inset(0px 100% 0px 0px)" }, { clipPath: "inset(0px 0% 0px 0px)", duration: 2.0, ease: "none" }, B[3] + 0.4);
+      fadeIn($("tarr"), B[3] + 0.8);
+      ft([$("wait"), $("idle")], { opacity: 0, scale: 1.06 }, { opacity: 1, scale: 1, duration: 0.4, ease: IN }, B[3] + 2.5);
+      ft($("bn"), { opacity: 0, scale: 0.85, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, B[3] + 2.6);
 
-      tl.set({}, {}, 49.0);
-      /* warp */ { const P = [[0.0, 0.0], [0.5, 0.5], [7.5, 10.16], [13.5, 17.31], [19.7, 23.46], [25.0, 31.46], [32.9, 38.01], [40.9, 44.87], [49.0, 52.14]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 52.14, duration: 52.14, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s03"] = outer; } /* /warp */
+      tl.set({}, {}, DUR);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["s03"] = tl;
     })();
   </script>
 </template>

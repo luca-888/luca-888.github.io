@@ -1,231 +1,180 @@
 <template>
   <style>
     #root { position: absolute; inset: 0; }
-    #root .s01-abs { position: absolute; }
     #root .s01-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
-    #root .s01-dot { position: absolute; width: 36px; height: 36px; border-radius: 50%; background: var(--ink2); }
-    #root .s01-lbl { position: absolute; font-size: 32px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
-    #root #s01-cover-lbl { left: 140px; top: 540px; font-size: 40px; font-weight: 700; color: var(--ink); }
-    #root #s01-row-lbl { left: 160px; top: 520px; }
-    #root #s01-clu-lbl { left: 160px; top: 560px; }
-    #root #s01-meter .num { left: 0; color: var(--ink); font-size: 40px; text-align: left; padding: 0; }
-    #root #s01-meter .note { color: var(--ink2); font-size: 30px; }
-    #root #s01-cube { left: 940px; top: 130px; width: 600px; height: 620px; }
-    #root #s01-cube-lbl { left: 940px; width: 600px; top: 772px; text-align: center; font-size: 36px; font-weight: 700; color: var(--teal-t); }
-    #root #s01-g128 { left: 160px; top: 260px; width: 192px; height: 96px; }
-    #root #s01-g128-lbl { left: 160px; top: 374px; }
-    #root #s01-g2048 { left: 856px; top: 278px; width: 768px; height: 384px; }
-    #root #s01-g2048-lbl { left: 856px; top: 682px; color: var(--teal-t); }
-    #root #s01-x16 { left: 150px; top: 440px; font-size: 180px; line-height: 1; font-weight: 800; color: var(--ink); white-space: nowrap; }
+    #root .s01-abs { position: absolute; }
+    /* 镜头 A：两个 C 矩阵 */
+    #root .s01-ver { position: absolute; top: 56px; width: 560px; text-align: center; font-size: 56px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+    #root #s01-slow { position: absolute; left: 760px; top: 72px; width: 400px; text-align: center; font-size: 32px; font-weight: 600; color: var(--note); white-space: nowrap; }
+    #root .s01-mat { position: absolute; top: 150px; width: 560px; height: 560px; border: 4px solid var(--purple); background: var(--cell); overflow: hidden; }
+    #root .s01-row { position: absolute; left: 0; width: 552px; height: 69px; background: var(--purple); transform-origin: 0 50%; }
+    #root .s01-grid { position: absolute; left: 0; top: 0; width: 552px; height: 552px; }
+    #root .s01-grid i { position: absolute; background: var(--paper); }
+    #root .s01-timer { position: absolute; top: 726px; width: 560px; text-align: center; font-family: var(--mono); font-size: 64px; font-weight: 800; color: var(--ink); white-space: nowrap; line-height: 76px; }
+    #root #s01-check { position: absolute; left: 1560px; top: 732px; width: 64px; height: 64px; }
+    #root .s01-tc { position: absolute; top: 826px; width: 60px; height: 60px; background: var(--teal); border-radius: 3px; }
+    #root #s01-tclbl { position: absolute; left: 704px; top: 836px; width: 512px; text-align: center; font-size: 32px; font-weight: 700; color: var(--teal-t); white-space: nowrap; }
+    /* 镜头 B：9% */
+    #root .s01-blbl { position: absolute; left: 160px; font-size: 40px; font-weight: 700; white-space: nowrap; }
+    #root .s01-bar { position: absolute; left: 160px; height: 96px; transform-origin: 0 50%; }
+    #root #s01-b2trk { position: absolute; left: 160px; top: 560px; width: 1300px; height: 96px; border: 3px dashed var(--gray); }
+    #root #s01-p9 { position: absolute; left: 1510px; top: 500px; font-size: 180px; line-height: 200px; font-weight: 800; color: var(--hot-t); white-space: nowrap; }
+    /* 镜头 C：大耗时条 + 问题 */
+    #root #s01-q { position: absolute; left: 0; top: 232px; width: 1920px; text-align: center; font-size: 96px; line-height: 120px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+    #root #s01-tb .ref { opacity: 0; }
   </style>
   <div id="root" data-composition-id="s01" data-width="1920" data-height="1080">
 
-    <!-- 点：封面的一个 FP32 乘加 → 一排 32 个 → 4 × 8 小阵 → 128 点阵的一角 -->
-    <div id="s01-dots" class="clip s01-full" data-start="0.00" data-a-start="0.0" data-duration="19.20" data-a-duration="17.95" data-track-index="1" data-layout-ignore>
-      <div id="s01-dots-in" class="s01-full"></div>
-    </div>
-
-    <div id="s01-cover-lbl" class="clip s01-lbl" data-start="0.00" data-a-start="0.0" data-duration="2.06" data-a-duration="1.75" data-track-index="2">
-      <div id="s01-cover-lbl-in">FP32：一次乘加</div>
-    </div>
-
-    <div id="s01-row-lbl" class="clip s01-lbl" data-start="2.00" data-a-start="1.7" data-duration="5.72" data-a-duration="4.7" data-track-index="2">
-      <div id="s01-row-lbl-in">一个处理块：32 个 FP32 单元</div>
-    </div>
-
-    <!-- 右上实测进度条：停在 44.3 -->
-    <div id="s01-meter" class="clip kit-meter" data-start="1.00" data-a-start="0.9" data-duration="6.72" data-a-duration="5.5" data-track-index="3">
-      <div id="s01-meter-in" style="position:absolute;inset:0">
-        <div class="lbl">FP32 版本 · TFLOPS</div>
-        <div class="track"><div id="s01-meter-fill" class="fill"></div></div>
-        <div id="s01-meter-num" class="num k-num" style="top:40px;left:44px">44.3</div>
-        <div id="s01-meter-note" class="note">FP32 单元用满</div>
+    <!-- 0.0 两个 C 矩阵同时填充（放慢 1000 倍） -->
+    <div id="s01-A" class="clip s01-full" data-start="0.00" data-duration="12.50" data-track-index="1">
+      <div id="s01-Ain" class="s01-full">
+        <div id="s01-verL" class="s01-ver" style="left:280px">第 1 版</div>
+        <div id="s01-verR" class="s01-ver" style="left:1080px">第 8 版</div>
+        <div id="s01-slow">放慢 1000 倍</div>
+        <div id="s01-matL" class="s01-mat" style="left:280px">
+          <div id="s01-L0" class="s01-row" style="top:0px"></div>
+          <div id="s01-L1" class="s01-row" style="top:69px"></div>
+          <div id="s01-L2" class="s01-row" style="top:138px"></div>
+          <div id="s01-L3" class="s01-row" style="top:207px"></div>
+          <div id="s01-L4" class="s01-row" style="top:276px"></div>
+          <div id="s01-L5" class="s01-row" style="top:345px"></div>
+          <div id="s01-L6" class="s01-row" style="top:414px"></div>
+          <div id="s01-L7" class="s01-row" style="top:483px"></div>
+          <div class="s01-grid"></div>
+        </div>
+        <div id="s01-matR" class="s01-mat" style="left:1080px">
+          <div id="s01-R0" class="s01-row" style="top:0px"></div>
+          <div id="s01-R1" class="s01-row" style="top:69px"></div>
+          <div id="s01-R2" class="s01-row" style="top:138px"></div>
+          <div id="s01-R3" class="s01-row" style="top:207px"></div>
+          <div id="s01-R4" class="s01-row" style="top:276px"></div>
+          <div id="s01-R5" class="s01-row" style="top:345px"></div>
+          <div id="s01-R6" class="s01-row" style="top:414px"></div>
+          <div id="s01-R7" class="s01-row" style="top:483px"></div>
+          <div class="s01-grid"></div>
+        </div>
+        <div id="s01-tL" class="s01-timer" style="left:280px">0.00 ms</div>
+        <div id="s01-tR" class="s01-timer" style="left:1080px">0.00 ms</div>
+        <svg id="s01-check" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="32" cy="32" r="30" style="fill:var(--teal)" />
+          <polyline points="17,33 28,44 47,22" style="fill:none;stroke:#fff;stroke-width:7;stroke-linecap:round;stroke-linejoin:round" />
+        </svg>
+        <!-- 7.61 同一批 Tensor Core -->
+        <div id="s01-tc0" class="s01-tc" style="left:416px"></div>
+        <div id="s01-tc1" class="s01-tc" style="left:492px"></div>
+        <div id="s01-tc2" class="s01-tc" style="left:568px"></div>
+        <div id="s01-tc3" class="s01-tc" style="left:644px"></div>
+        <div id="s01-tc4" class="s01-tc" style="left:1216px"></div>
+        <div id="s01-tc5" class="s01-tc" style="left:1292px"></div>
+        <div id="s01-tc6" class="s01-tc" style="left:1368px"></div>
+        <div id="s01-tc7" class="s01-tc" style="left:1444px"></div>
+        <div id="s01-tclbl">每个 SM 4 个 Tensor Core</div>
       </div>
     </div>
 
-    <!-- Tensor Core 乘加立方体（16 × 16 × 16）与 A / B / C 三片 -->
-    <div id="s01-cube" class="clip s01-abs" data-start="7.24" data-a-start="5.9" data-duration="13.05" data-a-duration="13.1" data-track-index="4" data-layout-ignore>
-      <div id="s01-cubeg" style="position:absolute;left:0;top:0;width:600px;height:620px">
-      <svg width="600" height="620" viewBox="-300 -340 600 620" xmlns="http://www.w3.org/2000/svg" style="display:block">
-        <g>
-          <polygon id="s01-f-top" style="fill:var(--teal)" />
-          <polygon id="s01-f-left" style="fill:var(--tealD)" />
-          <polygon id="s01-f-right" style="fill:var(--teal-t)" />
-          <path id="s01-f-grid" fill="none" style="stroke:var(--paper)" stroke-opacity="0.35" stroke-width="1" />
-          <path id="s01-f-edge" fill="none" style="stroke:var(--paper)" stroke-width="2" />
-        </g>
-      </svg>
+    <!-- 11.16 规格峰值 989 vs 第 1 版 93.3：9% -->
+    <div id="s01-B" class="clip s01-full" data-start="12.38" data-duration="5.02" data-track-index="2">
+      <div id="s01-Bin" class="s01-full">
+        <div id="s01-bl1" class="s01-blbl" style="top:300px;color:var(--teal-t)">Tensor Core 规格峰值 989 TFLOPS（FP32 单元的 16 倍）</div>
+        <div id="s01-b1" class="s01-bar" style="top:360px;width:1300px;background:var(--teal)"></div>
+        <div id="s01-bl2" class="s01-blbl" style="top:500px;color:var(--ink)">第 1 版 93.3 TFLOPS</div>
+        <div id="s01-b2trk"></div>
+        <div id="s01-b2" class="s01-bar" style="top:560px;width:123px;background:var(--ink2)"></div>
+        <div id="s01-p9">9%</div>
       </div>
-      <svg width="600" height="620" viewBox="-300 -340 600 620" xmlns="http://www.w3.org/2000/svg" style="position:absolute;left:0;top:0;display:block">
-        <g id="s01-sb">
-          <polygon id="s01-sb-p" style="fill:var(--yel)" />
-          <path id="s01-sb-g" fill="none" style="stroke:var(--paper)" stroke-opacity="0.45" stroke-width="1" />
-          <text id="s01-sb-t" text-anchor="middle" dominant-baseline="central" font-size="44" font-weight="800" style="fill:var(--ink)">B</text>
-        </g>
-        <g id="s01-sa">
-          <polygon id="s01-sa-p" style="fill:var(--blue)" />
-          <path id="s01-sa-g" fill="none" style="stroke:var(--paper)" stroke-opacity="0.35" stroke-width="1" />
-          <text id="s01-sa-t" text-anchor="middle" dominant-baseline="central" font-size="44" font-weight="800" fill="#fff">A</text>
-        </g>
-        <g id="s01-sc">
-          <polygon id="s01-sc-p" style="fill:var(--purple)" />
-          <path id="s01-sc-g" fill="none" style="stroke:var(--paper)" stroke-opacity="0.35" stroke-width="1" />
-          <text id="s01-sc-t" text-anchor="middle" dominant-baseline="central" font-size="44" font-weight="800" fill="#fff">C</text>
-        </g>
-      </svg>
     </div>
 
-    <div id="s01-cube-lbl" class="clip s01-lbl" data-start="8.30" data-a-start="7.0" data-duration="6.20" data-a-duration="6.4" data-track-index="5">
-      <div id="s01-cube-lbl-in">一条指令：16 × 16 × 16</div>
-    </div>
-
-    <div id="s01-clu-lbl" class="clip s01-lbl" data-start="8.11" data-a-start="6.8" data-duration="6.29" data-a-duration="6.5" data-track-index="2">
-      <div id="s01-clu-lbl-in">32 个 FP32 单元</div>
-    </div>
-
-    <!-- 同一点距：128 个点（FP32，整个 SM）对 2048 个点（Tensor Core） -->
-    <div id="s01-g128" class="clip s01-abs" data-start="14.39" data-a-start="13.3" data-duration="4.81" data-a-duration="4.65" data-track-index="6" data-layout-ignore>
-      <svg width="192" height="96" viewBox="0 0 192 96" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <pattern id="s01-pat-a" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="4.5" style="fill:var(--ink2)" /></pattern>
-        </defs>
-        <rect id="s01-q1" x="96" y="0" width="96" height="48" fill="url(#s01-pat-a)" />
-        <rect id="s01-q2" x="0" y="48" width="96" height="48" fill="url(#s01-pat-a)" />
-        <rect id="s01-q3" x="96" y="48" width="96" height="48" fill="url(#s01-pat-a)" />
-      </svg>
-    </div>
-    <div id="s01-g128-lbl" class="clip s01-lbl" data-start="14.70" data-a-start="13.6" data-duration="4.50" data-a-duration="4.35" data-track-index="7">
-      <div id="s01-g128-lbl-in">FP32：128 次乘加</div>
-    </div>
-
-    <div id="s01-g2048" class="clip s01-abs" data-start="15.12" data-a-start="14.0" data-duration="4.55" data-a-duration="4.4" data-track-index="8" data-layout-ignore>
-      <svg id="s01-g2048-svg" width="768" height="384" viewBox="0 0 768 384" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <pattern id="s01-pat-b" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="4.5" style="fill:var(--teal)" /></pattern>
-        </defs>
-        <rect id="s01-g2048-dots" x="0" y="0" width="768" height="384" fill="url(#s01-pat-b)" />
-        <path id="s01-g2048-cut" d="M192 0V384M384 0V384M576 0V384M0 96H768M0 192H768M0 288H768" fill="none" style="stroke:var(--paper)" stroke-width="5" />
-      </svg>
-    </div>
-    <div id="s01-g2048-lbl" class="clip s01-lbl" data-start="15.32" data-a-start="14.2" data-duration="3.88" data-a-duration="3.75" data-track-index="9">
-      <div id="s01-g2048-lbl-in">Tensor Core：2048 次乘加</div>
-    </div>
-
-    <div id="s01-x16" class="clip s01-abs" data-start="17.50" data-a-start="16.3" data-duration="2.79" data-a-duration="2.7" data-track-index="10">
-      <div id="s01-x16-in"><span class="acc">16</span> 倍</div>
+    <!-- 16.97 大耗时条：11.78 ms，时间去哪了？最后停靠右上角 -->
+    <div id="s01-C" class="clip s01-full" data-start="16.97" data-duration="4.53" data-track-index="3">
+      <div id="s01-q">时间去哪了？</div>
+      <div id="s01-tb" class="kit-tbar">
+        <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
+        <div class="track"><div id="s01-tbghost" class="ghost" style="opacity:0"></div><div id="s01-tbfill" class="fill"></div><div id="s01-tbpeak" class="peak"></div></div>
+        <div id="s01-tbnum" class="num">11.78 ms</div>
+        <div id="s01-ref1" class="ref">虚线：峰值只要 1.11 ms</div>
+        <div id="s01-ref2" class="ref">虚线：规格峰值 1.11 ms</div>
+      </div>
     </div>
   </div>
   <script>
     (function () {
-      // ---------- 立方体几何（等轴测，中心 (1240,470)，宽 360） ----------
-      var A = 208, C = A * Math.cos(Math.PI / 6), S = A / 2, N = 16;
-      var P = { top: [0, -A], ur: [C, -S], lr: [C, S], bot: [0, A], ll: [-C, S], ul: [-C, -S], ctr: [0, 0] };
-      function pts(a) { return a.map(function (p) { return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" "); }
-      function add(p, q, k) { return [p[0] + q[0] * k, p[1] + q[1] * k]; }
-      function sub(p, q) { return [p[0] - q[0], p[1] - q[1]]; }
-      function grid(O, U, V) {
-        var d = "";
-        for (var k = 1; k < N; k++) {
-          var a = add(O, U, k / N), b = add(a, V, 1);
-          var c = add(O, V, k / N), e = add(c, U, 1);
-          d += "M" + a[0].toFixed(1) + " " + a[1].toFixed(1) + "L" + b[0].toFixed(1) + " " + b[1].toFixed(1);
-          d += "M" + c[0].toFixed(1) + " " + c[1].toFixed(1) + "L" + e[0].toFixed(1) + " " + e[1].toFixed(1);
+      const $ = (k) => document.getElementById("s01-" + k);
+      const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
+      const IN = "power3.out", MOVE = "power2.inOut", OUT = "power2.in";
+      const ft = (el, a, b, t) => tl.fromTo(el, a, b, t);
+      const fadeIn = (el, t, d = 0.5) => ft(el, { opacity: 0 }, { opacity: 1, duration: d, ease: IN }, t);
+      const fadeOut = (el, t, d = 0.4) => ft(el, { opacity: 1 }, { opacity: 0, duration: d, ease: OUT }, t);
+
+      // 装饰：tile 网格线（8 × 8），不计时
+      document.querySelectorAll("#root .s01-grid").forEach((g) => {
+        for (let k = 1; k < 8; k++) {
+          const v = document.createElement("i"); v.style.cssText = `left:${k * 69 - 2}px;top:0;width:4px;height:552px`; g.appendChild(v);
+          const h = document.createElement("i"); h.style.cssText = `left:0;top:${k * 69 - 2}px;width:552px;height:4px`; g.appendChild(h);
         }
-        return d;
-      }
-      var faces = {
-        top: { O: P.ul, U: sub(P.top, P.ul), V: sub(P.ctr, P.ul) },
-        left: { O: P.ul, U: sub(P.ctr, P.ul), V: sub(P.ll, P.ul) },
-        right: { O: P.ctr, U: sub(P.ur, P.ctr), V: sub(P.bot, P.ctr) }
+      });
+
+      // ---------- 初始状态 ----------
+      const rowsL = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => $("L" + i));
+      const rowsR = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => $("R" + i));
+      gsap.set([...rowsL, ...rowsR], { scaleX: 0 });
+      gsap.set([$("check"), $("tclbl")], { opacity: 0 });
+      gsap.set([$("bl1"), $("bl2"), $("b2trk"), $("p9")], { opacity: 0 });
+      gsap.set([$("b1"), $("b2")], { scaleX: 0 });
+      gsap.set([0, 1, 2, 3, 4, 5, 6, 7].map((i) => $("tc" + i)), { opacity: 0 });
+
+      // ---------- 0.2 填充：右 1.41 s，左 11.78 s（放慢 1000 倍，线性） ----------
+      const T0 = 0.2;
+      const fill = (rows, total, timer) => {
+        const per = total / rows.length;
+        rows.forEach((r, i) => ft(r, { scaleX: 0 }, { scaleX: 1, duration: per, ease: "none" }, T0 + i * per));
+        const st = { v: 0 };
+        ft(st, { v: 0 }, { v: total, duration: total, ease: "none", onUpdate: () => { timer.textContent = st.v.toFixed(2) + " ms"; } }, T0);
       };
-      function quad(f) { return [f.O, add(f.O, f.U, 1), add(add(f.O, f.U, 1), f.V, 1), add(f.O, f.V, 1)]; }
-      function center(f) { return add(add(f.O, f.U, 0.5), f.V, 0.5); }
-      var $ = function (id) { return document.getElementById(id); };
-      $("s01-f-top").setAttribute("points", pts(quad(faces.top)));
-      $("s01-f-left").setAttribute("points", pts(quad(faces.left)));
-      $("s01-f-right").setAttribute("points", pts(quad(faces.right)));
-      $("s01-f-grid").setAttribute("d", grid(faces.top.O, faces.top.U, faces.top.V) + grid(faces.left.O, faces.left.U, faces.left.V) + grid(faces.right.O, faces.right.U, faces.right.V));
-      $("s01-f-edge").setAttribute("d", "M" + pts([P.ul, P.ctr, P.ur]).replace(/ /g, "L") + "M0,0L" + P.bot[0] + "," + P.bot[1]);
-      var slices = { sa: faces.left, sb: faces.top, sc: faces.right };
-      Object.keys(slices).forEach(function (k) {
-        var f = slices[k], c = center(f);
-        $("s01-" + k + "-p").setAttribute("points", pts(quad(f)));
-        $("s01-" + k + "-g").setAttribute("d", grid(f.O, f.U, f.V));
-        $("s01-" + k + "-t").setAttribute("x", c[0].toFixed(1));
-        $("s01-" + k + "-t").setAttribute("y", c[1].toFixed(1));
+      fill(rowsR, 1.41, $("tR"));
+      fill(rowsL, 11.78, $("tL"));
+      ft($("tR"), { color: "#141414" }, { color: "#0a6f63", duration: 0.3, ease: IN }, T0 + 1.41);
+      ft($("check"), { opacity: 0, scale: 0.4, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)" }, T0 + 1.45);
+
+      // ---------- 7.61 同一批 Tensor Core ----------
+      [0, 1, 2, 3].forEach((i) => {
+        ft([$("tc" + i), $("tc" + (i + 4))], { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 7.7 + i * 0.12);
       });
-      // 三片沿各自法线向外分开（屏幕方向）
-      var D = 120, cos = Math.cos(Math.PI / 6), sin = 0.5;
-      var off = { sa: [-cos * D, sin * D], sb: [0, -D], sc: [cos * D, sin * D] };
+      fadeIn($("tclbl"), 8.3);
 
-      // ---------- 点 ----------
-      var host = $("s01-dots-in"), dots = [];
-      for (var i = 0; i < 32; i++) {
-        var el = document.createElement("div");
-        el.className = "s01-dot";
-        el.id = "s01-dot-" + i;
-        el.style.left = (160 + 50 * i) + "px";
-        el.style.top = "452px";
-        host.appendChild(el);
-        dots.push(el);
-      }
-      function rowC(i) { return [178 + 50 * i, 470]; }
-      function cluC(i) { return [173 + 34 * (i % 8), 415 + 34 * Math.floor(i / 8)]; }
-      function g128C(i) { return [166 + 12 * (i % 8), 266 + 12 * Math.floor(i / 8)]; }
+      // ---------- 12.5 矩阵退场；横条：989 vs 93.3 → 9% ----------
+      ft($("Ain"), { opacity: 1, y: 0 }, { opacity: 0, y: -30, duration: 0.35, ease: OUT }, 11.98);
+      fadeIn([$("bl1")], 12.4);
+      ft($("b1"), { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: IN }, 12.4);
+      fadeIn([$("bl2"), $("b2trk")], 13.2);
+      ft($("b2"), { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: IN }, 13.4);
+      ft($("p9"), { opacity: 0, scale: 0.7, transformOrigin: "0% 50%" }, { opacity: 1, scale: 1, duration: 0.6, ease: IN }, 14.6);
+      fadeOut($("Bin"), 16.97);
 
-      var tl = gsap.timeline({ paused: true });
+      // ---------- 16.97 大耗时条（2 倍居中）→ 11.78 ms → 停靠右上角 ----------
+      // 停靠位：right 96 / top 84，720 宽；大画面：右上角为原点放大 2 倍，左缘 240，上缘 400
+      const BIG = { x: -144, y: 316, scale: 2 };
+      gsap.set($("tb"), { transformOrigin: "100% 0%", ...BIG });
+      gsap.set($("tbfill"), { scaleX: 0 });
+      gsap.set($("tbnum"), { x: 12 });
+      gsap.set($("q"), { opacity: 0 });
+      ft($("tb"), { opacity: 0 }, { opacity: 1, duration: 0.5, ease: IN }, 17.15);
+      ft($("q"), { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.6, ease: IN }, 17.05);
+      const ms = { v: 0 };
+      ft(ms, { v: 0 }, { v: 11.78, duration: 1.2, ease: "power2.out", onUpdate: () => {
+        gsap.set($("tbfill"), { scaleX: ms.v / 16 });
+        gsap.set($("tbnum"), { x: ms.v * 45 + 12 });
+        $("tbnum").textContent = ms.v.toFixed(2) + " ms";
+      } }, 17.4);
+      fadeIn($("ref1"), 17.6);
+      ft($("tbpeak"), { scaleY: 1 }, { scaleY: 1.35, duration: 0.3, ease: "power2.out", yoyo: true, repeat: 1 }, 18.5);
+      // 最后 1.5 s：问题淡出，耗时条缩回右上角
+      fadeOut($("q"), 19.8);
+      ft($("tb"), BIG, { x: 0, y: 0, scale: 1, duration: 1.0, ease: MOVE }, 20.0);
+      fadeOut($("ref1"), 20.0, 0.3);
+      fadeIn($("ref2"), 20.4, 0.4);
 
-      // ===== 0.0 封面：一个点 =====
-      tl.fromTo(dots[0], { scale: 2.2 }, { scale: 1, duration: 0.6, ease: "power2.inOut" }, 0.5);
-      tl.fromTo("#s01-cover-lbl-in", { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power2.in" }, 1.4);
-
-      // ===== 0.5 一排 32 个点逐个亮满；进度条停在 44.3 =====
-      tl.fromTo(dots.slice(1), { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "power3.out", stagger: 0.07 }, 0.75);
-      tl.fromTo("#s01-row-lbl-in", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power3.out" }, 1.75);
-      tl.fromTo("#s01-meter-in", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power3.out" }, 1.0);
-      tl.fromTo("#s01-meter-fill", { scaleX: 0 }, { scaleX: 44.3 / 781.86, duration: 0.8, ease: "power2.inOut" }, 1.3);
-      tl.fromTo("#s01-meter-num", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power3.out" }, 1.9);
-      tl.fromTo("#s01-meter-note", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power3.out" }, 3.6);
-
-      // ===== 5.9 点阵退到左侧缩小；立方体一次点亮；A/B/C 三片贴上 =====
-      tl.fromTo("#s01-meter-in", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power2.in", immediateRender: false }, 5.9);
-      tl.fromTo("#s01-row-lbl-in", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power2.in", immediateRender: false }, 5.9);
-      dots.forEach(function (d, i) {
-        var r = rowC(i), c = cluC(i);
-        tl.fromTo(d, { x: 0, y: 0, scale: 1 }, { x: c[0] - r[0], y: c[1] - r[1], scale: 26 / 36, duration: 1.0, ease: "power2.inOut", immediateRender: false }, 5.9 + i * 0.008);
-      });
-      tl.fromTo("#s01-clu-lbl-in", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power3.out" }, 6.8);
-      tl.fromTo("#s01-cubeg", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, transformOrigin: "300px 340px", duration: 0.7, ease: "power3.out" }, 6.05);
-      ["sb", "sa", "sc"].forEach(function (k, j) {
-        var o = off[k];
-        tl.fromTo("#s01-" + k, { opacity: 0, x: o[0] * 1.8, y: o[1] * 1.8 }, { opacity: 1, x: o[0], y: o[1], duration: 0.6, ease: "power3.out" }, 6.6 + j * 0.15);
-      });
-      tl.fromTo("#s01-cube-lbl-in", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power3.out" }, 7.0);
-
-      // ===== 12.9 同一点距：128 对 2048 =====
-      tl.fromTo(["#s01-sa", "#s01-sb", "#s01-sc"], { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power2.in", immediateRender: false }, 12.9);
-      tl.fromTo("#s01-cube-lbl-in", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power2.in", immediateRender: false }, 12.9);
-      tl.fromTo("#s01-clu-lbl-in", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power2.in", immediateRender: false }, 12.9);
-      tl.fromTo("#s01-cubeg", { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power2.in", immediateRender: false }, 13.0);
-      dots.forEach(function (d, i) {
-        var r = rowC(i), g = g128C(i);
-        tl.fromTo(d, { x: cluC(i)[0] - r[0], y: cluC(i)[1] - r[1], scale: 26 / 36 }, { x: g[0] - r[0], y: g[1] - r[1], scale: 9 / 36, duration: 0.9, ease: "power2.inOut", immediateRender: false }, 12.9);
-      });
-      tl.fromTo(["#s01-q1", "#s01-q2", "#s01-q3"], { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power3.out", stagger: 0.12 }, 13.5);
-      tl.fromTo("#s01-g128-lbl-in", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power3.out" }, 13.6);
-      tl.fromTo("#s01-g2048-svg", { clipPath: "inset(0px 0px 384px 0px)" }, { clipPath: "inset(0px 0px 0px 0px)", duration: 1.3, ease: "power1.inOut" }, 14.0);
-      tl.fromTo("#s01-g2048-lbl-in", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power3.out" }, 14.2);
-      tl.fromTo("#s01-g2048-cut", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power3.out" }, 16.1);
-      tl.fromTo("#s01-x16-in", { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, transformOrigin: "0% 50%", duration: 0.6, ease: "power3.out" }, 16.3);
-
-      // ===== 17.4 收成交接画面：立方体在右、16 倍在左 =====
-      tl.fromTo(["#s01-dots-in", "#s01-g128", "#s01-g128-lbl-in", "#s01-g2048-lbl-in"], { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power2.in", immediateRender: false }, 17.4);
-      tl.fromTo("#s01-g2048-svg", { opacity: 1, scale: 1 }, { opacity: 0, scale: 0.47, transformOrigin: "50% 50%", duration: 0.7, ease: "power2.inOut", immediateRender: false }, 17.55);
-      tl.fromTo("#s01-cubeg", { opacity: 0, scale: 1.3 }, { opacity: 1, scale: 1, transformOrigin: "300px 340px", duration: 0.75, ease: "power2.inOut", immediateRender: false }, 17.65);
-      tl.fromTo("#s01-x16-in", { y: 0 }, { y: -60, duration: 0.8, ease: "power2.inOut", immediateRender: false }, 17.5);
-
-      tl.set({}, {}, 19.0);
-      /* warp */ { const P = [[0.0, 0.0], [0.5, 0.5], [5.9, 7.24], [12.9, 13.98], [19.0, 20.29]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 20.29, duration: 20.29, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s01"] = outer; } /* /warp */
+      tl.set({}, {}, 21.5);
+      window.__timelines["s01"] = tl;
     })();
   </script>
 </template>

@@ -62,3 +62,14 @@ body { font-family: var(--zh); color: var(--ink); }
 /* —— 字幕：<div class="clip kit-sub"><span>一句配音</span></div> —— */
 .kit-sub { position: absolute; left: 0; right: 0; bottom: 64px; display: flex; justify-content: center; }
 .kit-sub span { display: block; max-width: 1600px; padding: 8px 26px; border-radius: 4px; background: var(--sub-bg); color: #fff; font-size: 40px; font-weight: 600; line-height: 1.4; text-align: center; white-space: nowrap; }
+
+/* —— 本片：耗时条 .kit-tbar（替代进度条）。一次 8192 阶矩阵乘法的实测耗时，16 ms 满格（45 px/ms）。
+   fill 用 scaleX = ms / 16；num 用 x = ms * 45 + 12；ghost 留上一版的长度。 —— */
+.kit-tbar { position: absolute; right: 96px; top: 84px; width: 720px; height: 150px; }
+.kit-tbar .lbl { position: absolute; left: 0; top: 0; font-size: 28px; font-weight: 600; color: var(--ink2); white-space: nowrap; }
+.kit-tbar .track { position: absolute; left: 0; top: 44px; width: 720px; height: 44px; background: var(--paper2); }
+.kit-tbar .ghost { position: absolute; left: 0; top: 0; width: 720px; height: 44px; background: var(--line); transform-origin: 0 50%; }
+.kit-tbar .fill { position: absolute; left: 0; top: 0; width: 720px; height: 44px; background: var(--ink2); transform-origin: 0 50%; }
+.kit-tbar .peak { position: absolute; left: 50px; top: -8px; height: 60px; border-left: 3px dashed var(--teal-t); }
+.kit-tbar .num { position: absolute; left: 0; top: 44px; height: 44px; line-height: 44px; font-family: var(--mono); font-size: 32px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+.kit-tbar .ref { position: absolute; left: 0; top: 104px; font-size: 28px; font-weight: 600; color: var(--teal-t); white-space: nowrap; }

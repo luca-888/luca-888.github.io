@@ -1,169 +1,105 @@
 <template>
+  <!--
+    s09 第 8 步：TMA 写回。节拍（幕内秒）1.0 / 8.4，幕长 14.37。
+    句 1：结果块 寄存器 → 共享内存，再由一个线程整块写出到显存（粗箭头）；下方时间线：写回移到 TMA 一轨，与下一块计算重叠。
+    句 2：耗时条 1.45 → 1.41；“1.41 毫秒 · 777.6 TFLOPS”，大字“cuBLAS 的 99.5%”，两根条几乎等长、刻线重合。
+  -->
   <style>
     #root { position: absolute; inset: 0; }
     #root .s09-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
-    #root .s09-abs { position: absolute; }
     #root .s09-in { position: absolute; inset: 0; }
+    #root .s09-abs { position: absolute; }
     #root .s09-lbl { position: absolute; font-size: 32px; font-weight: 600; color: var(--ink); white-space: nowrap; }
     #root .s09-note { position: absolute; font-size: 28px; font-weight: 500; color: var(--note); white-space: nowrap; }
-    #root .s09-big { position: absolute; font-size: 40px; font-weight: 800; color: var(--ink); white-space: nowrap; }
-    #root .s09-val { position: absolute; font-family: var(--mono); font-size: 40px; font-weight: 800; color: var(--ink); white-space: nowrap; line-height: 56px; }
     #root #s09-ttl { transform-origin: 0 0; }
-    /* 进度条 */
-    #root .kit-meter .track { overflow: hidden; }
-    #root #s09-num { position: absolute; left: 0; top: 40px; width: 140px; height: 40px; line-height: 40px; text-align: right; font-family: var(--mono); font-size: 30px; font-weight: 800; color: #fff; white-space: nowrap; }
-    #root #s09-gain { position: absolute; left: 0; top: 92px; font-size: 32px; font-weight: 700; color: var(--teal-t); white-space: nowrap; }
-    /* tile 图（与 s07、s08 同位置） */
-    #root .s09-grid { position: absolute; left: 200px; top: 300px; width: 960px; height: 480px; }
-    #root .s09-c { position: absolute; width: 14px; height: 14px; background: var(--cell); }
-    #root .s09-r { position: absolute; width: 14px; height: 14px; background: var(--purple); }
-    #root .s09-pr { position: absolute; width: 31px; height: 18px; border: 2px solid var(--ink); }
-    #root #s09-pair0 { position: absolute; left: 196px; top: 296px; width: 37px; height: 22px; border: 4px solid var(--ink); }
-    #root #s09-mk { position: absolute; left: 0; top: 0; width: 24px; height: 24px; border: 4px solid var(--ink); }
-    #root #s09-mkl { position: absolute; left: 30px; top: -10px; padding: 0 6px; background: var(--paper); font-size: 28px; font-weight: 700; color: var(--ink); white-space: nowrap; }
-    /* 多播图 */
-    #root .s09-box { position: absolute; border: 3px solid; background: var(--paper); }
-    #root .s09-slot { position: absolute; left: 320px; width: 200px; height: 60px; background: var(--paper2); border: 2px solid var(--line); }
-    #root .s09-slot i { position: absolute; inset: 0; background: var(--yel); transform-origin: 0 50%; }
-    #root .s09-slot b { position: absolute; left: 0; right: 0; top: 12px; text-align: center; font-size: 28px; font-weight: 600; color: var(--ink); }
-    #root .s09-half { position: absolute; left: 40px; width: 220px; height: 60px; background: var(--yel); }
-    #root .s09-half b { position: absolute; left: 0; right: 0; top: 12px; text-align: center; font-size: 28px; font-weight: 600; color: var(--ink); }
-    /* 条 */
-    #root .s09-bar { position: absolute; height: 56px; transform-origin: 0 50%; }
-    #root .s09-bar b { position: absolute; left: 14px; top: 8px; font-size: 32px; font-weight: 700; }
-    /* 写回 */
-    #root .s09-dot { position: absolute; left: 0; top: 0; width: 12px; height: 12px; border-radius: 50%; background: var(--purple); }
-    #root .s09-seg { position: absolute; top: 0; height: 52px; transform-origin: 0 50%; }
-    #root .s09-seg b { position: absolute; left: 14px; top: 9px; font-size: 28px; font-weight: 600; white-space: nowrap; }
+    /* 写回路径 */
+    #root .s09-box { position: absolute; top: 300px; height: 230px; border: 4px solid; background: var(--paper); }
+    #root .s09-bn { position: absolute; left: 18px; top: 10px; font-size: 36px; font-weight: 800; white-space: nowrap; }
+    #root .s09-res { position: absolute; left: 0; top: 0; width: 170px; height: 100px; background: var(--purple); color: #fff; font-size: 32px; font-weight: 700; line-height: 100px; text-align: center; white-space: nowrap; }
+    #root .s09-step { position: absolute; top: 548px; font-size: 32px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+    /* 时间线 */
+    #root .s09-lane { position: absolute; left: 380px; width: 1440px; height: 72px; background: var(--paper2); }
+    #root .s09-blk { position: absolute; height: 72px; line-height: 72px; text-align: center; font-size: 32px; font-weight: 700; color: #fff; white-space: nowrap; border-right: 3px solid var(--paper); }
+    #root .s09-blk.c { background: var(--teal-t); }
+    #root .s09-blk.w { background: var(--purple); }
+    #root .s09-tk { position: absolute; left: 96px; font-size: 32px; font-weight: 700; color: var(--ink); white-space: nowrap; line-height: 72px; }
+    /* 99.5% */
+    #root .s09-bar { position: absolute; left: 330px; height: 64px; transform-origin: 0 50%; }
+    #root .s09-val { position: absolute; font-family: var(--mono); font-size: 40px; font-weight: 800; color: var(--ink); white-space: nowrap; line-height: 64px; }
+    #root .s09-rl { position: absolute; left: 96px; font-size: 36px; font-weight: 600; color: var(--ink2); white-space: nowrap; line-height: 64px; }
   </style>
   <div id="root" data-composition-id="s09" data-width="1920" data-height="1080">
 
-    <!-- 标题卡 -->
-    <div id="s09-title" class="clip s09-full" data-start="0.00" data-a-start="0.0" data-duration="41.06" data-a-duration="38.0" data-track-index="1">
-      <div id="s09-chip" class="kit-chip">wgmma_cluster</div>
-      <div id="s09-ttl" class="kit-title">第 7 步：<span class="acc">集群与 TMA 多播</span></div>
+    <!-- 0–1.0 标题卡；之后缩到左上角常驻 -->
+    <div id="s09-title" class="clip s09-full" data-start="0.00" data-duration="14.37" data-track-index="1">
+      <div id="s09-chip" class="kit-chip">wgmma_tstore</div>
+      <div id="s09-ttl" class="kit-title">第 8 步：<span class="acc">TMA 写回</span></div>
     </div>
 
-    <!-- 右上进度条：开场 740 -->
-    <div id="s09-meter" class="clip kit-meter" data-start="1.00" data-a-start="1.0" data-duration="40.06" data-a-duration="37.0" data-track-index="2">
-      <div id="s09-mt" class="s09-in">
-        <div class="lbl">8192 阶 · BF16 · TFLOPS</div>
-        <div class="track"><div id="s09-fill" class="fill"></div></div>
-        <div class="tick"></div>
-        <div class="ref">cuBLAS 781.86</div>
-        <div id="s09-num">740</div>
-        <div id="s09-num2" style="position:absolute;left:0;top:40px;width:140px;height:40px;line-height:40px;text-align:right;font-family:var(--mono);font-size:30px;font-weight:800;color:#fff;white-space:nowrap">757</div>
-        <div id="s09-gain">cuBLAS 的 96.9%</div>
+    <!-- 耗时条：1.45 → 1.41 -->
+    <div id="s09-tb" class="clip kit-tbar" data-start="1.00" data-duration="13.37" data-track-index="2">
+      <div id="s09-tbin" class="s09-in">
+        <div class="lbl">8192 阶矩阵乘法 · 一次耗时</div>
+        <div class="track"><div id="s09-tbghost" class="ghost"></div><div id="s09-tbfill" class="fill"></div><div class="peak"></div></div>
+        <div id="s09-tbnum" class="num">1.45 ms</div>
+        <div id="s09-tbnum2" class="num">1.41 ms</div>
+        <div class="ref">虚线：规格峰值 1.11 ms</div>
       </div>
     </div>
 
-    <!-- 1.0 tile 图：上下相邻（同一列 W）的两个 tile 组成集群 -->
-    <div id="s09-ch1" class="clip s09-full" data-start="1.00" data-a-start="1.0" data-duration="6.18" data-a-duration="6.0" data-track-index="3">
-      <div id="s09-ch1in" class="s09-full">
-        <div id="s09-cells1" class="s09-grid"></div>
-        <div id="s09-run1" class="s09-grid"></div>
-        <div id="s09-prs" class="s09-grid"></div>
-        <div id="s09-pair0"></div>
-        <div id="s09-axis1" class="s09-note" style="left:200px;top:792px;width:960px;text-align:center">C 的 tile：横向 64 行，纵向 32 列（每个 128 × 256）</div>
-        <div id="s09-cl1" class="s09-full">
-          <div class="s09-big" style="left:1220px;top:380px">一个集群 = 两个 block</div>
-          <div class="s09-lbl" style="left:1220px;top:444px">相邻两行的 tile，共用同一块 W</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 7.0 集群：互访共享内存；W 各搬一半，TMA 多播 -->
-    <div id="s09-mc" class="clip s09-full" data-start="7.18" data-a-start="7.0" data-duration="8.12" data-a-duration="8.3" data-track-index="4" data-layout-allow-overlap>
-      <div id="s09-mcin" class="s09-full">
-        <div id="s09-cbox" class="s09-box" style="left:740px;top:290px;width:820px;height:590px;border:3px dashed var(--ink2);background:transparent">
-          <div class="s09-lbl" style="left:18px;top:4px">线程块集群</div>
-        </div>
-        <div id="s09-sm0" class="s09-box" style="left:780px;top:345px;width:740px;height:215px;border-color:var(--line)">
-          <div class="s09-lbl" style="left:18px;top:12px">block 0</div>
-          <div class="s09-note" style="left:170px;top:91px">共享内存</div>
-          <div id="s09-s0a" class="s09-slot" style="top:52px"><i></i><b>W 前半</b></div>
-          <div id="s09-s0b" class="s09-slot" style="top:132px"><i></i><b>W 后半</b></div>
-        </div>
-        <div id="s09-sm1" class="s09-box" style="left:780px;top:640px;width:740px;height:215px;border-color:var(--line)">
-          <div class="s09-lbl" style="left:18px;top:12px">block 1</div>
-          <div class="s09-note" style="left:170px;top:91px">共享内存</div>
-          <div id="s09-s1a" class="s09-slot" style="top:52px"><i></i><b>W 前半</b></div>
-          <div id="s09-s1b" class="s09-slot" style="top:132px"><i></i><b>W 后半</b></div>
-        </div>
-        <div id="s09-mut" class="s09-full">
-          <svg class="s09-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none">
-            <path d="M 1310 520 H 1350 V 730 H 1310" style="stroke:var(--use)" stroke-width="4" />
-            <path d="M 1318 510 L 1302 520 L 1318 530 Z M 1318 720 L 1302 730 L 1318 740 Z" style="fill:var(--use)" />
-          </svg>
-          <div class="s09-lbl" style="left:1364px;top:582px;font-size:30px;color:var(--use-t)">互访共享内存</div>
-        </div>
-        <div id="s09-l2" class="s09-box" style="left:140px;top:440px;width:320px;height:260px;border-color:var(--blue)">
-          <div class="s09-lbl" style="left:14px;top:6px">L2</div>
-          <div class="s09-half" style="top:57px"><b>W 前半</b></div>
-          <div class="s09-half" style="top:137px"><b>W 后半</b></div>
-        </div>
-        <div id="s09-who" class="s09-full">
-          <div class="s09-note" style="left:140px;top:712px">前半由 block 0 发出</div>
-          <div class="s09-note" style="left:140px;top:752px">后半由 block 1 发出</div>
-        </div>
-        <svg id="s09-msvg" class="s09-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" stroke-linejoin="round">
-          <path id="s09-pa" d="M 400 527 H 590 V 427 H 1094 M 590 527 V 722 H 1094" style="stroke:var(--yel-t)" stroke-width="4" />
-          <path id="s09-pb" d="M 400 607 H 640 V 507 H 1094 M 640 607 V 802 H 1094" style="stroke:var(--yel-t)" stroke-width="4" />
+    <!-- 1.0 写回路径：寄存器 → 共享内存 → 显存 -->
+    <div id="s09-path" class="clip s09-full" data-start="1.00" data-duration="7.80" data-track-index="3" data-layout-allow-overlap>
+      <div id="s09-pathin" class="s09-full">
+        <div id="s09-breg" class="s09-box" style="left:96px;width:400px;border-color:var(--purple)"><div class="s09-bn" style="color:var(--purple-t)">寄存器</div></div>
+        <div id="s09-bsm" class="s09-box" style="left:760px;width:420px;border-color:var(--use)"><div class="s09-bn" style="color:var(--use-t)">共享内存</div></div>
+        <div id="s09-bhb" class="s09-box" style="left:1420px;width:400px;border-color:var(--hot)"><div class="s09-bn" style="color:var(--hot-t)">显存</div></div>
+        <svg class="s09-full" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none">
+          <path id="s09-a1" d="M 500 440 H 750" style="stroke:var(--purple)" stroke-width="5" />
+          <path id="s09-a1h" d="M 736 428 L 754 440 L 736 452 Z" style="fill:var(--purple)" />
+          <path id="s09-a2" d="M 1184 440 H 1404" style="stroke:var(--purple)" stroke-width="18" />
+          <path id="s09-a2h" d="M 1392 416 L 1418 440 L 1392 464 Z" style="fill:var(--purple)" />
         </svg>
-        <div id="s09-mcl" class="s09-lbl" style="left:440px;top:370px">TMA 多播</div>
+        <div id="s09-tma" class="s09-abs" style="left:1240px;top:372px;font-family:var(--mono);font-size:36px;font-weight:800;color:var(--purple-t)">TMA</div>
+        <div id="s09-r0" class="s09-res">结果块</div>
+        <div id="s09-r1" class="s09-res">结果块</div>
+        <div id="s09-thr" class="s09-abs" style="left:1132px;top:362px;width:28px;height:28px;border-radius:50%;background:var(--ink)"></div>
+        <div id="s09-thl" class="s09-note" style="left:986px;top:356px;color:var(--ink2)">一个线程</div>
+        <div id="s09-st1" class="s09-step" style="left:760px">① 结果先进共享内存</div>
+        <div id="s09-st2" class="s09-step" style="left:1420px">② 整块写出</div>
       </div>
     </div>
 
-    <!-- 15.3 每 block 每步 L2 读取 48 KB → 32 KB -->
-    <div id="s09-bars" class="clip s09-full" data-start="15.30" data-a-start="15.3" data-duration="6.30" data-a-duration="5.7" data-track-index="5">
-      <div id="s09-barsin" class="s09-full">
-        <div id="s09-bh" class="s09-big" style="left:200px;top:320px;font-size:36px">每个 block 每步从 L2 读取</div>
-        <div class="s09-lbl" style="left:200px;top:410px">上一版</div>
-        <div id="s09-r1a" class="s09-bar" style="left:400px;top:400px;width:240px;background:var(--blue)"><b style="color:#fff">A</b></div>
-        <div id="s09-r1w" class="s09-bar" style="left:640px;top:400px;width:480px;background:var(--yel)"><b style="color:var(--ink)">W</b></div>
-        <div id="s09-v1" class="s09-val" style="left:1150px;top:400px">48 KB</div>
-        <div id="s09-rl2" class="s09-lbl" style="left:200px;top:520px">集群版</div>
-        <div id="s09-r2a" class="s09-bar" style="left:400px;top:510px;width:240px;background:var(--blue)"><b style="color:#fff">A</b></div>
-        <div id="s09-r2w" class="s09-bar" style="left:640px;top:510px;width:240px;background:var(--yel)"><b style="color:var(--ink)">W 一半</b></div>
-        <div id="s09-r2v" class="s09-bar" style="left:880px;top:510px;width:240px;background:var(--yel)"></div>
-        <div id="s09-r2x" class="s09-abs" style="left:880px;top:510px;width:240px;height:56px;border:3px dashed var(--gray)">
-          <div class="s09-note" style="left:0;right:0;top:10px;text-align:center">由对方多播</div>
-        </div>
-        <div id="s09-v2" class="s09-val" style="left:1150px;top:510px;color:var(--teal-t)">32 KB</div>
+    <!-- 5.4 时间线：写回移到 TMA 一轨，与下一块计算重叠 -->
+    <div id="s09-tl" class="clip s09-full" data-start="5.40" data-duration="5.00" data-track-index="4">
+      <div id="s09-tlin" class="s09-full">
+        <div class="s09-tk" style="top:636px">Tensor Core</div>
+        <div class="s09-tk" style="top:746px;font-family:var(--mono)">TMA</div>
+        <div class="s09-lane" style="top:636px"></div>
+        <div class="s09-lane" style="top:746px"></div>
+        <div id="s09-c1" class="s09-blk c" style="left:380px;top:636px;width:420px">计算</div>
+        <div id="s09-w1" class="s09-blk w" style="left:800px;top:636px;width:240px">写回</div>
+        <div id="s09-c2" class="s09-blk c" style="left:1040px;top:636px;width:420px">计算</div>
+        <div id="s09-w2" class="s09-blk w" style="left:1460px;top:636px;width:240px">写回</div>
+        <div id="s09-c3" class="s09-blk c" style="left:1220px;top:636px;width:420px">计算</div>
+        <div id="s09-ov" class="s09-lbl" style="left:380px;top:836px;color:var(--teal-t);font-weight:700">写回与下一块的计算重叠</div>
       </div>
     </div>
 
-    <!-- 21.0 常驻 kernel：132 个 block 循环领取 tile -->
-    <div id="s09-ch2" class="clip s09-full" data-start="21.60" data-a-start="21.0" data-duration="11.11" data-a-duration="9.2" data-track-index="6">
-      <div id="s09-ch2in" class="s09-full">
-        <div id="s09-cells2" class="s09-grid"></div>
-        <div id="s09-rounds" class="s09-grid"></div>
-        <div id="s09-mkw" class="s09-grid"><div id="s09-mk"><div id="s09-mkl">block 0</div></div></div>
-        <div id="s09-axis2" class="s09-note" style="left:200px;top:792px;width:960px;text-align:center">C 的 tile：横向 64 行，纵向 32 列（每个 128 × 256）</div>
-        <div id="s09-rs" class="s09-full">
-          <div class="s09-big" style="left:1220px;top:380px">只启动 132 个 block</div>
-          <div class="s09-lbl" style="left:1220px;top:444px">每个 block 循环领取 tile</div>
-        </div>
-        <div id="s09-rcl" class="s09-lbl" style="left:1220px;top:520px;color:var(--purple-t)">block 0 领到第 <span style="position:relative;display:inline-block;width:0.8em;height:1em;vertical-align:-0.1em"><b id="s09-rc1" style="position:absolute;left:0;top:-0.15em;font-family:var(--mono);font-size:40px;font-weight:800">1</b><b id="s09-rc2" style="position:absolute;left:0;top:-0.15em;font-family:var(--mono);font-size:40px;font-weight:800">2</b><b id="s09-rc3" style="position:absolute;left:0;top:-0.15em;font-family:var(--mono);font-size:40px;font-weight:800">3</b><b id="s09-rc4" style="position:absolute;left:0;top:-0.15em;font-family:var(--mono);font-size:40px;font-weight:800">4</b></span> 个 tile</div>
+    <!-- 8.4 1.41 ms，777.6 TFLOPS，cuBLAS 的 99.5% -->
+    <div id="s09-res" class="clip s09-full" data-start="8.40" data-duration="5.97" data-track-index="5">
+      <div id="s09-l1" class="s09-abs" style="left:96px;top:290px;font-size:48px;font-weight:700;color:var(--ink);white-space:nowrap"><span style="font-family:var(--mono);font-weight:800">1.41</span> 毫秒 · <span style="font-family:var(--mono);font-weight:800">777.6</span> TFLOPS</div>
+      <div id="s09-cap" class="s09-abs" style="left:96px;top:436px;font-size:56px;font-weight:700;color:var(--ink);white-space:nowrap">cuBLAS 的</div>
+      <div id="s09-big" class="s09-abs" style="left:400px;top:376px;font-family:var(--mono);font-size:220px;line-height:1;font-weight:800;color:var(--teal-t);white-space:nowrap">99.5%</div>
+      <div id="s09-rows" class="s09-full">
+        <div class="s09-rl" style="top:660px">第 8 版</div>
+        <div id="s09-bm" class="s09-bar" style="top:660px;width:1269px;background:var(--ink2)"></div>
+        <div class="s09-val" style="left:1620px;top:660px">1.41</div>
+        <div class="s09-rl" style="top:750px">cuBLAS</div>
+        <div id="s09-bc" class="s09-bar" style="top:750px;width:1265px;background:var(--teal)"></div>
+        <div class="s09-val" style="left:1620px;top:750px;color:var(--teal-t)">1.406</div>
+        <div id="s09-tick" class="s09-abs" style="left:1594px;top:644px;height:186px;border-left:4px dashed var(--ink)"></div>
+        <div class="s09-note" style="left:1620px;top:832px">ms</div>
       </div>
-    </div>
-
-    <!-- 30.2 写回：一个线程零散写显存 64 次，Tensor Core 空闲 -->
-    <div id="s09-wb" class="clip s09-full" data-start="32.71" data-a-start="30.2" data-duration="8.35" data-a-duration="7.8" data-track-index="7">
-      <div id="s09-thr" class="s09-abs" style="left:284px;top:414px;width:32px;height:32px;border-radius:50%;background:var(--purple)"></div>
-      <div id="s09-thl" class="s09-lbl" style="left:230px;top:466px">一个线程</div>
-      <div id="s09-wbl" class="s09-lbl" style="left:420px;top:330px">64 次零散写入，每次 4 字节</div>
-      <div id="s09-hbm" class="s09-box" style="left:1240px;top:330px;width:320px;height:220px;border-color:var(--hot)">
-        <div class="s09-lbl" style="left:14px;top:6px;color:var(--hot-t)">显存</div>
-      </div>
-      <div id="s09-dots" class="s09-full"></div>
-      <div id="s09-tcl" class="s09-lbl" style="left:200px;top:648px">Tensor Core</div>
-      <div id="s09-trk" class="s09-abs" style="left:440px;top:640px;width:1120px;height:52px;background:var(--paper2)">
-        <div id="s09-sg1" class="s09-seg" style="left:0;width:420px;background:var(--teal)"><b style="color:#fff">wgmma</b></div>
-        <div id="s09-sg2" class="s09-seg" style="left:420px;width:440px;border:3px dashed var(--gray)"><b style="color:var(--note)">写回期间：空闲</b></div>
-        <div id="s09-sg3" class="s09-seg" style="left:860px;width:260px;background:var(--teal)"><b style="color:#fff">下一块</b></div>
-      </div>
-      <div id="s09-btag" class="s09-abs" style="left:860px;top:716px"><span class="k-bottleneck">瓶颈：写回</span></div>
     </div>
   </div>
   <script>
@@ -174,167 +110,89 @@
       const ft = (el, a, b, t) => tl.fromTo(el, a, b, t);
       const fadeIn = (el, t, d = 0.5) => ft(el, { opacity: 0 }, { opacity: 1, duration: d, ease: IN }, t);
       const fadeOut = (el, t, d = 0.4) => ft(el, { opacity: 1 }, { opacity: 0, duration: d, ease: OUT }, t);
-      const mk = (parent, cls, x, y) => {
-        const d = document.createElement("div");
-        d.className = cls; d.style.left = x + "px"; d.style.top = y + "px";
-        parent.appendChild(d); return d;
-      };
 
-      // ---------- tile 图：x = tile 行 m（64），y = tile 列 n（32）；分组发放的序号 → 位置 ----------
-      const X = (m) => m * 15, Y = (n) => n * 15;
-      const pos = (id) => { const g = Math.floor(id / 512), r = id % 512; return [X(16 * g + (r % 16)), Y(Math.floor(r / 16))]; };
-      const cols1 = [], cols2 = [];
-      [["cells1", cols1], ["cells2", cols2]].forEach(([id, arr]) => {
-        for (let m = 0; m < 64; m++) {
-          const col = document.createElement("div");
-          col.className = "s09-in";
-          for (let n = 0; n < 32; n++) mk(col, "s09-c", X(m), Y(n));
-          $(id).appendChild(col); arr.push(col);
-        }
-      });
-      for (let k = 0; k < 132; k++) { const p = pos(k); mk($("run1"), "s09-r", p[0], p[1]); }
-      const prs = [];
-      for (let k = 0; k < 132; k += 2) { const p = pos(k); prs.push(mk($("prs"), "s09-pr", p[0] - 1, p[1] - 2)); }
-      // 常驻：4 次领取，每次 132 个 tile（序号 132·i … 132·i + 131）
-      const rnd = [], done = [];
-      for (let i = 0; i < 4; i++) {
-        const dl = document.createElement("div"), rl = document.createElement("div");
-        dl.className = "s09-in"; rl.className = "s09-in";
-        for (let k = 0; k < 132; k++) {
-          const p = pos(132 * i + k);
-          mk(dl, "s09-r", p[0], p[1]); mk(rl, "s09-r", p[0], p[1]);
-        }
-        $("rounds").appendChild(dl); $("rounds").appendChild(rl);
-        done.push(dl); rnd.push(rl);
-      }
+      // ---------- 耗时条 ----------
+      const TBX = (ms) => ms * 45 + 12;
+      gsap.set($("tbfill"), { scaleX: 1.45 / 16 });
+      gsap.set($("tbghost"), { scaleX: 1.45 / 16, opacity: 0 });
+      gsap.set($("tbnum"), { x: TBX(1.45) });
+      gsap.set($("tbnum2"), { x: TBX(1.45), opacity: 0 });
+      gsap.set($("tbin"), { opacity: 0 });
 
       // ---------- 初始状态 ----------
+      // 结果块中心：寄存器 (296, 440) → 共享内存 (970, 440) → 显存 (1620, 440)
+      const RX = [296 - 85, 970 - 85, 1620 - 85], RY = 440 - 50 + 20;
       gsap.set([$("chip"), $("ttl")], { opacity: 0 });
-      gsap.set($("ttl"), { x: 0, y: 0, scale: 1 });
-      const fx = (v) => (v / 781.86) * 544;
-      gsap.set($("fill"), { scaleX: 740 / 781.86 });
-      gsap.set($("num"), { x: fx(740) - 150 });
-      gsap.set($("num2"), { x: fx(757) - 150, opacity: 0 });
-      gsap.set([$("mt"), $("gain")], { opacity: 0 });
-      gsap.set([].concat(cols1, cols2), { opacity: 0 });
-      gsap.set([$("run1"), $("pair0"), $("axis1"), $("cl1"), $("axis2"), $("rs")], { opacity: 0 });
-      gsap.set(prs, { opacity: 0 });
-      gsap.set([$("cbox"), $("sm0"), $("sm1"), $("mut"), $("l2"), $("who"), $("mcl")], { opacity: 0 });
-      gsap.set(document.querySelectorAll("#s09-mc .s09-slot i"), { scaleX: 0 });
-      gsap.set(document.querySelectorAll("#s09-mc .s09-slot b"), { opacity: 0 });
-      gsap.set(done, { opacity: 0 });
-      gsap.set(rnd, { opacity: 0 });
-      done.forEach((d) => gsap.set(d.children, { opacity: 0.3 }));
-      gsap.set([$("mkw"), $("rcl"), $("rc1"), $("rc2"), $("rc3"), $("rc4")], { opacity: 0 });
-      gsap.set([$("r1a"), $("r1w"), $("r2a"), $("r2w")], { clipPath: "inset(0 100% 0 0)" });
-      gsap.set([$("bh"), $("v1"), $("v2"), $("rl2"), $("r2x")], { opacity: 0 });
+      gsap.set([$("breg"), $("bsm"), $("bhb"), $("tma"), $("thr"), $("thl"), $("st1"), $("st2"), $("a1h"), $("a2h")], { opacity: 0 });
+      ["a1", "a2"].forEach((k) => { const p = $(k), n = p.getTotalLength(); p.dataset.len = n; gsap.set(p, { strokeDasharray: n, strokeDashoffset: n }); });
+      gsap.set($("r0"), { x: RX[0], y: RY, opacity: 0 });
+      gsap.set($("r1"), { x: RX[1], y: RY, opacity: 0 });
+      gsap.set(["#s09-tlin .s09-tk", "#s09-tlin .s09-lane", "#s09-tlin .s09-blk", "#s09-ov"], { opacity: 0 });
+      gsap.set([$("l1"), $("cap"), $("big"), $("rows")], { opacity: 0 });
+      gsap.set([$("bm"), $("bc")], { scaleX: 0 });
+      gsap.set($("tick"), { opacity: 0 });
 
       // ---------- 0.0 标题卡 ----------
-      ft($("chip"), { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3, ease: IN }, 0.0);
+      ft($("chip"), { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, 0.0);
       ft($("ttl"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 0.1);
 
-      // ---------- 1.0 标题缩到左上；tile 图（分组发放的一轮），框出一个集群 ----------
+      // ---------- 1.0 标题缩到左上；写回路径三站 ----------
       ft($("ttl"), { x: 0, y: 0, scale: 1 }, { x: 0, y: -16, scale: 0.6, duration: 0.6, ease: MOVE }, 1.0);
-      fadeIn($("mt"), 1.0);
-      cols1.forEach((c, m) => ft(c, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: IN }, 1.05 + m * 0.008));
-      fadeIn($("axis1"), 1.3);
-      fadeIn($("run1"), 1.5);
-      ft($("pair0"), { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, 2.3);
-      fadeIn($("cl1"), 2.4);
-      prs.forEach((p, i) => ft(p, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, 4.0 + i * 0.02));
-      fadeOut($("ch1in"), 6.6, 0.35);
+      fadeIn($("tbin"), 1.0);
+      ft($("breg"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 1.2);
+      ft($("r0"), { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.4, ease: IN }, 1.5);
+      ft($("bsm"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 2.0);
+      ft($("bhb"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: IN }, 2.15);
 
-      // ---------- 7.0 互访共享内存 ----------
-      fadeIn($("cbox"), 7.05);
-      ft($("sm0"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: IN }, 7.2);
-      ft($("sm1"), { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: IN }, 7.35);
-      fadeIn($("mut"), 8.3);
-      // ---------- 10.3 各搬 W 的一半；12.0 TMA 多播写入双方 ----------
-      ft($("l2"), { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.6, ease: IN }, 10.3);
-      fadeIn($("who"), 10.8);
-      ft($("mut"), { opacity: 1 }, { opacity: 0.35, duration: 0.4, ease: MOVE }, 11.6);
-      const draw = (p, t) => { const len = p.getTotalLength(); gsap.set(p, { strokeDasharray: len, strokeDashoffset: len }); ft(p, { strokeDashoffset: len }, { strokeDashoffset: 0, duration: 0.9, ease: MOVE }, t); };
-      draw($("pa"), 11.8);
-      fadeIn($("mcl"), 11.9);
-      const slotFill = (id, t) => {
-        ft(document.querySelector("#s09-" + id + " i"), { scaleX: 0 }, { scaleX: 1, duration: 0.4, ease: IN }, t);
-        fadeIn(document.querySelector("#s09-" + id + " b"), t + 0.2, 0.3);
-      };
-      slotFill("s0a", 12.6); slotFill("s1a", 12.6);
-      draw($("pb"), 13.0);
-      slotFill("s0b", 13.8); slotFill("s1b", 13.8);
-      fadeOut($("mcin"), 14.9, 0.35);
+      // ---------- 3.3 结果先进共享内存 ----------
+      ft($("a1"), { strokeDashoffset: $("a1").dataset.len }, { strokeDashoffset: 0, duration: 0.6, ease: MOVE }, 3.3);
+      fadeIn($("a1h"), 3.8, 0.2);
+      ft($("r0"), { x: RX[0] }, { x: RX[1], duration: 0.9, ease: MOVE }, 3.35);
+      fadeIn($("st1"), 3.6);
 
-      // ---------- 15.3 48 KB → 32 KB ----------
-      fadeIn($("bh"), 15.35);
-      ft($("r1a"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.4, ease: IN }, 15.5);
-      ft($("r1w"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.6, ease: IN }, 15.8);
-      fadeIn($("v1"), 16.2, 0.3);
-      fadeIn($("rl2"), 16.8, 0.3);
-      ft($("r2a"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.4, ease: IN }, 16.8);
-      ft($("r2w"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.3, ease: "none" }, 17.0);
-      gsap.set($("r2v"), { scaleX: 0 });
-      ft($("r2v"), { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "none" }, 17.3);
-      ft($("r2v"), { scaleX: 1 }, { scaleX: 0, duration: 0.8, ease: MOVE }, 18.0);
-      fadeIn($("r2x"), 18.3);
-      fadeIn($("v2"), 18.7, 0.4);
-      fadeOut($("barsin"), 20.6, 0.35);
+      // ---------- 4.73 一个线程整块写出（TMA，粗箭头） ----------
+      ft($("thr"), { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.4, ease: IN }, 4.7);
+      fadeIn($("thl"), 4.8);
+      ft($("a2"), { strokeDashoffset: $("a2").dataset.len }, { strokeDashoffset: 0, duration: 0.6, ease: MOVE }, 5.0);
+      fadeIn($("a2h"), 5.5, 0.2);
+      fadeIn($("tma"), 5.2);
+      tl.set($("r1"), { opacity: 1 }, 5.0);
+      ft($("r1"), { x: RX[1] }, { x: RX[2], duration: 0.9, ease: MOVE }, 5.05);
+      fadeIn($("st2"), 5.5);
 
-      // ---------- 21.0 常驻：132 个 block 循环领取 tile ----------
-      cols2.forEach((c, m) => ft(c, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: IN }, 21.05 + m * 0.006));
-      fadeIn($("axis2"), 21.2);
-      fadeIn($("rs"), 21.3);
-      const RT = [21.7, 22.9, 24.1, 25.3];
-      const MK = [0, 132, 264, 396].map((id) => pos(id));
-      gsap.set($("mk"), { x: MK[0][0] - 5, y: MK[0][1] - 5 });
-      RT.forEach((t, i) => {
-        ft(rnd[i], { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, t);
-        if (i > 0) {
-          ft(rnd[i - 1], { opacity: 1 }, { opacity: 0, duration: 0.3, ease: OUT }, t);
-          ft(done[i - 1], { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, t);
-          ft($("mk"), { x: MK[i - 1][0] - 5, y: MK[i - 1][1] - 5 }, { x: MK[i][0] - 5, y: MK[i][1] - 5, duration: 0.5, ease: MOVE }, t - 0.1);
-          ft($("rc" + i), { opacity: 1 }, { opacity: 0, duration: 0.15 }, t);
-        }
-        ft($("rc" + (i + 1)), { opacity: 0 }, { opacity: 1, duration: 0.2, ease: IN }, t + 0.05);
-      });
-      fadeIn($("mkw"), 21.75, 0.3);
-      fadeIn($("rcl"), 21.75, 0.3);
-      // 26.9 实测：右侧说明退场，tile 图留作背景
-      fadeOut($("rs"), 26.9); fadeOut($("rcl"), 26.9); fadeOut($("mkw"), 26.9);
-      ft($("ch2in"), { opacity: 1 }, { opacity: 0.45, duration: 0.5, ease: MOVE }, 26.9);
-      fadeOut($("ch2in"), 29.8, 0.35);
-      gsap.set($("ch2in"), { opacity: 1 });
+      // ---------- 5.4 时间线：写回从计算一轨移到 TMA 一轨；6.35 计算接着做下一块 ----------
+      fadeIn(document.querySelectorAll("#s09-tlin .s09-tk"), 5.4);
+      fadeIn(document.querySelectorAll("#s09-tlin .s09-lane"), 5.4);
+      [$("c1"), $("w1"), $("c2"), $("w2")].forEach((e, i) =>
+        ft(e, { opacity: 0, clipPath: "inset(0px 100% 0px 0px)" }, { opacity: 1, clipPath: "inset(0px 0% 0px 0px)", duration: 0.35, ease: IN }, 5.5 + i * 0.12));
+      ft($("w1"), { y: 0 }, { y: 110, duration: 0.7, ease: MOVE }, 6.4);
+      ft($("c2"), { x: 0 }, { x: -240, duration: 0.7, ease: MOVE }, 6.55);
+      ft($("w2"), { x: 0, y: 0 }, { x: -240, y: 110, duration: 0.7, ease: MOVE }, 6.7);
+      ft($("c3"), { opacity: 0, x: 60 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 7.2);
+      fadeIn($("ov"), 7.4);
 
-      // ---------- 26.9 实测 757，cuBLAS 的 96.9% ----------
-      ft($("fill"), { scaleX: 740 / 781.86 }, { scaleX: 757 / 781.86, duration: 1.0, ease: MOVE }, 27.0);
-      ft($("num"), { x: fx(740) - 150 }, { x: fx(757) - 150, duration: 1.0, ease: MOVE }, 27.0);
-      ft($("num"), { opacity: 1 }, { opacity: 0, duration: 0.2, ease: OUT }, 27.0);
-      ft($("num2"), { opacity: 0 }, { opacity: 1, duration: 0.3, ease: IN }, 27.7);
-      fadeIn($("gain"), 28.0);
+      // ---------- 8.4 耗时条 1.45 → 1.41；路径退场 ----------
+      fadeOut($("pathin"), 8.4);
+      tl.set($("tbghost"), { opacity: 1 }, 8.4);
+      ft($("tbfill"), { scaleX: 1.45 / 16 }, { scaleX: 1.41 / 16, duration: 0.9, ease: MOVE }, 8.4);
+      ft([$("tbnum"), $("tbnum2")], { x: TBX(1.45) }, { x: TBX(1.41), duration: 0.9, ease: MOVE }, 8.4);
+      fadeOut($("tbnum"), 8.4, 0.3);
+      fadeIn($("tbnum2"), 8.9, 0.4);
+      ft($("tbghost"), { opacity: 1 }, { opacity: 0, duration: 0.5, ease: OUT }, 9.9);
+      ft($("l1"), { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.5, ease: IN }, 8.8);
+      // 10.0 时间线让位给两根条
+      fadeOut($("tlin"), 9.9);
+      fadeIn($("rows"), 10.2, 0.3);
+      ft($("bm"), { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: IN }, 10.25);
+      ft($("bc"), { scaleX: 0 }, { scaleX: 1, duration: 0.8, ease: IN }, 10.45);
+      fadeIn($("tick"), 11.2, 0.4);
+      // 11.87 cuBLAS 的 99.5%
+      fadeIn($("cap"), 11.1);
+      ft($("big"), { opacity: 0, scale: 0.92, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.6, ease: IN }, 11.2);
 
-      // ---------- 30.2 写回：64 次零散写入，Tensor Core 空闲 ----------
-      gsap.set([$("thr"), $("thl"), $("wbl"), $("hbm"), $("tcl"), $("trk"), $("btag")], { opacity: 0 });
-      gsap.set($("sg3"), { opacity: 0 });
-      fadeIn($("thr"), 30.3); fadeIn($("thl"), 30.3);
-      fadeIn($("hbm"), 30.4);
-      fadeIn($("wbl"), 30.6);
-      fadeIn($("tcl"), 30.8); fadeIn($("trk"), 30.8);
-      const dots = $("dots");
-      for (let i = 0; i < 64; i++) {
-        const d = mk(dots, "s09-dot", 0, 0);
-        const j = (i * 37) % 64, cx = 1290 + (j % 8) * 30, cy = 396 + Math.floor(j / 8) * 18;
-        const t = 31.2 + i * 0.045;
-        gsap.set(d, { x: 294, y: 424, opacity: 0 });
-        ft(d, { opacity: 0 }, { opacity: 1, duration: 0.05 }, t);
-        ft(d, { x: 294, y: 424 }, { x: cx, y: cy, duration: 0.35, ease: MOVE }, t);
-      }
-      gsap.set($("sg2"), { clipPath: "inset(0 100% 0 0)", opacity: 1 });
-      ft($("sg2"), { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 2.9, ease: "none" }, 31.2);
-      fadeIn($("sg3"), 34.2, 0.4);
-      ft($("btag"), { opacity: 0, scale: 0.85, transformOrigin: "0 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: IN }, 34.6);
-
-      tl.set({}, {}, 38.0);
-      /* warp */ { const P = [[0.0, 0.0], [1.0, 1.0], [7.0, 7.18], [15.3, 15.3], [21.0, 21.6], [26.9, 27.34], [30.2, 32.71], [38.0, 41.06]]; const inv = (y) => { for (let i = 1; i < P.length; i++) if (y <= P[i][1] || i === P.length - 1) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; return y1 > y0 ? x0 + (y - y0) * (x1 - x0) / (y1 - y0) : x1; } return y; }; tl.pause(); const st = { t: 0 }; const outer = gsap.timeline({ paused: true }); outer.fromTo(st, { t: 0 }, { t: 41.06, duration: 41.06, ease: "none", immediateRender: true, onUpdate: () => tl.seek(inv(st.t), false) }, 0); window.__timelines["s09"] = outer; } /* /warp */
+      tl.set({}, {}, 14.37);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["s09"] = tl;
     })();
   </script>
 </template>
