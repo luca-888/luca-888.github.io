@@ -13,15 +13,11 @@
 <body>
 <canvas id="cv" width="1920" height="1080"></canvas>
 <div id="bar"><button>播放</button><input type="range" min="0"><span></span></div>
-<!-- Tensor Core 影片。当前只有关键帧：时间轴上每 1 秒是一幕的结束画面，?t=N 看第 N + 1 幕。 -->
+<!-- Tensor Core 科普影片：同一块 B200 上，矩阵乘法为什么快 30 倍。文案与节拍在 script.js，出处见 docs/tensor-core-notes.md -->
+<script src="script.js"></script>
+<script>var VO;</script>
+<script src="vo.js" onerror="void 0"></script>
 <script src="core.js"></script>
-<script src="keyframes.js"></script>
-<script>
-start((t) => {
-  const f = KF[Math.min(KF.length - 1, Math.floor(t))];
-  g.fillStyle = KC.paper; g.fillRect(0, 0, W, H);
-  header(f); f.draw();
-}, KF.length);
-</script>
+<script src="scenes.js"></script>
 </body>
 </html>

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>GPU 架构</title>
+<style>
+  html, body { margin: 0; background: #111; color: #ccc; font: 14px -apple-system, sans-serif; }
+  #cv { display: block; width: 100vw; max-height: calc(100vh - 44px); aspect-ratio: 16 / 9; object-fit: contain; }
+  #bar { height: 44px; display: flex; align-items: center; gap: 12px; padding: 0 16px; }
+  #bar input { flex: 1; }
+</style>
+</head>
+<body>
+<canvas id="cv" width="1920" height="1080"></canvas>
+<div id="bar"><button>播放</button><input type="range" min="0"><span></span></div>
+<!-- GPU 架构科普影片：以 B200 为例，芯片怎样把数据及时送到 Tensor Core。文案与节拍在 script.js，出处见 docs/gpu-architecture-notes.md -->
+<script src="script.js"></script>
+<script>var VO;</script>
+<script src="vo.js" onerror="void 0"></script>
+<script src="core.js"></script>
+<script src="scenes.js"></script>
+</body>
+</html>
