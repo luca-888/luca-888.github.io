@@ -1,0 +1,15 @@
+$ /build/matmul_tc wmma,wmma_pad,mma,mma_async,wgmma,wgmma_ws,wgmma_l2,wgmma_pipe,wgmma_persist,wgmma_cluster,wgmma_tstore 8192
+# 计时：每个 N 先逐个对答案，再轮流计时（每轮每个 kernel 各跑一次，取中位数），免得排在前面的 kernel 赶上 GPU 还没降频
+kernel                  N         ms    TFLOPS  max_rel_err
+wmma                 8192     12.221     89.97     0.00e+00
+mma                  8192      4.223    260.38     0.00e+00
+mma_async            8192      3.526    311.84     0.00e+00
+wgmma                8192      2.242    490.36     0.00e+00
+wgmma_ws             8192      2.321    473.63     0.00e+00
+wgmma_l2             8192      1.463    751.72     0.00e+00
+wgmma_pipe           8192      1.462    751.92     0.00e+00
+wgmma_persist        8192      1.679    654.80     0.00e+00
+wgmma_cluster        8192      1.431    768.35     0.00e+00
+wgmma_tstore         8192      1.395    788.32     0.00e+00
+wmma_pad             8192      7.871    139.69     0.00e+00
+no error

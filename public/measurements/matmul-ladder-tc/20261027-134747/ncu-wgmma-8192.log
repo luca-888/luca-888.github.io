@@ -1,0 +1,13 @@
+$ /opt/nvidia/nsight-compute/2025.1.1/ncu --clock-control none --set full --import-source yes -k "regex:^mm_" -c 1 -f -o /out/matmul-ladder-tc/20261027-134747/ncu-wgmma-8192 /build/matmul_tc wgmma 8192
+==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 388 (/build/matmul_tc)
+==WARNING== Unable to access the following 6 metrics: ctc__rx_bytes_data_user.sum, ctc__rx_bytes_data_user.sum.pct_of_peak_sustained_elapsed, ctc__rx_bytes_data_user.sum.per_second, ctc__tx_bytes_data_user.sum, ctc__tx_bytes_data_user.sum.pct_of_peak_sustained_elapsed, ctc__tx_bytes_data_user.sum.per_second.
+
+
+==PROF== Profiling "mm_wgmma": 0%....50%....100% - 39 passes
+# 计时：每个 N 先逐个对答案，再轮流计时（每轮每个 kernel 各跑一次，取中位数），免得排在前面的 kernel 赶上 GPU 还没降频
+kernel                  N         ms    TFLOPS  max_rel_err
+wgmma                8192      2.233    492.47     0.00e+00
+no error
+==PROF== Disconnected from process 388
+==PROF== Report: /out/matmul-ladder-tc/20261027-134747/ncu-wgmma-8192.ncu-rep

@@ -1,0 +1,15 @@
+$ /opt/nvidia/nsight-systems/2024.6.2/bin/nsys profile --trace=cuda --force-overwrite=true -o /out/matmul-ladder-tc/20261027-134747/nsys-wmma /build/matmul_tc wmma 8192
+# 计时：每个 N 先逐个对答案，再轮流计时（每轮每个 kernel 各跑一次，取中位数），免得排在前面的 kernel 赶上 GPU 还没降频
+kernel                  N         ms    TFLOPS  max_rel_err
+wmma                 8192     10.794    101.86     0.00e+00
+no error
+Collecting data...
+Generating '/tmp/nsys-report-c182.qdstrm'
+
+[1/1] [0%                          ] nsys-wmma.nsys-rep
+[1/1] [0%                          ] nsys-wmma.nsys-rep
+[1/1] [=======================94%  ] nsys-wmma.nsys-rep
+[1/1] [========================100%] nsys-wmma.nsys-rep
+[1/1] [========================100%] nsys-wmma.nsys-rep
+Generated:
+    /out/matmul-ladder-tc/20261027-134747/nsys-wmma.nsys-rep

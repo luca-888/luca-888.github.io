@@ -1,0 +1,35 @@
+$ /opt/nvidia/nsight-systems/2024.6.2/bin/nsys stats --report cuda_gpu_trace --format csv /out/matmul-ladder-tc/20261027-134747/nsys-wmma.nsys-rep
+Generating SQLite file /out/matmul-ladder-tc/20261027-134747/nsys-wmma.sqlite from /out/matmul-ladder-tc/20261027-134747/nsys-wmma.nsys-rep
+Processing [/out/matmul-ladder-tc/20261027-134747/nsys-wmma.sqlite] with [/opt/nvidia/nsight-systems/2024.6.2/host-linux-x64/reports/cuda_gpu_trace.py]... 
+Start (ns),Duration (ns),CorrId,GrdX,GrdY,GrdZ,BlkX,BlkY,BlkZ,Reg/Trd,StcSMem (MB),DymSMem (MB),Bytes (MB),Throughput (MB/s),SrcMemKd,DstMemKd,Device,Ctx,GreenCtx,Strm,Name
+375221730,158433,1278,262144,1,1,256,1,1,16,0.000,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"fill_rand(__nv_bfloat16 *, unsigned long, unsigned int)"
+375381315,158400,1279,262144,1,1,256,1,1,16,0.000,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"fill_rand(__nv_bfloat16 *, unsigned long, unsigned int)"
+464415832,1152,1353,,,,,,,,,,0.000,3.472,Device,,NVIDIA H100 80GB HBM3 (0),1,,7,[CUDA memset]
+464436504,1367299,1354,2,66,1,384,1,1,168,0.000,0.189,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,nvjet_tst_320x128_64x3_1x2_h_bz_coopB_TNT
+465825211,40928,1360,,,,,,,,,,134.218,3279341.748,Device,,NVIDIA H100 80GB HBM3 (0),1,,7,[CUDA memset]
+465870139,10924370,1361,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+476808333,736,1363,,,,,,,,,,0.000,10.870,Device,,NVIDIA H100 80GB HBM3 (0),1,,7,[CUDA memset]
+476834157,220001,1364,528,1,1,256,1,1,19,0.000,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"max_err(const __nv_bfloat16 *, const __nv_bfloat16 *, unsigned long, unsigned int *)"
+477058030,2272,1365,,,,,,,,,,0.000,3.521,Device,Pageable,NVIDIA H100 80GB HBM3 (0),1,,7,[CUDA memcpy Device-to-Host]
+477093134,10906706,1369,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+488022912,10887378,1374,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+498931026,10835506,1379,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+509792997,10840498,1384,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+520653623,10847474,1389,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+531520521,10840914,1394,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+542383035,10867667,1399,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+553271470,10852178,1404,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+564144096,10854866,1409,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+575021138,10852914,1414,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+585893892,10786738,1419,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+596703991,10621265,1424,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+607344904,10655218,1429,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+618018106,10632754,1434,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+628670892,10636050,1439,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+639325534,10626610,1444,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+649971504,10642674,1449,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+660633250,10629234,1454,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+671282100,10646674,1459,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+681946822,10646866,1464,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+692616248,10632594,1469,64,64,1,256,1,1,128,0.025,0.000,,,,,NVIDIA H100 80GB HBM3 (0),1,,7,"void mm_wmma<(int)0>(const __nv_bfloat16 *, const __nv_bfloat16 *, __nv_bfloat16 *, int, int, int)"
+

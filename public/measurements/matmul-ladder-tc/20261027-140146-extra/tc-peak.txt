@@ -1,0 +1,4 @@
+$ /build/tc_peak
+peak_mma   mma.sync.m16n8k16   643.1 TFLOPS
+peak_wgmma wgmma.m64n256k16    962.1 TFLOPS
+no error

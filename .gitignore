@@ -33,3 +33,7 @@ __pycache__/
 /videos/*/review/old/
 /videos/*/review/kfsrc/
 /videos/*/review/frames.json
+
+# Nsight 报告（二进制，本地用 Nsight 界面打开；原件在 Modal Volume inference-study-results）
+/public/measurements/**/*.ncu-rep
+/public/measurements/**/*.nsys-rep

@@ -1,0 +1,3 @@
+$ cuobjdump -sass -fun mm_wmma /build/matmul_tc | grep -E 'LDS|LDSM|HMMA|STS|LDG|BAR' | sed -E 's/ +/ /g' | sort | uniq -c | sort -rn | head -40
+cuobjdump warning : Function listed in --function 'mm_wmma' not found
+cuobjdump warning : Function listed in --function 'mm_wmma' not found

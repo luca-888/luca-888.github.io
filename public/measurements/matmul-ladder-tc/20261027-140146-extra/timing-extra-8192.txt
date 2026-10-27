@@ -1,0 +1,10 @@
+$ /build/matmul_tc wmma,wmma_pad,mma_sync_ld,mma_noswz,mma,mma_async 8192
+# 计时：每个 N 先逐个对答案，再轮流计时（每轮每个 kernel 各跑一次，取中位数），免得排在前面的 kernel 赶上 GPU 还没降频
+kernel                  N         ms    TFLOPS  max_rel_err
+wmma                 8192     10.996     99.99     0.00e+00
+mma                  8192      3.802    289.20     0.00e+00
+mma_async            8192      3.261    337.22     0.00e+00
+wmma_pad             8192      7.444    147.69     0.00e+00
+mma_sync_ld          8192      4.946    222.29     0.00e+00
+mma_noswz            8192     15.510     70.89     0.00e+00
+no error

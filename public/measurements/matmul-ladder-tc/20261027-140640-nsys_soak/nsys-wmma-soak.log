@@ -1,0 +1,12 @@
+$ /opt/nvidia/nsight-systems/2024.6.2/bin/nsys profile --trace=cuda --force-overwrite=true -o /out/matmul-ladder-tc/20261027-140640-nsys_soak/nsys-wmma-soak /build/matmul_tc soak wmma 8192
+wmma                 8192   195 次  平均 10.712 ms   102.64 TFLOPS  SM   1980 MHz  功耗   385 W  (35 个采样)
+Collecting data...
+Generating '/tmp/nsys-report-e071.qdstrm'
+
+[1/1] [0%                          ] nsys-wmma-soak.nsys-rep
+[1/1] [0%                          ] nsys-wmma-soak.nsys-rep
+[1/1] [======================90%   ] nsys-wmma-soak.nsys-rep
+[1/1] [========================100%] nsys-wmma-soak.nsys-rep
+[1/1] [========================100%] nsys-wmma-soak.nsys-rep
+Generated:
+    /out/matmul-ladder-tc/20261027-140640-nsys_soak/nsys-wmma-soak.nsys-rep

@@ -24,9 +24,11 @@ typedef __nv_bfloat16 bf16;
 // ---------------------------------------------------------------- wmma
 // wmma：最朴素的 Tensor Core 版。block 算 128×128，8 个 warp 各算 64×32（4×2 个 16×16 片段）；
 // 沿 K 每次把 A、W 各 128×32 同步搬进共享内存，每个 warp 用 wmma::mma_sync 一条指令做 16×16×16
+// PAD：共享内存每行多留的元素数。0 是阶梯第一版；8（每行多 16 B，行距 80 B）是视频用的对照版，只为测 bank 冲突占多少
+template <int PAD = 0>
 __global__ void __launch_bounds__(256) mm_wmma(const bf16* A, const bf16* W, bf16* C, int M, int N, int K) {
-    constexpr int BM = 128, BN = 128, BK = 32;
-    __shared__ __align__(128) bf16 As[BM * BK], Ws[BN * BK];
+    constexpr int BM = 128, BN = 128, BK = 32, LD = BK + PAD;
+    __shared__ __align__(128) bf16 As[BM * LD], Ws[BN * LD];
     __shared__ __align__(128) float stage[8][16 * 16];             // 收尾时把 FP32 片段落到这里再转成 BF16
     int tid = threadIdx.x, warp = tid / 32, lane = tid % 32;
     int wRow = warp / 4, wCol = warp % 4;
@@ -39,13 +41,13 @@ __global__ void __launch_bounds__(256) mm_wmma(const bf16* A, const bf16* W, bf1
     for (int k0 = 0; k0 < K; k0 += BK) {
         for (int i = tid; i < BM * BK / 8; i += 256) {              // 每线程一次搬 8 个 bf16（16 B）
             int r = i / (BK / 8), c8 = i % (BK / 8) * 8;
-            *(int4*)&As[r * BK + c8] = *(const int4*)&A[(size_t)(bm + r) * K + k0 + c8];
-            *(int4*)&Ws[r * BK + c8] = *(const int4*)&W[(size_t)(bn + r) * K + k0 + c8];
+            *(int4*)&As[r * LD + c8] = *(const int4*)&A[(size_t)(bm + r) * K + k0 + c8];
+            *(int4*)&Ws[r * LD + c8] = *(const int4*)&W[(size_t)(bn + r) * K + k0 + c8];
         }
         __syncthreads();
         for (int kk = 0; kk < BK; kk += 16) {
-            for (int i = 0; i < 4; i++) wmma::load_matrix_sync(a[i], &As[(wRow * 64 + i * 16) * BK + kk], BK);
-            for (int j = 0; j < 2; j++) wmma::load_matrix_sync(b[j], &Ws[(wCol * 32 + j * 16) * BK + kk], BK);
+            for (int i = 0; i < 4; i++) wmma::load_matrix_sync(a[i], &As[(wRow * 64 + i * 16) * LD + kk], LD);
+            for (int j = 0; j < 2; j++) wmma::load_matrix_sync(b[j], &Ws[(wCol * 32 + j * 16) * LD + kk], LD);
             for (int i = 0; i < 4; i++)
                 for (int j = 0; j < 2; j++) wmma::mma_sync(c[i][j], a[i], b[j], c[i][j]);
         }
@@ -82,12 +84,15 @@ __device__ __forceinline__ void mma16816(float* c, const uint32_t* a, const uint
 // 一行 64 个 bf16 = 128 B = 8 个 16 B 块；第 row 行的第 c 块放到 c ^ (row & 7)。ldmatrix 一次读 8 行的同一块，
 // 换位后 8 个地址落在 8 个不同的 bank 组 —— 和 TMA 的 SWIZZLE_128B 是同一个规则
 __device__ __forceinline__ uint32_t swz(int row, int chunk) { return row * 128 + ((chunk ^ (row & 7)) << 4); }
+// 视频对照用：不换位，第 c 块就放在第 c 块（ldmatrix 读 8 行同一块时全落在同一组 bank）
+template <bool SWZ> __device__ __forceinline__ uint32_t saddr(int row, int chunk) { return SWZ ? swz(row, chunk) : row * 128 + (chunk << 4); }
 
 // ---------------------------------------------------------------- mma / mma_async
 // mma（STAGES=1）：换成 PTX 级 mma.sync.m16n8k16 + ldmatrix，共享内存按上面的 XOR 规则换位存（消除 ldmatrix 的 bank 冲突），
 // 显存→共享内存改用 cp.async（不经寄存器）。但还是"搬完一块、等齐、再算"，搬和算不重叠。
 // mma_async（STAGES=3）：只改一处 —— 共享内存开 3 级环形缓冲，cp.async 提前 2 块发出，搬第 t+2 块和算第 t 块重叠
-template <int BM, int BN, int STAGES>
+// SWZ=false、SYNC=true 只给视频的拆分对照用：分别去掉换位、把 cp.async 换回“经寄存器的同步搬运”
+template <int BM, int BN, int STAGES, bool SWZ = true, bool SYNC = false>
 __global__ void __launch_bounds__(256) mm_mma(const bf16* A, const bf16* W, bf16* C, int M, int N, int K) {
     constexpr int BK = 64, WM = BM / 2, WN = BN / 4, MT = WM / 16, NT = WN / 8;   // 8 个 warp 排成 2×4
     constexpr int A_BYTES = BM * BK * 2, STAGE_BYTES = (BM + BN) * BK * 2;
@@ -100,8 +105,15 @@ __global__ void __launch_bounds__(256) mm_mma(const bf16* A, const bf16* W, bf16
     const bf16* Wb = W + (size_t)bn * K;
     auto load = [&](int stage, int k0) {
         uint32_t sa = sbase + stage * STAGE_BYTES, sw = sa + A_BYTES;
-        for (int i = tid; i < BM * 8; i += 256) { int r = i / 8, c = i % 8; cp_async16(sa + swz(r, c), Ab + (size_t)r * K + k0 + c * 8); }
-        for (int i = tid; i < BN * 8; i += 256) { int r = i / 8, c = i % 8; cp_async16(sw + swz(r, c), Wb + (size_t)r * K + k0 + c * 8); }
+        if constexpr (SYNC) {                                       // 经寄存器：读 16 B 进寄存器，再 st.shared
+            for (int i = tid; i < BM * 8; i += 256) { int r = i / 8, c = i % 8; int4 x = *(const int4*)(Ab + (size_t)r * K + k0 + c * 8);
+                asm volatile("st.shared.v4.b32 [%0], {%1,%2,%3,%4};" ::"r"(sa + saddr<SWZ>(r, c)), "r"(x.x), "r"(x.y), "r"(x.z), "r"(x.w)); }
+            for (int i = tid; i < BN * 8; i += 256) { int r = i / 8, c = i % 8; int4 x = *(const int4*)(Wb + (size_t)r * K + k0 + c * 8);
+                asm volatile("st.shared.v4.b32 [%0], {%1,%2,%3,%4};" ::"r"(sw + saddr<SWZ>(r, c)), "r"(x.x), "r"(x.y), "r"(x.z), "r"(x.w)); }
+        } else {
+            for (int i = tid; i < BM * 8; i += 256) { int r = i / 8, c = i % 8; cp_async16(sa + saddr<SWZ>(r, c), Ab + (size_t)r * K + k0 + c * 8); }
+            for (int i = tid; i < BN * 8; i += 256) { int r = i / 8, c = i % 8; cp_async16(sw + saddr<SWZ>(r, c), Wb + (size_t)r * K + k0 + c * 8); }
+        }
     };
     float acc[MT][NT][4] = {};
     auto compute = [&](int stage) {
@@ -110,11 +122,11 @@ __global__ void __launch_bounds__(256) mm_mma(const bf16* A, const bf16* W, bf16
         for (int kk = 0; kk < BK / 16; kk++) {
             uint32_t a[MT][4], b[NT][2];
 #pragma unroll
-            for (int i = 0; i < MT; i++) ldmatrix_x4(a[i], sa + swz(wRow * WM + i * 16 + lane % 16, kk * 2 + lane / 16));
+            for (int i = 0; i < MT; i++) ldmatrix_x4(a[i], sa + saddr<SWZ>(wRow * WM + i * 16 + lane % 16, kk * 2 + lane / 16));
 #pragma unroll
             for (int j = 0; j < NT; j += 2) {
                 uint32_t t[4];
-                ldmatrix_x4(t, sw + swz(wCol * WN + j * 8 + lane % 8 + lane / 16 * 8, kk * 2 + lane / 8 % 2));
+                ldmatrix_x4(t, sw + saddr<SWZ>(wCol * WN + j * 8 + lane % 8 + lane / 16 * 8, kk * 2 + lane / 8 % 2));
                 b[j][0] = t[0]; b[j][1] = t[1]; b[j + 1][0] = t[2]; b[j + 1][1] = t[3];
             }
 #pragma unroll
@@ -514,11 +526,12 @@ static void launch_cublas_nn(int N) {   // 参考：和 matmul.cu 里 bf16 同�
     cublasGemmEx(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, N, N, &one, dW, CUDA_R_16BF, N, dA, CUDA_R_16BF, N, &zero, dNN, CUDA_R_16BF, N,
                  CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT);
 }
-static void launch_wmma(int N) { mm_wmma<<<dim3(N / 128, N / 128), 256>>>(dA, dW, dC, N, N, N); }
-template <int BM, int BN, int S>
-static void prep_mma(int) { cudaFuncSetAttribute(mm_mma<BM, BN, S>, cudaFuncAttributeMaxDynamicSharedMemorySize, S * (BM + BN) * 128); }
-template <int BM, int BN, int S>
-static void launch_mma(int N) { mm_mma<BM, BN, S><<<dim3(N / BN, N / BM), 256, S * (BM + BN) * 128>>>(dA, dW, dC, N, N, N); }
+static void launch_wmma(int N) { mm_wmma<0><<<dim3(N / 128, N / 128), 256>>>(dA, dW, dC, N, N, N); }
+static void launch_wmma_pad(int N) { mm_wmma<8><<<dim3(N / 128, N / 128), 256>>>(dA, dW, dC, N, N, N); }
+template <int BM, int BN, int S, bool SWZ = true, bool SYNC = false>
+static void prep_mma(int) { cudaFuncSetAttribute(mm_mma<BM, BN, S, SWZ, SYNC>, cudaFuncAttributeMaxDynamicSharedMemorySize, S * (BM + BN) * 128); }
+template <int BM, int BN, int S, bool SWZ = true, bool SYNC = false>
+static void launch_mma(int N) { mm_mma<BM, BN, S, SWZ, SYNC><<<dim3(N / BN, N / BM), 256, S * (BM + BN) * 128>>>(dA, dW, dC, N, N, N); }
 template <int S>
 static void prep_wgmma(int N) {
     WgState<S>::a = make_map(dA, N, N, 128);
@@ -582,6 +595,9 @@ static const Kernel KS[] = {
     {"wgmma_cluster", launch_wgmma_ws<4, 16, true, 2, true>, prep_wgmma_ws<4, 16, true, 2>, 256},
     {"wgmma_tstore", launch_wgmma_ws<3, 16, true, 2, true, true>, prep_wgmma_ws<3, 16, true, 2, true>, 256},
     // ---- 调参候选
+    {"wmma_pad", launch_wmma_pad, nullptr, 128},                 // 视频对照：wmma 每行加 16 B padding
+    {"mma_sync_ld", launch_mma<128, 128, 1, true, true>, prep_mma<128, 128, 1, true, true>, 128},     // 视频对照：mma 但搬运经寄存器
+    {"mma_noswz", launch_mma<128, 128, 1, false, false>, prep_mma<128, 128, 1, false, false>, 128},   // 视频对照：mma 但不换位
     {"mma_async_s2", launch_mma<128, 128, 2>, prep_mma<128, 128, 2>, 128},
     {"mma_async_s4", launch_mma<128, 128, 4>, prep_mma<128, 128, 4>, 128},
     {"mma_async_256_s3", launch_mma<128, 256, 3>, prep_mma<128, 256, 3>, 256},

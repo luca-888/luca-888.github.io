@@ -1,0 +1,993 @@
+{
+ "mma-8192": {
+  "kernel": "mma",
+  "N": 8192,
+  "time_ms": 3.776864,
+  "tflops": 291.11761180068964,
+  "tensor_pipe_active_pct": 45.151451,
+  "issue_active_pct": 37.576782,
+  "sm_clock_ghz": 1.81596,
+  "smem_pipe_pct": 47.953139,
+  "l1tex_throughput_pct": 50.220677,
+  "l2_overall_throughput_pct": 50.197271,
+  "dram_read_gb": 2.996318,
+  "l2_hit_pct": 68.196116,
+  "l2_throughput_pct": 39.305929,
+  "smem_ld_wavefronts_per_request": 1.0027753040194511,
+  "smem_ld_bank_conflicts": 1117485.0,
+  "stalls": {
+   "long_scoreboard": {
+    "per_issue": 2.019,
+    "share_pct": 21.4
+   },
+   "wait": {
+    "per_issue": 2.001,
+    "share_pct": 21.2
+   },
+   "short_scoreboard": {
+    "per_issue": 1.316,
+    "share_pct": 13.9
+   },
+   "math_pipe_throttle": {
+    "per_issue": 1.181,
+    "share_pct": 12.5
+   },
+   "barrier": {
+    "per_issue": 1.044,
+    "share_pct": 11.1
+   },
+   "not_selected": {
+    "per_issue": 0.764,
+    "share_pct": 8.1
+   },
+   "mio_throttle": {
+    "per_issue": 0.454,
+    "share_pct": 4.8
+   },
+   "dispatch_stall": {
+    "per_issue": 0.432,
+    "share_pct": 4.6
+   },
+   "branch_resolving": {
+    "per_issue": 0.145,
+    "share_pct": 1.5
+   },
+   "lg_throttle": {
+    "per_issue": 0.037,
+    "share_pct": 0.4
+   },
+   "no_instruction": {
+    "per_issue": 0.033,
+    "share_pct": 0.3
+   },
+   "drain": {
+    "per_issue": 0.018,
+    "share_pct": 0.2
+   },
+   "imc_miss": {
+    "per_issue": 0.0,
+    "share_pct": 0.0
+   }
+  }
+ },
+ "mma_async-8192": {
+  "kernel": "mma_async",
+  "N": 8192,
+  "time_ms": 3.263008,
+  "tflops": 336.96259027743724,
+  "tensor_pipe_active_pct": 53.671332,
+  "issue_active_pct": 43.219765,
+  "sm_clock_ghz": 1.786467,
+  "smem_pipe_pct": 56.707255,
+  "l1tex_throughput_pct": 59.923639,
+  "l2_overall_throughput_pct": 63.123314,
+  "dram_read_gb": 4.264007,
+  "l2_hit_pct": 63.341387,
+  "l2_throughput_pct": 47.770882,
+  "smem_ld_wavefronts_per_request": 1.009415328502655,
+  "smem_ld_bank_conflicts": 3791112.0,
+  "stalls": {
+   "wait": {
+    "per_issue": 2.404,
+    "share_pct": 29.6
+   },
+   "math_pipe_throttle": {
+    "per_issue": 1.424,
+    "share_pct": 17.5
+   },
+   "short_scoreboard": {
+    "per_issue": 1.159,
+    "share_pct": 14.3
+   },
+   "not_selected": {
+    "per_issue": 0.952,
+    "share_pct": 11.7
+   },
+   "dispatch_stall": {
+    "per_issue": 0.946,
+    "share_pct": 11.7
+   },
+   "barrier": {
+    "per_issue": 0.637,
+    "share_pct": 7.8
+   },
+   "long_scoreboard": {
+    "per_issue": 0.284,
+    "share_pct": 3.5
+   },
+   "branch_resolving": {
+    "per_issue": 0.17,
+    "share_pct": 2.1
+   },
+   "mio_throttle": {
+    "per_issue": 0.077,
+    "share_pct": 0.9
+   },
+   "lg_throttle": {
+    "per_issue": 0.029,
+    "share_pct": 0.4
+   },
+   "no_instruction": {
+    "per_issue": 0.021,
+    "share_pct": 0.3
+   },
+   "drain": {
+    "per_issue": 0.018,
+    "share_pct": 0.2
+   },
+   "imc_miss": {
+    "per_issue": 0.0,
+    "share_pct": 0.0
+   },
+   "misc": {
+    "per_issue": 0.0,
+    "share_pct": 0.0
+   }
+  }
+ },
+ "wgmma-8192": {
+  "kernel": "wgmma",
+  "N": 8192,
+  "time_ms": 2.170208,
+  "tflops": 506.6388234565534,
+  "tensor_pipe_active_pct": 55.623212,
+  "issue_active_pct": 11.297454,
+  "sm_clock_ghz": 1.730212,
+  "smem_pipe_pct": 40.627019,
+  "l1tex_throughput_pct": 43.464971,
+  "l2_overall_throughput_pct": 95.406557,
+  "dram_read_gb": 4.828993,
+  "l2_hit_pct": 60.438165,
+  "l2_throughput_pct": 76.29167,
+  "smem_ld_wavefronts_per_request": null,
+  "smem_ld_bank_conflicts": 0.0,
+  "stalls": {
+   "barrier": {
+    "per_issue": 4.454,
+    "share_pct": 56.6
+   },
+   "wait": {
+    "per_issue": 1.543,
+    "share_pct": 19.6
+   },
+   "long_scoreboard": {
+    "per_issue": 0.726,
+    "share_pct": 9.2
+   },
+   "gmma": {
+    "per_issue": 0.557,
+    "share_pct": 7.1
+   },
+   "lg_throttle": {
+    "per_issue": 0.242,
+    "share_pct": 3.1
+   },
+   "branch_resolving": {
+    "per_issue": 0.164,
+    "share_pct": 2.1
+   },
+   "drain": {
+    "per_issue": 0.094,
+    "share_pct": 1.2
+   },
+   "no_instruction": {
+    "per_issue": 0.043,
+    "share_pct": 0.5
+   },
+   "dispatch_stall": {
+    "per_issue": 0.042,
+    "share_pct": 0.5
+   },
+   "short_scoreboard": {
+    "per_issue": 0.005,
+    "share_pct": 0.1
+   },
+   "imc_miss": {
+    "per_issue": 0.001,
+    "share_pct": 0.0
+   }
+  }
+ },
+ "wgmma_cluster-8192": {
+  "kernel": "wgmma_cluster",
+  "N": 8192,
+  "time_ms": 1.417984,
+  "tflops": 775.4048196425348,
+  "tensor_pipe_active_pct": 92.596226,
+  "issue_active_pct": 19.734588,
+  "sm_clock_ghz": 1.615546,
+  "smem_pipe_pct": 55.48842,
+  "l1tex_throughput_pct": 60.97271,
+  "l2_overall_throughput_pct": 68.023545,
+  "dram_read_gb": 1.324035,
+  "l2_hit_pct": 76.799844,
+  "l2_throughput_pct": 59.522267,
+  "smem_ld_wavefronts_per_request": null,
+  "smem_ld_bank_conflicts": 0.0,
+  "stalls": {
+   "barrier": {
+    "per_issue": 7.869,
+    "share_pct": 55.5
+   },
+   "wait": {
+    "per_issue": 1.465,
+    "share_pct": 10.3
+   },
+   "mio_throttle": {
+    "per_issue": 1.423,
+    "share_pct": 10.0
+   },
+   "long_scoreboard": {
+    "per_issue": 1.026,
+    "share_pct": 7.2
+   },
+   "branch_resolving": {
+    "per_issue": 0.618,
+    "share_pct": 4.4
+   },
+   "lg_throttle": {
+    "per_issue": 0.549,
+    "share_pct": 3.9
+   },
+   "gmma": {
+    "per_issue": 0.454,
+    "share_pct": 3.2
+   },
+   "dispatch_stall": {
+    "per_issue": 0.316,
+    "share_pct": 2.2
+   },
+   "short_scoreboard": {
+    "per_issue": 0.232,
+    "share_pct": 1.6
+   },
+   "not_selected": {
+    "per_issue": 0.093,
+    "share_pct": 0.7
+   },
+   "no_instruction": {
+    "per_issue": 0.074,
+    "share_pct": 0.5
+   },
+   "math_pipe_throttle": {
+    "per_issue": 0.03,
+    "share_pct": 0.2
+   },
+   "misc": {
+    "per_issue": 0.021,
+    "share_pct": 0.1
+   },
+   "membar": {
+    "per_issue": 0.017,
+    "share_pct": 0.1
+   },
+   "imc_miss": {
+    "per_issue": 0.001,
+    "share_pct": 0.0
+   },
+   "drain": {
+    "per_issue": 0.0,
+    "share_pct": 0.0
+   }
+  }
+ },
+ "wgmma_l2-4096": {
+  "kernel": "wgmma_l2",
+  "N": 4096,
+  "time_ms": 0.20300800000000002,
+  "tflops": 677.0124993694828,
+  "tensor_pipe_active_pct": 79.82131,
+  "issue_active_pct": 14.414446,
+  "sm_clock_ghz": 1.677139,
+  "smem_pipe_pct": 46.679077,
+  "l1tex_throughput_pct": 54.89542,
+  "l2_overall_throughput_pct": 64.019921,
+  "dram_read_gb": 0.148621824,
+  "l2_hit_pct": 79.694392,
+  "l2_throughput_pct": 55.166388,
+  "smem_ld_wavefronts_per_request": null,
+  "smem_ld_bank_conflicts": 0.0,
+  "stalls": {
+   "barrier": {
+    "per_issue": 8.435,
+    "share_pct": 60.3
+   },
+   "long_scoreboard": {
+    "per_issue": 1.685,
+    "share_pct": 12.0
+   },
+   "lg_throttle": {
+    "per_issue": 1.539,
+    "share_pct": 11.0
+   },
+   "wait": {
+    "per_issue": 1.341,
+    "share_pct": 9.6
+   },
+   "drain": {
+    "per_issue": 0.292,
+    "share_pct": 2.1
+   },
+   "short_scoreboard": {
+    "per_issue": 0.209,
+    "share_pct": 1.5
+   },
+   "dispatch_stall": {
+    "per_issue": 0.201,
+    "share_pct": 1.4
+   },
+   "not_selected": {
+    "per_issue": 0.081,
+    "share_pct": 0.6
+   },
+   "gmma": {
+    "per_issue": 0.066,
+    "share_pct": 0.5
+   },
+   "math_pipe_throttle": {
+    "per_issue": 0.056,
+    "share_pct": 0.4
+   },
+   "no_instruction": {
+    "per_issue": 0.051,
+    "share_pct": 0.4
+   },
+   "branch_resolving": {
+    "per_issue": 0.024,
+    "share_pct": 0.2
+   },
+   "imc_miss": {
+    "per_issue": 0.018,
+    "share_pct": 0.1
+   },
+   "mio_throttle": {
+    "per_issue": 0.001,
+    "share_pct": 0.0
+   },
+   "misc": {
+    "per_issue": 0.0,
+    "share_pct": 0.0
+   }
+  }
+ },
+ "wgmma_l2-8192": {
+  "kernel": "wgmma_l2",
+  "N": 8192,
+  "time_ms": 1.468992,
+  "tflops": 748.4803373850913,
+  "tensor_pipe_active_pct": 90.059298,
+  "issue_active_pct": 15.662811,
+  "sm_clock_ghz": 1.605573,
+  "smem_pipe_pct": 53.897754,
+  "l1tex_throughput_pct": 59.11172,
+  "l2_overall_throughput_pct": 79.503616,
+  "dram_read_gb": 1.368331,
+  "l2_hit_pct": 78.509151,
+  "l2_throughput_pct": 66.22058,
+  "smem_ld_wavefronts_per_request": null,
+  "smem_ld_bank_conflicts": 0.0,
+  "stalls": {
+   "barrier": {
+    "per_issue": 8.532,
+    "share_pct": 64.5
+   },
+   "long_scoreboard": {
+    "per_issue": 1.989,
+    "share_pct": 15.0
+   },
+   "wait": {
+    "per_issue": 1.321,
+    "share_pct": 10.0
+   },
+   "lg_throttle": {
+    "per_issue": 0.598,
+    "share_pct": 4.5
+   },
+   "dispatch_stall": {
+    "per_issue": 0.205,
+    "share_pct": 1.6
+   },
+   "short_scoreboard": {
+    "per_issue": 0.202,
+    "share_pct": 1.5
+   },
+   "drain": {
+    "per_issue": 0.125,
+    "share_pct": 0.9
+   },
+   "not_selected": {
+    "per_issue": 0.079,
+    "share_pct": 0.6
+   },
+   "gmma": {
+    "per_issue": 0.068,
+    "share_pct": 0.5
+   },
+   "math_pipe_throttle": {
+    "per_issue": 0.062,
+    "share_pct": 0.5
+   },
+   "no_instruction": {
+    "per_issue": 0.024,
+    "share_pct": 0.2
+   },
+   "branch_resolving": {
+    "per_issue": 0.021,
+    "share_pct": 0.2
+   },
+   "imc_miss": {
+    "per_issue": 0.002,
+    "share_pct": 0.0
+   },
+   "mio_throttle": {
+    "per_issue": 0.001,
+    "share_pct": 0.0
+   },
+   "misc": {
+    "per_issue": 0.0,
+    "share_pct": 0.0
+   }
+  }
+ },
+ "wgmma_persist-8192": {
+  "kernel": "wgmma_persist",
+  "N": 8192,
+  "time_ms": 1.639488,
+  "tflops": 670.6432909396103,
+  "tensor_pipe_active_pct": 86.383175,
+  "issue_active_pct": 15.16587,
+  "sm_clock_ghz": 1.657139,
+  "smem_pipe_pct": 46.784865,
+  "l1tex_throughput_pct": 56.862643,
+  "l2_overall_throughput_pct": 81.77103,
+  "dram_read_gb": 2.553894,
+  "l2_hit_pct": 71.86274,
+  "l2_throughput_pct": 71.012514,
+  "smem_ld_wavefronts_per_request": null,
+  "smem_ld_bank_conflicts": 0.0,
+  "stalls": {
+   "long_scoreboard": {
+    "per_issue": 8.52,
+    "share_pct": 60.7
+   },
+   "barrier": {
+    "per_issue": 1.672,
+    "share_pct": 11.9
+   },
+   "wait": {
+    "per_issue": 1.619,
+    "share_pct": 11.5
+   },
+   "lg_throttle": {
+    "per_issue": 0.641,
+    "share_pct": 4.6
+   },
+   "mio_throttle": {
+    "per_issue": 0.465,
+    "share_pct": 3.3
+   },
+   "not_selected": {
+    "per_issue": 0.236,
+    "share_pct": 1.7
+   },
+   "short_scoreboard": {
+    "per_issue": 0.214,
+    "share_pct": 1.5
+   },
+   "dispatch_stall": {
+    "per_issue": 0.213,
+    "share_pct": 1.5
+   },
+   "math_pipe_throttle": {
+    "per_issue": 0.142,
+    "share_pct": 1.0
+   },
+   "gmma": {
+    "per_issue": 0.142,
+    "share_pct": 1.0
+   },
+   "branch_resolving": {
+    "per_issue": 0.134,
+    "share_pct": 1.0
+   },
+   "no_instruction": {
+    "per_issue": 0.026,
+    "share_pct": 0.2
+   },
+   "drain": {
+    "per_issue": 0.006,
+    "share_pct": 0.0
+   },
+   "imc_miss": {
+    "per_issue": 0.002,
+    "share_pct": 0.0
+   },
+   "misc": {
+    "per_issue": 0.0,
+    "share_pct": 0.0
+   }
+  }
+ },
+ "wgmma_pipe-8192": {
+  "kernel": "wgmma_pipe",
+  "N": 8192,
+  "time_ms": 1.467424,
+  "tflops": 749.2801179318315,
+  "tensor_pipe_active_pct": 90.650778,
+  "issue_active_pct": 16.648665,
+  "sm_clock_ghz": 1.585262,
+  "smem_pipe_pct": 54.646645,
+  "l1tex_throughput_pct": 59.499947,
+  "l2_overall_throughput_pct": 78.59392,
+  "dram_read_gb": 1.626198,
+  "l2_hit_pct": 77.494308,
+  "l2_throughput_pct": 66.988782,
+  "smem_ld_wavefronts_per_request": null,
+  "smem_ld_bank_conflicts": 0.0,
+  "stalls": {
+   "barrier": {
+    "per_issue": 3.593,
+    "share_pct": 31.8
+   },
+   "long_scoreboard": {
+    "per_issue": 2.927,
+    "share_pct": 25.9
+   },
+   "wait": {
+    "per_issue": 1.626,
+    "share_pct": 14.4
+   },
+   "mio_throttle": {
+    "per_issue": 1.361,
+    "share_pct": 12.1
+   },
+   "lg_throttle": {
+    "per_issue": 0.575,
+    "share_pct": 5.1
+   },
+   "gmma": {
+    "per_issue": 0.264,
+    "share_pct": 2.3
+   },
+   "short_scoreboard": {
+    "per_issue": 0.215,
+    "share_pct": 1.9
+   },
+   "dispatch_stall": {
+    "per_issue": 0.206,
+    "share_pct": 1.8
+   },
+   "not_selected": {
+    "per_issue": 0.156,
+    "share_pct": 1.4
+   },
+   "branch_resolving": {
+    "per_issue": 0.13,
+    "share_pct": 1.2
+   },
+   "drain": {
+    "per_issue": 0.111,
+    "share_pct": 1.0
+   },
+   "math_pipe_throttle": {
+    "per_issue": 0.083,
+    "share_pct": 0.7
+   },
+   "no_instruction": {
+    "per_issue": 0.034,
+    "share_pct": 0.3
+   },
+   "imc_miss": {
+    "per_issue": 0.002,
+    "share_pct": 0.0
+   },
+   "misc": {
+    "per_issue": 0.0,
+    "share_pct": 0.0
+   }
+  }
+ },
+ "wgmma_tstore-8192": {
+  "kernel": "wgmma_tstore",
+  "N": 8192,
+  "time_ms": 1.385088,
+  "tflops": 793.8207736808059,
+  "tensor_pipe_active_pct": 93.751882,
+  "issue_active_pct": 18.440357,
+  "sm_clock_ghz": 1.621911,
+  "smem_pipe_pct": 56.960652,
+  "l1tex_throughput_pct": 59.002009,
+  "l2_overall_throughput_pct": 64.533802,
+  "dram_read_gb": 1.224794,
+  "l2_hit_pct": 73.865585,
+  "l2_throughput_pct": 57.051548,
+  "smem_ld_wavefronts_per_request": null,
+  "smem_ld_bank_conflicts": 0.0,
+  "stalls": {
+   "barrier": {
+    "per_issue": 6.21,
+    "share_pct": 40.7
+   },
+   "long_scoreboard": {
+    "per_issue": 4.65,
+    "share_pct": 30.5
+   },
+   "wait": {
+    "per_issue": 1.609,
+    "share_pct": 10.5
+   },
+   "mio_throttle": {
+    "per_issue": 0.834,
+    "share_pct": 5.5
+   },
+   "branch_resolving": {
+    "per_issue": 0.627,
+    "share_pct": 4.1
+   },
+   "dispatch_stall": {
+    "per_issue": 0.401,
+    "share_pct": 2.6
+   },
+   "not_selected": {
+    "per_issue": 0.33,
+    "share_pct": 2.2
+   },
+   "math_pipe_throttle": {
+    "per_issue": 0.198,
+    "share_pct": 1.3
+   },
+   "short_scoreboard": {
+    "per_issue": 0.192,
+    "share_pct": 1.3
+   },
+   "no_instruction": {
+    "per_issue": 0.081,
+    "share_pct": 0.5
+   },
+   "gmma": {
+    "per_issue": 0.073,
+    "share_pct": 0.5
+   },
+   "misc": {
+    "per_issue": 0.021,
+    "share_pct": 0.1
+   },
+   "lg_throttle": {
+    "per_issue": 0.019,
+    "share_pct": 0.1
+   },
+   "membar": {
+    "per_issue": 0.014,
+    "share_pct": 0.1
+   },
+   "imc_miss": {
+    "per_issue": 0.002,
+    "share_pct": 0.0
+   },
+   "drain": {
+    "per_issue": 0.0,
+    "share_pct": 0.0
+   }
+  }
+ },
+ "wgmma_ws-4096": {
+  "kernel": "wgmma_ws",
+  "N": 4096,
+  "time_ms": 0.21136000000000002,
+  "tflops": 650.2599993943982,
+  "tensor_pipe_active_pct": 75.544138,
+  "issue_active_pct": 14.352448,
+  "sm_clock_ghz": 1.696584,
+  "smem_pipe_pct": 44.321651,
+  "l1tex_throughput_pct": 51.956128,
+  "l2_overall_throughput_pct": 70.06257,
+  "dram_read_gb": 0.17276288,
+  "l2_hit_pct": 78.939027,
+  "l2_throughput_pct": 61.919952,
+  "smem_ld_wavefronts_per_request": null,
+  "smem_ld_bank_conflicts": 0.0,
+  "stalls": {
+   "barrier": {
+    "per_issue": 7.886,
+    "share_pct": 56.3
+   },
+   "long_scoreboard": {
+    "per_issue": 2.298,
+    "share_pct": 16.4
+   },
+   "lg_throttle": {
+    "per_issue": 1.473,
+    "share_pct": 10.5
+   },
+   "wait": {
+    "per_issue": 1.209,
+    "share_pct": 8.6
+   },
+   "dispatch_stall": {
+    "per_issue": 0.313,
+    "share_pct": 2.2
+   },
+   "drain": {
+    "per_issue": 0.311,
+    "share_pct": 2.2
+   },
+   "not_selected": {
+    "per_issue": 0.15,
+    "share_pct": 1.1
+   },
+   "short_scoreboard": {
+    "per_issue": 0.139,
+    "share_pct": 1.0
+   },
+   "math_pipe_throttle": {
+    "per_issue": 0.076,
+    "share_pct": 0.5
+   },
+   "gmma": {
+    "per_issue": 0.056,
+    "share_pct": 0.4
+   },
+   "no_instruction": {
+    "per_issue": 0.047,
+    "share_pct": 0.3
+   },
+   "imc_miss": {
+    "per_issue": 0.024,
+    "share_pct": 0.2
+   },
+   "branch_resolving": {
+    "per_issue": 0.023,
+    "share_pct": 0.2
+   },
+   "mio_throttle": {
+    "per_issue": 0.002,
+    "share_pct": 0.0
+   },
+   "misc": {
+    "per_issue": 0.0,
+    "share_pct": 0.0
+   }
+  }
+ },
+ "wgmma_ws-8192": {
+  "kernel": "wgmma_ws",
+  "N": 8192,
+  "time_ms": 2.439904,
+  "tflops": 450.63724957047486,
+  "tensor_pipe_active_pct": 50.878384,
+  "issue_active_pct": 9.073295,
+  "sm_clock_ghz": 1.623135,
+  "smem_pipe_pct": 32.099457,
+  "l1tex_throughput_pct": 33.395477,
+  "l2_overall_throughput_pct": 91.789118,
+  "dram_read_gb": 6.705439,
+  "l2_hit_pct": 48.048131,
+  "l2_throughput_pct": 62.331679,
+  "smem_ld_wavefronts_per_request": null,
+  "smem_ld_bank_conflicts": 0.0,
+  "stalls": {
+   "long_scoreboard": {
+    "per_issue": 9.179,
+    "share_pct": 45.4
+   },
+   "barrier": {
+    "per_issue": 8.013,
+    "share_pct": 39.6
+   },
+   "wait": {
+    "per_issue": 1.199,
+    "share_pct": 5.9
+   },
+   "lg_throttle": {
+    "per_issue": 0.819,
+    "share_pct": 4.0
+   },
+   "dispatch_stall": {
+    "per_issue": 0.291,
+    "share_pct": 1.4
+   },
+   "drain": {
+    "per_issue": 0.216,
+    "share_pct": 1.1
+   },
+   "not_selected": {
+    "per_issue": 0.187,
+    "share_pct": 0.9
+   },
+   "short_scoreboard": {
+    "per_issue": 0.123,
+    "share_pct": 0.6
+   },
+   "math_pipe_throttle": {
+    "per_issue": 0.096,
+    "share_pct": 0.5
+   },
+   "gmma": {
+    "per_issue": 0.046,
+    "share_pct": 0.2
+   },
+   "no_instruction": {
+    "per_issue": 0.023,
+    "share_pct": 0.1
+   },
+   "branch_resolving": {
+    "per_issue": 0.021,
+    "share_pct": 0.1
+   },
+   "imc_miss": {
+    "per_issue": 0.003,
+    "share_pct": 0.0
+   },
+   "mio_throttle": {
+    "per_issue": 0.001,
+    "share_pct": 0.0
+   },
+   "misc": {
+    "per_issue": 0.0,
+    "share_pct": 0.0
+   }
+  }
+ },
+ "wmma-8192": {
+  "kernel": "wmma",
+  "N": 8192,
+  "time_ms": 10.947104,
+  "tflops": 100.43858428457426,
+  "tensor_pipe_active_pct": 15.880401,
+  "issue_active_pct": 18.2635,
+  "sm_clock_ghz": 1.8158,
+  "smem_pipe_pct": 68.026838,
+  "l1tex_throughput_pct": 81.320736,
+  "l2_overall_throughput_pct": 22.738267,
+  "dram_read_gb": 4.647961,
+  "l2_hit_pct": 66.1429,
+  "l2_throughput_pct": 14.039754,
+  "smem_ld_wavefronts_per_request": 4.002587439482694,
+  "smem_ld_bank_conflicts": 1215298275.0,
+  "stalls": {
+   "long_scoreboard": {
+    "per_issue": 8.115,
+    "share_pct": 39.4
+   },
+   "lg_throttle": {
+    "per_issue": 4.377,
+    "share_pct": 21.2
+   },
+   "barrier": {
+    "per_issue": 2.222,
+    "share_pct": 10.8
+   },
+   "wait": {
+    "per_issue": 2.217,
+    "share_pct": 10.8
+   },
+   "mio_throttle": {
+    "per_issue": 1.338,
+    "share_pct": 6.5
+   },
+   "short_scoreboard": {
+    "per_issue": 1.207,
+    "share_pct": 5.9
+   },
+   "not_selected": {
+    "per_issue": 0.478,
+    "share_pct": 2.3
+   },
+   "dispatch_stall": {
+    "per_issue": 0.274,
+    "share_pct": 1.3
+   },
+   "math_pipe_throttle": {
+    "per_issue": 0.229,
+    "share_pct": 1.1
+   },
+   "branch_resolving": {
+    "per_issue": 0.12,
+    "share_pct": 0.6
+   },
+   "no_instruction": {
+    "per_issue": 0.021,
+    "share_pct": 0.1
+   },
+   "drain": {
+    "per_issue": 0.005,
+    "share_pct": 0.0
+   },
+   "imc_miss": {
+    "per_issue": 0.0,
+    "share_pct": 0.0
+   }
+  }
+ },
+ "wmma_pad-8192": {
+  "kernel": "wmma_pad",
+  "N": 8192,
+  "time_ms": 7.414496,
+  "tflops": 148.29216008424578,
+  "tensor_pipe_active_pct": 22.950991,
+  "issue_active_pct": 26.417129,
+  "sm_clock_ghz": 1.814501,
+  "smem_pipe_pct": 39.582004,
+  "l1tex_throughput_pct": 55.860345,
+  "l2_overall_throughput_pct": 27.286664,
+  "dram_read_gb": 2.311134,
+  "l2_hit_pct": 75.457629,
+  "l2_throughput_pct": 16.831061,
+  "smem_ld_wavefronts_per_request": 1.0091858107808958,
+  "smem_ld_bank_conflicts": 3717960.0,
+  "stalls": {
+   "long_scoreboard": {
+    "per_issue": 6.36,
+    "share_pct": 46.1
+   },
+   "wait": {
+    "per_issue": 2.299,
+    "share_pct": 16.7
+   },
+   "barrier": {
+    "per_issue": 1.816,
+    "share_pct": 13.2
+   },
+   "lg_throttle": {
+    "per_issue": 0.873,
+    "share_pct": 6.3
+   },
+   "not_selected": {
+    "per_issue": 0.603,
+    "share_pct": 4.4
+   },
+   "math_pipe_throttle": {
+    "per_issue": 0.577,
+    "share_pct": 4.2
+   },
+   "short_scoreboard": {
+    "per_issue": 0.514,
+    "share_pct": 3.7
+   },
+   "dispatch_stall": {
+    "per_issue": 0.416,
+    "share_pct": 3.0
+   },
+   "mio_throttle": {
+    "per_issue": 0.199,
+    "share_pct": 1.4
+   },
+   "branch_resolving": {
+    "per_issue": 0.12,
+    "share_pct": 0.9
+   },
+   "no_instruction": {
+    "per_issue": 0.021,
+    "share_pct": 0.2
+   },
+   "drain": {
+    "per_issue": 0.004,
+    "share_pct": 0.0
+   },
+   "imc_miss": {
+    "per_issue": 0.0,
+    "share_pct": 0.0
+   }
+  }
+ }
+}

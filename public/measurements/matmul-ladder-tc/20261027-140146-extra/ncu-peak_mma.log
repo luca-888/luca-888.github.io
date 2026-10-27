@@ -1,0 +1,12 @@
+$ /opt/nvidia/nsight-compute/2025.1.1/ncu --clock-control none --set full -k "regex:peak_mma" -c 1 -f -o /out/matmul-ladder-tc/20261027-140146-extra/ncu-peak_mma /build/tc_peak
+==WARNING== Note: Running with unmodified GPU clocks. If not controlled otherwise, profiling results may be inconsistent.
+==PROF== Connected to process 213 (/build/tc_peak)
+==WARNING== Unable to access the following 6 metrics: ctc__rx_bytes_data_user.sum, ctc__rx_bytes_data_user.sum.pct_of_peak_sustained_elapsed, ctc__rx_bytes_data_user.sum.per_second, ctc__tx_bytes_data_user.sum, ctc__tx_bytes_data_user.sum.pct_of_peak_sustained_elapsed, ctc__tx_bytes_data_user.sum.per_second.
+
+
+==PROF== Profiling "peak_mma": 0%....50%....100% - 39 passes
+peak_mma   mma.sync.m16n8k16   648.5 TFLOPS
+peak_wgmma wgmma.m64n256k16    970.9 TFLOPS
+no error
+==PROF== Disconnected from process 213
+==PROF== Report: /out/matmul-ladder-tc/20261027-140146-extra/ncu-peak_mma.ncu-rep
