@@ -1,0 +1,51 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- 矩阵乘法阶梯 · 下集封面，16:9 横版（1920 × 1080）。左侧标题区沿用竖版的文字；右侧是同一张存储层级图（宽度表示共用范围，语义色实心块），
+     数据块沿通路上行到点亮的 Tensor Core。数字：93.3 → 777.6 TFLOPS、cuBLAS 的 99.5%（content/matmul-ladder-tc.md 开头，8192 阶，H100 SXM 实测）。
+     node covers/matmul-ladder-tc/render.mjs 导出 cover-1920x1080.png；顶部 130 px 不放文字，左右边距 115 px。 -->
+<style>html, body { margin: 0; background: #f1ede4; } canvas { display: block; }</style>
+<canvas id="cv" width="1920" height="1080"></canvas>
+<script>
+const W = 1920, H = 1080;
+const C = { paper: '#f1ede4', ink: '#141414', ink2: '#3a3a3a', gray: '#8a8474', note: '#6b6556', red: '#e5322d', blue: '#2350d8', yel: '#f4c21b', hot: '#c4561d', use: '#2f8a57', teal: '#0fa391', tealD: '#0b7d70', purple: '#7c3ff5' };
+const ZH = '"PingFang SC","Helvetica Neue",sans-serif', MONO = '"SF Mono",Menlo,monospace', EN = '"Helvetica Neue",sans-serif';
+const g = document.getElementById('cv').getContext('2d');
+const rr = (x, y, w, h, c) => { g.fillStyle = c; g.beginPath(); g.roundRect(x, y, w, h, 5); g.fill(); };
+const ln = (pts, c, lw, dash = []) => { g.strokeStyle = c; g.lineWidth = lw; g.setLineDash(dash); g.lineJoin = 'round'; g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke(); g.setLineDash([]); };
+const tri = (x, y, dir, c, s = 15) => { g.fillStyle = c; g.beginPath(); if (dir === 'up') { g.moveTo(x, y - s); g.lineTo(x - s, y + 5); g.lineTo(x + s, y + 5); } else { g.moveTo(x, y + s); g.lineTo(x - s, y - 5); g.lineTo(x + s, y - 5); } g.closePath(); g.fill(); };
+const tw = (s, size, w = 800, font = ZH) => { g.font = `${w} ${size}px ${font}`; return g.measureText(s).width; };
+const tx = (s, x, y, { size = 40, c = C.ink, w = 800, align = 'left', font = ZH } = {}) => { g.fillStyle = c; g.textAlign = align; g.font = `${w} ${size}px ${font}`; g.fillText(s, x, y); return x + tw(s, size, w, font); };
+const tag = (s, x, y, size = 40, bg = C.ink) => { const w = tw(s, size, 700) + size * 1.1; g.fillStyle = bg; g.fillRect(x, y, w, size * 1.6); tx(s, x + size * 0.55, y + size * 1.17, { size, c: '#fff', w: 700 }); return w; };
+const SX = W * 0.06;
+g.fillStyle = C.paper; g.fillRect(0, 0, W, H);
+
+// ---------- 左：标题区 ----------
+// 标签：架构与型号连成一枚双色章（Hopper 实心、H100 描边），主题词 Tensor Core 只用主题色文字
+{ const ty = 300, sz = 46, hh = sz * 1.6, w1 = tw('Hopper', sz, 800) + sz * 1.1, w2 = tw('H100', sz, 800) + sz * 1.1;
+  g.fillStyle = C.ink; g.fillRect(SX, ty, w1, hh); tx('Hopper', SX + sz * 0.55, ty + sz * 1.17, { size: sz, c: '#fff' });
+  g.strokeStyle = C.ink; g.lineWidth = 4; g.strokeRect(SX + w1, ty + 2, w2 - 2, hh - 4); tx('H100', SX + w1 + sz * 0.55, ty + sz * 1.17, { size: sz });
+  tx('Tensor Core', SX + w1 + w2 + 34, ty + sz * 1.17, { size: sz, c: C.tealD }); }
+tx('矩阵乘法优化', SX - 4, 540, { size: 150, w: 900 });
+tx('（下）', SX - 14, 700, { size: 112, w: 900, c: C.tealD });
+
+// ---------- 右：存储层级图（与竖版同一张，按地图坐标画，整体缩放后放到右侧） ----------
+const s = 0.78, dx = 1805 - 1015 * s, dy = 186 - 900 * s;   // 右边缘对齐 6% 边距
+g.setTransform(s, 0, 0, s, dx, dy);
+const PX = (k) => 195 + k * 170, PW = 150, LANE = PX(0) + PW / 2;
+const Y = { tc: 1000, reg: 1166, smem: 1286, l2: 1440, hbm: 1586 }, Hh = { tc: 126, reg: 70, smem: 92, l2: 102, hbm: 126 };
+const centered = (t, cx, cy, size, w = 800) => tx(t, cx, cy + size * 0.36, { size, w, c: '#fff', align: 'center' });
+ln([[165, 960], [915, 960], [915, 1404], [165, 1404], [165, 960]], C.gray, 3, [12, 9]);
+rr(65, Y.hbm, 950, Hh.hbm, C.hot); centered('显存', 540, Y.hbm + Hh.hbm / 2, 46, 900);
+rr(105, Y.l2, 870, Hh.l2, C.ink2); centered('L2 缓存', 540, Y.l2 + Hh.l2 / 2, 42, 900);
+rr(195, Y.smem, 660, Hh.smem, C.use); centered('shared memory', 525, Y.smem + Hh.smem / 2, 38);
+for (let k = 0; k < 4; k++) {
+  rr(PX(k), Y.reg, PW, Hh.reg, C.ink2); centered('寄存器', PX(k) + PW / 2, Y.reg + Hh.reg / 2, 34);
+  rr(PX(k), Y.tc, PW, Hh.tc, C.teal); centered('Tensor', PX(k) + PW / 2, Y.tc + Hh.tc / 2 - 21, 34); centered('Core', PX(k) + PW / 2, Y.tc + Hh.tc / 2 + 21, 34);
+}
+g.strokeStyle = C.ink; g.lineWidth = 7; g.beginPath(); g.roundRect(PX(0) - 4, Y.tc - 4, PW + 8, Hh.tc + 8, 7); g.stroke();
+[['hbm', 'l2'], ['l2', 'smem'], ['smem', 'reg'], ['reg', 'tc']].forEach(([a, b]) => { const y0 = Y[a] - 6, y1 = Y[b] + Hh[b] + 18; ln([[LANE, y0], [LANE, y1]], C.ink, 6); tri(LANE, y1, 'up', C.ink); });
+const rx = PX(3) + PW;
+ln([[rx + 8, Y.reg + Hh.reg / 2], [955, Y.reg + Hh.reg / 2], [955, Y.hbm - 22]], C.purple, 7); tri(955, Y.hbm - 18, 'down', C.purple);
+[[Y.hbm - 26, C.blue], [Y.l2 - 46, C.yel], [Y.smem - 30, C.blue], [Y.reg - 24, C.yel]].forEach(([y, col]) => { rr(LANE + 26, y - 18, 36, 36, col); g.strokeStyle = C.ink; g.lineWidth = 3; g.strokeRect(LANE + 26, y - 18, 36, 36); });
+g.setTransform(1, 0, 0, 1, 0, 0);
+</script>

@@ -80,7 +80,7 @@ mbarrier 是 shared memory 中的计数器，数据到齐后，mbarrier 通知�
 双方通过 mbarrier 交接：数据到达后，consumer 开始计算；缓冲用完后，producer 立即补充。
 # 动作：两条泳道之间的计数格亮灭交替，数据块从上道递到下道，空格从下道还给上道。
 搬运始终提前几块，两组 consumer 轮流使用 Tensor Core，块与块之间不再有空闲。
-# 动作：Tensor Core 那一行的空白一格格被填满，连成一整条；速度条前进。
+# 动作：Tensor Core 那一行的空白一格格被填满，连成一整条；速度条原地抖一下（8192 阶这一步没有变快，见 EVIDENCE.md）。
 
 ## s06
 SM 内部的等待消除之后，矩阵增大时速度不再提升，此时的等待来自显存。
@@ -114,6 +114,14 @@ Hopper 新增了 thread block cluster，即线程块集群：若干线程块组�
 计算方随即开始计算下一块，写回与计算由此重叠。
 # 动作：时间线上写回段移到下一块计算的下方，Tensor Core 那一行连成一整条；速度条前进。
 
+## s08b
+在更新一代的 Blackwell 上，Tensor Core 的指令换成了 tcgen05，一个线程即可发出。
+# 动作：页眉换成“Blackwell：tcgen05 与 Tensor Memory”，速度条变暗（这一幕不是 H100 上的一步）；右侧一个 warpgroup 的线程一起向 Tensor Core 发出 wgmma，随后只剩一个线程，指令换成 tcgen05.mma。
+计算结果不再放在寄存器，而是存入 Tensor Core 旁边新增的 Tensor Memory，即张量内存。
+# 动作：寄存器下移，Tensor Core 下方展开新的一层 Tensor Memory；结果 C 从寄存器升进 Tensor Memory，寄存器变暗。
+配对的两个线程块还可以共同完成一条矩阵乘法指令。
+# 动作：右侧滑入第二个 SM，两个 SM 被框成一对；一条 tcgen05.mma 同时送进两边，八个 Tensor Core 一起亮。
+
 ## s09
 在这张图上，前四步位于 SM 内部：读取不再冲突，搬运不占用线程，指令更大，搬运与计算分工。
 # 动作：小地图放大回整屏；SM 内部的四个标题依次点亮各自那一层。
@@ -137,3 +145,6 @@ mbarrier → M barrier
 ldmatrix → LD matrix
 行 → 航
 运航 → 运行
+即片上 → 即骗上
+挤出 L2 → 挤出L-2
+tcgen05 → T C gen 零五

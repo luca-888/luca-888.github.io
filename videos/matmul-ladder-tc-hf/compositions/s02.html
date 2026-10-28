@@ -1,0 +1,167 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; }
+    #root .s02-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .s02-col { position: absolute; width: 34px; background: var(--paper2); border: 2px solid var(--line); border-radius: 3px; transform-origin: 50% 100%; }
+    #root .s02-chunk { position: absolute; width: 154px; height: 34px; border-radius: 3px; color: #fff; font-family: var(--mono); font-size: 28px; font-weight: 800; text-align: center; line-height: 34px; }
+    #root .s02-lbl { position: absolute; font-size: 32px; font-weight: 700; color: var(--ink2); white-space: nowrap; }
+  </style>
+  <!-- s02 第 1 步 swizzle：地图上 shared memory → 寄存器 点亮 → 32 个 bank → 冲突 → 按行存、竖着读 → 8 轮 → 换位成对角线 → 1 轮 → ldmatrix -->
+  <div id="root" data-composition-id="s02" data-width="1920" data-height="1080">
+    <div id="s02-mapw" class="s02-full"></div>
+    <div id="s02-bank" class="s02-full"></div>
+    <div id="s02-hud" class="s02-full"></div>
+  </div>
+  <script>
+    (function () {
+      const B = [0.6, 5.06, 12.34, 21.81, 25.86, 32.4, 39.49, 47.29, 55.09];
+      const DUR = 63.57;
+      const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
+      const U = HFKit("s02", tl), $ = U.$, mk = U.mk, ft = U.ft;
+
+      // 常驻：地图（接 s01 结尾的整图）、速度条、页眉
+      const M = HFMap.state(HFMap($("mapw"), { x: 460, y: 180 }));
+      const SP = HFSpeed($("hud"), HFSPEED.s01).instant();
+      const H = HFHeader($("hud"), "第 1 步", "swizzle：把数据错开存，避免 bank 冲突");
+
+      // ================= 第 1 句：图上 shared memory → 寄存器 一段点亮，其余变淡；标题出现；图缩到左上角 =================
+      HFMap.focus(tl, M, "smem-reg", B[0] + 0.1);
+      H.show(tl, B[0] + 0.4);
+      HFMap.toMini(tl, M, B[0] + 2.4, 1.0, false, [1, 0]);   // 寄存器那段点亮，Tensor Core 已变淡
+
+      // ================= 第 2 句：32 根 bank 柱排成一排，一拍各吐出一格 =================
+      const bk = $("bank"), X0 = 560, P = 40, CY = 440, CH = 280;
+      const cols = [];
+      for (let i = 0; i < 32; i++) { const c = mk(bk, `left:${X0 + i * P}px;top:${CY}px;height:${CH}px`); c.className = "s02-col"; cols.push(c); }
+      const l0 = mk(bk, `left:${X0}px;top:${CY + CH + 12}px`, "bank 0"); l0.className = "s02-lbl";
+      const l31 = mk(bk, `left:${X0 + 31 * P + 34}px;top:${CY + CH + 12}px`, "bank 31"); l31.className = "s02-lbl";
+      const bT = mk(bk, `left:${X0}px;top:${CY - 70}px;font-size:36px;font-weight:800;color:var(--ink)`, "shared memory · 32 个 bank"); bT.className = "s02-lbl";
+      gsap.set(l31, { xPercent: -100 });
+      gsap.set([cols, l0, l31, bT], { opacity: 0 });
+      cols.forEach((c, i) => ft(c, { opacity: 0, scaleY: 0 }, { opacity: 1, scaleY: 1, duration: 0.5, ease: U.ARRIVE }, B[1] + 0.2 + i * 0.02));
+      U.appear(bT, B[1] + 0.3, 0.5, 10); U.fade([l0, l31], B[1] + 0.8);
+      // 一拍：每根柱顶各吐出一格
+      const outs = cols.map((c, i) => { const o = mk(bk, `position:absolute;left:${X0 + i * P + 3}px;top:${CY + 4}px;width:28px;height:28px;background:var(--use);border-radius:2px`); gsap.set(o, { opacity: 0 }); return o; });
+      const emit = (els, t) => { ft(els, { opacity: 1, y: 0 }, { opacity: 0, y: -70, duration: 0.6, ease: "power2.out" }, t); };
+      emit(outs, B[1] + 2.0); emit(outs, B[1] + 3.2);
+
+      // ================= 第 3 句：32 个线程分散读 → 一拍读完；几根挤进同一根柱 → 逐个排队 =================
+      const sv = U.svg(bk);
+      const thr = [], arr = [];
+      for (let i = 0; i < 32; i++) {
+        const d = mk(bk, `position:absolute;left:${X0 + i * P + 7}px;top:${CY - 150}px;width:20px;height:20px;border-radius:50%;background:var(--blue)`);
+        thr.push(d); arr.push(U.path(sv, `M ${X0 + i * P + 17} ${CY - 124} L ${X0 + i * P + 17} ${CY - 10}`, "var(--blue)", 3));
+      }
+      const tL = mk(bk, `left:${X0}px;top:${CY - 200}px`, "一个 warp 的 32 个线程"); tL.className = "s02-lbl";
+      gsap.set([thr, tL], { opacity: 0 });
+      U.leave(bT, B[2], 0.2);
+      U.fade(thr, B[2] + 0.2); U.fade(tL, B[2] + 0.2);
+      arr.forEach((p) => U.draw(p, B[2] + 0.8, 0.35));
+      ft(cols, { backgroundColor: "#e6e0d3" }, { backgroundColor: "#a9d6b9", duration: 0.15 }, B[2] + 1.2);
+      ft(cols, { backgroundColor: "#a9d6b9" }, { backgroundColor: "#e6e0d3", duration: 0.4 }, B[2] + 1.6);
+      const one = mk(bk, `left:${X0 + 32 * P - 40}px;top:${CY - 200}px;font-size:40px;font-weight:800;color:var(--use-t)`, "1 轮"); one.className = "s02-lbl";
+      gsap.set(one, { opacity: 0, xPercent: -100 });
+      U.appear(one, B[2] + 1.3, 0.4, 10);
+      // 换成 4 根箭头挤进同一根柱（第 5 号 bank）
+      U.leave([arr, one], B[2] + 3.6, 0.3);
+      const pick = [3, 9, 14, 22], tgt = 5;
+      const conv = pick.map((i) => U.path(sv, `M ${X0 + i * P + 17} ${CY - 124} L ${X0 + tgt * P + 17} ${CY - 10}`, "var(--red)", 4));
+      ft(thr.filter((_, i) => !pick.includes(i)), { opacity: 1 }, { opacity: 0.25, duration: 0.3 }, B[2] + 3.8);
+      conv.forEach((p, k) => U.draw(p, B[2] + 4.0 + k * 0.1, 0.4));
+      const q = pick.map((_, k) => { const e = mk(bk, `position:absolute;left:${X0 + tgt * P + 3}px;top:${CY - 40 - k * 32}px;width:28px;height:28px;background:var(--blue);border-radius:2px`); gsap.set(e, { opacity: 0 }); return e; });
+      q.forEach((e, k) => U.fade(e, B[2] + 4.6 + k * 0.08, 0.2));
+      const qn = mk(bk, `left:${X0 + tgt * P + 60}px;top:${CY - 120}px;font-size:40px;font-weight:800;color:var(--red)`, ""); qn.className = "s02-lbl";
+      const qv = [1, 2, 3, 4].map((n) => { const e = mk(bk, `position:absolute;left:${X0 + tgt * P + 60}px;top:${CY + 30}px;font-size:40px;font-weight:800;color:var(--red);white-space:nowrap`, `第 ${n} 轮`); gsap.set(e, { opacity: 0 }); return e; });
+      // 逐个出队：每轮只送出一份
+      q.forEach((e, k) => {
+        const t = B[2] + 5.4 + k * 0.85;
+        ft(e, { opacity: 1, y: 0 }, { opacity: 0, y: -60, duration: 0.45, ease: "power2.out" }, t);
+        q.slice(k + 1).forEach((r) => ft(r, { y: 0 }, { y: 32, duration: 0.3 }, t + 0.1));   // 后面的往下补一格（显示上是“往出口挪”）
+        ft(qv[k], { opacity: 0 }, { opacity: 1, duration: 0.15 }, t);
+        if (k) ft(qv[k - 1], { opacity: 1 }, { opacity: 0, duration: 0.15 }, t);
+      });
+
+      // ================= 第 4 句：挤在一起的那根柱标红，打出 bank conflict =================
+      ft(cols[tgt], { backgroundColor: "#e6e0d3", borderColor: "#cfc8b8" }, { backgroundColor: "#f4b3ad", borderColor: "#e5322d", duration: 0.3 }, B[3] + 0.1);
+      const bc = mk(bk, `left:${X0 + tgt * P + 60}px;top:${CY + 100}px;font-size:48px;font-weight:800;color:var(--red);font-family:var(--mono)`, "bank conflict"); bc.className = "s02-lbl";
+      gsap.set(bc, { opacity: 0 });
+      U.pop(bc, B[3] + 0.3);
+
+      // ================= 第 5 句：矩阵按行铺在 bank 上方；一条竖条框住 8 行的同一位置 =================
+      U.leave([thr, tL, conv, bc, qv[3]], B[4], 0.3);
+      ft(cols[tgt], { backgroundColor: "#f4b3ad", borderColor: "#e5322d" }, { backgroundColor: "#e6e0d3", borderColor: "#cfc8b8", duration: 0.3 }, B[4]);
+      // bank 柱压扁到画面下方，腾出位置给矩阵
+      const BY = 720, BH = 110;
+      ft(cols, { y: 0, scaleY: 1 }, { y: BY + BH - (CY + CH), scaleY: BH / CH, duration: 0.7, ease: U.CAM }, B[4] + 0.1);
+      ft([l0, l31], { y: 0 }, { y: BY + BH - (CY + CH), duration: 0.7, ease: U.CAM }, B[4] + 0.1);
+      // 8 行 × 8 块；一块 16 字节 = 4 个 bank 宽；一行 128 字节正好盖住 32 个 bank 一圈
+      const GY = 330, RH = 40, chunks = [];
+      for (let r = 0; r < 8; r++) { chunks.push([]); for (let c = 0; c < 8; c++) {
+        const e = mk(bk, `left:${X0 + c * 160 + 2}px;top:${GY + r * RH}px;background:${r % 2 ? "#6f8fe6" : "var(--blue)"}`, `${r},${c}`); e.className = "s02-chunk";
+        gsap.set(e, { opacity: 0 }); chunks[r].push(e);
+      } }
+      const rowsL = mk(bk, `left:${X0}px;top:${GY - 56}px`, "矩阵按行存放：一行 128 字节，正好盖住 32 个 bank 一圈"); rowsL.className = "s02-lbl";
+      gsap.set(rowsL, { opacity: 0 });
+      chunks.forEach((row, r) => ft(row, { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.45, ease: U.ARRIVE }, B[4] + 0.8 + r * 0.18));
+      U.appear(rowsL, B[4] + 0.8, 0.5, 10);
+      const frame = mk(bk, `position:absolute;left:${X0 - 6}px;top:${GY - 8}px;width:170px;height:${8 * RH + 10}px;border:5px solid var(--hot);border-radius:4px`);
+      gsap.set(frame, { opacity: 0 });
+      U.pop(frame, B[4] + 3.2);
+
+      // ================= 第 6 句：8 行同一位置的格子全落进同一组 bank，排成一摞，逐个送出，计数跳到 8 轮 =================
+      const fall = [];
+      for (let r = 0; r < 8; r++) { const e = mk(bk, `left:${X0 + 2}px;top:${GY + r * RH}px;background:${r % 2 ? "#6f8fe6" : "var(--blue)"}`, `${r},0`); e.className = "s02-chunk"; gsap.set(e, { opacity: 0 }); fall.push(e); }
+      const stackY = (k) => BY - 6 - (k + 1) * 36;
+      fall.forEach((e, r) => { ft(e, { opacity: 1, y: 0 }, { opacity: 1, y: stackY(r) - (GY + r * RH), duration: 0.6, ease: "power2.in" }, B[5] + 0.3 + r * 0.06); });
+      // 原位的那一列先让出位置（落下去的就是它们），数完再放回
+      ft(chunks.map((row) => row[0]), { opacity: 1 }, { opacity: 0, duration: 0.05 }, B[5] + 0.3);
+      ft(chunks.map((row) => row[0]), { opacity: 0 }, { opacity: 1, duration: 0.4 }, B[5] + 6.6);
+      ft(cols.slice(0, 4), { backgroundColor: "#e6e0d3" }, { backgroundColor: "#f4b3ad", duration: 0.2 }, B[5] + 1.0);
+      const cnt = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => { const e = mk(bk, `position:absolute;left:${X0 + 180}px;top:${BY + BH + 20}px;font-size:56px;font-weight:800;color:var(--red);white-space:nowrap`, `${n} 轮`); gsap.set(e, { opacity: 0 }); return e; });
+      // 每轮从这组 bank 送出一块（最下面那块），其余往下落一格
+      for (let k = 0; k < 8; k++) {
+        const t = B[5] + 1.4 + k * 0.6, e = fall[k];
+        ft(e, { opacity: 1 }, { opacity: 0, duration: 0.3 }, t);
+        ft(cnt[k], { opacity: 0 }, { opacity: 1, duration: 0.12 }, t);
+        if (k) ft(cnt[k - 1], { opacity: 1 }, { opacity: 0, duration: 0.12 }, t);
+      }
+
+      // ================= 第 7 句：swizzle：各行的数据块按行号滑动换位，竖列变成对角线 =================
+      U.leave(frame, B[6], 0.25);
+      ft(cols.slice(0, 4), { backgroundColor: "#f4b3ad" }, { backgroundColor: "#e6e0d3", duration: 0.3 }, B[6]);
+      const swL = mk(bk, `left:${X0 + 1280}px;top:${GY - 56}px;font-family:var(--mono);font-size:40px;font-weight:800;color:var(--tealD)`, "第 r 行的块 c → c ⊕ r"); swL.className = "s02-lbl";
+      gsap.set(swL, { opacity: 0, xPercent: -100 });
+      U.leave(rowsL, B[6], 0.2); U.appear(swL, B[6] + 0.3, 0.5, 10);
+      chunks.forEach((row, r) => row.forEach((e, c) => { const dx = ((c ^ r) - c) * 160; if (dx) ft(e, { x: 0 }, { x: dx, duration: 0.9, ease: U.CAM }, B[6] + 1.2 + r * 0.15); }));
+      const diag = chunks.map((row, r) => row[0]);
+      ft(diag, { backgroundColor: (i) => (i % 2 ? "#6f8fe6" : "#2350d8") }, { backgroundColor: "#0b7d70", duration: 0.3 }, B[6] + 3.0);
+
+      // ================= 第 8 句：对角线 8 格同时落进 8 组不同的 bank，一拍齐出：8 轮 → 1 轮 =================
+      const fall2 = diag.map((e, r) => { const f = mk(bk, `left:${X0 + r * 160 + 2}px;top:${GY + r * RH}px;background:var(--tealD)`, `${r},0`); f.className = "s02-chunk"; gsap.set(f, { opacity: 0 }); return f; });
+      fall2.forEach((f, r) => ft(f, { opacity: 1, y: 0 }, { opacity: 1, y: stackY(0) - (GY + r * RH), duration: 0.7, ease: "power2.in" }, B[7] + 0.3));
+      ft(diag, { opacity: 1 }, { opacity: 0, duration: 0.05 }, B[7] + 0.3);
+      ft(diag, { opacity: 0 }, { opacity: 1, duration: 0.4 }, B[7] + 2.2);
+      ft(cols, { backgroundColor: "#e6e0d3" }, { backgroundColor: "#a9d6b9", duration: 0.2 }, B[7] + 1.05);
+      ft(fall2, { opacity: 1 }, { opacity: 0, duration: 0.35 }, B[7] + 1.6);
+      const res = mk(bk, `left:${X0 + 640}px;top:${BY + BH + 20}px;font-size:56px;font-weight:800;white-space:nowrap`, '<span style="color:var(--red)">8 轮</span> <span style="color:var(--ink2)">→</span> <span style="color:var(--use-t)">1 轮</span>'); res.className = "s02-lbl";
+      gsap.set(res, { opacity: 0, xPercent: -50 });
+      U.leave(cnt[7], B[7] + 0.2, 0.2);
+      U.pop(res, B[7] + 1.7);
+
+      // ================= 第 9 句：ldmatrix(… swz(r, c))，8 根细线连到对角线上的 8 格；速度条前进 =================
+      ft(cols, { backgroundColor: "#a9d6b9" }, { backgroundColor: "#e6e0d3", duration: 0.4 }, B[8]);
+      U.leave(res, B[8], 0.25);
+      const code = mk(bk, `position:absolute;left:${X0 + 640}px;top:${BY + BH + 14}px;padding:12px 26px;background:var(--panel);border-radius:4px;font-family:var(--mono);font-size:44px;font-weight:700;color:var(--ink2);white-space:nowrap`, 'ldmatrix(… <b style="color:var(--tealD)">swz(r, c)</b>)');
+      gsap.set(code, { opacity: 0, xPercent: -50 });
+      U.appear(code, B[8] + 0.2, 0.5, 14);
+      const sv2 = U.svg(bk);
+      const thin = diag.map((_, r) => U.path(sv2, `M ${X0 + 640} ${BY + BH + 14} L ${X0 + r * 160 + 80 } ${GY + r * RH + 34}`, "var(--tealD)", 2));
+      thin.forEach((p, r) => U.draw(p, B[8] + 0.9 + r * 0.08, 0.4));
+      SP.to(tl, HFSPEED.s02, B[8] + 2.0, 1.2);
+
+      tl.set({}, {}, DUR);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["s02"] = tl;
+    })();
+  </script>
+</template>

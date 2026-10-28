@@ -1,0 +1,126 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; }
+    #root .s09-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .s09-blk { position: absolute; left: 0; top: 0; width: 36px; height: 36px; border: 3px solid var(--ink); border-radius: 3px; }
+  </style>
+  <!-- s09 收尾：小地图放大回整图 → 七个标题依次点亮各自那一层（与 s01 第 8 句同位置）→ 速度条与 cuBLAS 齐平 → 数据一块块流畅上行，Tensor Core 持续亮着 -->
+  <div id="root" data-composition-id="s09" data-width="1920" data-height="1080">
+    <div id="s09-mapw" class="s09-full"></div>
+    <div id="s09-hud" class="s09-full"></div>
+  </div>
+  <script>
+    (function () {
+      const B = [0.6, 9.4, 15.87, 20.41];
+      const DUR = 27.63;
+      const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
+      const U = HFKit("s09", tl), $ = U.$, mk = U.mk, ft = U.ft;
+      const NS = "http://www.w3.org/2000/svg";
+
+      // 常驻：地图（接 s08 的小地图）、速度条、页眉
+      const MX = 460, MY = 180;
+      const M = HFMap.state(HFMap($("mapw"), { x: MX, y: MY }), { mini: true, direct: true });
+      const SP = HFSpeed($("hud"), HFSPEED.s08).instant();
+      const H = HFHeader($("hud"), "回顾", "七步，各消除一处等待");
+
+      // ================= 第 1 句：小地图放大回整屏；七个标题挂回 s01 的位置；SM 内部的四个标题依次点亮各自那一层 =================
+      HFMap.toMini(tl, M, B[0] + 0.1, 1.0, true);
+      H.show(tl, B[0] + 0.4);
+      // 七个标题：文字、位置、引线与 s01 第 8 句一致
+      const hud = $("hud");
+      const T = [
+        ["1 swizzle", 60, 390, "reg"],
+        ["2 cp.async", 60, 566, "smem"],
+        ["3 wgmma", 60, 280, "tc"],
+        ["4 warp specialization", 60, 476, "sm"],
+        ["5 tile 分组", 1500, 790, "hbm"],
+        ["6 cluster 多播", 1500, 520, "smem"],
+        ["7 TMA store", 1500, 640, "wb"],
+      ];
+      const lsvg = U.svg(hud);
+      const anchor = { smem: [MX + 170, MY + 368], reg: [MX + 182, MY + 222], tc: [MX + 182, MY + 95], sm: [MX + 140, MY + 300], wb: [MX + 966, MY + 470] };
+      const anchorR = { smem: [MX + 830, MY + 368], hbm: [MX + 1000, MY + 688] };
+      const tags = T.map(([txt, x, y, a], i) => {
+        const right = x > 900, col = right ? "#c4561d" : "#0b7d70";
+        const e = mk(hud, `position:absolute;left:${x}px;top:${y - 26}px;padding:6px 14px;background:#fff;border:3px solid ${col};border-radius:4px;font-size:32px;font-weight:800;color:var(--ink);white-space:nowrap`, txt);
+        gsap.set(e, { opacity: 0 });
+        const [ax, ay] = right ? (anchorR[a] || anchor[a]) : anchor[a];
+        const sx = right ? x - 6 : x + e.offsetWidth + 6;
+        const ln = document.createElementNS(NS, "path");
+        ln.setAttribute("d", `M ${sx} ${y} L ${ax} ${ay}`); ln.setAttribute("stroke", col); ln.setAttribute("stroke-width", 3); ln.setAttribute("fill", "none");
+        lsvg.appendChild(ln); const L = ln.getTotalLength(); ln.style.strokeDasharray = L; ln.style.strokeDashoffset = L;
+        // 挂回原位：先淡（未点亮）
+        const t = B[0] + 1.0 + i * 0.08;
+        ft(e, { opacity: 0, x: right ? 30 : -30 }, { opacity: 0.4, x: 0, duration: 0.5, ease: U.ARRIVE }, t);
+        ft(ln, { strokeDashoffset: L, opacity: 0.4 }, { strokeDashoffset: 0, opacity: 0.4, duration: 0.35 }, t + 0.15);
+        return { e, ln, col, a, right };
+      });
+      const inL = mk(hud, "position:absolute;left:60px;top:180px;font-size:34px;font-weight:800;color:var(--tealD);white-space:nowrap", "SM 内部：前四步");
+      const outL = mk(hud, "position:absolute;left:1500px;top:860px;font-size:34px;font-weight:800;color:var(--hot-t);white-space:nowrap", "SM 之外：后三步");
+      const outBox = mk(hud, `position:absolute;left:${MX - 14}px;top:${MY + 480}px;width:1028px;height:280px;border:4px dashed var(--hot);border-radius:8px`);
+      gsap.set([inL, outL, outBox], { opacity: 0 });
+      // 点亮一个标题：标题填色、引线加粗；它作用的那一层加描边，约 1.1 s 后撤掉（下一层接着亮）
+      const light = (k, t, hold = 1.1) => {
+        const g = tags[k];
+        ft(g.e, { opacity: 0.4, backgroundColor: "#ffffff", color: "#141414" }, { opacity: 1, backgroundColor: g.col, color: "#ffffff", duration: 0.3, ease: "power2.out" }, t);
+        ft(g.ln, { opacity: 0.4, strokeWidth: 3 }, { opacity: 1, strokeWidth: 5, duration: 0.3 }, t);
+        const els = g.a === "sm" ? [] : g.a === "wb" ? [] : (g.right && g.a === "smem" ? [M.layer.l2, M.layer.smem] : M.all(g.a));
+        if (els.length) {
+          ft(els, { outlineWidth: 0 }, { outlineWidth: 6, duration: 0.25 }, t);
+          ft(els, { outlineWidth: 6 }, { outlineWidth: 0, duration: 0.3 }, t + hold);
+        }
+        if (g.a === "sm") { ft(M.box, { borderWidth: 3 }, { borderWidth: 7, duration: 0.25 }, t); ft(M.box, { borderWidth: 7 }, { borderWidth: 3, duration: 0.3 }, t + hold); }
+        if (g.a === "wb") { ft(M.wb, { strokeWidth: 6 }, { strokeWidth: 13, duration: 0.25 }, t); ft(M.wbHead, { scale: 1 }, { scale: 1.6, transformOrigin: "50% 50%", duration: 0.25 }, t); ft(M.wb, { strokeWidth: 13 }, { strokeWidth: 6, duration: 0.3 }, t + hold); ft(M.wbHead, { scale: 1.6 }, { scale: 1, transformOrigin: "50% 50%", duration: 0.3 }, t + hold); }
+      };
+      ft(M.box, { borderColor: "#8a8474" }, { borderColor: "#0b7d70", duration: 0.4 }, B[0] + 1.6);
+      U.appear(inL, B[0] + 1.6, 0.5, 10);
+      // 读取不再冲突 / 搬运不占用线程 / 指令更大 / 搬运与计算分工
+      light(0, B[0] + 2.9); light(1, B[0] + 4.1); light(2, B[0] + 5.4); light(3, B[0] + 6.6);
+
+      // ================= 第 2 句：SM 之外的三个标题依次点亮 =================
+      U.fade(outBox, B[1] + 0.2, 0.4); U.appear(outL, B[1] + 0.2, 0.5, 10);
+      // 减少显存 / 与 L2 的读取 / 写回与计算重叠
+      light(4, B[1] + 1.6); light(5, B[1] + 2.6); light(6, B[1] + 3.7);
+
+      // ================= 第 3 句：速度条与 cuBLAS 满格齐平 =================
+      ft(tags.map((g) => g.e), { scale: 1 }, { scale: 1.06, duration: 0.2, ease: "power2.out" }, B[2] + 0.3);
+      ft(tags.map((g) => g.e), { scale: 1.06 }, { scale: 1, duration: 0.3, ease: "power2.inOut" }, B[2] + 0.5);
+      ft(SP.el, { scale: 1, transformOrigin: "100% 0%" }, { scale: 1.45, transformOrigin: "100% 0%", duration: 0.8, ease: U.CAM }, B[2] + 0.4);
+      ft(SP.el, { scale: 1.45 }, { scale: 1, transformOrigin: "100% 0%", duration: 0.7, ease: U.CAM }, B[2] + 3.0);
+      ft(M.partL, { opacity: 1 }, { opacity: 0, duration: 0.2 }, B[2] + 0.3);
+      ft(M.partL, { opacity: 0 }, { opacity: 1, duration: 0.3 }, B[2] + 3.5);
+      SP.mark(tl, B[2] + 1.4);
+      ft(SP.fill, { backgroundColor: "#0fa391" }, { backgroundColor: "#5fd6c6", duration: 0.2 }, B[2] + 1.4);
+      ft(SP.fill, { backgroundColor: "#5fd6c6" }, { backgroundColor: "#0fa391", duration: 0.5 }, B[2] + 1.6);
+      // 标题与区域框退场，回到干净的地图
+      U.leave([...tags.map((g) => g.e), lsvg, inL, outL, outBox], B[2] + 2.8, 0.45);
+      ft(M.box, { borderColor: "#0b7d70" }, { borderColor: "#8a8474", duration: 0.45 }, B[2] + 2.8);
+
+      // ================= 第 4 句：一块块数据流畅地沿图上行（shared memory 直达 Tensor Core），Tensor Core 持续亮着 =================
+      ft(M.part.tc, { outlineWidth: 0 }, { outlineWidth: 5, duration: 0.4 }, B[3] + 0.2);
+      // 地图坐标：显存 → L2 → shared memory → 直达箭头 → Tensor Core
+      const L = M.LANE, G = M.G, bx = G.box.x + 20, ty = G.tc.y + G.tc.h / 2;
+      const up = [[L, G.hbm.y + G.hbm.h / 2], [L, G.l2.y + G.l2.h / 2], [L, G.smem.y + G.smem.h / 2], [M.PX(0) + 20, G.smem.y - 4], [bx, G.smem.y - 30], [bx, ty], [M.PX(0) + 50, ty]];
+      for (let i = 0; B[3] + 0.4 + i * 0.42 < DUR - 0.3; i++) {
+        const t = B[3] + 0.4 + i * 0.42, d = 2.0;
+        const b = mk(M.el, `background:${i % 2 ? "var(--yel)" : "var(--blue)"}`); b.className = "s09-blk"; gsap.set(b, { opacity: 0 });
+        U.travel(b, up, t, d, "none");
+        ft(b, { opacity: 0 }, { opacity: 1, duration: 0.15 }, t);
+        ft(b, { opacity: 1 }, { opacity: 0, duration: 0.15 }, t + d - 0.1);
+      }
+      // 结果一块块沿写回箭头回到显存
+      const rx = M.PX(3) + M.PW, wy = G.reg.y + G.reg.h / 2, wx = 966;
+      for (let i = 0; B[3] + 1.6 + i * 0.84 < DUR - 0.3; i++) {
+        const t = B[3] + 1.6 + i * 0.84, d = 1.3;
+        const c = mk(M.el, "background:var(--purple)"); c.className = "s09-blk"; gsap.set(c, { opacity: 0 });
+        U.travel(c, [[rx + 20, wy], [wx, wy], [wx, G.hbm.y - 20]], t, d, "none");
+        ft(c, { opacity: 0 }, { opacity: 1, duration: 0.15 }, t);
+        ft(c, { opacity: 1 }, { opacity: 0, duration: 0.15 }, t + d - 0.1);
+      }
+
+      tl.set({}, {}, DUR);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["s09"] = tl;
+    })();
+  </script>
+</template>

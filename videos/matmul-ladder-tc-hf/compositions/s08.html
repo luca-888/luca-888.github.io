@@ -1,0 +1,139 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; }
+    #root .s08-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .s08-blk { position: absolute; border-radius: 4px; color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap; }
+    #root .s08-lbl { position: absolute; font-size: 30px; font-weight: 800; color: var(--ink2); white-space: nowrap; }
+    #root .s08-c { position: absolute; left: 0; top: 0; background: var(--purple); border: 3px solid var(--ink); border-radius: 3px; color: #fff; font-size: 30px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+    #root .s08-seg { position: absolute; height: 52px; border-radius: 3px; }
+  </style>
+  <!-- s08 第 7 步 TMA store：写回箭头点亮 → 线程分散写回，Tensor Core 空等 → 结果先进 shared memory，TMA 整块写回 → 写回与计算重叠 -->
+  <div id="root" data-composition-id="s08" data-width="1920" data-height="1080">
+    <div id="s08-mapw" class="s08-full"></div>
+    <div id="s08-main" class="s08-full"></div>
+    <div id="s08-hud" class="s08-full"></div>
+  </div>
+  <script>
+    (function () {
+      const B = [0.6, 5.99, 13.08, 22.25];
+      const DUR = 27.73;
+      const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
+      const U = HFKit("s08", tl), $ = U.$, mk = U.mk, ft = U.ft;
+      const NS = "http://www.w3.org/2000/svg";
+
+      // 常驻：小地图、速度条、页眉
+      const M = HFMap.state(HFMap($("mapw"), { x: 460, y: 180 }), { mini: true, direct: true });
+      const SP = HFSpeed($("hud"), HFSPEED.s07).instant();
+      const H = HFHeader($("hud"), "第 7 步", "TMA store：写回时不停算");
+
+      // ---- 主画面：左边一个 SM（Tensor Core、寄存器、shared memory），右边显存；下方时间线 ----
+      const mn = $("main");
+      const BX = 580, BY = 190, BW = 680, BH = 510;
+      const box = mk(mn, `position:absolute;left:${BX}px;top:${BY}px;width:${BW}px;height:${BH}px;border:3px dashed var(--gray);border-radius:8px`);
+      const boxL = mk(mn, `left:${BX + 4}px;top:${BY - 50}px;color:var(--note)`, "一个 SM"); boxL.className = "s08-lbl";
+      const PXs = [0, 1, 2, 3].map((i) => BX + 19 + i * 164);
+      const tcs = PXs.map((x) => { const e = mk(mn, `left:${x}px;top:${BY + 30}px;width:150px;height:100px;background:var(--teal);font-size:28px;line-height:1.15`, "Tensor<br>Core"); e.className = "s08-blk"; return e; });
+      const regs = PXs.map((x) => { const e = mk(mn, `left:${x}px;top:${BY + 170}px;width:150px;height:70px;background:var(--ink2);font-size:30px;justify-content:flex-start;padding-left:14px`, "寄存器"); e.className = "s08-blk"; return e; });
+      const smem = mk(mn, `left:${BX + 19}px;top:${BY + 320}px;width:642px;height:110px;background:var(--use);font-size:32px;align-items:flex-start;padding-top:10px`, "shared memory"); smem.className = "s08-blk";
+      const HX = 1560, hbm = mk(mn, `left:${HX}px;top:${BY}px;width:200px;height:${BH}px;background:var(--hot);font-size:40px`, "显存"); hbm.className = "s08-blk";
+      // 结果 C 先放在寄存器里：每个分区一小块紫色
+      const cIn = PXs.map((x) => { const e = mk(mn, `position:absolute;left:${x + 114}px;top:${BY + 191}px;width:28px;height:28px;background:var(--purple);border:2px solid #fff;border-radius:2px`); return e; });
+      gsap.set([box, boxL, tcs, regs, smem, hbm, cIn], { opacity: 0 });
+      const sv = U.svg(mn);
+      const headAt = (x, y, dir, col, s = 16) => {
+        const p = document.createElementNS(NS, "polygon");
+        const pts = dir === "down" ? `${x},${y + s} ${x - s},${y - 4} ${x + s},${y - 4}` : `${x + s},${y} ${x - 4},${y - s} ${x - 4},${y + s}`;
+        p.setAttribute("points", pts); p.setAttribute("fill", col); sv.appendChild(p); gsap.set(p, { opacity: 0 }); return p;
+      };
+
+      // 时间线：上行 Tensor Core（计算），下行写回
+      const X0 = 800, CW = 170, WW = 110, RY = [760, 830];
+      const rowL = ["Tensor Core", "写回"].map((t, r) => { const e = mk(mn, `left:560px;top:${RY[r] + 8}px;width:210px;text-align:right`, t); e.className = "s08-lbl"; return e; });
+      const rowT = RY.map((y) => mk(mn, `position:absolute;left:${X0}px;top:${y}px;width:1040px;height:52px;background:var(--paper2);border-radius:3px`));
+      const seg = (x, r, w, col) => { const e = mk(mn, `left:${x}px;top:${RY[r]}px;width:${w}px;background:${col}`); e.className = "s08-seg"; gsap.set(e, { opacity: 0 }); return e; };
+      const cs = [0, 1, 2, 3].map((i) => seg(X0 + i * (CW + WW) + 2, 0, CW - 4, "var(--teal)"));
+      const ws = [0, 1, 2].map((i) => seg(X0 + i * (CW + WW) + CW + 2, 1, WW - 4, "var(--purple)"));
+      const gaps = [0, 1, 2].map((i) => { const e = mk(mn, `position:absolute;left:${X0 + i * (CW + WW) + CW + 2}px;top:${RY[0]}px;width:${WW - 4}px;height:52px;border:3px dashed var(--gray);border-radius:3px;font-size:28px;font-weight:700;color:var(--note);display:flex;align-items:center;justify-content:center;white-space:nowrap`, "空闲"); gsap.set(e, { opacity: 0 }); return e; });
+      gsap.set([rowL, rowT], { opacity: 0 });
+
+      // ================= 第 1 句：小地图写回箭头点亮；标题；SM 与显存出现，算完一块，结果留在寄存器 =================
+      HFMap.focus(tl, M, "wb", B[0] + 0.1, "#7c3ff5");
+      H.show(tl, B[0] + 0.4);
+      ft([box, boxL], { opacity: 0 }, { opacity: 1, duration: 0.5 }, B[0] + 0.9);
+      tcs.forEach((e, i) => U.appear(e, B[0] + 1.0 + i * 0.06, 0.5, 16));
+      regs.forEach((e, i) => U.appear(e, B[0] + 1.2 + i * 0.06, 0.5, 16));
+      U.appear(smem, B[0] + 1.4, 0.5, 16);
+      ft(hbm, { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.6, ease: U.ARRIVE }, B[0] + 1.6);
+      // Tensor Core 算完一块（亮一下），结果落进各分区的寄存器
+      ft(tcs, { backgroundColor: "#0fa391" }, { backgroundColor: "#5fd6c6", duration: 0.15 }, B[0] + 2.5);
+      ft(tcs, { backgroundColor: "#5fd6c6" }, { backgroundColor: "#0fa391", duration: 0.4 }, B[0] + 2.65);
+      cIn.forEach((e, i) => ft(e, { opacity: 0, y: -60 }, { opacity: 1, y: 0, duration: 0.5, ease: U.ARRIVE }, B[0] + 2.8 + i * 0.05));
+
+      // ================= 第 2 句：寄存器射出一大把细箭头，零散写回显存；时间线上计算之后跟着写回，Tensor Core 那一行留空 =================
+      const N = 12, thin = [], dots = [];
+      for (let k = 0; k < N; k++) {
+        const y0 = BY + 176 + k * 5, y1 = BY + 30 + k * 40;
+        thin.push(U.path(sv, `M ${BX + BW - 8} ${y0} L ${HX - 8} ${y1}`, "var(--purple)", 3));
+        for (let w = 0; w < 2; w++) {
+          const d = mk(mn, "position:absolute;left:0;top:0;width:16px;height:16px;background:var(--purple);border-radius:2px");
+          gsap.set(d, { opacity: 0 }); dots.push(d);
+          const t = B[1] + 0.9 + w * 1.5 + k * 0.07;
+          U.travel(d, [[BX + BW - 8, y0], [HX - 8, y1]], t, 0.8, "power1.inOut");
+          ft(d, { opacity: 0 }, { opacity: 1, duration: 0.1 }, t);
+          ft(d, { opacity: 1 }, { opacity: 0, duration: 0.15 }, t + 0.8);
+        }
+      }
+      thin.forEach((p, k) => U.draw(p, B[1] + 0.3 + k * 0.04, 0.4));
+      U.leave(cIn, B[1] + 1.0, 0.4);
+      ft(tcs, { opacity: 1 }, { opacity: 0.35, duration: 0.4 }, B[1] + 0.6);   // 写回期间 Tensor Core 不干活
+      ft([rowL, rowT], { opacity: 0 }, { opacity: 1, duration: 0.4 }, B[1] + 2.9);
+      [cs[0], ws[0], cs[1], ws[1], cs[2], ws[2], cs[3]].forEach((e, i) => ft(e, { opacity: 0, scaleX: 0, transformOrigin: "0 50%" }, { opacity: 1, scaleX: 1, duration: 0.3, ease: "power2.out" }, B[1] + 3.2 + i * 0.3));
+      gaps.forEach((e, i) => U.pop(e, B[1] + 5.1 + i * 0.12));
+
+      // ================= 第 3 句：细箭头收拢成一根粗箭头：结果先进 shared memory，再由 TMA 整块推回显存 =================
+      const CX = 920, S1 = `M ${CX} ${BY + 244} L ${CX} ${BY + 302}`;
+      thin.forEach((p) => ft(p, { attr: { d: p.getAttribute("d") } }, { attr: { d: S1 }, duration: 0.7, ease: U.CAM }, B[2] + 0.2));
+      U.leave(thin, B[2] + 0.95, 0.2);
+      const a1 = U.path(sv, S1, "var(--purple)", 12), a1h = headAt(CX, BY + 302, "down", "var(--purple)");
+      U.draw(a1, B[2] + 0.8, 0.2); ft(a1h, { opacity: 0 }, { opacity: 1, duration: 0.1 }, B[2] + 0.95);
+      // 一整块结果 C：寄存器 → shared memory
+      const big = mk(mn, "", "C"); big.className = "s08-c"; big.setAttribute("data-layout-allow-overlap", ""); big.style.width = "84px"; big.style.height = "52px"; gsap.set(big, { opacity: 0 });
+      ft(big, { opacity: 0 }, { opacity: 1, duration: 0.2 }, B[2] + 1.2);
+      U.travel(big, [[CX, BY + 262], [CX, BY + 400]], B[2] + 1.2, 0.8, "power2.inOut");
+      // TMA：一条指令，把整块从 shared memory 推回显存
+      const AY = BY + 400;
+      const tma = mk(mn, `position:absolute;left:${BX + BW + 46}px;top:${AY - 84}px;padding:4px 14px;background:var(--hot);border-radius:3px;color:#fff;font-family:var(--mono);font-size:32px;font-weight:800;white-space:nowrap`, "TMA");
+      gsap.set(tma, { opacity: 0 });
+      U.pop(tma, B[2] + 3.4);
+      const a2 = U.path(sv, `M ${BX + BW - 14} ${AY} L ${HX - 20} ${AY}`, "var(--purple)", 12), a2h = headAt(HX - 18, AY, "right", "var(--purple)");
+      U.draw(a2, B[2] + 3.8, 0.45); ft(a2h, { opacity: 0 }, { opacity: 1, duration: 0.1 }, B[2] + 4.2);
+      tl.to(big, { keyframes: { "0%": { x: CX, y: BY + 400 }, "100%": { x: HX + 100, y: AY }, easeEach: "none" }, duration: 1.1, ease: "power2.inOut" }, B[2] + 4.5);
+      ft(big, { opacity: 1 }, { opacity: 0, duration: 0.25 }, B[2] + 5.6);
+      ft(hbm, { backgroundColor: "#c4561d" }, { backgroundColor: "#e08a5a", duration: 0.12 }, B[2] + 5.55);
+      ft(hbm, { backgroundColor: "#e08a5a" }, { backgroundColor: "#c4561d", duration: 0.4 }, B[2] + 5.67);
+
+      // ================= 第 4 句：写回段移到下一块计算的下方，Tensor Core 那一行连成一整条；速度条前进 =================
+      ft(tcs, { opacity: 0.35 }, { opacity: 1, duration: 0.4 }, B[3] + 0.2);
+      U.leave(gaps, B[3] + 0.3, 0.25);
+      cs.forEach((e, i) => { if (i) ft(e, { x: 0 }, { x: -WW * i, duration: 0.8, ease: U.CAM }, B[3] + 0.5); });
+      ws.forEach((e, i) => { if (i) ft(e, { x: 0 }, { x: -WW * i, duration: 0.8, ease: U.CAM }, B[3] + 0.5); });
+      // 补上后面的块：计算接连不断，写回在下一块计算的下方
+      const cs2 = [4, 5].map((i) => seg(X0 + i * CW + 2, 0, CW - 4, "var(--teal)"));
+      const ws2 = [3, 4].map((i) => seg(X0 + (i + 1) * CW + 2, 1, WW - 4, "var(--purple)"));
+      [cs2[0], ws2[0], cs2[1], ws2[1]].forEach((e, i) => ft(e, { opacity: 0, scaleX: 0, transformOrigin: "0 50%" }, { opacity: 1, scaleX: 1, duration: 0.3, ease: "power2.out" }, B[3] + 1.4 + i * 0.25));
+      // 图上：Tensor Core 一直亮着，结果一块块经 shared memory 由 TMA 写回
+      [1.2, 2.9].forEach((o) => {
+        const c = mk(mn, "", "C"); c.className = "s08-c"; c.setAttribute("data-layout-allow-overlap", ""); c.style.width = "64px"; c.style.height = "42px"; gsap.set(c, { opacity: 0 });
+        const t = B[3] + o;
+        ft(c, { opacity: 0 }, { opacity: 1, duration: 0.15 }, t);
+        U.travel(c, [[CX, BY + 262], [CX, AY], [HX + 100, AY]], t, 1.5, "power1.inOut");
+        ft(c, { opacity: 1 }, { opacity: 0, duration: 0.2 }, t + 1.5);
+      });
+      SP.zoomTo(tl, HFSPEED.s08, B[3] + 3.0);
+
+      tl.set({}, {}, DUR);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["s08"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,132 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; }
+    #root .s07-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .s07-sm { position: absolute; width: 480px; height: 370px; border: 3px dashed var(--gray); border-radius: 8px; }
+    #root .s07-tc { position: absolute; width: 96px; height: 84px; background: var(--teal); border-radius: 4px; }
+    #root .s07-smem { position: absolute; width: 432px; height: 110px; background: var(--use); border-radius: 4px; color: #fff; font-size: 30px; font-weight: 800; text-align: center; padding-top: 10px; white-space: nowrap; }
+    #root .s07-lbl { position: absolute; font-size: 32px; font-weight: 800; color: var(--note); white-space: nowrap; }
+    #root .s07-w { position: absolute; left: 0; top: 0; width: 40px; height: 40px; background: var(--yel); border: 3px solid var(--ink); border-radius: 3px; color: var(--ink); font-size: 28px; font-weight: 800; line-height: 34px; text-align: center; }
+  </style>
+  <!-- s07 第 6 步 cluster 多播：L2 → shared memory 点亮 → 两个 SM 各读一次同一块 W → cluster 圈住两个 SM → 多播：读一次，分叉落进两个 SM -->
+  <div id="root" data-composition-id="s07" data-width="1920" data-height="1080">
+    <div id="s07-mapw" class="s07-full"></div>
+    <div id="s07-main" class="s07-full"></div>
+    <div id="s07-hud" class="s07-full"></div>
+  </div>
+  <script>
+    (function () {
+      const B = [0.6, 9.4, 19.5];
+      const DUR = 29.39;
+      const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
+      const U = HFKit("s07", tl), $ = U.$, mk = U.mk, ft = U.ft;
+
+      // 常驻：小地图（wgmma 之后的状态）、速度条、页眉
+      const M = HFMap.state(HFMap($("mapw"), { x: 460, y: 180 }), { mini: true, direct: true });
+      const SP = HFSpeed($("hud"), HFSPEED.s06).instant();
+      const H = HFHeader($("hud"), "第 6 步", "cluster 多播：读一次，两个 SM 共用");
+
+      // ---- 主画面：下方 L2，上方两个相邻的 SM ----
+      const mn = $("main");
+      const L2X = 620, L2Y = 740, L2W = 1140, L2H = 96;
+      const l2 = mk(mn, `position:absolute;left:${L2X}px;top:${L2Y}px;width:${L2W}px;height:${L2H}px;background:var(--ink2);border-radius:4px`);
+      mk(l2, "position:absolute;left:30px;top:0;height:100%;display:flex;align-items:center;font-size:36px;font-weight:800;color:#fff;white-space:nowrap", "L2 缓存");
+      // L2 中间：同一块数据的读取次数；右侧：忙碌度
+      const cnt2 = mk(l2, "position:absolute;left:0;width:100%;top:0;height:100%;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:#fff;white-space:nowrap", '读取 <span style="font-family:var(--mono);color:#eeb48f;margin:0 8px">2</span> 次');
+      const cnt1 = mk(l2, "position:absolute;left:0;width:100%;top:0;height:100%;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:#fff;white-space:nowrap", '读取 <span style="font-family:var(--mono);color:#7fe0d2;margin:0 8px">1</span> 次');
+      mk(l2, "position:absolute;right:316px;top:0;height:100%;display:flex;align-items:center;font-size:30px;font-weight:700;color:#fff;white-space:nowrap", "忙碌");
+      const track = mk(l2, "position:absolute;right:30px;top:34px;width:270px;height:28px;background:#5c5a55;border-radius:3px");
+      const busy = mk(track, "position:absolute;left:0;top:0;width:270px;height:28px;background:var(--hot);border-radius:3px;transform-origin:0 50%");
+      gsap.set([cnt1, cnt2], { opacity: 0 }); gsap.set(busy, { scaleX: 0.35 });
+
+      // 两个 SM：上面一排 Tensor Core，下面 shared memory
+      const SMX = [640, 1260], SMY = 240, CX = SMX.map((x) => x + 240);
+      const sms = [], smems = [], tcs = [];
+      SMX.forEach((x, k) => {
+        const b = mk(mn, `left:${x}px;top:${SMY}px`); b.className = "s07-sm"; sms.push(b);
+        const l = mk(b, "left:20px;top:14px", "SM"); l.className = "s07-lbl";
+        for (let i = 0; i < 4; i++) { const t = mk(b, `left:${21 + i * 112}px;top:70px`); t.className = "s07-tc"; tcs.push(t); }
+        const s = mk(b, "left:21px;top:220px", "shared memory"); s.className = "s07-smem"; smems.push(s);
+      });
+      gsap.set([l2, sms], { opacity: 0 });
+      const sv = U.svg(mn);
+      // 进入 shared memory 的落点（画面坐标）
+      const SMEM_IN = SMY + 220 + 110;            // shared memory 下沿 = 570
+      const land = (k) => [CX[k], SMEM_IN - 26];
+      const head = (x, y, col, s = 14) => { const p = document.createElementNS("http://www.w3.org/2000/svg", "polygon"); p.setAttribute("points", `${x},${y - s} ${x - s},${y + 5} ${x + s},${y + 5}`); p.setAttribute("fill", col); sv.appendChild(p); gsap.set(p, { opacity: 0 }); return p; };
+      // 原来：L2 → 各 SM 各一根
+      const sep = CX.map((x) => U.path(sv, `M ${x} ${L2Y - 6} L ${x} ${SMEM_IN + 18}`, "var(--hot)", 7));
+      const sepH = CX.map((x) => head(x, SMEM_IN + 12, "var(--hot)"));
+
+      // ================= 第 1 句：小地图 L2 → shared memory 点亮；标题；L2 向两个 SM 各射出一根箭头，载着同样的数据 =================
+      HFMap.focus(tl, M, "l2-smem", B[0] + 0.1);
+      H.show(tl, B[0] + 0.4);
+      ft(l2, { opacity: 0, scaleX: 0.6, transformOrigin: "50% 50%" }, { opacity: 1, scaleX: 1, duration: 0.7, ease: U.ARRIVE }, B[0] + 0.9);
+      sms.forEach((b, k) => U.appear(b, B[0] + 1.3 + k * 0.15, 0.6, 24));
+      sep.forEach((p, k) => { U.draw(p, B[0] + 2.2 + k * 0.1, 0.45); ft(sepH[k], { opacity: 0 }, { opacity: 1, duration: 0.1 }, B[0] + 2.6 + k * 0.1); });
+      // 同一块 W 被读两次：每一轮左右各从 L2 出发一块（相隔一拍），L2 闪两下
+      const flashL2 = (t) => { ft(l2, { backgroundColor: "#3a3a3a" }, { backgroundColor: "#6a6660", duration: 0.1 }, t); ft(l2, { backgroundColor: "#6a6660" }, { backgroundColor: "#3a3a3a", duration: 0.35 }, t + 0.1); };
+      const ship = (k, t, d = 0.9) => {
+        const w = mk(mn, "", "W"); w.className = "s07-w"; w.setAttribute("data-layout-allow-overlap", ""); gsap.set(w, { opacity: 0 });
+        U.travel(w, [[CX[k], L2Y + 10], land(k)], t, d, "power1.inOut");
+        ft(w, { opacity: 0 }, { opacity: 1, duration: 0.15 }, t);
+        ft(w, { opacity: 1 }, { opacity: 0, duration: 0.25 }, t + d);
+        ft(smems[k], { backgroundColor: "#2f8a57" }, { backgroundColor: "#4fae78", duration: 0.12 }, t + d);
+        ft(smems[k], { backgroundColor: "#4fae78" }, { backgroundColor: "#2f8a57", duration: 0.4 }, t + d + 0.12);
+      };
+      [3.0, 4.5, 6.0].forEach((o, r) => { ship(0, B[0] + o); ship(1, B[0] + o + 0.45); flashL2(B[0] + o); flashL2(B[0] + o + 0.45); });
+      ft(busy, { scaleX: 0.35 }, { scaleX: 0.92, duration: 2.6, ease: "power1.inOut" }, B[0] + 3.0);
+      U.pop(cnt2, B[0] + 5.7);
+
+      // ================= 第 2 句：cluster 圈住两个 SM；两个 SM 的 shared memory 可以互相访问 =================
+      ft(sep, { opacity: 1 }, { opacity: 0.35, duration: 0.4 }, B[1]); ft(sepH, { opacity: 1 }, { opacity: 0.35, duration: 0.4 }, B[1]);
+      const cl = mk(mn, `position:absolute;left:${SMX[0] - 28}px;top:${SMY - 34}px;width:${SMX[1] + 480 - SMX[0] + 56}px;height:${370 + 68}px;border:5px solid var(--ink);border-radius:10px`);
+      const clL = mk(mn, `position:absolute;left:${SMX[0] - 28}px;top:${SMY - 92}px;font-family:var(--mono);font-size:40px;font-weight:800;color:var(--ink);white-space:nowrap`, "cluster");
+      gsap.set([cl, clL], { opacity: 0 });
+      ft(cl, { opacity: 0, scale: 1.05, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.6, ease: U.ARRIVE }, B[1] + 0.3);
+      U.appear(clL, B[1] + 0.6, 0.5, 12);
+      // “位于相邻的 SM 上”：两个 SM 框描一下
+      ft(sms, { borderColor: "#8a8474" }, { borderColor: "#141414", duration: 0.25 }, B[1] + 4.6);
+      ft(sms, { borderColor: "#141414" }, { borderColor: "#8a8474", duration: 0.5 }, B[1] + 5.6);
+      // “可以互相访问 shared memory”：两块 shared memory 之间一根双向绿线
+      const smY = SMY + 220 + 55, bx0 = SMX[0] + 21 + 432 + 8, bx1 = SMX[1] + 21 - 8;
+      const dsm = U.path(sv, `M ${bx0 + 14} ${smY} L ${bx1 - 14} ${smY}`, "var(--use)", 7);
+      const dh = [[bx0, 1], [bx1, -1]].map(([x, s]) => { const p = document.createElementNS("http://www.w3.org/2000/svg", "polygon"); p.setAttribute("points", `${x},${smY} ${x + s * 20},${smY - 14} ${x + s * 20},${smY + 14}`); p.setAttribute("fill", "var(--use)"); sv.appendChild(p); gsap.set(p, { opacity: 0 }); return p; });
+      U.draw(dsm, B[1] + 6.1, 0.5);
+      ft(dh, { opacity: 0 }, { opacity: 1, duration: 0.15 }, B[1] + 6.5);
+
+      // ================= 第 3 句：两根箭头合成一根，到 cluster 门口分叉，同时落进两个 SM；L2 忙碌度下降；速度条前进 =================
+      U.leave([...sep, ...sepH], B[2] + 0.1, 0.4, 0.35);
+      U.leave([dsm, ...dh], B[2] + 0.1, 0.4);
+      const MID = (CX[0] + CX[1]) / 2, GATE = SMY + 370 + 34 + 30;   // cluster 框下沿之下 30 px
+      const trunk = U.path(sv, `M ${MID} ${L2Y - 6} L ${MID} ${GATE}`, "var(--hot)", 10);
+      const br = CX.map((x) => U.path(sv, `M ${MID} ${GATE} L ${x} ${GATE} L ${x} ${SMEM_IN + 18}`, "var(--hot)", 7));
+      const brH = CX.map((x) => head(x, SMEM_IN + 12, "var(--hot)"));
+      U.draw(trunk, B[2] + 0.5, 0.35);
+      br.forEach((p, k) => { U.draw(p, B[2] + 0.85, 0.5); ft(brH[k], { opacity: 0 }, { opacity: 1, duration: 0.1 }, B[2] + 1.3); });
+      // 多播：一块 W 从 L2 出发一次（L2 只闪一下），到门口变成两块，同时落进两个 SM
+      const mcast = (t) => {
+        const d = 1.2;
+        [0, 1].forEach((k) => {
+          const w = mk(mn, "", "W"); w.className = "s07-w"; w.setAttribute("data-layout-allow-overlap", ""); gsap.set(w, { opacity: 0 });
+          U.travel(w, [[MID, L2Y + 10], [MID, GATE], [CX[k], GATE], land(k)], t, d, "power1.inOut");
+          ft(w, { opacity: 0 }, { opacity: 1, duration: 0.15 }, t);
+          ft(w, { opacity: 1 }, { opacity: 0, duration: 0.25 }, t + d);
+          ft(smems[k], { backgroundColor: "#2f8a57" }, { backgroundColor: "#4fae78", duration: 0.12 }, t + d);
+          ft(smems[k], { backgroundColor: "#4fae78" }, { backgroundColor: "#2f8a57", duration: 0.4 }, t + d + 0.12);
+        });
+        flashL2(t);
+      };
+      [1.5, 3.0, 4.5].forEach((o) => mcast(B[2] + o));
+      // 读取次数 2 → 1；忙碌度下降
+      ft(cnt2, { opacity: 1 }, { opacity: 0, duration: 0.2 }, B[2] + 2.0);
+      U.pop(cnt1, B[2] + 2.1);
+      ft(busy, { scaleX: 0.92 }, { scaleX: 0.55, duration: 1.4, ease: "power2.inOut" }, B[2] + 2.4);
+      SP.zoomTo(tl, HFSPEED.s07, B[2] + 4.0);
+
+      tl.set({}, {}, DUR);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["s07"] = tl;
+    })();
+  </script>
+</template>

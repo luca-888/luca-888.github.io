@@ -61,7 +61,7 @@ body { font-family: var(--zh); color: var(--ink); }
 
 /* —— 字幕：<div class="clip kit-sub"><span>一句配音</span></div> —— */
 .kit-sub { position: absolute; left: 0; right: 0; bottom: 64px; display: flex; justify-content: center; }
-.kit-sub span { display: block; max-width: 1600px; padding: 8px 26px; border-radius: 4px; background: var(--sub-bg); color: #fff; font-size: 40px; font-weight: 600; line-height: 1.4; text-align: center; white-space: nowrap; }
+.kit-sub span { display: block; max-width: 1600px; padding: 6px 24px; border-radius: 10px; background: rgba(20, 20, 20, 0.78); color: #fff; font-size: 40px; font-weight: 500; line-height: 1.4; text-align: center; white-space: nowrap; }
 
 /* —— 本片：耗时条 .kit-tbar（替代进度条）。一次 8192 阶矩阵乘法的实测耗时，16 ms 满格（45 px/ms）。
    fill 用 scaleX = ms / 16；num 用 x = ms * 45 + 12；ghost 留上一版的长度。 —— */

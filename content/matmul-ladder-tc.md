@@ -388,11 +388,13 @@ if constexpr (MICRO) {                                  // 第 0 步单独剥出
 
 计算单元的峰值是固定的，矩阵乘法的速度取决于数据能否及时送达计算单元。
 
+**Blackwell。** 第四节起的各版依赖 `wgmma`，它只在 sm_90a 上可用，不能直接用于 B200 等 Blackwell 数据中心 GPU。Blackwell 的第五代 Tensor Core 改用 `tcgen05.mma`：一个线程即可发出，异步执行，完成后经 `tcgen05.commit` 在 mbarrier 上报到。累加结果 D 不再放在寄存器，而放在新增的 Tensor Memory 中；它每个 CTA 128 行 × 512 列、每格 32 位，由一个 warp 显式分配。B 来自 shared memory，A 来自 shared memory 或 Tensor Memory。同一 cluster 中配对的两个 CTA 还可以合作执行一条 MMA（PTX ISA 9.7.18）。
+
 ## 参考
 
 1. Simon Boehm. [How to Optimize a CUDA Matmul Kernel for cuBLAS-like Performance: a Worklog](https://siboehm.com/articles/22/CUDA-MMM), 2022-12.
 2. Pranjal Shankhdhar. [Outperforming cuBLAS on H100: a Worklog](https://cudaforfun.substack.com/p/outperforming-cublas-on-h100-a-worklog), 2024-11-29.
-3. NVIDIA. [Parallel Thread Execution ISA](https://docs.nvidia.com/cuda/parallel-thread-execution/)：`cp.async`、`ldmatrix`、`mma.sync`、`wgmma`、`cp.async.bulk.tensor`、`mbarrier`、`setmaxnreg`。
+3. NVIDIA. [Parallel Thread Execution ISA](https://docs.nvidia.com/cuda/parallel-thread-execution/)：`cp.async`、`ldmatrix`、`mma.sync`、`wgmma`、`cp.async.bulk.tensor`、`mbarrier`、`setmaxnreg`；Blackwell 的 `tcgen05.mma` 与 Tensor Memory（9.7.18 节）。
 4. NVIDIA. [CUTLASS：Efficient GEMM in CUDA](https://docs.nvidia.com/cutlass/latest/media/docs/cpp/efficient_gemm.html)：Hopper 的 warp 特化、persistent cooperative 与 ping-pong 调度、rasterization、split-K。
 5. NVIDIA. NVIDIA H100 Tensor Core GPU Architecture（白皮书）。
 6. Jay Shah et al. [FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision](https://arxiv.org/abs/2407.08608), 2024：warp 特化与 ping-pong 调度。

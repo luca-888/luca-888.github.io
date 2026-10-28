@@ -1,0 +1,238 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; }
+    #root .s04-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .s04-blk { position: absolute; border-radius: 4px; color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.15; white-space: nowrap; outline: 0 solid var(--ink); }
+    #root .s04-lbl { position: absolute; font-size: 32px; font-weight: 800; color: var(--ink2); white-space: nowrap; }
+    #root .s04-ins { position: absolute; left: 0; top: 0; width: 44px; height: 44px; background: var(--teal); border: 3px solid var(--ink); border-radius: 3px; }
+    #root .s04-dat { position: absolute; left: 0; top: 0; width: 40px; height: 40px; border: 3px solid var(--ink); border-radius: 3px; }
+    #root .s04-bar { position: absolute; height: 60px; border-radius: 3px; }
+    #root .s04-warp { position: absolute; width: 170px; height: 60px; background: var(--warp); border-radius: 3px; color: var(--ink); font-family: var(--mono); font-size: 30px; font-weight: 800; text-align: center; line-height: 60px; }
+    #root .s04-cell { position: absolute; width: 22px; height: 22px; border-radius: 2px; }
+    #root .s04-cnt { position: absolute; width: 34px; height: 34px; border-radius: 3px; background: var(--paper2); border: 2px solid var(--use); }
+  </style>
+  <!-- s04 第 3 步 wgmma：地图上 shared memory → Tensor Core 点亮 → 一串小指令都经过寄存器 → 吞吐只有三分之二 → 合成一条大指令，直读 shared memory → TMA 整块搬入并换位 → mbarrier 计满通知 → 三者分工 -->
+  <div id="root" data-composition-id="s04" data-width="1920" data-height="1080">
+    <div id="s04-mapw" class="s04-full"></div>
+    <div id="s04-main" class="s04-full"></div>
+    <div id="s04-hud" class="s04-full"></div>
+  </div>
+  <script>
+    (function () {
+      const B = [0.6, 3.5, 10.75, 17.93, 30.07, 40.69, 47.27];
+      const DUR = 54.52;
+      const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
+      const U = HFKit("s04", tl), $ = U.$, mk = U.mk, ft = U.ft;
+      const NS = "http://www.w3.org/2000/svg";
+
+      // 常驻：小地图（前两步做完的状态）、速度条、页眉
+      const M = HFMap.state(HFMap($("mapw"), { x: 460, y: 180 }), { mini: true });
+      const SP = HFSpeed($("hud"), HFSPEED.s03).instant();
+      const H = HFHeader($("hud"), "第 3 步", "wgmma：换一条更大的指令");
+      const MS = HFMap.MINI.scale;
+      const miniRect = (id) => { const g = M.G[id], x = g.x ?? M.PX(0), w = g.w ?? M.PW; return { x: HFMap.MINI.x + x * MS, y: HFMap.MINI.y + g.y * MS, w: w * MS, h: g.h * MS }; };
+      const grow = (el, id, r, t, d = 0.9) => {
+        const m = miniRect(id);
+        ft(el, { opacity: 0 }, { opacity: 1, duration: 0.15 }, t);
+        ft(el, { x: m.x + m.w / 2 - (r.x + r.w / 2), y: m.y + m.h / 2 - (r.y + r.h / 2), scaleX: m.w / r.w, scaleY: m.h / r.h, transformOrigin: "50% 50%" },
+          { x: 0, y: 0, scaleX: 1, scaleY: 1, transformOrigin: "50% 50%", duration: d, ease: U.CAM }, t);
+      };
+      const blk = (p, r, bg, html, fs) => { const e = mk(p, `left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;background:${bg};font-size:${fs}px`, html); e.className = "s04-blk"; return e; };
+      const poly = (svg, pts, col) => { const p = document.createElementNS(NS, "polygon"); p.setAttribute("points", pts); p.setAttribute("fill", col); svg.appendChild(p); gsap.set(p, { opacity: 0 }); return p; };
+      const tok = (cls, bg) => { const e = mk(mn, bg ? `background:${bg}` : ""); e.className = cls; gsap.set(e, { opacity: 0 }); return e; };
+
+      // ================= 第 1 句：小地图上 shared memory → 寄存器 → Tensor Core 一段点亮；标题出现；这一段放大到主画面 =================
+      HFMap.focus(tl, M, "sm", B[0] + 0.1);
+      H.show(tl, B[0] + 0.4);
+      const mn = $("main");
+      const sv = U.svg(mn);
+      const LY = 400;   // 指令通道
+      const R = { smem: { x: 560, y: 200, w: 320, h: 340 }, reg: { x: 1000, y: 300, w: 180, h: 160 }, tc: { x: 1580, y: 220, w: 260, h: 300 } };
+      const smemB = blk(mn, R.smem, "var(--use)", "", 32);
+      const smemT = mk(smemB, "position:absolute;left:0;top:18px;width:100%;text-align:center;font-size:32px;font-weight:800;color:#fff", "shared memory");
+      const regB = blk(mn, R.reg, "var(--ink2)", "", 32);
+      const regT = mk(regB, "position:absolute;left:0;top:14px;width:100%;text-align:center;font-size:32px;font-weight:800;color:#fff", "寄存器");
+      const tcB = blk(mn, R.tc, "var(--teal)", "Tensor<br>Core", 44);
+      gsap.set([smemB, regB, tcB], { opacity: 0 });
+      grow(smemB, "smem", R.smem, B[0] + 0.5);
+      grow(regB, "reg", R.reg, B[0] + 0.6);
+      grow(tcB, "tc", R.tc, B[0] + 0.7);
+      const a1 = U.path(sv, `M 884 ${LY} L 984 ${LY}`, "var(--ink)", 5), a1h = poly(sv, `996,${LY} 982,${LY - 12} 982,${LY + 12}`, "var(--ink)");
+      const a2 = U.path(sv, `M 1184 ${LY} L 1564 ${LY}`, "var(--ink)", 5), a2h = poly(sv, `1576,${LY} 1562,${LY - 12} 1562,${LY + 12}`, "var(--ink)");
+      U.draw(a1, B[0] + 1.9, 0.3); U.fade(a1h, B[0] + 2.15, 0.1);
+      U.draw(a2, B[0] + 2.1, 0.4); U.fade(a2h, B[0] + 2.45, 0.1);
+      const tcFlash = (t) => { ft(tcB, { backgroundColor: "#0fa391" }, { backgroundColor: "#0b7d70", duration: 0.08 }, t); ft(tcB, { backgroundColor: "#0b7d70" }, { backgroundColor: "#0fa391", duration: 0.2 }, t + 0.08); };
+
+      // ================= 第 2 句：mma.sync 一条一小块，每块都先经过寄存器；Tensor Core 前排着一长串 =================
+      const conv = mk(mn, "position:absolute;left:0;top:0;width:1920px;height:1080px");
+      const mmaL = mk(mn, "left:1230px;top:296px;font-family:var(--mono);color:var(--teal-t)", "mma.sync"); mmaL.className = "s04-lbl";
+      gsap.set(mmaL, { opacity: 0 });
+      U.appear(mmaL, B[1] + 0.3, 0.5, 10);
+      const ins = (t, viaReg) => {
+        const e = mk(conv, ""); e.className = "s04-ins"; gsap.set(e, { opacity: 0 });
+        if (viaReg) {
+          ft(e, { opacity: 0 }, { opacity: 1, duration: 0.15 }, t);
+          U.travel(e, [[840, LY], [1090, LY]], t, 0.5, "power1.inOut");
+          U.travel(e, [[1090, LY], [1556, LY]], t + 0.75, 2.0);
+        } else {
+          ft(e, { opacity: 0 }, { opacity: 1, duration: 0.15 }, t + 0.75);
+          U.travel(e, [[1220, LY], [1556, LY]], t + 0.75, 2.0 * 336 / 466);
+        }
+        const end = viaReg ? t + 2.75 : t + 0.75 + 2.0 * 336 / 466;
+        ft(e, { opacity: 1 }, { opacity: 0, duration: 0.08 }, end);
+        if (end < B[3] + 3.2) tcFlash(end);
+      };
+      // 第 2 句：从 shared memory 出发，经过寄存器；第 3 句：只发指令、不读数据，直接排在 Tensor Core 前面
+      for (let t = B[1] + 0.2; t < B[2]; t += 0.35) ins(t, true);
+      for (let t = B[2]; t < B[3] + 2.6; t += 0.35) ins(t, false);
+      // 寄存器随指令进出闪一下
+      for (let t = B[1] + 0.7; t < B[2] + 0.5; t += 0.35) { ft(regB, { outlineWidth: 0 }, { outlineWidth: 4, duration: 0.08 }, t); ft(regB, { outlineWidth: 4 }, { outlineWidth: 0, duration: 0.15 }, t + 0.2); }
+
+      // ================= 第 3 句：只发 mma.sync、不读数据，吞吐也只有新指令的三分之二 =================
+      // 变淡用浅色底 + 深色字（整体降透明度会让白字对比度不够）
+      const dim = (blkE, txt, bg0, bg1, c0, c1, t, d = 0.4) => { ft(blkE, { backgroundColor: bg0 }, { backgroundColor: bg1, duration: d }, t); ft(txt, { color: c0 }, { color: c1, duration: d }, t); };
+      dim(smemB, smemT, "#2f8a57", "#a9d6b9", "#ffffff", "#24704a", B[2] + 0.1);
+      dim(regB, regT, "#3a3a3a", "#cfc8b8", "#ffffff", "#3a3a3a", B[2] + 0.1);
+      ft([a1, a1h], { opacity: 1 }, { opacity: 0.3, duration: 0.4 }, B[2] + 0.1);
+      const BX = 820, BW = 900, BY1 = 650, BY2 = 760;
+      const bl1 = mk(mn, `left:560px;top:${BY1 + 10}px;color:var(--teal-t)`, "Hopper 新指令"); bl1.className = "s04-lbl";
+      const bl2 = mk(mn, `left:560px;top:${BY2 + 10}px;font-family:var(--mono)`, "mma.sync"); bl2.className = "s04-lbl";
+      const bt1 = mk(mn, `left:${BX}px;top:${BY1}px;width:${BW}px;background:var(--paper2)`); bt1.className = "s04-bar";
+      const bt2 = mk(mn, `left:${BX}px;top:${BY2}px;width:${BW}px;background:var(--paper2)`); bt2.className = "s04-bar";
+      const bf1 = mk(mn, `left:${BX}px;top:${BY1}px;width:${BW}px;background:var(--teal)`); bf1.className = "s04-bar";
+      const bf2 = mk(mn, `left:${BX}px;top:${BY2}px;width:${BW * 2 / 3}px;background:var(--line);border:3px solid var(--gray)`); bf2.className = "s04-bar";
+      const cut = mk(mn, `position:absolute;left:${BX + BW * 2 / 3 - 2}px;top:${BY1 - 14}px;width:0;height:${BY2 - BY1 + 88}px;border-left:4px dotted var(--ink)`);
+      const third = mk(mn, `left:${BX + BW * 2 / 3 + 22}px;top:${BY2 + 2}px;font-family:var(--mono);font-size:48px;color:var(--ink)`, "2/3"); third.className = "s04-lbl";
+      const bars = [bl1, bl2, bt1, bt2, bf1, bf2, cut, third];
+      gsap.set(bars, { opacity: 0 });
+      U.appear([bl1, bl2], B[2] + 0.3, 0.5, 10); U.fade([bt1, bt2], B[2] + 0.3, 0.4);
+      // 同样的速度往右长：新指令长满，mma.sync 到三分之二停住
+      ft([bf1, bf2], { opacity: 1, clipPath: "inset(0px 100% 0px 0px)" }, { opacity: 1, clipPath: "inset(0px 0% 0px 0px)", duration: 0.01 }, B[2] + 1.0 - 0.01);
+      ft(bf1, { clipPath: "inset(0px 100% 0px 0px)" }, { clipPath: "inset(0px 0% 0px 0px)", duration: 2.4, ease: "none" }, B[2] + 1.0);
+      ft(bf2, { clipPath: "inset(0px 100% 0px 0px)" }, { clipPath: "inset(0px 0% 0px 0px)", duration: 1.6, ease: "none" }, B[2] + 1.0);
+      U.fade(cut, B[2] + 2.6, 0.3); U.pop(third, B[2] + 2.8);
+
+      // ================= 第 4 句：wgmma：4 个 warp 组成 warpgroup；小方块合成一整块大方块；箭头从 shared memory 直接指向 Tensor Core =================
+      U.leave(bars, B[3], 0.3);
+      const WX = [820, 1010, 1200, 1390], WY = 680;
+      const warps = WX.map((x) => { const e = mk(mn, `left:${x}px;top:${WY}px`, "warp"); e.className = "s04-warp"; gsap.set(e, { opacity: 0 }); return e; });
+      warps.forEach((e, i) => U.appear(e, B[3] + 0.6 + i * 0.12, 0.5, 14));
+      const wgF = mk(mn, `position:absolute;left:800px;top:${WY - 20}px;width:780px;height:100px;border:4px solid var(--ink);border-radius:6px`);
+      const wgL = mk(mn, `left:1600px;top:${WY + 10}px;font-family:var(--mono);color:var(--ink)`, "warpgroup"); wgL.className = "s04-lbl";
+      gsap.set([wgF, wgL], { opacity: 0 });
+      ft(wgF, { opacity: 0, scale: 1.04 }, { opacity: 1, scale: 1, duration: 0.5, ease: U.ARRIVE }, B[3] + 1.9);
+      U.appear(wgL, B[3] + 2.1, 0.5, 10);
+      // 一串小方块合并成一块大方块
+      const Tm = B[3] + 3.4;
+      U.leave(mmaL, Tm, 0.25);
+      // 队列里的小方块从各自当前的位置直接收拢（不换成替身，避免跳动）
+      ft(conv, { scale: 1, transformOrigin: `1390px ${LY}px` }, { scale: 0.12, transformOrigin: `1390px ${LY}px`, duration: 0.6, ease: "power3.in" }, Tm + 0.3);
+      ft(conv, { opacity: 1 }, { opacity: 0, duration: 0.15 }, Tm + 0.85);
+      const big = blk(mn, { x: 1220, y: 340, w: 340, h: 120 }, "var(--teal)", "wgmma", 44);
+      big.style.fontFamily = "var(--mono)"; big.style.border = "3px solid var(--ink)";
+      gsap.set(big, { opacity: 0 });
+      ft(big, { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.4)" }, Tm + 0.85);
+      ft(wgF, { borderColor: "#141414" }, { borderColor: "#0fa391", duration: 0.3 }, Tm + 0.85);
+      tcFlash(Tm + 1.5);
+      // 操作数直接从 shared memory 读：寄存器那一段淡出，直达箭头画出（主画面与小地图同时）
+      const Td = B[3] + 6.3;
+      dim(smemB, smemT, "#a9d6b9", "#2f8a57", "#24704a", "#ffffff", Td - 0.3);
+      ft([a1, a1h, a2, a2h], { opacity: (i) => (i < 2 ? 0.3 : 1) }, { opacity: 0.12, duration: 0.5 }, Td);
+      const dl = U.path(sv, "M 884 262 L 1562 262", "var(--teal)", 8), dlh = poly(sv, "1578,262 1560,248 1560,276", "var(--teal)");
+      U.draw(dl, Td + 0.3, 0.7); U.fade(dlh, Td + 0.95, 0.1);
+      ft([M.link.reg, M.link.tc, M.linkHead.reg, M.linkHead.tc], { opacity: 1 }, { opacity: 0.18, duration: 0.5 }, Td);
+      U.draw(M.direct, Td + 0.3, 0.7); U.fade(M.directHead, Td + 0.95, 0.1);
+      // 操作数（A 蓝、W 黄）沿直达箭头送进 Tensor Core
+      const feed = (t, n, gap = 0.45) => {
+        for (let k = 0; k < n; k++) {
+          const e = tok("s04-dat", k % 2 ? "var(--yel)" : "var(--blue)"), s = t + k * gap;
+          ft(e, { opacity: 0 }, { opacity: 1, duration: 0.1 }, s);
+          U.travel(e, [[850, 262], [1560, 262]], s, 0.9, "power1.in");
+          ft(e, { opacity: 1 }, { opacity: 0, duration: 0.08 }, s + 0.9);
+          tcFlash(s + 0.9);
+        }
+      };
+      feed(Td + 1.2, 5);
+
+      // ================= 第 5 句：TMA 一条指令把一整块推进 shared memory，落下时自动排成对角线 =================
+      U.leave([...warps, wgF, wgL], B[4], 0.3);
+      const tma = blk(mn, { x: 560, y: 600, w: 320, h: 76 }, "var(--hot)", "TMA", 40);
+      const tile = mk(mn, "position:absolute;left:0;top:0;width:1920px;height:1080px");
+      const TX = 616, TY = 290, PT = 26, DY = 410;
+      const cells = [];
+      mk(tile, `position:absolute;left:${TX - 6}px;top:${TY - 6}px;width:${8 * PT + 8}px;height:${8 * PT + 8}px;background:var(--paper);border-radius:3px`);   // 浅底，好看清对角线
+      for (let r = 0; r < 8; r++) { cells.push([]); for (let c = 0; c < 8; c++) {
+        const e = mk(tile, `left:${TX + c * PT}px;top:${TY + r * PT}px;background:${c === 0 ? "var(--tealD)" : r % 2 ? "#6f8fe6" : "var(--blue)"}`); e.className = "s04-cell"; cells[r].push(e);
+      } }
+      mn.appendChild(tma);   // TMA 盖在数据块上面，数据像是从它里面穿过
+      gsap.set(tma, { opacity: 0 });
+      gsap.set(tile, { opacity: 0, y: DY });
+      U.appear(tma, B[4] + 0.2, 0.5, 14);
+      ft(tile, { opacity: 0, y: DY + 30 }, { opacity: 1, y: DY, duration: 0.5, ease: U.ARRIVE }, B[4] + 0.7);
+      ft(tma, { outlineWidth: 0 }, { outlineWidth: 5, duration: 0.15 }, B[4] + 1.6);
+      ft(tile, { y: DY }, { y: 0, duration: 1.0, ease: "power2.inOut" }, B[4] + 1.7);
+      ft(tma, { outlineWidth: 5 }, { outlineWidth: 0, duration: 0.3 }, B[4] + 2.7);
+      // 落下时按 swizzle 换位：第 r 行的块 c 移到 c ⊕ r，竖列变成对角线
+      cells.forEach((row, r) => row.forEach((e, c) => { const dx = ((c ^ r) - c) * PT; if (dx) ft(e, { x: 0 }, { x: dx, duration: 0.8, ease: U.CAM }, B[4] + 3.0 + r * 0.08); }));
+      const swL = mk(mn, "left:720px;top:700px;font-family:var(--mono);font-size:36px;color:var(--tealD)", "swizzle"); swL.className = "s04-lbl";
+      gsap.set(swL, { opacity: 0, xPercent: -50 });
+      U.appear(swL, B[4] + 3.2, 0.5, 10);
+
+      // ================= 第 6 句：mbarrier：计数格一格格填满，亮灯，Tensor Core 开始算 =================
+      const mb = mk(mn, "position:absolute;left:930px;top:600px;width:580px;height:84px;border:3px solid var(--use);border-radius:4px");
+      const mbL = mk(mb, "position:absolute;left:18px;top:18px;font-family:var(--mono);font-size:32px;font-weight:800;color:var(--use-t);white-space:nowrap", "mbarrier");
+      const cnt = [];
+      for (let k = 0; k < 8; k++) { const e = mk(mb, `left:${190 + k * 40}px;top:22px`); e.className = "s04-cnt"; cnt.push(e); }
+      const lamp = mk(mb, "position:absolute;left:518px;top:17px;width:44px;height:44px;border-radius:50%;background:var(--paper2);border:3px solid var(--ink2)");
+      const mbLine = U.path(sv, "M 884 500 L 905 500 L 905 642 L 930 642", "var(--use)", 4);
+      gsap.set(mb, { opacity: 0 });
+      U.appear(mb, B[5] + 0.2, 0.5, 14); U.draw(mbLine, B[5] + 0.4, 0.4);
+      cnt.forEach((e, k) => ft(e, { backgroundColor: "#e6e0d3" }, { backgroundColor: "#2f8a57", duration: 0.15 }, B[5] + 1.0 + k * 0.28));
+      const tl0 = B[5] + 1.0 + 8 * 0.28;
+      ft(lamp, { backgroundColor: "#e6e0d3", scale: 1 }, { backgroundColor: "#2f8a57", scale: 1.25, duration: 0.2, ease: "power2.out" }, tl0);
+      ft(lamp, { scale: 1.25 }, { scale: 1, duration: 0.3 }, tl0 + 0.2);
+      // 通知计算方：灯 → Tensor Core
+      const nt = U.path(sv, "M 1494 642 L 1710 642 L 1710 538", "var(--use)", 5), nth = poly(sv, "1710,524 1697,540 1723,540", "var(--use)");
+      U.draw(nt, tl0 + 0.3, 0.5); U.fade(nth, tl0 + 0.78, 0.1);
+      ft(big, { outlineWidth: 0 }, { outlineWidth: 5, duration: 0.2 }, tl0 + 0.9);
+      ft(big, { outlineWidth: 5 }, { outlineWidth: 0, duration: 0.3 }, tl0 + 1.5);
+      feed(tl0 + 0.9, 5, 0.4);
+
+      // ================= 第 7 句：搬运由 TMA、读取由 wgmma、线程只发指令：三者各占一段同时亮起；速度条前进 =================
+      ft([mb, mbLine, nt, nth], { opacity: 1 }, { opacity: 0.3, duration: 0.4 }, B[6]);
+      U.leave(swL, B[6], 0.25);
+      const th = mk(mn, "position:absolute;left:1180px;top:780px;width:200px;height:64px;border:3px solid var(--ink);border-radius:4px;background:var(--paper);font-size:32px;font-weight:800;color:var(--ink);text-align:center;line-height:58px", "线程");
+      gsap.set(th, { opacity: 0 });
+      U.appear(th, B[6] + 0.2, 0.5, 14);
+      // 线程只发两条指令：一条给 TMA，一条给 wgmma
+      const o1 = tok("s04-dat", "var(--ink)"), o2 = tok("s04-dat", "var(--ink)");
+      [[o1, [[1180, 812], [880, 640]]], [o2, [[1280, 780], [1390, 462]]]].forEach(([e, pts]) => {
+        ft(e, { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 0.6, duration: 0.1 }, B[6] + 0.8);
+        U.travel(e, pts, B[6] + 0.8, 0.6, "power2.inOut");
+        ft(e, { opacity: 1 }, { opacity: 0, duration: 0.1 }, B[6] + 1.4);
+      });
+      const T7 = B[6] + 1.45;
+      ft([tma, big, th], { outlineWidth: 0 }, { outlineWidth: 5, duration: 0.25 }, T7);
+      ft(th, { borderColor: "#141414" }, { borderColor: "#0fa391", duration: 0.25 }, T7);
+      ft(dl, { strokeWidth: 8 }, { strokeWidth: 14, duration: 0.25 }, T7);
+      // 小地图：L2 → shared memory（TMA）与直达箭头（wgmma）同时亮
+      ft([M.layer.l2, M.layer.hbm], { opacity: 0.28 }, { opacity: 1, duration: 0.3 }, T7);
+      ft(M.link.smem, { strokeWidth: 6 }, { strokeWidth: 12, stroke: "#c4561d", duration: 0.25 }, T7);
+      ft(M.linkHead.smem, { scale: 1 }, { scale: 1.6, fill: "#c4561d", transformOrigin: "50% 50%", duration: 0.25 }, T7);
+      ft(M.direct, { strokeWidth: 7 }, { strokeWidth: 12, duration: 0.25 }, T7);
+      // 搬与读同时在走：数据从下面经 TMA 进 shared memory，操作数沿直达箭头进 Tensor Core
+      for (let k = 0; k < 4; k++) {
+        const e = tok("s04-dat", "var(--hot)"), s = T7 + 0.2 + k * 0.6;
+        ft(e, { opacity: 0 }, { opacity: 1, duration: 0.1 }, s);
+        U.travel(e, [[720, 760], [720, 500]], s, 0.7, "power1.inOut");
+        ft(e, { opacity: 1 }, { opacity: 0, duration: 0.1 }, s + 0.7);
+      }
+      feed(T7 + 0.4, 5, 0.6);
+      SP.to(tl, HFSPEED.s04, B[6] + 2.4, 1.2);
+
+      tl.set({}, {}, DUR);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["s04"] = tl;
+    })();
+  </script>
+</template>

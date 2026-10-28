@@ -28,6 +28,7 @@ __pycache__/
 /videos/*/.thumbnails/
 /videos/*/.waveform-cache/
 /videos/*/renders/
+/videos/*/legacy/
 /videos/*/assets/vo/
 /videos/*/review/img/
 /videos/*/review/old/

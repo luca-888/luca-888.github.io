@@ -1,0 +1,60 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- 矩阵乘法阶梯 · 下集封面（样稿），9:16 竖版（1080 × 1920）。标题区沿用上集封面的版式与字号；下半部换成视频里贯穿全片的存储层级图
+     （videos/matmul-ladder-tc-hf/assets/kit/map.js：宽度表示共用范围，语义色实心块），数据块沿通路上行到点亮的 Tensor Core。
+     数字：93.3 → 777.6 TFLOPS、cuBLAS 的 99.5%，见 content/matmul-ladder-tc.md 开头（8192 阶，H100 SXM 实测）。
+     node covers/matmul-ladder-tc/render-portrait.mjs 导出 portrait-1080x1920.png；顶部 240 px 不放文字，左右边距 65 px。 -->
+<style>html, body { margin: 0; background: #f1ede4; } canvas { display: block; }</style>
+<canvas id="cv" width="1080" height="1920"></canvas>
+<script>
+const W = 1080, H = 1920;
+const C = { paper: '#f1ede4', paper2: '#e6e0d3', ink: '#141414', ink2: '#3a3a3a', gray: '#8a8474', note: '#6b6556', red: '#e5322d', blue: '#2350d8', yel: '#f4c21b', hot: '#c4561d', use: '#2f8a57', teal: '#0fa391', tealD: '#0b7d70', purple: '#7c3ff5' };
+const ZH = '"PingFang SC","Helvetica Neue",sans-serif', MONO = '"SF Mono",Menlo,monospace', EN = '"Helvetica Neue",sans-serif';
+const g = document.getElementById('cv').getContext('2d');
+const rr = (x, y, w, h, c, a = 1) => { g.globalAlpha = a; g.fillStyle = c; g.beginPath(); g.roundRect(x, y, w, h, 5); g.fill(); g.globalAlpha = 1; };
+const ln = (pts, c, lw, dash = []) => { g.strokeStyle = c; g.lineWidth = lw; g.setLineDash(dash); g.lineJoin = 'round'; g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke(); g.setLineDash([]); };
+const tri = (x, y, dir, c, s = 15) => { g.fillStyle = c; g.beginPath(); if (dir === 'up') { g.moveTo(x, y - s); g.lineTo(x - s, y + 5); g.lineTo(x + s, y + 5); } else { g.moveTo(x, y + s); g.lineTo(x - s, y - 5); g.lineTo(x + s, y - 5); } g.closePath(); g.fill(); };
+const tw = (s, size, w = 800, font = ZH) => { g.font = `${w} ${size}px ${font}`; return g.measureText(s).width; };
+const tx = (s, x, y, { size = 40, c = C.ink, w = 800, align = 'left', font = ZH } = {}) => { g.fillStyle = c; g.textAlign = align; g.font = `${w} ${size}px ${font}`; g.fillText(s, x, y); return x + tw(s, size, w, font); };
+const tag = (s, x, y, size = 40, bg = C.ink) => { const w = tw(s, size, 700) + size * 1.1; g.fillStyle = bg; g.fillRect(x, y, w, size * 1.6); tx(s, x + size * 0.55, y + size * 1.17, { size, c: '#fff', w: 700 }); return w; };
+const SX = W * 0.06;
+g.fillStyle = C.paper; g.fillRect(0, 0, W, H);
+
+// ---------- 标题区（同上集） ----------
+// 标签：架构与型号连成一枚双色章（Hopper 实心、H100 描边），主题词 Tensor Core 只用主题色文字
+{ const ty = 262, sz = 46, hh = sz * 1.6, w1 = tw('Hopper', sz, 800) + sz * 1.1, w2 = tw('H100', sz, 800) + sz * 1.1;
+  g.fillStyle = C.ink; g.fillRect(SX, ty, w1, hh); tx('Hopper', SX + sz * 0.55, ty + sz * 1.17, { size: sz, c: '#fff' });
+  g.strokeStyle = C.ink; g.lineWidth = 4; g.strokeRect(SX + w1, ty + 2, w2 - 2, hh - 4); tx('H100', SX + w1 + sz * 0.55, ty + sz * 1.17, { size: sz });
+  tx('Tensor Core', SX + w1 + w2 + 34, ty + sz * 1.17, { size: sz, c: C.tealD }); }
+tx('矩阵乘法优化', SX - 4, 484, { size: 150, w: 900 });
+tx('（下）', SX - 14, 626, { size: 112, w: 900, c: C.tealD });
+
+// ---------- 存储层级图：宽度表示共用范围 ----------
+g.setTransform(1, 0, 0, 1, 0, -140);
+const PX = (k) => 195 + k * 170, PW = 150, LANE = PX(0) + PW / 2;
+const Y = { tc: 1000, reg: 1166, smem: 1286, l2: 1440, hbm: 1586 }, Hh = { tc: 126, reg: 70, smem: 92, l2: 102, hbm: 126 };
+const centered = (s, cx, cy, size, w = 800, c = '#fff', font = ZH) => tx(s, cx, cy + size * 0.36, { size, w, c, align: 'center', font });
+// SM 框
+ln([[165, 960], [915, 960], [915, 1404], [165, 1404], [165, 960]], C.gray, 3, [12, 9]);
+// 显存、L2：全芯片共用，最宽
+rr(SX, Y.hbm, W - 2 * SX, Hh.hbm, C.hot); centered('显存', W / 2, Y.hbm + Hh.hbm / 2, 46, 900);
+rr(105, Y.l2, 870, Hh.l2, C.ink2); centered('L2 缓存', W / 2, Y.l2 + Hh.l2 / 2, 42, 900);
+// shared memory：一个 SM 共用
+rr(195, Y.smem, 660, Hh.smem, C.use); centered('shared memory', 525, Y.smem + Hh.smem / 2, 38, 800);
+// 寄存器、Tensor Core：每个分区各一份
+for (let k = 0; k < 4; k++) {
+  rr(PX(k), Y.reg, PW, Hh.reg, C.ink2); centered('寄存器', PX(k) + PW / 2, Y.reg + Hh.reg / 2, 32);
+  rr(PX(k), Y.tc, PW, Hh.tc, C.teal); centered('Tensor', PX(k) + PW / 2, Y.tc + Hh.tc / 2 - 20, 32); centered('Core', PX(k) + PW / 2, Y.tc + Hh.tc / 2 + 20, 32);
+}
+// Tensor Core 持续亮着：第 0 个分区描黑边
+g.strokeStyle = C.ink; g.lineWidth = 7; g.beginPath(); g.roundRect(PX(0) - 4, Y.tc - 4, PW + 8, Hh.tc + 8, 7); g.stroke();
+// 数据通道：自下而上的箭头
+const up = [['hbm', 'l2'], ['l2', 'smem'], ['smem', 'reg'], ['reg', 'tc']];
+up.forEach(([a, b]) => { const y0 = Y[a] - 6, y1 = Y[b] + Hh[b] + 18; ln([[LANE, y0], [LANE, y1]], C.ink, 6); tri(LANE, y1, 'up', C.ink); });
+// 写回：最右一个分区的寄存器 → 图右侧 → 显存
+const rx = PX(3) + PW;
+ln([[rx + 8, Y.reg + Hh.reg / 2], [955, Y.reg + Hh.reg / 2], [955, Y.hbm - 22]], C.purple, 7); tri(955, Y.hbm - 18, 'down', C.purple);
+// 沿通路上行的数据块（A 蓝、W 黄），越往上越密，示意数据及时送到
+[[Y.hbm - 26, C.blue], [Y.l2 - 46, C.yel], [Y.smem - 30, C.blue], [Y.reg - 24, C.yel]].forEach(([y, col]) => { rr(LANE + 26, y - 18, 36, 36, col); g.strokeStyle = C.ink; g.lineWidth = 3; g.strokeRect(LANE + 26, y - 18, 36, 36); });
+g.setTransform(1, 0, 0, 1, 0, 0);
+</script>

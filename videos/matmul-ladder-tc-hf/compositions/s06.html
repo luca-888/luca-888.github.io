@@ -1,0 +1,191 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; }
+    #root .s06-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .s06-lbl { position: absolute; font-size: 32px; font-weight: 700; color: var(--ink2); white-space: nowrap; }
+    #root .s06-cell { position: absolute; background: var(--purple); border-radius: 1px; }
+    #root .s06-blk { position: absolute; left: 580px; top: 0; width: 280px; height: 40px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 800; color: var(--ink); }
+  </style>
+  <!-- s06 第 5 步 tile 分组：显存 → L2 点亮变红 → C 网格（左 A、上 W）→ 按行发放，同列相隔很久 → W 被挤出 L2、再读一次 → 每 16 行一组按列发放 → 一块 W 分出 16 根线，显存箭头变细 -->
+  <div id="root" data-composition-id="s06" data-width="1920" data-height="1080">
+    <div id="s06-mapw" class="s06-full"></div>
+    <div id="s06-main" class="s06-full"></div>
+    <div id="s06-hud" class="s06-full"></div>
+  </div>
+  <script>
+    (function () {
+      const B = [0.6, 7.37, 16.44, 21.57, 28.07, 36.21];
+      const DUR = 44.73;
+      const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
+      const U = HFKit("s06", tl), $ = U.$, mk = U.mk, ft = U.ft;
+
+      // 常驻：小地图（前面各步做完的状态）、速度条、页眉
+      const M = HFMap.state(HFMap($("mapw"), { x: 460, y: 180 }), { mini: true, direct: true });
+      const SP = HFSpeed($("hud"), HFSPEED.s05).instant();
+      const H = HFHeader($("hud"), "第 5 步", "tile 分组：让共用的数据趁热复用");
+
+      // ---- 矩阵：C 网格 32 列 × 64 行（tile 128 × 256，每格宽是高的 2 倍，整体是正方形）；左边 A，上面 W（转置后放在上方） ----
+      const mn = $("main");
+      const GX = 1166, GY = 272, GS = 620, NC = 32, NR = 64, cw = GS / NC, ch = GS / NR;
+      const COL = 8;                                          // 讲的那一列
+      const cx = (c) => GX + c * cw, cy = (r) => GY + r * ch;
+      const cBase = mk(mn, `position:absolute;left:${GX}px;top:${GY}px;width:${GS}px;height:${GS}px;background:var(--paper2)`);
+      const gsv = U.svg(mn);
+      const gl = [];
+      for (let c = 0; c <= NC; c++) gl.push(U.path(gsv, `M ${cx(c)} ${GY} V ${GY + GS}`, "#cfc8b8", 1.5, "none"));
+      for (let r = 0; r <= NR; r++) gl.push(U.path(gsv, `M ${GX} ${cy(r)} H ${GX + GS}`, "#cfc8b8", 1.5, "none"));
+      const cL = mk(mn, `left:${GX + GS + 18}px;top:${GY + GS / 2 - 24}px;font-size:40px;font-weight:800;color:var(--purple-t)`, "C"); cL.className = "s06-lbl";
+      const aS = mk(mn, `position:absolute;left:1060px;top:${GY}px;width:90px;height:${GS}px;background:#b9c8f2;border-radius:3px;display:flex;justify-content:center;padding-top:8px;font-size:40px;font-weight:800;color:var(--ink)`, "A");
+      const wS = mk(mn, `position:absolute;left:${GX}px;top:166px;width:${GS}px;height:90px;background:#f8df8d;border-radius:3px;display:flex;align-items:center;padding-left:14px;font-size:40px;font-weight:800;color:var(--ink)`, "W");
+      // W 上每一列各一块（亮起时实心黄）
+      const wB = Array.from({ length: NC }, (_, c) => { const e = mk(mn, `position:absolute;left:${cx(c)}px;top:166px;width:${cw}px;height:90px;background:var(--yel)`); gsap.set(e, { opacity: 0 }); return e; });
+      // 讲的那一列：从 W 上那一块一直框到 C 的底
+      const colF = mk(mn, `position:absolute;left:${cx(COL) - 4}px;top:162px;width:${cw + 8}px;height:${GY + GS - 162 + 4}px;border:4px solid var(--yel-t);border-radius:3px`);
+      // C 的格子：只建前 16 行（动画只用到这些）
+      const cell = [];
+      for (let r = 0; r < 16; r++) { cell.push([]); for (let c = 0; c < NC; c++) {
+        const e = mk(mn, `left:${cx(c) + 1.5}px;top:${cy(r) + 1.5}px;width:${cw - 3}px;height:${ch - 3}px`); e.className = "s06-cell";
+        gsap.set(e, { opacity: 0 }); cell[r].push(e);
+      } }
+      gsap.set([cBase, ...gl, cL, aS, wS, colF], { opacity: 0 });
+
+      // ================= 第 1 句：小地图上显存 → L2 一段点亮、变红；标题出现 =================
+      HFMap.focus(tl, M, "hbm-l2", B[0] + 0.1, "#e5322d");
+      H.show(tl, B[0] + 0.4);
+      // 矩阵增大时速度不再提升：速度条原地抖一下；等待来自显存：显存 → L2 的箭头闪两下
+      SP.shake(tl, B[0] + 2.4);
+      // 主画面：把小地图上点亮的“显存 → L2”放大出来，箭头标红、闪烁，说明等待来自这一段
+      const zL2 = mk(mn, "position:absolute;left:760px;top:330px;width:560px;height:110px;background:var(--ink2);border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:40px;font-weight:800", "L2 缓存");
+      const zHB = mk(mn, "position:absolute;left:760px;top:640px;width:560px;height:120px;background:var(--hot);border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:44px;font-weight:800", "显存");
+      const zsv = U.svg(mn), zAr = U.path(zsv, "M 1040 632 L 1040 460", "var(--red)", 14);
+      const zHd = document.createElementNS("http://www.w3.org/2000/svg", "polygon"); zHd.setAttribute("points", "1040,446 1016,474 1064,474"); zHd.setAttribute("fill", "var(--red)"); zsv.appendChild(zHd);
+      gsap.set([zL2, zHB, zHd], { opacity: 0 });
+      ft([zHB, zL2], { opacity: 0, scale: 0.4, transformOrigin: "0% 0%" }, { opacity: 1, scale: 1, transformOrigin: "0% 0%", duration: 0.8, ease: U.CAM, stagger: 0.1 }, B[0] + 0.6);
+      U.draw(zAr, B[0] + 1.4, 0.4); ft(zHd, { opacity: 0 }, { opacity: 1, duration: 0.1 }, B[0] + 1.75);
+      [B[0] + 3.4, B[0] + 4.2].forEach((t) => ft(zAr, { strokeWidth: 14 }, { keyframes: [{ strokeWidth: 26, duration: 0.15 }, { strokeWidth: 14, duration: 0.3 }] }, t));
+      U.leave([zL2, zHB, zAr, zHd], B[1] - 0.1, 0.35);
+      [B[0] + 3.4, B[0] + 4.2].forEach((t) => ft(M.link.l2, { strokeWidth: 12 }, { keyframes: [{ strokeWidth: 22, duration: 0.15 }, { strokeWidth: 12, duration: 0.3 }] }, t));
+
+      // ================= 第 2 句：C 画成网格，左边 A、上面 W；一个 tile；一百多个同时算；选中一列，W 上对应的一块高亮 =================
+      ft(cBase, { opacity: 0, scale: 0.96, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.6, ease: U.ARRIVE }, B[1] + 0.1);
+      ft(gl, { opacity: 0 }, { opacity: 1, duration: 0.4, stagger: 0.005 }, B[1] + 0.3);
+      U.fade(cL, B[1] + 0.6);
+      ft(aS, { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.6, ease: U.ARRIVE }, B[1] + 0.8);
+      ft(wS, { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.6, ease: U.ARRIVE }, B[1] + 0.95);
+      // 一个 tile：左下放大出一块，写“tile”
+      const one = mk(mn, `left:${cx(0) + 1.5}px;top:${cy(40) + 1.5}px;width:${cw - 3}px;height:${ch - 3}px`); one.className = "s06-cell";
+      const big = mk(mn, "position:absolute;left:800px;top:560px;width:160px;height:80px;background:var(--purple);border-radius:3px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:36px;font-weight:800", "tile");
+      const tsv = U.svg(mn);
+      const tLine = U.path(tsv, `M 960 600 L ${cx(0) + 2} ${cy(40) + ch / 2}`, "var(--purple)", 3);
+      gsap.set([one, big], { opacity: 0 });
+      U.fade(one, B[1] + 1.8, 0.2);
+      U.draw(tLine, B[1] + 2.0, 0.4);
+      U.pop(big, B[1] + 2.3);
+      // 一百多个 tile 同时算：前 4 行加 4 格一起亮
+      const first132 = []; for (let i = 0; i < 132; i++) first132.push(cell[Math.floor(i / NC)][i % NC]);
+      U.leave([one, big, tLine], B[1] + 3.6, 0.3);
+      ft(first132, { opacity: 0 }, { opacity: 1, duration: 0.3, stagger: { each: 0.004, from: "random" } }, B[1] + 3.8);
+      ft(first132, { opacity: 1 }, { opacity: 0, duration: 0.3 }, B[1] + 5.6);
+      // 同一列的 tile 都需要同一块 W：框出这一列，W 上对应那一块实心
+      ft(colF, { opacity: 0, scaleY: 0, transformOrigin: "50% 0%" }, { opacity: 1, scaleY: 1, duration: 0.6, ease: U.ARRIVE }, B[1] + 5.9);
+      ft(wB[COL], { opacity: 0 }, { opacity: 1, duration: 0.3 }, B[1] + 6.1);
+
+      // ================= 第 3 句：按行发放，网格一格格亮起；同一列的两格之间隔了很多拍 =================
+      // 发放速度取成：第 3 行那一列的格子正好在第 4 句开始后 4 秒亮（W 被再读一次的时刻）
+      const S = B[2] + 0.4, REUSE = B[3] + 4.0, dt = (REUSE - S) / (3 * NC + COL);
+      const T = (r, c) => S + (r * NC + c) * dt;
+      for (let r = 0; r < 16; r++) for (let c = 0; c < NC; c++) {
+        const t = T(r, c); if (t > B[4] - 0.2) break;
+        ft(cell[r][c], { opacity: 0 }, { opacity: 1, duration: 0.12 }, t);
+        if (c === COL) {
+          ft(cell[r][c], { scale: 1 }, { keyframes: [{ scale: 1.8, duration: 0.12 }, { scale: 1, duration: 0.25 }] }, t);
+          ft(wB[COL], { opacity: 1 }, { keyframes: [{ opacity: 0.3, duration: 0.1 }, { opacity: 1, duration: 0.25 }] }, t);
+        }
+      }
+      const lastLit = []; for (let r = 0; r < 16; r++) for (let c = 0; c < NC; c++) if (T(r, c) <= B[4] - 0.2) lastLit.push(cell[r][c]);
+
+      // ================= 第 4 句：L2：W 进来，又被后来的数据挤出去；同一块 W 第二次从显存读入，显存箭头反复闪 =================
+      const LX = 560, LW = 320, LY = 400, LH = 260, HY = 760;
+      const l2Box = mk(mn, `position:absolute;left:${LX}px;top:${LY}px;width:${LW}px;height:${LH}px;border:4px solid var(--ink2);border-radius:4px`);
+      const l2L = mk(mn, `left:${LX}px;top:${LY - 50}px;font-weight:800;color:var(--ink2)`, "L2 缓存"); l2L.className = "s06-lbl";
+      const hbm = mk(mn, `position:absolute;left:${LX}px;top:${HY}px;width:${LW}px;height:90px;background:var(--hot);border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:36px;font-weight:800`, "显存");
+      const asv = U.svg(mn);
+      const AXX = LX + LW / 2;
+      const arrow = U.path(asv, `M ${AXX} ${HY - 4} L ${AXX} ${LY + LH + 22}`, "var(--hot)", 14);
+      const aHead = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+      aHead.setAttribute("points", `${AXX},${LY + LH + 6} ${AXX - 20},${LY + LH + 30} ${AXX + 20},${LY + LH + 30}`); aHead.setAttribute("fill", "var(--hot)"); asv.appendChild(aHead);
+      gsap.set([l2Box, l2L, hbm, aHead], { opacity: 0 });
+      // L2 里排 5 格，自下而上：新来的从底下进，其余往上挤一格，最上面那块被挤出去
+      const SLOT = (s) => LY + LH - 50 - s * 48;
+      const q = [];   // 当前在 L2 里的块：{ e, s }
+      const block = (kind) => {
+        const e = mk(mn, `background:${kind === "A" ? "#b9c8f2" : kind === "W8" ? "var(--yel)" : "#f8df8d"};${kind === "W8" ? "outline:4px solid var(--ink)" : ""}`, kind === "W8" ? "W" : "");
+        e.className = "s06-blk"; gsap.set(e, { opacity: 0 }); return e;
+      };
+      const pulse = (t) => { ft(arrow, { strokeWidth: 14 }, { keyframes: [{ strokeWidth: 24, duration: 0.1 }, { strokeWidth: 14, duration: 0.25 }] }, t); };
+      const enter = (kind, t, e = block(kind)) => {
+        q.forEach((b) => {
+          const y0 = SLOT(b.s); b.s += 1;
+          if (b.s > 4) ft(b.e, { y: y0, opacity: 1 }, { y: y0 - 40, opacity: 0, duration: 0.35, ease: U.OUT }, t);
+          else ft(b.e, { y: y0 }, { y: SLOT(b.s), duration: 0.3, ease: U.CAM }, t);
+        });
+        for (let i = q.length - 1; i >= 0; i--) if (q[i].s > 4) q.splice(i, 1);
+        ft(e, { y: HY + 25, opacity: 0 }, { y: SLOT(0), opacity: 1, duration: 0.4, ease: "power2.out" }, t);
+        pulse(t);
+        q.push({ e, s: 0 });
+        return e;
+      };
+      // L2 先装着别的数据（直接摆好，不算读取）
+      const pre = ["A", "W", "A", "W"].map((k, i) => { const e = block(k); gsap.set(e, { y: SLOT(3 - i) }); q.push({ e, s: 3 - i }); return e; });
+      U.fade([l2Box, l2L, hbm, ...pre], B[3] + 0.1, 0.4);
+      U.draw(arrow, B[3] + 0.3, 0.3); ft(aHead, { opacity: 0 }, { opacity: 1, duration: 0.15 }, B[3] + 0.5);
+      const D4 = B[4] - B[3];
+      enter("W8", B[3] + 0.8);
+      // 后来的数据一块块进来，把 W 挤出去
+      const kinds = ["A", "W", "A", "W", "A"];
+      kinds.forEach((k, i) => enter(k, B[3] + 1.5 + i * 0.45));
+      // 后一个 tile 要用这块 W：再从显存读一次（第二个 W 块，同样描边）
+      enter("W8", REUSE);
+      ["A", "W"].forEach((k, i) => { const t = REUSE + 0.6 + i * 0.45; if (t < B[4] - 0.3) enter(k, t); });
+
+      // ================= 第 5 句：分组发放：每 16 行一组，组内按列发放，一列 16 格同时亮起 =================
+      ft(lastLit, { opacity: 1 }, { opacity: 0, duration: 0.35 }, B[4]);
+      const grp = mk(mn, `position:absolute;left:${GX - 6}px;top:${GY - 4}px;width:${GS + 12}px;height:${16 * ch + 8}px;border:4px solid var(--ink);border-radius:3px`);
+      const grpL = mk(mn, `left:${1050}px;top:${GY + 8 * ch - 24}px`, "16 行一组"); grpL.className = "s06-lbl";
+      gsap.set(grpL, { xPercent: -100 });
+      gsap.set([grp, grpL], { opacity: 0 });
+      ft(grp, { opacity: 0, scaleY: 0.3, transformOrigin: "50% 0%" }, { opacity: 1, scaleY: 1, duration: 0.5, ease: U.ARRIVE }, B[4] + 0.4);
+      U.appear(grpL, B[4] + 0.6, 0.4, 8);
+      const G0 = B[4] + 1.4, GP = Math.min(0.5, (B[5] - 0.4 - G0) / 8);
+      for (let c = 0; c < COL; c++) {
+        const t = G0 + c * GP;
+        ft(cell.map((row) => row[c]), { opacity: 0, scaleY: 0.2 }, { opacity: 1, scaleY: 1, duration: 0.25, ease: U.ARRIVE }, t);
+        ft(wB[c], { opacity: 0 }, { keyframes: [{ opacity: 1, duration: 0.1 }, { opacity: 0, duration: 0.35 }] }, t);
+        enter(c % 2 ? "W" : "A", t);
+      }
+
+      // ================= 第 6 句：一块 W 进入 L2，分出 16 根线连到 16 格；显存 → L2 的箭头变细；速度条前进 =================
+      const w8 = enter("W8", B[5] + 0.3);
+      ft(cell.map((row) => row[COL]), { opacity: 0, scaleY: 0.2 }, { opacity: 1, scaleY: 1, duration: 0.25, ease: U.ARRIVE }, B[5] + 0.7);
+      ft(wB[COL], { opacity: 1 }, { keyframes: [{ opacity: 0.3, duration: 0.1 }, { opacity: 1, duration: 0.25 }] }, B[5] + 0.7);
+      const fsv = U.svg(mn);
+      // 一块 W 分给 16 个 tile：主干从 L2 里的 W 引到这一列左侧的括号，再分出 16 根短线，每格一根
+      const bx = cx(COL) - 26, y0 = cy(0) + ch / 2, y15 = cy(15) + ch / 2;
+      const trunk = U.path(fsv, `M ${LX + 20 + 280} ${SLOT(0) + 20} L ${bx} ${(y0 + y15) / 2}`, "var(--yel-t)", 4);
+      const brk = U.path(fsv, `M ${bx} ${y0} L ${bx} ${y15}`, "var(--yel-t)", 4);
+      const fan = Array.from({ length: 16 }, (_, r) => U.path(fsv, `M ${bx} ${cy(r) + ch / 2} L ${cx(COL) + 2} ${cy(r) + ch / 2}`, "var(--yel-t)", 3));
+      const n16 = mk(mn, `position:absolute;left:${cx(COL) + cw + 14}px;top:${(y0 + y15) / 2 - 22}px;font-size:36px;font-weight:800;color:var(--yel-t);white-space:nowrap`, "16 个 tile");
+      gsap.set(n16, { opacity: 0 });
+      U.draw(trunk, B[5] + 1.0, 0.4); U.draw(brk, B[5] + 1.35, 0.3);
+      fan.forEach((p, r) => U.draw(p, B[5] + 1.6 + r * 0.06, 0.15));
+      U.appear(n16, B[5] + 2.3, 0.4, 8);
+      ft(arrow, { strokeWidth: 14 }, { strokeWidth: 4, duration: 0.6, ease: U.CAM }, B[5] + 2.6);
+      ft(aHead, { scale: 1 }, { scale: 0.5, transformOrigin: "50% 100%", duration: 0.6, ease: U.CAM }, B[5] + 2.6);
+      SP.to(tl, HFSPEED.s06, B[5] + 3.2, 1.2);
+
+      tl.set({}, {}, DUR);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["s06"] = tl;
+    })();
+  </script>
+</template>

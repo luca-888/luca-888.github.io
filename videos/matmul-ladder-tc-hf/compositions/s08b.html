@@ -1,0 +1,137 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; }
+    #root .s08b-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .s08b-blk { position: absolute; border-radius: 4px; color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; text-align: center; white-space: nowrap; }
+    #root .s08b-lbl { position: absolute; font-size: 30px; font-weight: 800; color: var(--ink2); white-space: nowrap; }
+    #root .s08b-chip { position: absolute; padding: 4px 14px; background: var(--ink); border-radius: 3px; color: #fff; font-family: var(--mono); font-size: 30px; font-weight: 800; white-space: nowrap; }
+    #root .s08b-c { position: absolute; width: 26px; height: 26px; background: var(--purple); border: 2px solid #fff; border-radius: 2px; }
+  </style>
+  <!-- s08b Blackwell 简介：tcgen05 由一个线程发出 → 结果存进 Tensor Core 旁的 Tensor Memory → 配对的两个线程块合作完成一条 MMA。
+       速度条变暗：这一幕不是 H100 上的一步，没有测量。 -->
+  <div id="root" data-composition-id="s08b" data-width="1920" data-height="1080">
+    <div id="s08b-mapw" class="s08b-full"></div>
+    <div id="s08b-main" class="s08b-full"></div>
+    <div id="s08b-hud" class="s08b-full"></div>
+  </div>
+  <script>
+    (function () {
+      const B = [0.6, 7.59, 14.43];
+      const DUR = 19.94;
+      const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
+      const U = HFKit("s08b", tl), $ = U.$, mk = U.mk, ft = U.ft;
+      const NS = "http://www.w3.org/2000/svg";
+
+      // 常驻：小地图、速度条、页眉
+      const M = HFMap.state(HFMap($("mapw"), { x: 460, y: 180 }), { mini: true, direct: true });
+      const SP = HFSpeed($("hud"), HFSPEED.s08).instant();
+      const H = HFHeader($("hud"), "Blackwell", "tcgen05 与 Tensor Memory");
+
+      // ---- 一个 SM：四个分区的 Tensor Core；其下 Tensor Memory（先藏起）、寄存器、shared memory ----
+      const mn = $("main");
+      const BY = 240, SW = 560, SH = 420, Y = { tc: 24, tm: 136, reg0: 136, reg: 232, smem: 306 };
+      const sm = (X, final) => {
+        const g = mk(mn, `position:absolute;left:${X}px;top:${BY}px;width:${SW}px;height:${SH}px`);
+        const box = mk(g, `position:absolute;left:0;top:0;width:${SW}px;height:${SH}px;border:3px dashed var(--gray);border-radius:8px`);
+        const px = [0, 1, 2, 3].map((i) => 16 + i * 134);
+        const tcs = px.map((x) => { const e = mk(g, `left:${x}px;top:${Y.tc}px;width:124px;height:96px;background:var(--teal);font-size:28px;line-height:1.15`, "Tensor<br>Core"); e.className = "s08b-blk"; return e; });
+        const tm = mk(g, `left:16px;top:${Y.tm}px;width:526px;height:80px;background:#0b7d70;font-size:28px;align-items:flex-start;padding-top:6px;transform-origin:50% 0`, "Tensor Memory"); tm.className = "s08b-blk";
+        const regs = px.map((x) => { const e = mk(g, `left:${x}px;top:${final ? Y.reg : Y.reg0}px;width:124px;height:56px;background:var(--ink2);font-size:28px`, "寄存器"); e.className = "s08b-blk"; return e; });
+        const smem = mk(g, `left:16px;top:${Y.smem}px;width:526px;height:90px;background:var(--use);font-size:30px`, "shared memory"); smem.className = "s08b-blk";
+        // 结果 C：每个分区一小块
+        const cs = px.map((x) => { const e = mk(g, `left:${x + 49}px;top:${final ? Y.tm + 44 : Y.reg0 + 15}px`); e.className = "s08b-c"; e.setAttribute("data-layout-allow-overlap", ""); return e; });
+        if (final) gsap.set(regs, { opacity: 0.35 });
+        return { g, box, tcs, tm, regs, smem, cs };
+      };
+      const X1 = 620, X2 = 1300;
+      const A = sm(X1, false), Bm = sm(X2, true);
+      const smL = mk(mn, `left:${X1 + 4}px;top:${BY - 50}px;color:var(--note)`, "一个 SM"); smL.className = "s08b-lbl";
+      gsap.set([A.box, A.tcs, A.tm, A.regs, A.smem, A.cs, smL, Bm.g], { opacity: 0 });
+      const sv = U.svg(mn);
+      const head = (x, y, dir, col, s = 15) => {
+        const p = document.createElementNS(NS, "polygon");
+        const pts = dir === "left" ? `${x - s},${y} ${x + 4},${y - s} ${x + 4},${y + s}` : `${x},${y + s} ${x - s},${y - 4} ${x + s},${y - 4}`;
+        p.setAttribute("points", pts); p.setAttribute("fill", col); sv.appendChild(p); gsap.set(p, { opacity: 0 }); return p;
+      };
+      const flash = (els, t, from = "#0fa391", to = "#5fd6c6") => {
+        ft(els, { backgroundColor: from }, { backgroundColor: to, duration: 0.15 }, t);
+        ft(els, { backgroundColor: to }, { backgroundColor: from, duration: 0.45 }, t + 0.15);
+      };
+
+      // ---- 右侧：发出指令的线程。一个 warpgroup 画成四排点（每排一个 warp） ----
+      const PX0 = 1380, PY0 = 270;
+      const pL = mk(mn, `left:${PX0}px;top:${PY0}px`, "一个 warpgroup"); pL.className = "s08b-lbl";
+      const pL2 = mk(mn, `left:${PX0}px;top:${PY0}px`, "一个线程"); pL2.className = "s08b-lbl";
+      const dots = [];
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 16; c++) {
+        dots.push(mk(mn, `position:absolute;left:${PX0 + c * 28}px;top:${PY0 + 60 + r * 46}px;width:20px;height:20px;border-radius:50%;background:var(--warp)`));
+      }
+      gsap.set([pL, pL2, dots], { opacity: 0 });
+      const AY = BY + Y.tc + 48;
+      const arr = U.path(sv, `M ${PX0 - 20} ${AY} L ${X1 + SW + 18} ${AY}`, "var(--ink)", 6), arrH = head(X1 + SW + 14, AY, "left", "var(--ink)");
+      const chipOld = mk(mn, `left:${X1 + SW + 40}px;top:${BY - 60}px`, "wgmma"); chipOld.className = "s08b-chip";
+      const chip = mk(mn, `left:${X1 + SW + 40}px;top:${BY - 60}px;background:#0b7d70`, "tcgen05.mma"); chip.className = "s08b-chip";
+      gsap.set([chipOld, chip], { opacity: 0 });
+      const pulse = (t) => {
+        const d = mk(mn, "position:absolute;left:0;top:0;width:22px;height:22px;background:var(--ink);border-radius:2px");
+        gsap.set(d, { opacity: 0 });
+        ft(d, { opacity: 0 }, { opacity: 1, duration: 0.1 }, t);
+        U.travel(d, [[PX0 - 20, AY], [X1 + SW + 20, AY]], t, 0.5, "power1.in");
+        ft(d, { opacity: 1 }, { opacity: 0, duration: 0.1 }, t + 0.5);
+      };
+
+      // ================= 第 1 句：页眉；SM 出现；一个 warpgroup 发出 wgmma → 只剩一个线程，指令换成 tcgen05.mma =================
+      HFMap.focus(tl, M, "smem-tc", B[0] + 0.1, "#0fa391");
+      H.show(tl, B[0] + 0.4);
+      ft(SP.el, { opacity: 1 }, { opacity: 0.3, duration: 0.5 }, B[0] + 0.4);
+      ft([A.box, smL], { opacity: 0 }, { opacity: 1, duration: 0.5 }, B[0] + 0.8);
+      A.tcs.forEach((e, i) => U.appear(e, B[0] + 0.9 + i * 0.06, 0.5, 16));
+      A.regs.forEach((e, i) => U.appear(e, B[0] + 1.1 + i * 0.06, 0.5, 16));
+      U.appear(A.smem, B[0] + 1.3, 0.5, 16);
+      U.fade(pL, B[0] + 1.3);
+      dots.forEach((e, i) => ft(e, { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, B[0] + 1.4 + (i % 16) * 0.015 + Math.floor(i / 16) * 0.08));
+      U.pop(chipOld, B[0] + 1.5);
+      U.draw(arr, B[0] + 1.6, 0.35); ft(arrH, { opacity: 0 }, { opacity: 1, duration: 0.1 }, B[0] + 1.9);
+      pulse(B[0] + 1.9); flash(A.tcs, B[0] + 2.4);
+      // 只剩一个线程
+      ft(dots.slice(1), { opacity: 1 }, { opacity: 0.1, duration: 0.5 }, B[0] + 2.7);
+      ft(dots[0], { scale: 1 }, { scale: 1.6, backgroundColor: "#0b7d70", duration: 0.4, ease: "back.out(2)" }, B[0] + 2.8);
+      U.leave(pL, B[0] + 2.7, 0.25); U.fade(pL2, B[0] + 2.9);
+      U.leave(chipOld, B[0] + 2.8, 0.2); U.pop(chip, B[0] + 3.0);
+      pulse(B[0] + 3.5); flash(A.tcs, B[0] + 4.0);
+
+      // ================= 第 2 句：寄存器下移，Tensor Memory 展开；结果 C 从寄存器升进 Tensor Memory；寄存器变暗 =================
+      U.fade(A.cs, B[1] + 0.1, 0.3);
+      ft([A.regs, A.cs], { y: 0 }, { y: Y.reg - Y.reg0, duration: 0.7, ease: U.CAM }, B[1] + 0.5);
+      ft(A.tm, { opacity: 0, scaleY: 0 }, { opacity: 1, scaleY: 1, duration: 0.6, ease: U.ARRIVE }, B[1] + 1.1);
+      ft(A.cs, { y: Y.reg - Y.reg0 }, { y: Y.tm + 44 - (Y.reg0 + 15), duration: 0.7, ease: U.CAM }, B[1] + 2.2);
+      ft(A.regs, { opacity: 1 }, { opacity: 0.35, duration: 0.5 }, B[1] + 2.8);
+      flash(A.tcs, B[1] + 3.6); flash(A.tm, B[1] + 3.75, "#0b7d70", "#3fb3a5");
+
+      // ================= 第 3 句：第二个 SM 滑入，两个框成一对；一条 tcgen05.mma 同时送进两边 =================
+      U.leave([pL2, dots, arr, arrH, smL], B[2] + 0.1, 0.3);
+      ft(Bm.g, { opacity: 0, x: 120 }, { opacity: 1, x: 0, duration: 0.7, ease: U.ARRIVE }, B[2] + 0.4);
+      const FX = X1 - 24, FW = X2 + SW + 24 - FX, FY = BY - 22, FH = SH + 44;
+      const frame = U.path(sv, `M ${FX} ${FY} L ${FX + FW} ${FY} L ${FX + FW} ${FY + FH} L ${FX} ${FY + FH} Z`, "var(--ink)", 5);
+      U.draw(frame, B[2] + 1.2, 0.6);
+      const fL = mk(mn, `left:${FX}px;top:${FY + FH + 14}px`, "配对的两个线程块"); fL.className = "s08b-lbl"; gsap.set(fL, { opacity: 0 });
+      U.fade(fL, B[2] + 1.6);
+      // 指令移到两个 SM 之间的上方，分两路送进两边的 Tensor Core
+      const CXm = (X1 + SW + X2) / 2;
+      tl.to(chip, { x: CXm - (X1 + SW + 40) - 100, y: -20, duration: 0.6, ease: U.CAM }, B[2] + 1.6);
+      const ty = BY + Y.tc - 4, sy = FY - 12;
+      const l1 = U.path(sv, `M ${CXm - 30} ${sy} L ${X1 + SW - 90} ${ty - 14}`, "var(--ink)", 6), h1 = head(X1 + SW - 90, ty - 10, "down", "var(--ink)");
+      const l2 = U.path(sv, `M ${CXm + 30} ${sy} L ${X2 + 90} ${ty - 14}`, "var(--ink)", 6), h2 = head(X2 + 90, ty - 10, "down", "var(--ink)");
+      [l1, l2].forEach((p) => U.draw(p, B[2] + 2.3, 0.35));
+      ft([h1, h2], { opacity: 0 }, { opacity: 1, duration: 0.1 }, B[2] + 2.6);
+      flash([...A.tcs, ...Bm.tcs], B[2] + 2.8);
+      flash([A.tm, Bm.tm], B[2] + 2.95, "#0b7d70", "#3fb3a5");
+      flash([...A.tcs, ...Bm.tcs], B[2] + 3.8);
+      flash([A.tm, Bm.tm], B[2] + 3.95, "#0b7d70", "#3fb3a5");
+
+      tl.set({}, {}, DUR);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["s08b"] = tl;
+    })();
+  </script>
+</template>

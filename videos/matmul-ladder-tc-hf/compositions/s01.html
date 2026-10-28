@@ -1,0 +1,221 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; }
+    #root .s01-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .s01-sm { position: absolute; width: 64px; height: 36px; background: #cdc5b3; border-radius: 2px; }
+    #root .s01-hbm { position: absolute; width: 120px; height: 170px; background: var(--hot); border-radius: 3px; color: #fff; font-size: 30px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+    #root .s01-lbl { position: absolute; font-size: 36px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+    #root .s01-part { position: absolute; width: 400px; height: 230px; background: var(--paper2); border: 3px solid var(--line); border-radius: 4px; }
+    #root .s01-mat { position: absolute; width: 132px; height: 132px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; border-radius: 3px; }
+    #root .s01-mat i { display: block; border-radius: 2px; }
+    #root .s01-slot { position: absolute; width: 140px; height: 140px; border: 4px dashed var(--gray); border-radius: 4px; }
+  </style>
+  <!-- s01 开场：芯片全景 → 推进到 SM → 推进到 Tensor Core（一条指令一整块）→ 输入槽空了在等 → 存储层级图从显存搭起 -->
+  <div id="root" data-composition-id="s01" data-width="1920" data-height="1080">
+    <div id="s01-cam" class="s01-full"></div>
+    <div id="s01-smd" class="s01-full"></div>
+    <div id="s01-tc" class="s01-full"></div>
+    <div id="s01-mapw" class="s01-full"></div>
+    <div id="s01-hud" class="s01-full"></div>
+  </div>
+  <script>
+    (function () {
+      const B = [0.6, 8.84, 18.09, 21.59, 30.76, 33.66, 39.91, 45.16];
+      const DUR = 53.2;
+      const $ = (k) => document.getElementById("s01-" + k);
+      const mk = (p, css, html) => { const e = document.createElement("div"); e.style.cssText = css; if (html !== undefined) e.innerHTML = html; p.appendChild(e); return e; };
+      const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
+      const ft = (el, a, b, t) => tl.fromTo(el, a, b, t);
+      const ARRIVE = "expo.out", CAM = "power2.inOut", OUT = "power3.in";
+      const appear = (el, t, d = 0.6, y = 20) => ft(el, { opacity: 0, y }, { opacity: 1, y: 0, duration: d, ease: ARRIVE }, t);
+      const leave = (el, t, d = 0.3) => ft(el, { opacity: 1 }, { opacity: 0, duration: d, ease: OUT }, t);
+      const mat = (p, x, y, col, light) => { const m = mk(p, `left:${x}px;top:${y}px;background:${light}`); m.className = "s01-mat"; for (let i = 0; i < 16; i++) mk(m, `background:${col}`); return m; };
+
+      // ================= 第 1 句：芯片全景。SM 网格、中间的 L2、两侧显存依次亮起 =================
+      const cam = $("cam");
+      const die = mk(cam, "position:absolute;left:560px;top:200px;width:800px;height:610px;background:#e9e3d6;border:4px solid var(--ink2);border-radius:6px");
+      const cells = [];
+      for (let half = 0; half < 2; half++) for (let c = 0; c < 11; c++) for (let r = 0; r < 6; r++) {
+        const e = mk(cam, `left:${582 + c * 70}px;top:${(half ? 560 : 218) + r * 40}px`); e.className = "s01-sm";
+        cells.push({ e, c, r, half });
+      }
+      const l2 = mk(cam, "position:absolute;left:582px;top:470px;width:756px;height:76px;background:var(--ink2);border-radius:3px;color:#fff;font-size:36px;font-weight:800;display:flex;align-items:center;justify-content:center", "L2 缓存");
+      const hbm = [];
+      [220, 410, 600].forEach((y) => { const a = mk(cam, `left:404px;top:${y}px`, "显存"); a.className = "s01-hbm"; const b = mk(cam, `left:1396px;top:${y}px`, "显存"); b.className = "s01-hbm"; hbm.push(a, b); });
+      const lSM = mk(cam, "left:960px;top:120px", "132 个 SM"); lSM.className = "s01-lbl"; lSM.style.fontSize = "48px";
+      gsap.set(lSM, { xPercent: -50 });
+      gsap.set([cells.map((x) => x.e), l2, hbm, lSM], { opacity: 0 });
+      ft(die, { opacity: 0, scale: 0.96, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.8, ease: ARRIVE }, 0);
+      // SM 自上而下、从左到右亮起（每个 SM 先浅后深）
+      cells.forEach(({ e, c, r, half }) => ft(e, { opacity: 0, backgroundColor: "#e9e3d6" }, { opacity: 1, backgroundColor: "#cdc5b3", duration: 0.35, ease: "power2.out" }, B[0] + 0.3 + c * 0.07 + (half ? 6 + r : r) * 0.04));
+      appear(lSM, B[0] + 0.6);
+      ft(l2, { opacity: 0, scaleX: 0, transformOrigin: "50% 50%" }, { opacity: 1, scaleX: 1, duration: 0.7, ease: ARRIVE }, B[0] + 2.4);
+      hbm.forEach((e, i) => ft(e, { opacity: 0, x: i % 2 ? 50 : -50 }, { opacity: 1, x: 0, duration: 0.6, ease: ARRIVE }, B[0] + 3.8 + Math.floor(i / 2) * 0.1));
+
+      // ================= 第 2 句：推进到一个 SM，再落到 Tensor Core；一条指令完成两块小矩阵的乘法；普通单元一次一个乘加 =================
+      const pick = cells.find((x) => x.half === 0 && x.c === 5 && x.r === 2).e;
+      const ring = mk(cam, "position:absolute;left:927px;top:291px;width:76px;height:48px;border:5px solid var(--teal);border-radius:3px");
+      gsap.set(ring, { opacity: 0 });
+      ft(ring, { opacity: 0, scale: 1.6, transformOrigin: "50% 50%" }, { opacity: 1, scale: 1, duration: 0.5, ease: ARRIVE }, B[1]);
+      ft(pick, { backgroundColor: "#cdc5b3" }, { backgroundColor: "#0fa391", duration: 0.3 }, B[1] + 0.1);
+      // 镜头推进：以选中的 SM 为中心放大，芯片在最后一段淡出
+      ft(cam, { scale: 1, transformOrigin: "964px 316px" }, { scale: 13, transformOrigin: "964px 316px", duration: 1.1, ease: CAM }, B[1] + 0.6);
+      ft(cam, { opacity: 1 }, { opacity: 0, duration: 0.45, ease: "power1.in" }, B[1] + 1.15);
+      // SM 内部：4 个分区，每个分区一个 Tensor Core
+      const smd = $("smd");
+      const smBox = mk(smd, "position:absolute;left:540px;top:170px;width:840px;height:560px;border:4px dashed var(--gray);border-radius:6px");
+      const smL = mk(smd, "left:540px;top:108px", "1 个 SM"); smL.className = "s01-lbl"; smL.style.fontSize = "40px";
+      const tcs = [], parts = [];
+      [[560, 190], [960, 190], [560, 480], [960, 480]].forEach(([x, y]) => {
+        const p = mk(smd, `left:${x}px;top:${y}px`); p.className = "s01-part"; parts.push(p);
+        tcs.push(mk(p, "position:absolute;left:16px;top:16px;width:170px;height:130px;background:var(--teal);border-radius:3px;color:#fff;font-size:32px;font-weight:800;display:flex;align-items:center;justify-content:center;text-align:center;line-height:38px", "Tensor<br>Core"));
+        mk(p, "position:absolute;left:206px;top:20px;width:170px;height:84px;background-image:radial-gradient(circle, var(--ink2) 4.5px, transparent 5px);background-size:21px 21px");
+        mk(p, "position:absolute;left:206px;top:112px;font-size:28px;font-weight:700;color:var(--note);white-space:nowrap", "普通计算单元");
+        mk(p, "position:absolute;left:16px;top:162px;width:368px;height:48px;background:var(--ink2);border-radius:3px;color:#fff;font-size:28px;font-weight:700;line-height:48px;padding-left:14px", "寄存器");
+      });
+      gsap.set([smBox, smL, parts], { opacity: 0 }); gsap.set(tcs, { opacity: 0.35 });
+      // SM 内部图从被选中的那个 SM 方格（964, 316，宽 64）长出来，与镜头推进同一段时间、同一种缓动
+      ft(smd, { scale: 64 / 840, x: 964 - 960, y: 316 - 450, transformOrigin: "960px 450px" }, { scale: 1, x: 0, y: 0, transformOrigin: "960px 450px", duration: 1.1, ease: CAM }, B[1] + 0.6);
+      ft([smBox, ...parts], { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "power1.out" }, B[1] + 0.85);
+      appear(smL, B[1] + 1.6, 0.5, 12);
+      gsap.set(smd, { transformOrigin: "960px 450px" });
+      tcs.forEach((e, i) => ft(e, { opacity: 0.35, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.6)" }, B[1] + 2.0 + i * 0.12));
+      // 再推进：落到左上角那个 Tensor Core
+      // SM 图放大 400/170 倍并平移，使左上角那块 Tensor Core（中心 664, 274）正好落到特写的位置（中心 960, 470）
+      const zs = 400 / 170;
+      ft(smd, { scale: 1, x: 0, y: 0, transformOrigin: "0px 0px" }, { scale: zs, x: 960 - 664 * zs, y: 470 - 274 * zs, transformOrigin: "0px 0px", duration: 0.9, ease: CAM }, B[1] + 2.9);
+      ft(smd, { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.in" }, B[1] + 3.75);
+
+      // Tensor Core 特写：两块小矩阵飞入，一块结果飞出
+      const tcw = $("tc");
+      const TC = mk(tcw, "position:absolute;left:760px;top:330px;width:400px;height:280px;background:var(--teal);border-radius:6px");
+      const tcN = mk(TC, "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:800;color:#fff", "Tensor Core");
+      const slotA = mk(tcw, "left:560px;top:320px"); slotA.className = "s01-slot";
+      const slotW = mk(tcw, "left:560px;top:480px"); slotW.className = "s01-slot";
+      const A = mat(tcw, 564, 324, "var(--blue)", "#c9d6f6"), W = mat(tcw, 564, 484, "var(--yel)", "#fbe7a6"), C = mat(tcw, 1290, 400, "var(--purple)", "#ddd0fb");
+      const aL = mk(tcw, "left:500px;top:350px;font-size:36px;font-weight:800;color:var(--blue-t)", "A"); aL.className = "s01-lbl";
+      const wL = mk(tcw, "left:496px;top:510px;font-size:36px;font-weight:800;color:var(--yel-t)", "W"); wL.className = "s01-lbl";
+      const fp = mk(tcw, "position:absolute;left:760px;top:700px;width:400px;height:110px;background:var(--paper2);border:3px solid var(--line);border-radius:4px");
+      mk(fp, "position:absolute;left:24px;top:0;height:100%;display:flex;align-items:center;font-size:32px;font-weight:800;color:var(--ink2)", "普通计算单元");
+      const fpOut = mk(tcw, "position:absolute;left:1290px;top:728px;width:30px;height:30px;background:var(--purple);border-radius:2px");
+      const fpL = mk(tcw, "left:1340px;top:724px;font-size:32px;color:var(--note)", "一次一个乘加"); fpL.className = "s01-lbl";
+      const x16 = mk(tcw, "left:1290px;top:300px;font-size:44px;color:var(--tealD)", "一次一整块 · 16 倍"); x16.className = "s01-lbl";
+      gsap.set([TC, slotA, slotW, A, W, C, aL, wL, fp, fpOut, fpL, x16], { opacity: 0 });
+      const t1 = B[1] + 3.6;
+      // 特写从 SM 图里那块 Tensor Core（中心 664, 274，宽 170）长出来
+      ft(TC, { opacity: 0 }, { opacity: 1, duration: 0.3 }, B[1] + 3.65);
+      ft([slotA, slotW], { opacity: 0 }, { opacity: 1, duration: 0.3 }, t1);
+      // A、W 从左侧飞入输入槽，再被吸进 Tensor Core
+      ft(A, { opacity: 0, x: -360 }, { opacity: 1, x: 0, duration: 0.6, ease: ARRIVE }, t1 + 0.6);
+      ft(W, { opacity: 0, x: -360 }, { opacity: 1, x: 0, duration: 0.6, ease: ARRIVE }, t1 + 0.7);
+      ft([aL, wL], { opacity: 0 }, { opacity: 1, duration: 0.3 }, t1 + 0.9);
+      ft(A, { x: 0, y: 0, scale: 1 }, { x: 330, y: 80, scale: 0.4, duration: 0.45, ease: "power3.in" }, t1 + 1.6);
+      ft(W, { x: 0, y: 0, scale: 1 }, { x: 330, y: -80, scale: 0.4, duration: 0.45, ease: "power3.in" }, t1 + 1.6);
+      leave([A, W, aL, wL], t1 + 1.95, 0.12);
+      ft(TC, { backgroundColor: "#0fa391" }, { backgroundColor: "#5fd6c6", duration: 0.12 }, t1 + 2.05);
+      ft(TC, { backgroundColor: "#5fd6c6" }, { backgroundColor: "#0fa391", duration: 0.35 }, t1 + 2.17);
+      ft(C, { opacity: 0, x: -260, scale: 0.4 }, { opacity: 1, x: 0, scale: 1, duration: 0.6, ease: ARRIVE }, t1 + 2.15);
+      // 普通计算单元：一次一个乘加（一格）
+      ft(fp, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: ARRIVE }, t1 + 2.5);
+      ft(fpOut, { opacity: 0, x: -130 }, { opacity: 1, x: 0, duration: 0.45, ease: ARRIVE }, t1 + 3.0);
+      appear(fpL, t1 + 3.1, 0.5, 10);
+      appear(x16, t1 + 3.6, 0.5, 10);
+
+      // ================= 第 3 句：Tensor Core 只能计算已经送达的数据：输入槽空了，闪烁等待 =================
+      leave([C, fp, fpOut, fpL, x16], B[2], 0.3);
+      ft(TC, { backgroundColor: "#0fa391" }, { backgroundColor: "#7cc9bf", duration: 0.5 }, B[2] + 0.2);
+      ft([slotA, slotW], { borderColor: "#8a8474" }, { borderColor: "#c4561d", duration: 0.2 }, B[2] + 0.3);
+      for (let k = 0; k < 3; k++) { ft([slotA, slotW], { opacity: 1 }, { opacity: 0.25, duration: 0.35, ease: "none" }, B[2] + 0.5 + k * 0.7); ft([slotA, slotW], { opacity: 0.25 }, { opacity: 1, duration: 0.35, ease: "none" }, B[2] + 0.85 + k * 0.7); }
+      const wait = mk(tcw, "left:960px;top:640px;font-size:40px;color:var(--hot-t)", "等待数据"); wait.className = "s01-lbl";
+      gsap.set(wait, { xPercent: -50, opacity: 0 });
+      appear(wait, B[2] + 0.6, 0.5, 10);
+
+      // ================= 第 4 句：存储层级图从下往上搭起（特写里的 Tensor Core 缩成图上第一个分区的 Tensor Core） =================
+      const MX = 460, MY = 180;
+      const M = HFMap($("mapw"), { x: MX, y: MY });
+      leave([slotA, slotW, wait], B[3], 0.25);
+      const tx = MX + M.PX(0) - 760, ty = MY + M.G.tc.y - 330, sx = M.PW / 400, sy = M.G.tc.h / 280;
+      leave(tcN, B[3], 0.15);
+      ft(TC, { x: 0, y: 0, scaleX: 1, scaleY: 1, transformOrigin: "0 0", backgroundColor: "#7cc9bf" }, { x: tx, y: ty, scaleX: sx, scaleY: sy, transformOrigin: "0 0", backgroundColor: "#0fa391", duration: 0.8, ease: CAM }, B[3] + 0.1);
+      ft(M.layer.tc, { opacity: 0 }, { opacity: 1, duration: 0.2 }, B[3] + 0.85);
+      leave(TC, B[3] + 1.0, 0.15);
+      // 说到哪层亮哪层：显存 → L2 → shared memory → 寄存器 → Tensor Core
+      HFMap.build(tl, M, B[3] + 0.9, ["hbm"]);
+      HFMap.build(tl, M, B[3] + 2.1, ["l2"]);
+      ft([M.box, M.boxL], { opacity: 0 }, { opacity: 1, duration: 0.5 }, B[3] + 3.3);
+      HFMap.build(tl, M, B[3] + 3.5, ["smem"]);
+      HFMap.build(tl, M, B[3] + 6.0, ["reg"]);
+      appear(M.partL, B[3] + 6.6, 0.5, 10);
+      ft(M.link.tc, { strokeDashoffset: +M.link.tc.dataset.len }, { strokeDashoffset: 0, duration: 0.3 }, B[3] + 7.4);
+      ft(M.linkHead.tc, { opacity: 0 }, { opacity: 1, duration: 0.1 }, B[3] + 7.65);
+      M.part.tc.slice(1).forEach((e, k) => ft(e, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.55, ease: ARRIVE }, B[3] + 7.5 + k * 0.08));
+
+      // ================= 第 5 句：右侧画出寄存器回到显存的写回箭头 =================
+      ft(M.wb, { strokeDashoffset: +M.wb.dataset.len }, { strokeDashoffset: 0, duration: 0.9, ease: "power1.inOut" }, B[4] + 0.2);
+      ft(M.wbHead, { opacity: 0 }, { opacity: 1, duration: 0.1 }, B[4] + 1.05);
+      appear(M.wbL, B[4] + 0.8, 0.5, 10);
+
+      // ================= 第 6 句：一块数据沿图缓慢上行，Tensor Core 亮一下就灭；速度条出现，停在很短的一截 =================
+      const blk = mk(M.el, "position:absolute;left:0;top:0;width:44px;height:44px;background:var(--blue);border:3px solid var(--ink);border-radius:3px");
+      gsap.set(blk, { opacity: 0 });
+      const lane = ["hbm", "l2", "smem", "reg", "tc"].map((id) => M.at(id));
+      const kfs = {}; lane.forEach((q, i) => { kfs[(i * 25) + "%"] = { x: q.x - 22, y: q.y - 22 }; });
+      tl.set(blk, { x: lane[0].x - 22, y: lane[0].y - 22 }, B[5] - 0.01);
+      ft(blk, { opacity: 0 }, { opacity: 1, duration: 0.2 }, B[5]);
+      tl.to(blk, { keyframes: { ...kfs, easeEach: "power1.inOut" }, duration: 4.0, ease: "none" }, B[5] + 0.1);
+      leave(blk, B[5] + 4.1, 0.15);
+      ft(M.layer.tc, { backgroundColor: "#0fa391" }, { backgroundColor: "#5fd6c6", duration: 0.1 }, B[5] + 4.15);
+      ft(M.layer.tc, { backgroundColor: "#5fd6c6" }, { backgroundColor: "#7cc9bf", duration: 0.5 }, B[5] + 4.3);
+      M.part.tc.slice(1).forEach((e) => ft(e, { backgroundColor: "#0fa391" }, { backgroundColor: "#7cc9bf", duration: 0.5 }, B[5] + 0.3));
+      const SP = HFSpeed($("mapw"), HFSPEED.s01).show(tl, B[5] + 1.0);
+
+      // ================= 第 7 句：速度条满格刻度高亮，标注 cuBLAS =================
+      SP.mark(tl, B[6] + 0.3);
+
+      // ================= 第 8 句：七个优化标题挂到各自作用的那一层旁边；SM 内部、SM 之外分别框出 =================
+      const hud = $("hud");
+      const T = [
+        // 左侧：SM 内部的四步（y 为画面坐标，tx/ty 为引线指向的地图位置）
+        ["1 swizzle", 60, 390, "reg", null],
+        ["2 cp.async", 60, 566, "smem", null],
+        ["3 wgmma", 60, 280, "tc", null],
+        ["4 warp specialization", 60, 476, "sm", null],
+        // 右侧：SM 之外的三步
+        ["5 tile 分组", 1500, 790, "hbm", null],
+        ["6 cluster 多播", 1500, 520, "smem", null],
+        ["7 TMA store", 1500, 640, "wb", null],
+      ];
+      const lsvg = (() => { const s = document.createElementNS("http://www.w3.org/2000/svg", "svg"); s.setAttribute("width", 1920); s.setAttribute("height", 1080); s.style.cssText = "position:absolute;left:0;top:0;overflow:visible"; hud.appendChild(s); return s; })();
+      const anchor = { smem: [MX + 170, MY + 368], reg: [MX + 182, MY + 222], tc: [MX + 182, MY + 95], sm: [MX + 140, MY + 300], wb: [MX + 966, MY + 470] };
+      const anchorR = { smem: [MX + 830, MY + 368], hbm: [MX + 1000, MY + 688] };
+      T.forEach(([txt, x, y, a], i) => {
+        const right = x > 900;
+        const e = mk(hud, `position:absolute;left:${x}px;top:${y - 26}px;padding:6px 14px;background:#fff;border:3px solid ${right ? "var(--hot)" : "var(--tealD)"};border-radius:4px;font-size:32px;font-weight:800;color:var(--ink);white-space:nowrap`, txt);
+        gsap.set(e, { opacity: 0 });
+        const [ax, ay] = right ? (anchorR[a] || anchor[a]) : anchor[a];
+        const sx = right ? x - 6 : x + e.offsetWidth + 6;
+        const ln = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        ln.setAttribute("d", `M ${sx} ${y} L ${ax} ${ay}`); ln.setAttribute("stroke", right ? "var(--hot)" : "var(--tealD)"); ln.setAttribute("stroke-width", 3); ln.setAttribute("fill", "none");
+        lsvg.appendChild(ln); const L = ln.getTotalLength(); ln.style.strokeDasharray = L; ln.style.strokeDashoffset = L;
+        const t = B[7] + 0.4 + i * 0.55;
+        ft(e, { opacity: 0, x: right ? 30 : -30 }, { opacity: 1, x: 0, duration: 0.5, ease: ARRIVE }, t);
+        ft(ln, { strokeDashoffset: L }, { strokeDashoffset: 0, duration: 0.35 }, t + 0.15);
+      });
+      const inL = mk(hud, "position:absolute;left:60px;top:180px;font-size:34px;font-weight:800;color:var(--tealD);white-space:nowrap", "SM 内部：前四步");
+      const outL = mk(hud, "position:absolute;left:1500px;top:860px;font-size:34px;font-weight:800;color:var(--hot-t);white-space:nowrap", "SM 之外：后三步");
+      const outBox = mk(hud, `position:absolute;left:${MX - 14}px;top:${MY + 480}px;width:1028px;height:280px;border:4px dashed var(--hot);border-radius:8px`);
+      gsap.set([inL, outL, outBox], { opacity: 0 });
+      ft(M.box, { borderColor: "#8a8474" }, { borderColor: "#0b7d70", duration: 0.4 }, B[7] + 0.3);
+      appear(inL, B[7] + 0.3, 0.5, 10);
+      ft(outBox, { opacity: 0 }, { opacity: 1, duration: 0.4 }, B[7] + 2.6);
+      appear(outL, B[7] + 2.6, 0.5, 10);
+
+      // 幕尾：标题与区域框退场，回到干净的地图，下一幕从这里接着讲
+      leave([hud.querySelectorAll("div"), lsvg], DUR - 0.7, 0.4);
+      ft(M.box, { borderColor: "#0b7d70" }, { borderColor: "#8a8474", duration: 0.4 }, DUR - 0.7);
+      tl.set({}, {}, DUR);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["s01"] = tl;
+    })();
+  </script>
+</template>

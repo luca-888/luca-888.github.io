@@ -1,0 +1,174 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; }
+    #root .s05-full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    #root .s05-warp { position: absolute; width: 56px; height: 96px; border-radius: 4px; overflow: hidden; outline: 0 solid var(--ink); }
+    #root .s05-lbl { position: absolute; font-size: 32px; font-weight: 700; color: var(--ink2); white-space: nowrap; }
+    #root .s05-blk { position: absolute; border-radius: 3px; transform-origin: 0 50%; }
+    #root .s05-cell { position: absolute; width: 100px; height: 60px; border: 4px solid var(--use); border-radius: 4px; background: var(--paper); }
+    #root .s05-tok { position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 3px; }
+  </style>
+  <!-- s05 第 4 步 warp specialization：同一批 warp 既搬又算 → 每块之后同步、Tensor Core 留空 → 分成 producer / 两组 consumer → mbarrier 交接 → Tensor Core 那一行连成一整条 -->
+  <div id="root" data-composition-id="s05" data-width="1920" data-height="1080">
+    <div id="s05-mapw" class="s05-full"></div>
+    <div id="s05-main" class="s05-full"></div>
+    <div id="s05-hud" class="s05-full"></div>
+  </div>
+  <script>
+    (function () {
+      const B = [0.6, 7.59, 15.69, 26.13, 33.71];
+      const DUR = 41.23;
+      const tl = gsap.timeline({ paused: true, defaults: { immediateRender: false } });
+      const U = HFKit("s05", tl), $ = U.$, mk = U.mk, ft = U.ft;
+
+      // 常驻：小地图（wgmma 之后的状态）、速度条、页眉
+      const M = HFMap.state(HFMap($("mapw"), { x: 460, y: 180 }), { mini: true, direct: true });
+      const SP = HFSpeed($("hud"), HFSPEED.s04).instant();
+      const H = HFHeader($("hud"), "第 4 步", "warp specialization：一组专门搬，一组专门算");
+
+      // 本地辅助：同时点亮“L2 → shared memory”（搬）与“shared memory → Tensor Core”（算）两段。
+      // HFMap.focus 一次只能点一段，连调两次会互相改写其余层的透明度，所以这里自己写。
+      const focus2 = (t, col = "#c4561d") => {
+        [...M.all("hbm"), ...M.all("reg")].forEach((e) => ft(e, { opacity: 1 }, { opacity: 0.28, duration: 0.4 }, t));
+        ["l2", "smem", "tc"].forEach((id) => M.all(id).forEach((e) => ft(e, { outlineWidth: 0 }, { outlineWidth: 5, duration: 0.3 }, t)));
+        [M.link.smem, M.direct].forEach((p) => ft(p, { strokeWidth: p === M.direct ? 7 : 6 }, { strokeWidth: 12, stroke: col, duration: 0.3 }, t));
+        [M.linkHead.smem, M.directHead].forEach((h) => ft(h, { scale: 1 }, { scale: 1.6, fill: col, transformOrigin: "50% 50%", duration: 0.3 }, t));
+      };
+
+      const mn = $("main");
+      // ---- 12 个 warp 图标（3 个 warpgroup × 4）：上半“搬”（橙）、下半“算”（teal） ----
+      const AX = (k) => 787 + k * 70, AY = 220;
+      const warps = [], top = [], bot = [];
+      const half = "position:absolute;left:0;width:56px;height:48px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;font-weight:800";
+      for (let k = 0; k < 12; k++) {
+        const w = mk(mn, `left:${AX(k)}px;top:${AY}px`); w.className = "s05-warp";
+        top.push(mk(w, half + ";top:0;background:var(--hot)", "<span>搬</span>"));
+        bot.push(mk(w, half + ";top:48px;background:var(--teal)", "<span>算</span>"));
+        warps.push(w);
+      }
+      const wL = mk(mn, "left:560px;top:246px", "同一批 warp"); wL.className = "s05-lbl";
+      gsap.set([warps, wL], { opacity: 0 });
+
+      // ---- 时间线（第 2 句）：搬运一行、Tensor Core 一行；横轴是时间 ----
+      const X0 = 780, TW = 1060, P = 212, RY = 520, TY = 700;
+      const rowL = mk(mn, `left:560px;top:${RY + 10}px`, "搬运"); rowL.className = "s05-lbl";
+      const tcL = mk(mn, `left:560px;top:${TY + 20}px`, "Tensor Core"); tcL.className = "s05-lbl";
+      const rowT = mk(mn, `position:absolute;left:${X0}px;top:${RY}px;width:${TW}px;height:60px;background:var(--paper2);border-radius:3px`);
+      const tcT = mk(mn, `position:absolute;left:${X0}px;top:${TY}px;width:${TW}px;height:80px;background:var(--paper2);border-radius:3px`);
+      const blk = (x, y, w, h, col) => { const e = mk(mn, `left:${X0 + x}px;top:${y}px;width:${w}px;height:${h}px;background:${col}`); e.className = "s05-blk"; gsap.set(e, { opacity: 0 }); return e; };
+      const comp = [0, 1, 2, 3, 4].map((k) => ({ x: k * P + 40, w: 140, e: blk(k * P + 40, TY, 140, 80, "var(--teal)") }));
+      const loads = [{ x: 0, w: 34 }, ...[0, 1, 2, 3].map((k) => ({ x: k * P + 196, w: 44 }))].map((o) => ({ ...o, e: blk(o.x, RY, o.w, 60, "var(--hot)") }));
+      const sv = U.svg(mn);
+      const syncX = [0, 1, 2, 3].map((k) => X0 + k * P + 188);
+      const syncs = syncX.map((x) => U.path(sv, `M ${x} ${RY - 24} L ${x} ${TY + 96}`, "var(--ink)", 4));
+      const syncL = mk(mn, `left:${syncX[0]}px;top:${RY - 72}px`, "同步"); syncL.className = "s05-lbl";
+      gsap.set(syncL, { xPercent: -50 });
+      gsap.set([rowL, tcL, rowT, tcT, syncL], { opacity: 0 });
+
+      // ================= 第 1 句：标题出现；一排 warp 图标同时挂着“搬”和“算” =================
+      focus2(B[0] + 0.1);
+      H.show(tl, B[0] + 0.4);
+      warps.forEach((w, k) => U.appear(w, B[0] + 1.6 + k * 0.06, 0.5, 16));
+      U.fade(wL, B[0] + 1.6);
+      // 同一批 warp 先发搬运、再发计算：上下两半交替亮
+      ft(top, { opacity: 1 }, { opacity: 0.35, duration: 0.25 }, B[0] + 3.4);
+      ft(top, { opacity: 0.35 }, { opacity: 1, duration: 0.25 }, B[0] + 3.9);
+      ft(bot, { opacity: 1 }, { opacity: 0.35, duration: 0.25 }, B[0] + 4.2);
+      ft(bot, { opacity: 0.35 }, { opacity: 1, duration: 0.25 }, B[0] + 4.7);
+
+      // ================= 第 2 句：时间线上每块计算之后一道竖线（同步），竖线前后 Tensor Core 留空 =================
+      [rowL, tcL].forEach((e) => U.fade(e, B[1] + 0.1));
+      ft([rowT, tcT], { opacity: 0, scaleX: 0, transformOrigin: "0 50%" }, { opacity: 1, scaleX: 1, duration: 0.6, ease: U.ARRIVE }, B[1] + 0.1);
+      // 一根时间指针从左往右扫过，扫到哪里画到哪里
+      const SW = 5.0, xt = (x) => B[1] + 0.8 + (x / TW) * SW;
+      const head = mk(mn, `position:absolute;left:${X0 - 2}px;top:${RY - 30}px;width:4px;height:${TY + 110 - RY}px;background:var(--gray)`);
+      gsap.set(head, { opacity: 0 });
+      ft(head, { opacity: 0 }, { opacity: 1, duration: 0.2 }, xt(0));
+      ft(head, { x: 0 }, { x: TW, duration: SW, ease: "none" }, xt(0));
+      U.leave(head, xt(TW), 0.3);
+      [...comp, ...loads].forEach((o) => ft(o.e, { opacity: 1, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: (o.w / TW) * SW, ease: "none" }, xt(o.x)));
+      syncs.forEach((p, k) => U.draw(p, xt(k * P + 188), 0.25));
+      U.appear(syncL, xt(188), 0.4, 8);
+      // 同步时 warp 图标全体停一下（变淡），同步结束再亮
+      syncX.forEach((x) => { const t = xt(x - X0); ft(warps, { opacity: 1 }, { opacity: 0.4, duration: 0.12 }, t); ft(warps, { opacity: 0.4 }, { opacity: 1, duration: 0.2 }, t + 0.3); });
+
+      // ================= 第 3 句：warp 图标分成上下两组：上面一组只搬（producer），下面两组只算（consumer） =================
+      U.leave([rowL, rowT, syncL, ...loads.map((o) => o.e), wL], B[2], 0.3);
+      syncs.forEach((p) => U.leave(p, B[2], 0.3));
+      // 目标位置：producer 居中在上；两组 consumer 并排在下
+      const dst = (k) => k < 4 ? [1067 + k * 70, 180] : k < 8 ? [860 + (k - 4) * 70, 450] : [1274 + (k - 8) * 70, 450];
+      warps.forEach((w, k) => { const [x, y] = dst(k); ft(w, { x: 0, y: 0 }, { x: x - AX(k), y: y - AY, duration: 0.9, ease: U.CAM }, B[2] + 0.5 + (k >> 2) * 0.12); });
+      // producer 全变成“搬”；consumer 全变成“算”（第 2 组用深一档的 teal，后面在 Tensor Core 一行里区分两组）
+      ft(bot.slice(0, 4), { backgroundColor: "#0fa391" }, { backgroundColor: "#c4561d", duration: 0.4 }, B[2] + 1.6);
+      ft(bot.slice(0, 4).map((e) => e.firstChild), { opacity: 1 }, { opacity: 0, duration: 0.3 }, B[2] + 1.6);
+      ft(top.slice(4), { backgroundColor: "#c4561d" }, { backgroundColor: (i) => (i < 4 ? "#0fa391" : "#0b7d70"), duration: 0.4 }, B[2] + 1.6);
+      ft(top.slice(4).map((e) => e.firstChild), { opacity: 1 }, { opacity: 0, duration: 0.3 }, B[2] + 1.6);
+      ft(bot.slice(8), { backgroundColor: "#0fa391" }, { backgroundColor: "#0b7d70", duration: 0.4 }, B[2] + 1.6);
+      const pL = mk(mn, "left:1356px;top:206px", "producer"); pL.className = "s05-lbl";
+      const c1L = mk(mn, "left:993px;top:562px", "consumer 1"); c1L.className = "s05-lbl";
+      const c2L = mk(mn, "left:1407px;top:562px", "consumer 2"); c2L.className = "s05-lbl";
+      gsap.set([c1L, c2L], { xPercent: -50 });
+      gsap.set([pL, c1L, c2L], { opacity: 0 });
+      U.appear(pL, B[2] + 2.0, 0.5, 10);
+      U.appear(c1L, B[2] + 3.0, 0.5, 10); U.appear(c2L, B[2] + 3.15, 0.5, 10);
+
+      // ================= 第 4 句：两组之间的 mbarrier 计数格亮灭交替：数据块从上递到下，空格从下还给上 =================
+      const CX = (j) => 970 + j * 120, CY = 330;
+      const cells = [0, 1, 2, 3].map((j) => { const c = mk(mn, `left:${CX(j)}px;top:${CY}px`); c.className = "s05-cell"; return c; });
+      const mL = mk(mn, "left:1458px;top:340px;font-family:var(--mono)", "mbarrier"); mL.className = "s05-lbl";
+      gsap.set([cells, mL], { opacity: 0 });
+      cells.forEach((c, j) => U.pop(c, B[3] + 0.1 + j * 0.06, 0.4));
+      U.appear(mL, B[3] + 0.3, 0.4, 8);
+      const full = (j, t) => ft(cells[j], { backgroundColor: "#f1ede4" }, { backgroundColor: "#2f8a57", duration: 0.15 }, t);
+      const empty = (j, t) => ft(cells[j], { backgroundColor: "#2f8a57" }, { backgroundColor: "#f1ede4", duration: 0.15 }, t);
+      const cc = (j) => [CX(j) + 50, CY + 30];
+      const PRO = [1200, 290], CON = [[993, 440], [1407, 440]];
+      const tok = (col, border) => { const e = mk(mn, `background:${col};${border ? "border:4px solid var(--use);" : ""}`); e.className = "s05-tok"; gsap.set(e, { opacity: 0 }); return e; };
+      // 一次搬运：producer 发出一块（橙）→ 落进第 j 格（格子变绿 = full）
+      const load = (j, t) => {
+        const e = tok("var(--hot)");
+        ft(e, { opacity: 0 }, { opacity: 1, duration: 0.1 }, t);
+        U.travel(e, [PRO, cc(j)], t, 0.4, "power1.in");
+        ft(e, { opacity: 1 }, { opacity: 0, duration: 0.08 }, t + 0.4);
+        full(j, t + 0.38);
+      };
+      // 一次计算：consumer g 取走第 j 格的数据（绿块下行）；用完把空格（描边方块）还给 producer
+      const use = (j, g, t) => {
+        const e = tok("var(--use)"), r = tok("var(--paper)", true);
+        empty(j, t);
+        ft(e, { opacity: 0 }, { opacity: 1, duration: 0.1 }, t);
+        U.travel(e, [cc(j), CON[g]], t, 0.4, "power1.in");
+        ft(e, { opacity: 1 }, { opacity: 0, duration: 0.12 }, t + 0.4);
+        const grp = warps.slice(4 + g * 4, 8 + g * 4);
+        ft(grp, { outlineWidth: 0 }, { outlineWidth: 4, duration: 0.12 }, t + 0.4);
+        ft(grp, { outlineWidth: 4 }, { outlineWidth: 0, duration: 0.3 }, t + 1.2);
+        const back = [CON[g][0] + (g ? 60 : -60), CON[g][1] - 20];
+        ft(r, { opacity: 0 }, { opacity: 1, duration: 0.12 }, t + 0.6);
+        U.travel(r, [back, [back[0], 300], PRO], t + 0.6, 0.6, "power1.inOut");
+        ft(r, { opacity: 1 }, { opacity: 0, duration: 0.1 }, t + 1.2);
+        return t + 1.25;   // producer 收到空格的时刻
+      };
+      // 开头 producer 先把 4 格都填上（提前几块），之后每用完一格就补一格；一直转到本幕结束
+      const L0 = B[3] + 0.6;
+      [0, 1, 2, 3].forEach((j) => load(j, L0 + j * 0.3));
+      const PER = 0.75;
+      for (let i = 0, t = L0 + 1.6; t < DUR - 1.6; i++, t += PER) {
+        const back = use(i % 4, i % 2, t);
+        load(i % 4, back + 0.05);
+      }
+
+      // ================= 第 5 句：Tensor Core 那一行的空白一格格填满，连成一整条；两组 consumer 轮流（两档 teal） =================
+      const gaps = [[0, 40], ...[0, 1, 2, 3].map((k) => [k * P + 180, (k + 1) * P + 40]), [4 * P + 180, TW]];
+      const fills = gaps.map(([a, b], i) => ({ i, e: blk(a, TY, b - a, 80, "var(--teal)") }));
+      fills.forEach(({ e }, i) => ft(e, { opacity: 1, scaleX: 0 }, { opacity: 1, scaleX: 1, duration: 0.35, ease: U.ARRIVE }, B[4] + 0.4 + i * 0.4));
+      // 原来的计算块换成第 2 组的深 teal：两组交替占满 Tensor Core
+      comp.forEach(({ e }) => { ft(e, { backgroundColor: "#0fa391" }, { backgroundColor: "#0b7d70", duration: 0.3 }, B[4] + 2.9); });
+      ft(tcT, { outlineWidth: 0, outlineStyle: "solid", outlineColor: "#141414" }, { outlineWidth: 4, duration: 0.3 }, B[4] + 3.0);
+      SP.shake(tl, B[4] + 3.2);
+
+      tl.set({}, {}, DUR);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["s05"] = tl;
+    })();
+  </script>
+</template>
