@@ -1,6 +1,7 @@
 """matmul-ladder-tc 视频用的 profiler 数据：每一版 ncu --set full + 计时，wmma 版再录一段 nsys。
 
 一次 H100 调用做完：计时（含 wmma_pad 对照）→ 每个 kernel 一份 ncu 报告（8192 阶，wgmma_ws 加 4096 阶）→ nsys。
+--part article：文章用的计时（cuBLAS + 阶梯 256–8192 阶、对照与微调变体）与连续 2 s 的功耗，不跑 ncu。
 --part extra：第 2 版的拆分对照（mma_sync_ld 搬运经寄存器、mma_noswz 不换位）、两种指令的峰值（tc_peak.cu）、wmma 的 SASS。
 ncu 在 Modal 容器里只能 --clock-control none（不锁频）。结果先写 Volume 再回传。
 用法（先 unset 掉 *_proxy）：
@@ -28,10 +29,12 @@ image = (modal.Image.from_registry("nvidia/cuda:12.8.1-devel-ubuntu22.04", add_p
 LADDER = ["wmma", "wmma_pad", "mma", "mma_async", "wgmma", "wgmma_ws", "wgmma_l2", "wgmma_pipe", "wgmma_persist",
           "wgmma_cluster", "wgmma_tstore"]
 NCU_RUNS = [(k, 8192) for k in LADDER] + [("wgmma_ws", 4096), ("wgmma_l2", 4096)]
+ART_LADDER = [k for k in LADDER if k != "wmma_pad"]
+ART_MICRO = ["wgmma_hilbert", "wgmma_micro", "wgmma_tstore_c1", "wgmma_micro_c1"]
 EXTRA = ["wmma", "wmma_pad", "mma_sync_ld", "mma_noswz", "mma", "mma_async"]
 
 
-@app.function(image=image, gpu="H100", timeout=1800, max_containers=1, retries=0, volumes={"/out": vol})
+@app.function(image=image, gpu="H100", timeout=900, max_containers=1, retries=0, volumes={"/out": vol})
 def run(stamp: str, part: str) -> dict:
     import glob
     import subprocess
@@ -59,6 +62,15 @@ def run(stamp: str, part: str) -> dict:
     if part == "nsys_soak":                                         # 和文章同口径：连续跑 2 s，看后段每次的耗时
         sh(f"{nsys} profile --trace=cuda --force-overwrite=true -o {d}/nsys-wmma-soak /build/matmul_tc soak wmma 8192", "nsys-wmma-soak.log")
         sh(f"{nsys} stats --report cuda_gpu_trace --format csv {d}/nsys-wmma-soak.nsys-rep", "nsys-wmma-soak-trace.csv")
+        files["gpu-seconds.txt"] = f"{time.time() - t0:.1f}\n"
+        (d / "gpu-seconds.txt").write_text(files["gpu-seconds.txt"])
+        vol.commit()
+        return files
+    if part == "article":
+        sh(f"/build/matmul_tc cublas,{','.join(ART_LADDER)}", "timing-ladder.txt")
+        sh(f"/build/matmul_tc cublas,{','.join(EXTRA)} 8192", "timing-ablation-8192.txt")
+        sh(f"/build/matmul_tc cublas,wgmma_tstore,{','.join(ART_MICRO)} 2048,4096,8192", "timing-micro.txt")
+        sh("/build/matmul_tc soak cublas,wgmma_tstore,wgmma_micro_c1 4096,8192", "soak.txt")
         files["gpu-seconds.txt"] = f"{time.time() - t0:.1f}\n"
         (d / "gpu-seconds.txt").write_text(files["gpu-seconds.txt"])
         vol.commit()

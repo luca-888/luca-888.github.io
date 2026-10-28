@@ -163,32 +163,32 @@ export function TimelineFp32() {
 }
 
 export function TimelineMma() {
-  return <TimelineFigure title="同步搬运与三级缓冲" desc="STAGES = 1 时每块搬完才算；STAGES = 3 时拷贝提前两块发出，计算连续。"
+  return <TimelineFigure title="单个 stage 与 pipeline" desc="STAGES = 1 时每块搬完才算；STAGES = 3 时拷贝提前两块发出，计算连续。"
     groups={[
       { title: 'mma（STAGES = 1）', rows: [
         { label: 'cp.async', segs: rep(3, i => [[i * 8, i * 8 + 3.5, 'amber', `搬 ${i}`]]) },
         { label: 'Tensor Core', segs: rep(3, i => [[i * 8 + 3.5, i * 8 + 8, 'teal', `算 ${i}`]]) },
       ] },
-      { title: 'mma 三级缓冲（STAGES = 3）', rows: [
+      { title: 'mma pipeline（STAGES = 3）', rows: [
         { label: 'cp.async', segs: [[0, 3.5, 'amber', '搬 0'], [0.4, 3.9, 'amber', '搬 1'], ...rep(4, i => [[4 + i * 4.5, 7.5 + i * 4.5, 'amber', `搬 ${i + 2}`]] as Seg[])] },
         { label: 'Tensor Core', segs: rep(5, i => [[3.9 + i * 4.5, 8.2 + i * 4.5, 'teal', `算 ${i}`]]).filter(s => s[1] <= 24.2) },
       ] },
     ]}
     caption=""
-    legend={[['amber', '显存 → 共享内存'], ['teal', 'Tensor Core 计算']]} />
+    legend={[['amber', '显存 → shared memory'], ['teal', 'Tensor Core 计算']]} />
 }
 
 export function TimelineWs() {
-  return <TimelineFigure title="单个 warpgroup 与 warp 特化" desc="wgmma 版每块之后全体同步才发下一次 TMA；warp 特化后生产者连续搬运，两个消费者交替使用 Tensor Core。"
+  return <TimelineFigure title="单个 warpgroup 与 warp specialization" desc="wgmma 版每块之后全体同步才发下一次 TMA；warp specialization 后 producer 连续搬运，两个 consumer 交替使用 Tensor Core。"
     groups={[
       { title: 'wgmma：一个 warpgroup', rows: [
         { label: 'TMA', segs: [[0, 2, 'amber', 'TMA'], ...rep(3, i => [[6 + i * 6, 8 + i * 6, 'amber', 'TMA']] as Seg[])] },
         { label: 'Tensor Core', segs: rep(4, i => [[2 + i * 6, 5.4 + i * 6, 'teal', `块 ${i}`], [5.4 + i * 6, 6 + i * 6, 'gray']]).filter(s => s[1] <= 24) },
       ] },
-      { title: 'wgmma_ws：一个生产者、两个消费者', rows: [
-        { label: '生产者', segs: rep(10, i => [[i * 2.2, i * 2.2 + 2, 'amber', 'TMA']]).filter(s => s[1] <= 24) },
-        { label: '消费者 1', segs: rep(5, i => [[2 + i * 4.4, 4.2 + i * 4.4, 'teal', 'wgmma']]).filter(s => s[1] <= 24) },
-        { label: '消费者 2', segs: rep(5, i => [[4.2 + i * 4.4, 6.4 + i * 4.4, 'teal', 'wgmma']]).filter(s => s[1] <= 24) },
+      { title: 'wgmma_ws：一个 producer、两个 consumer', rows: [
+        { label: 'producer', segs: rep(10, i => [[i * 2.2, i * 2.2 + 2, 'amber', 'TMA']]).filter(s => s[1] <= 24) },
+        { label: 'consumer 1', segs: rep(5, i => [[2 + i * 4.4, 4.2 + i * 4.4, 'teal', 'wgmma']]).filter(s => s[1] <= 24) },
+        { label: 'consumer 2', segs: rep(5, i => [[4.2 + i * 4.4, 6.4 + i * 4.4, 'teal', 'wgmma']]).filter(s => s[1] <= 24) },
       ] },
     ]}
     caption=""
@@ -196,19 +196,19 @@ export function TimelineWs() {
 }
 
 export function TimelineTstore() {
-  return <TimelineFigure title="零散写回与 TMA 写回" desc="集群版每个 tile 结束时由消费者逐个线程写回显存，期间不发 wgmma；TMA 写回由一个线程发出后与下一块计算重叠。"
+  return <TimelineFigure title="零散写回与 TMA store" desc="cluster 版每个 tile 结束时由 consumer 逐个线程写回显存，期间不发 wgmma；TMA store 由一个线程发出后与下一块计算重叠。"
     groups={[
       { title: 'wgmma_cluster：每个线程直接写回', rows: [
-        { label: '消费者', segs: rep(3, i => [[i * 8, i * 8 + 6, 'teal', `tile ${i}`], [i * 8 + 6, i * 8 + 8, 'red', '写回']]) },
+        { label: 'consumer', segs: rep(3, i => [[i * 8, i * 8 + 6, 'teal', `tile ${i}`], [i * 8 + 6, i * 8 + 8, 'red', '写回']]) },
         { label: '写回显存', segs: rep(3, i => [[i * 8 + 6, i * 8 + 8, 'amber']]) },
       ] },
-      { title: 'wgmma_tstore：TMA 写回', rows: [
-        { label: '消费者', segs: rep(4, i => [[i * 6.4, i * 6.4 + 6, 'teal', `tile ${i}`], [i * 6.4 + 6, i * 6.4 + 6.4, 'green']]).filter(s => s[1] <= 24.4) },
-        { label: 'TMA 写回', segs: rep(3, i => [[6.4 + i * 6.4, 9.4 + i * 6.4, 'amber', `C ${i}`]]) },
+      { title: 'wgmma_tstore：TMA store', rows: [
+        { label: 'consumer', segs: rep(4, i => [[i * 6.4, i * 6.4 + 6, 'teal', `tile ${i}`], [i * 6.4 + 6, i * 6.4 + 6.4, 'green']]).filter(s => s[1] <= 24.4) },
+        { label: 'TMA store', segs: rep(3, i => [[6.4 + i * 6.4, 9.4 + i * 6.4, 'amber', `C ${i}`]]) },
       ] },
     ]}
-    caption="绿色为写入共享内存的停顿。"
-    legend={[['teal', 'wgmma 计算'], ['red', '消费者在写回'], ['green', '写入共享内存'], ['amber', '写回显存']]} />
+    caption="绿色为写入 shared memory 的停顿。"
+    legend={[['teal', 'wgmma 计算'], ['red', 'consumer 在写回'], ['green', '写入 shared memory'], ['amber', '写回显存']]} />
 }
 
 // ---------------------------------------------------------------- 异或换位
@@ -658,7 +658,7 @@ export function TcRateFigure() {
       {[0, 1, 2, 3].map(block)}
       {chip(BX0, by, 2 * BW + BG, 9, 'fk-fill-gray')}
       {chip(BX0, by + 12, 2 * BW + BG, 12, 'fk-fill-green', 0.3)}
-      <text x={BX0 + BW + BG / 2} y={by + 18} style={{ fill: '#2f6b4a', fontSize: 10, fontWeight: 600 }}>L1 / 共享内存 256 KB</text>
+      <text x={BX0 + BW + BG / 2} y={by + 18} style={{ fill: '#2f6b4a', fontSize: 10, fontWeight: 600 }}>L1 / shared memory 256 KB</text>
       {/* 放大引线 */}
       <line x1={BX0 + BW} y1={BY0} x2={ZX} y2={ZY} stroke="var(--fk-teal)" strokeDasharray="4 3" />
       <line x1={BX0 + BW} y1={BY0 + BH} x2={ZX} y2={ZY + ZH} stroke="var(--fk-teal)" strokeDasharray="4 3" />
@@ -737,7 +737,7 @@ export function WmmaTileFigure() {
   const bx = wx + bj * S, by = cy + bi * S
   const zx = 352, zy = 56, Z = 176, u = Z / 128             // 放大的 128 × 128，u = 每个元素的像素
   const WR = 0, WC = 1                                       // 选中的 warp（2 × 4 中的第 0 行第 1 列）
-  return <Figure title="wmma 的分工：block、warp 与片段" desc="C 按 128 × 128 切给 block；一个 block 的 8 个 warp 排成 2 × 4，各负责 64 × 32，即 4 × 2 个 16 × 16 片段。block 沿 K 读 A 的一条行带与 Wᵀ 的一条列带。" height={286}
+  return <Figure title="wmma 的分工：block、warp 与 fragment" desc="C 按 128 × 128 切给 block；一个 block 的 8 个 warp 排成 2 × 4，各负责 64 × 32，即 4 × 2 个 16 × 16 片段。block 沿 K 读 A 的一条行带与 Wᵀ 的一条列带。" height={286}
     caption="紫色小块为一个 block 的 128 × 128（放大显示），蓝、黄细条为它沿 K 读取的 A、Wᵀ。">
     {() => <>
       <rect x={wx} y={ty} width={S} height={S} className="fk-fill-amber" opacity={0.28} />
@@ -771,17 +771,17 @@ export function WmmaTileFigure() {
 
 // ---------------------------------------------------------------- wmma 的数据通路与 4 路 bank 冲突（构图同视频第 2 幕结尾）
 export function WmmaPathFigure() {
-  const st: TowerV = { ...TOWER.wmma, hot: { lv: [2], hop: [1, 2] }, tags: [{ hop: 2, text: '寄存器中转' }, { lv: 2, text: 'bank 冲突' }] }
+  const st: TowerV = { ...TOWER.wmma, hot: { lv: [2], hop: [1, 2] }, tags: [{ hop: 2, text: '寄存器中转' }, { lv: 2, text: 'bank conflict' }] }
   const x0 = 40, w = 300, top = 70
   // bank 面板：每行 64 字节，一排 32 个 bank 放两行矩阵；读 8 行的第 1 块（16 字节 = 4 个 bank）
   const PX = 540, PY = 134, cw = 6.5, ch = 20, rg = 8
   const hit = (b: number) => (b >= 4 && b < 8) || (b >= 20 && b < 24)
   const H = top + 4 * TOWER_GAP + TOWER_H + 18
-  return <Figure title="wmma 的数据通路与 bank 冲突" desc="显存经 L2 读入寄存器，写入共享内存，再读回寄存器交给 Tensor Core；共享内存每行 64 字节，读取 8 行的同一块时落在两组 bank，每组 4 个请求，分 4 轮完成。" height={H}
+  return <Figure title="wmma 的数据通路与 bank conflict" desc="显存经 L2 读入寄存器，写入 shared memory，再读回寄存器交给 Tensor Core；shared memory 每行 64 字节，读取 8 行的同一块时落在两组 bank，每组 4 个请求，分 4 轮完成。" height={H}
     caption="绿色为数据走过的路径，红色为瓶颈。">
     {() => <>
       <TowerBody st={st} x0={x0} w={w} top={top} stack />
-      <text x={PX - 46} y={PY - 52} textAnchor="start" className="fk-strong">共享内存：每行 64 字节</text>
+      <text x={PX - 46} y={PY - 52} textAnchor="start" className="fk-strong">shared memory：每行 64 字节</text>
       <text x={PX - 46} y={PY - 33} textAnchor="start" className="fk-muted">一排 32 个 bank 放两行</text>
       {[0, 8, 16, 24].map(b => <text key={b} x={PX + b * cw + cw / 2} y={PY - 12} className="fk-muted fk-small fk-mono">{b}</text>)}
       <text x={PX + 8 * cw} y={PY + 4 * (ch + rg) + 2} className="fk-muted fk-small">偶数行</text>
@@ -860,11 +860,11 @@ export function SwizzleFigure2() {
     {Array.from({ length: 8 }, (_, i) => <text key={i} x={ox + i * c + c / 2 - 1} y={top + 8 * c + 12} className="fk-muted">{i}</text>)}
     <text x={ox + 4 * c} y={top + 8 * c + 32} className="fk-muted">bank 组</text>
   </>
-  return <Figure title="128 字节行的异或换位" desc="一行 8 个 16 字节块。换位前 8 行的逻辑块 2 都在 bank 组 2；换位后第 r 行的块 c 存到 c ⊕ r，分散到 8 组。" height={292}
+  return <Figure title="128 字节行的 swizzle" desc="一行 8 个 16 字节块。swizzle 前 8 行的逻辑块 2 都在 bank 组 2；swizzle 后第 r 行的块 c 存到 c ⊕ r，分散到 8 组。" height={292}
     caption="每格 16 字节（4 个 bank），数字为逻辑块号；着色为 ldmatrix 一次读取的 8 行同一块。">
     {() => <>
-      {head(110, '换位前')}
-      {head(440, '换位后')}
+      {head(110, 'swizzle 前')}
+      {head(440, 'swizzle 后')}
       {grid(110, false)}
       {grid(440, true)}
       {Array.from({ length: 8 }, (_, r) => <text key={r} x={96} y={top + r * c + c / 2 - 1} textAnchor="end" className="fk-muted">{r}</text>)}
@@ -1141,17 +1141,17 @@ const TOWER: Record<string, TowerV> = {
   dbuf: { title: 'SM 剖面：dbuf', desc: '显存读取与计算重叠，共享内存开两份；FP32 单元的峰值成为上限。', tc: false,
     path: [4, 3, 2, 1, 0], hops: ['', 'LDG → STS', 'LDS.128', 'FFMA'], hot: { lv: [0] }, tag: { lv: 0, text: 'FP32 峰值' }, sub: { 2: 'As、Bs × 2' }, warps: 'rrrrrrrrrrrrrrss',
     caption: 'dbuf：读显存与计算重叠，共享内存开两份；上限变为 FP32 单元的峰值。示意。' },
-  wmma: { title: 'wmma 的数据通路', desc: '显存经 L2 读入寄存器，写入共享内存，再读回寄存器交给 Tensor Core。', tc: true,
+  wmma: { title: 'wmma 的数据通路', desc: '显存经 L2 读入寄存器，写入 shared memory，再读回寄存器交给 Tensor Core。', tc: true,
     path: [4, 3, 1, 2, 1, 0], hops: ['', '读入', '写入', '读回', 'mma'], lanes: [0.5, 0.96],
-    caption: 'wmma：数据先读入寄存器、写入共享内存，计算前再读回寄存器，两次经过寄存器。' },
-  mma: { title: 'mma.sync 与三级缓冲的数据通路', desc: 'cp.async 由 L2 直接写入共享内存，ldmatrix 读入寄存器，mma.sync 交给 Tensor Core；每条 mma.sync 只有 2048 次乘加。', tc: true,
+    caption: 'wmma：数据先读入寄存器、写入 shared memory，计算前再读回寄存器，两次经过寄存器。' },
+  mma: { title: 'mma.sync 与 pipeline 的数据通路', desc: 'cp.async 由 L2 直接写入 shared memory，ldmatrix 读入寄存器，mma.sync 交给 Tensor Core；每条 mma.sync 只有 2048 次乘加。', tc: true,
     path: [4, 3, 2, 1, 0], hops: ['', 'cp.async', 'ldmatrix', 'mma.sync'], hot: { hop: [3] }, tag: { hop: 3, text: '指令小，停在约 300' },
     caption: '' },
-  wgmma: { title: 'TMA 与 wgmma 的数据通路', desc: 'TMA 把整块从 L2 搬入共享内存，wgmma 直接读共享内存，寄存器只存累加结果；同一个 warpgroup 既搬运又计算，两块之间 Tensor Core 空闲。', tc: true,
+  wgmma: { title: 'TMA 与 wgmma 的数据通路', desc: 'TMA 把整块从 L2 搬入 shared memory，wgmma 直接读 shared memory，寄存器只存累加结果；同一个 warpgroup 既搬运又计算，两块之间 Tensor Core 空闲。', tc: true,
     path: [4, 3, 2, 0], hops: ['', 'TMA', 'wgmma'], sub: { 1: '累加结果' }, hot: { lv: [0] }, tag: { lv: 0, text: '两块之间空闲' },
     caption: '' },
-  tstore: { title: 'TMA 写回的数据通路', desc: '累加结果从寄存器换位写入共享内存，再由 TMA 经 L2 写回显存；上一版由每个线程零散写回。', tc: true,
-    path: [1, 2, 3, 4], hops: ['换位写入', 'TMA 写回', ''], lanes: [0.64, 0.95], xpath: [1, 4], xhop: '零散写回', xl: 0.45, sub: { 1: '累加结果' }, purple: true,
+  tstore: { title: 'TMA store 的数据通路', desc: '累加结果从寄存器 swizzle 写入 shared memory，再由 TMA 经 L2 写回显存；上一版由每个线程零散写回。', tc: true,
+    path: [1, 2, 3, 4], hops: ['swizzle 写入', 'TMA store', ''], lanes: [0.64, 0.95], xpath: [1, 4], xhop: '零散写回', xl: 0.45, sub: { 1: '累加结果' }, purple: true,
     caption: '划掉的虚线为上一版的零散写回。' },
 }
 const WARP_HUE: Record<string, Fill> = { r: 'green', w: 'amber', s: 'gray' }
@@ -1174,7 +1174,7 @@ function TowerBody({ st, x0, w, top, compact = false, wx = 650, wdy = 0, stack =
   const Y = (i: number) => top + i * gap
   const LV: [string, Hue, string][] = [
     st.tc ? ['Tensor Core', 'teal', '×4'] : ['FP32 单元', 'blue', '128 FMA / 时钟'],
-    ['寄存器', 'purple', '256 KB'], [st.tc ? '共享内存' : '共享内存 / L1', 'green', '228 KB'], ['L2', 'amber', '50 MB'], ['显存', 'amber', '80 GB'],
+    ['寄存器', 'purple', '256 KB'], [st.tc ? 'shared memory' : '共享内存 / L1', 'green', '228 KB'], ['L2', 'amber', '50 MB'], ['显存', 'amber', '80 GB'],
   ]
   const onLv = new Set(st.path), hotLv = new Set(st.hot?.lv ?? []), hotHop = new Set(st.hot?.hop ?? [])
   const [l0, l1] = st.lanes ?? [0.56, 0.95], n = st.path.length - 1
@@ -1422,8 +1422,8 @@ export function WsFigure2() {
   const sw = 58, sg = 10, sx0 = x0 + 14, slotX = (i: number) => sx0 + i * (sw + sg)
   const SLOT: [string, Fill, boolean, boolean][] = [['空', 'free', false, true], ['计算中', 'green', true, false], ['已到', 'green', true, false], ['写入中', 'amber', false, false]]
   const tx = slotX(3) + sw / 2, cx = slotX(1) + sw / 2, cy = tcY + h + 14, py = smY + smH + 8, mid = (a: number, b: number) => (a + b) / 2
-  return <Figure title="warp 特化：生产者、槽位与消费者" desc="生产者 warpgroup 的一个线程发 TMA，把 A、W 块从 L2 写入共享内存的 4 个槽位；每个槽位有 full、empty 两个 mbarrier；两个消费者 warpgroup 发 wgmma，Tensor Core 直接读槽位。" height={322}
-    caption="full：TMA 已到齐；empty：消费者已用完。">
+  return <Figure title="warp specialization：producer、stage 与 consumer" desc="producer warpgroup 的一个线程发 TMA，把 A、W 块从 L2 写入 shared memory 的 4 个 stage；每个 stage 有 full、empty 两个 mbarrier；两个 consumer warpgroup 发 wgmma，Tensor Core 直接读 stage。" height={322}
+    caption="producer 为 warpgroup 0，两个 consumer 为 warpgroup 1、2。full：TMA 已到齐；empty：consumer 已用完。">
     {() => <>
       <rect x={18} y={20} width={724} height={smY + smH + 14 - 20} rx={6} fill="none" stroke="var(--color-muted)" strokeDasharray="5 4" />
       <text x={18} y={10} textAnchor="start" className="fk-muted">一个 SM</text>
@@ -1432,9 +1432,9 @@ export function WsFigure2() {
       <text x={x0 + 20} y={tcY + h / 2} textAnchor="start" className="fk-strong">Tensor Core</text>
       <Slab x={x0} y={smY} w={w} h={smH} tone="on" />
       <rect x={x0 + 8} y={smY + 9} width={4} height={14} rx={1} className="fk-fill-green" />
-      <text x={x0 + 20} y={smY + 16} textAnchor="start" className="fk-strong">共享内存</text>
+      <text x={x0 + 20} y={smY + 16} textAnchor="start" className="fk-strong">shared memory</text>
       {SLOT.map(([s, fill, full, empty], i) => <g key={i}>
-        <Cell x={slotX(i)} y={smY + 28} w={sw} h={40} rx={3} fill={fill} label={`槽 ${i}`} sub={s} />
+        <Cell x={slotX(i)} y={smY + 28} w={sw} h={40} rx={3} fill={fill} label={`stage ${i}`} sub={s} />
         <Cell x={slotX(i)} y={smY + 74} w={sw / 2 - 1} h={15} rx={2} fill={full ? 'green' : 'free'} label="full" fs={9} />
         <Cell x={slotX(i) + sw / 2 + 1} y={smY + 74} w={sw / 2 - 1} h={15} rx={2} fill={empty ? 'blue' : 'free'} label="empty" fs={9} />
       </g>)}
@@ -1446,20 +1446,19 @@ export function WsFigure2() {
       <Arrow a={[cx, smY + 28]} b={[cx, tcY + h]} color="var(--fk-green)" w={2.4} />
       <text x={tx + 8} y={mid(smY + smH + 14, l2Y - 9)} textAnchor="start" className="fk-small fk-mono">TMA</text>
       <text x={cx + 8} y={cy + 14} textAnchor="start" className="fk-small fk-mono">wgmma</text>
-      {/* 生产者 warpgroup：线程 0 发 TMA */}
+      {/* producer warpgroup：线程 0 发 TMA */}
       <rect x={34} y={smY} width={176} height={smH} rx={8} className="fk-band-blue" />
-      <text x={46} y={smY + 16} textAnchor="start" className="fk-strong fk-text-blue">生产者</text>
+      <text x={46} y={smY + 16} textAnchor="start" className="fk-strong fk-text-blue">producer</text>
       <text x={198} y={smY + 16} textAnchor="end" className="fk-muted fk-small">warpgroup 0</text>
       {Array.from({ length: 64 }, (_, i) => <circle key={i} cx={52 + (i % 16) * 9.4} cy={smY + 40 + Math.floor(i / 16) * 11} r={2.6} className="fk-fill-blue" opacity={i === 0 ? 1 : 0.28} />)}
       <text x={52} y={smY + 88} textAnchor="start" className="fk-muted fk-small">线程 0</text>
       <path d={`M 48 ${smY + 40} H 40 V ${py} H ${tx - 3}`} fill="none" className="fk-line-blue" strokeWidth={1.4} strokeDasharray="4 3" />
-      {/* 两个消费者 warpgroup */}
+      {/* 两个 consumer warpgroup */}
       {[0, 1].map(j => {
         const y = 32 + j * 96
         return <g key={j}>
           <rect x={574} y={y} width={160} height={80} rx={8} className="fk-band-teal" />
-          <text x={586} y={y + 16} textAnchor="start" className="fk-strong fk-text-teal">消费者 {j + 1}</text>
-          <text x={722} y={y + 16} textAnchor="end" className="fk-muted fk-small">warpgroup {j + 1}</text>
+          <text x={586} y={y + 16} textAnchor="start" className="fk-strong fk-text-teal">consumer {j + 1}</text>
           {Array.from({ length: 64 }, (_, i) => <circle key={i} cx={590 + (i % 16) * 8.6} cy={y + 36 + Math.floor(i / 16) * 10} r={2.4} className="fk-fill-teal" opacity={0.75} />)}
           <path d={`M 574 ${y + 40} H 556 V ${cy}`} fill="none" className="fk-line-teal" strokeWidth={1.4} strokeDasharray="4 3" />
         </g>
@@ -1469,7 +1468,7 @@ export function WsFigure2() {
   </Figure>
 }
 
-// ---------------------------------------------------------------- L2 读取与集群多播（硬件塔画法，替代 ClusterFigure2）
+// ---------------------------------------------------------------- L2 读取与 cluster 多播（硬件塔画法，替代 ClusterFigure2）
 export function ClusterFigure3() {
   const panel = (ox: number, cl: boolean) => {
     const by = 62, bh = 92, bw = 160, b0 = ox + 6, b1 = ox + 180, ly = 222, lh = 44
@@ -1484,8 +1483,8 @@ export function ClusterFigure3() {
     </g>
     const wc = (bx: number, half: 0 | 1 | -1) => [half < 0 ? bx + 98 : bx + 70 + half * 56, by + 82] as Pt
     return <g>
-      <text x={ox + 170} y={14} className="fk-strong">{cl ? '2 个 block 的集群' : '无集群'}</text>
-      {cl && <><rect x={ox} y={by - 34} width={360} height={bh + 44} rx={6} fill="none" stroke="var(--color-muted)" strokeDasharray="5 4" /><text x={ox + 8} y={by - 22} textAnchor="start" className="fk-muted fk-small">集群：相邻的两个 SM</text></>}
+      <text x={ox + 170} y={14} className="fk-strong">{cl ? '2 个 block 的 cluster' : '无 cluster'}</text>
+      {cl && <><rect x={ox} y={by - 34} width={360} height={bh + 44} rx={6} fill="none" stroke="var(--color-muted)" strokeDasharray="5 4" /><text x={ox + 8} y={by - 22} textAnchor="start" className="fk-muted fk-small">cluster：相邻的两个 SM</text></>}
       {block(b0, 0)}{block(b1, 1)}
       <Slab x={ox + 6} y={ly} w={334} h={lh} />
       <rect x={ox + 14} y={ly + 9} width={4} height={lh - 18} rx={1} className="fk-fill-amber" />
@@ -1502,7 +1501,7 @@ export function ClusterFigure3() {
       <text x={ox + 336} y={ly + lh / 2} textAnchor="end" className="fk-muted fk-small">{cl ? '读出 1 份 W' : '读出 2 份 W'}</text>
     </g>
   }
-  return <Figure title="L2 读取与集群多播" desc="上下相邻的两个 tile 用同一块 W。无集群时两个 block 各从 L2 读整块 W；2 个 block 的集群中各读一半，用 TMA 多播写入两个 block 的共享内存。" height={286}
+  return <Figure title="L2 读取与 cluster 多播" desc="上下相邻的两个 tile 用同一块 W。无 cluster 时两个 block 各从 L2 读整块 W；2 个 block 的 cluster 中各读一半，用 TMA multicast 写入两个 block 的 shared memory。" height={286}
     caption="左：两个 block 各读整块 W；右：各读一半并多播。">
     {() => <>
       {panel(14, false)}
@@ -1512,7 +1511,7 @@ export function ClusterFigure3() {
   </Figure>
 }
 
-// ---------------------------------------------------------------- warp 特化在 8192 阶的瓶颈：W 放不下 L2（构图同视频第 6 幕结尾）
+// ---------------------------------------------------------------- warp specialization 在 8192 阶的瓶颈：W 放不下 L2（构图同视频第 6 幕结尾）
 export function WsL2Figure() {
   const st: TowerV = { title: '', desc: '', caption: '', tc: true, path: [4, 3, 2, 0], hops: ['', 'TMA', 'wgmma'], sub: { 1: '累加结果' },
     hot: { hop: [0], lv: [3] }, tag: { hop: 0, text: 'W 反复从显存读入' } }
@@ -1539,14 +1538,14 @@ export function WsL2Figure() {
 
 // ---------------------------------------------------------------- 持续满载：700 W 功耗墙（构图同视频第 10 幕）
 export function PowerFigure() {
-  const X = 230, k = 440 / 989
+  const X = 230, k = 440 / 989, P = 743
   const rows: [string, string, number, string, string][] = [
     ['规格峰值', '1830 MHz', 989, 'fk-fill-gray', ''],
-    ['按持续时钟的峰值', '约 1360 MHz', 735, 'fk-fill-gray', ''],
-    ['最终版，持续 2 秒', '1360 MHz · 699 W', 682.34, 'fk-fill-teal', '93%'],
-    ['cuBLAS BF16，持续 2 秒', '1368 MHz · 697 W', 681.14, 'fk-fill-int', '93%'],
+    ['按持续时钟的峰值', '约 1375 MHz', P, 'fk-fill-gray', ''],
+    ['最终版，持续 2 秒', '1375 MHz · 700 W', 691.48, 'fk-fill-teal', '93%'],
+    ['cuBLAS BF16，持续 2 秒', '1377 MHz · 697 W', 688.85, 'fk-fill-int', '93%'],
   ]
-  return <Figure title="持续满载时的功耗墙" desc="8192 阶连续运行 2 秒，手写版与 cuBLAS 都达到 700 W，时钟降到约 1360 MHz；按这一时钟的峰值为 735 TFLOPS，两者都用到 93%。" height={196}
+  return <Figure title="持续满载时的功耗墙" desc="8192 阶连续运行 2 秒，手写版与 cuBLAS 都达到 700 W，时钟降到约 1375 MHz；按这一时钟的峰值为 743 TFLOPS，两者都用到 93%。" height={196}
     caption="8192 阶，TFLOPS。">
     {() => <>
       {rows.map(([t, sub, v, c, pct], i) => {
@@ -1559,7 +1558,7 @@ export function PowerFigure() {
           {pct && <text x={X + v * k - 8} y={y + 15} textAnchor="end" className="fk-cell-text">{pct}</text>}
         </g>
       })}
-      <line x1={X + 735 * k} y1={56} x2={X + 735 * k} y2={190} stroke="var(--color-muted)" strokeDasharray="4 3" />
+      <line x1={X + P * k} y1={56} x2={X + P * k} y2={190} stroke="var(--color-muted)" strokeDasharray="4 3" />
     </>}
   </Figure>
 }
@@ -1569,13 +1568,13 @@ export function SummaryFigure() {
   const st: TowerV = { title: '', desc: '', caption: '', tc: true, path: [4, 0], hops: [''], lanes: [0.82, 0.82] }
   const top = 46, x0 = 40, w = 260, tx = 372
   const notes: [number, string, string][] = [
-    [0, 'wmma → mma.sync → wgmma', '指令越大，Tensor Core 越忙'],
-    [1, 'cp.async、TMA；TMA 写回', '读入与写回都不再经寄存器中转'],
-    [2, '128B 换位；三级缓冲、warp 特化', '消除 bank 冲突；搬运与计算重叠'],
-    [3, 'tile 分组发放；集群与 TMA 多播', '共用的 W 留在 L2；L2 读出量减为 2/3'],
-    [4, '共享内存分块（上篇）', '读进共享内存的数被复用多次'],
+    [0, '3 wgmma', '指令更大，操作数直接从 shared memory 读'],
+    [1, '2 cp.async；7 TMA store', '搬入与写回都不经寄存器中转'],
+    [2, '1 swizzle；2 pipeline；4 warp specialization', '读取不冲突；搬运与计算重叠'],
+    [3, '5 tile 分组；6 cluster 多播', '共用的 W 留在 L2；相邻 SM 只读一次'],
+    [4, 'shared memory 分块（上篇）', '读进 shared memory 的数被复用多次'],
   ]
-  return <Figure title="各层去掉的瓶颈" desc="从显存到 Tensor Core 的五层，每层旁注明去除该层瓶颈的改动。" height={top + 4 * TOWER_GAP + TOWER_H + 18}
+  return <Figure title="各层去掉的等待" desc="从显存到 Tensor Core 的五层，每层旁注明消除该层等待的步骤，数字为本文七步的编号。" height={top + 4 * TOWER_GAP + TOWER_H + 18}
     caption="">
     {() => <>
       <TowerBody st={st} x0={x0} w={w} top={top} />
@@ -1601,15 +1600,15 @@ export function HierarchyHopperFigure({ focus }: { focus: 'warpgroup' | 'cluster
     ['thread', '一个线程', ''],
     ['warp', '32 个线程', 'SIMT 同步执行'],
     ['warpgroup', '4 个 warp，128 个线程', '共同发出 wgmma'],
-    ['block（CTA）', '驻留在一个 SM', '共用共享内存'],
-    ['cluster', '同一 GPC 的几个 block', '可访问彼此的共享内存'],
+    ['block（CTA）', '驻留在一个 SM', '共用 shared memory'],
+    ['cluster', '同一 GPC 的几个 block', '可访问彼此的 shared memory'],
     ['grid', '一次 kernel 启动', ''],
   ]
   const mult = ['× 32', '× 4', '× 1 或 3', '× 2', '× 多个']
   const warpDots = (x: number, y: number, op = 1) => Array.from({ length: 32 }, (_, k) =>
     <circle key={k} cx={x + (k % 8) * 5.5} cy={y + Math.floor(k / 8) * 5.5} r={1.8} className="fk-fill-blue" opacity={op} />)
   return <Figure title="Hopper 的线程层级" desc="thread、warp、block、grid 四层之外，Hopper 新增 warpgroup（4 个 warp）与 cluster（同一 GPC 的几个 block）。" height={226}
-    caption="青色为 Hopper 新增的两层；本文的 warp 特化版每个 block 有 3 个 warpgroup，集群版每个 cluster 有 2 个 block。">
+    caption="青色为 Hopper 新增的两层；本文的 warp specialization 版每个 block 有 3 个 warpgroup，cluster 版每个 cluster 有 2 个 block。">
     {() => <>
       {cols.map(([name, a, b], i) => {
         const x = cx(i), op = dim(i), col = isNew(i) ? 'var(--fk-teal)' : 'var(--fk-blue)'
@@ -1631,14 +1630,14 @@ export function HierarchyHopperFigure({ focus }: { focus: 'warpgroup' | 'cluster
         <rect x={cx(2) - 34} y={mid - 34} width={68} height={68} rx={6} className="fk-fill-teal" opacity={0.15} />
         {[0, 1, 2, 3].map(w => <rect key={w} x={cx(2) - 26} y={mid - 27 + w * 14} width={52} height={10} rx={2} className="fk-fill-blue" opacity={0.7} />)}
       </g>
-      {/* block：3 个 warpgroup + 共享内存 */}
+      {/* block：3 个 warpgroup + shared memory */}
       <g>
         <rect x={cx(3) - 46} y={mid - 36} width={92} height={72} rx={6} className="fk-fill-gray" opacity={0.6} />
         {[0, 1, 2].map(w => <rect key={w} x={cx(3) - 38 + w * 26} y={mid - 28} width={22} height={34} rx={3} className="fk-fill-teal" opacity={0.75} />)}
         <rect x={cx(3) - 38} y={mid + 12} width={76} height={14} rx={2} className="fk-fill-green" opacity={0.45} />
-        <text x={cx(3)} y={mid + 19} style={{ fontSize: 9.5, fill: '#2f6b4a' }}>共享内存</text>
+        <text x={cx(3)} y={mid + 19} style={{ fontSize: 9.5, fill: '#2f6b4a' }}>shared memory</text>
       </g>
-      {/* cluster：2 个 block，共享内存互通 */}
+      {/* cluster：2 个 block，shared memory 互通 */}
       <g opacity={dim(4)}>
         <rect x={cx(4) - 50} y={mid - 38} width={100} height={76} rx={6} fill="none" stroke="var(--fk-teal)" strokeDasharray="4 3" strokeWidth={1.4} />
         {[0, 1].map(bk => <g key={bk}>

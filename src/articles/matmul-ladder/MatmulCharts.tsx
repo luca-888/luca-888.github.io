@@ -19,7 +19,7 @@ const ladder = (data.ladder as Row[]).filter(r => !r.side)
 const base = data.baselines as Record<string, { tflops: Record<string, number> }>
 const CUBLAS_FP32 = base.cublas_fp32.tflops['8192']
 const CUBLAS_BF16 = base.cublas_bf16.tflops['8192']
-const LABEL: Record<string, string> = { mma_async: 'mma 三级缓冲', smem16: 'smem T=16', smem32: 'smem T=32' }
+const LABEL: Record<string, string> = { mma_async: 'mma pipeline', smem16: 'smem T=16', smem32: 'smem T=32' }
 
 function Chart({ build, height, compactHeight, label, caption }: { build: (ui: UI) => Option; height: number; compactHeight?: number; label: string; caption: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)

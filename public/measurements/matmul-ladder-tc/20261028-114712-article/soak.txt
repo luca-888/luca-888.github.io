@@ -1,0 +1,7 @@
+$ /build/matmul_tc soak cublas,wgmma_tstore,wgmma_micro_c1 4096,8192
+cublas_bf16          4096  9945 次  平均 0.201 ms   682.90 TFLOPS  SM   1458 MHz  功耗   548 W  (1985 个采样)
+wgmma_tstore         4096  9630 次  平均 0.208 ms   661.26 TFLOPS  SM   1413 MHz  功耗   696 W  (1922 个采样)
+wgmma_micro_c1       4096  9700 次  平均 0.206 ms   666.16 TFLOPS  SM   1380 MHz  功耗   698 W  (1936 个采样)
+cublas_bf16          8192  1260 次  平均 1.596 ms   688.85 TFLOPS  SM   1377 MHz  功耗   697 W  (248 个采样)
+wgmma_tstore         8192  1265 次  平均 1.590 ms   691.48 TFLOPS  SM   1375 MHz  功耗   700 W  (249 个采样)
+wgmma_micro_c1       8192  1220 次  平均 1.652 ms   665.42 TFLOPS  SM   1359 MHz  功耗   697 W  (240 个采样)

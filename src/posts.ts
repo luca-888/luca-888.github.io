@@ -24,9 +24,9 @@ export const posts: Post[] = [
   {
     slug: 'matmul-ladder-tc',
     title: '矩阵乘法优化（下）：Tensor Core 路线追平 cuBLAS',
-    description: '在 H100 上用 Tensor Core 逐版优化 BF16 矩阵乘法：mma.sync 与三级缓冲、TMA 与 wgmma、warp 特化、L2 调度、常驻 kernel、集群多播与 TMA 写回。8192 阶达到 cuBLAS BF16 的 99.5%，持续运行时两者都受 700 W 功耗上限约束。',
+    description: 'Tensor Core 只能计算已经送达的数据。在 H100 上从 wmma 出发，沿显存、L2、shared memory、寄存器这条通路做七步优化：swizzle、cp.async 与 pipeline、wgmma、warp specialization、tile 分组、cluster 多播与 TMA store。8192 阶达到 cuBLAS BF16 的 99.0%，持续运行时两者都受 700 W 功耗上限约束。',
     category: '算子优化',
-    tags: ['GEMM', 'CUDA', 'H100', 'Tensor Core', 'wgmma', 'TMA', 'warp 特化', 'cuBLAS'],
+    tags: ['GEMM', 'CUDA', 'H100', 'Tensor Core', 'wgmma', 'TMA', 'warp specialization', 'cuBLAS'],
     status: 'draft',
   },
   {

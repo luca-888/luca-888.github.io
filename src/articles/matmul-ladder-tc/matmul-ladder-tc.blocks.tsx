@@ -1,6 +1,7 @@
 import type { Components } from 'react-markdown'
 import { MatmulStill, matmulComponents } from '../matmul-ladder/blocks'
 import source from '../../../content/matmul-ladder-tc.md?raw'
+import { MapFigure } from './MapFigure'
 import sizes from '../../assets/matmul-ladder-tc/sizes.json'
 
 // 正文里的 ![说明](../src/assets/matmul-ladder-tc/x.png) 是视频画面的静帧（videos/matmul-ladder-tc，render.mjs --stills --scale 2 导出后裁剪）；说明文字作图注。
@@ -18,6 +19,7 @@ const components = {
       const w = (sizes as Record<string, number>)[src.replace(/^.*\//, '').replace(/\.png$/, '')]
       return <MatmulStill src={still(src)} alt={alt} width={w ?? 900} />
     }
+    if (children === '::ml-map::') return <div className="ml-fig"><MapFigure /></div>
     return matmulComponents.p({ children })
   },
 } satisfies Components

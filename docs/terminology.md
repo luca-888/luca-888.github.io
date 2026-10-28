@@ -100,8 +100,8 @@
 | chunkwise 计算 / chunk | 训练与 prefill 中按 chunk 并行、chunk 之间串行传递 state 的算法 / 序列切分的单位 | 保留英文 chunk，不写“分块”，以免与 KV cache 的 block 混淆。 |
 | arithmetic intensity / roofline / 拐点 | 每读 1 字节做的运算次数（FLOP / byte）/ 以强度为横轴、可达到的算力为纵轴的上限图（斜线为带宽，平顶为算力）/ 两段相交处，强度 = 算力 ÷ 带宽 | 保留英文 arithmetic intensity 与 roofline，不写“算术强度图”“屋顶线模型”；可简称“强度”。原论文（Williams 2009）称 operational intensity，引用原文时说明两者在 LLM 推理语境下指同一个量。ridge point 写“拐点”。2026-10-20 LLM Roofline 视频采用。 |
 | warp / lane / warpgroup | 32 个同时执行同一条指令的线程 / 线程在 warp 中的序号 / Hopper 上 4 个连续的 warp（128 个线程） | 保留英文，不写“线程束”；block、grid 同样保留英文。2026-10-21 矩阵乘法文章采用。 |
-| tile / bank 冲突 | 一个 block 负责计算的输出块（泛指数据分块时就近说明）/ 一个 warp 的共享内存读取在同一 bank 上落到不同地址、须分多轮完成 | tile 保留英文；bank 冲突写作“2 路 / 4 路冲突”。 |
-| warp 特化 / 常驻 kernel / 线程块集群 | warp specialization / persistent kernel / thread block cluster | 正文用中文写法，首次出现时附英文原名；生产者、消费者指 warp 特化中的两类 warpgroup。 |
+| tile | 一个 block 负责计算的输出块（泛指数据分块时就近说明） | tile 保留英文。bank conflict 见上方 shared memory 条目，路数写“4 路冲突”。 |
+| 常驻 kernel | persistent kernel：只启动与 SM 数相同的 block，每个 block 循环领取 tile | 正文用中文写法，首次出现时附英文原名。warp specialization、thread block cluster 见上方条目。 |
 
 ## 维护方式
 
