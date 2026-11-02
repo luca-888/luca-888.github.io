@@ -37,7 +37,7 @@
 | 部署 | GitHub Pages + GitHub Actions（`.github/workflows/pages.yml`，推送 `main` 触发） |
 
 - 仓库 `luca-888/luca-888.github.io`，站点 `https://luca-888.github.io/`，Vite `base` 为 `/`；静态资源通过 Vite 处理或 `import.meta.env.BASE_URL` 引用。
-- 新文章：正文 `content/<slug>.md`，入口 `posts/<slug>/index.html`（head 中加载 `/theme.js`），页面代码放在 `src/articles/<slug>/`（入口、`.blocks.tsx`、图表与样式），在 `vite.config.ts` 登记，信息写入 `src/posts.ts`；复用 `src/SiteLayout.tsx` 的页头页脚。正式发布时填写真实日期与 `published` 状态。
+- 新文章：正文 `content/<slug>.md`，入口 `posts/<slug>/index.html`（head 中加载 `/theme.js`），页面代码放在 `src/articles/<slug>/`（入口、`.blocks.tsx`、图表与样式），草稿登记在 `src/drafts.ts`，发布时移到 `src/posts.ts` 并填日期（`vite.config.ts` 据此只构建已发布的文章；草稿只在 dev 中出现，不进构建产物）；复用 `src/SiteLayout.tsx` 的页头页脚。正式发布时填写真实日期与 `published` 状态。
 - 一个主题的文件都按文章 slug 存放，各只保留一个版本（2026-10-07 用户要求）：
 
   | 内容 | 位置 |
@@ -51,7 +51,7 @@
 
   `src/` 顶层只放多篇共用的文件。临时结果不存储：渲染中间产物、草稿、样稿、检查截图、导出包、旧版本用完即删；成片与配音留在已忽略的 `videos/<slug>/build/`。
 - 站点只有浅色模式，不做夜间配色与切换（2026-10-01 用户确认）。
-- 首页为单列、等尺寸阅读卡片（只有标题，不放摘要与配图；2026-10-07 用户要求）加搜索；白底、细边框、无阴影。
+- 首页为按日期从新到旧的索引列表（每行：日期、标题、分类，细分隔线，不放摘要与配图；2026-11-02 用户要求）加搜索；白底、无阴影。
 - 站点 UI 用 `src/styles.css` 的颜色变量：白与中性浅灰为底，蓝灰 `#567891` 为主强调，灰绿 `#587767` 为辅助。
 
 ## 开发与验证

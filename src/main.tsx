@@ -5,6 +5,13 @@ import { SiteHeader } from './SiteLayout';
 import './styles.css';
 import './site.css';
 
+// 冒号前是主题，冒号后的细节用浅色。
+function TitleText({ title }: { title: string }) {
+  const index = title.indexOf('：');
+  if (index < 0) return <>{title}</>;
+  return <>{title.slice(0, index)}<span className="title-detail">{title.slice(index)}</span></>;
+}
+
 function App() {
   const [query, setQuery] = useState('');
   const search = query.trim().toLocaleLowerCase();
@@ -31,7 +38,9 @@ function App() {
             {visiblePosts.map((post) => (
               <li key={post.slug}>
                 <a className="article-row" href={`${import.meta.env.BASE_URL}posts/${post.slug}/`}>
-                  <h2>{post.title}</h2>
+                  <time dateTime={post.publishedAt}>{post.publishedAt ?? '草稿'}</time>
+                  <h2><TitleText title={post.title} /></h2>
+                  <span className="article-category">{post.category}</span>
                 </a>
               </li>
             ))}

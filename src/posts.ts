@@ -1,3 +1,5 @@
+import { drafts } from './drafts';
+
 export type Post = {
   slug: string;
   title: string;
@@ -11,15 +13,16 @@ export type Post = {
   | { status: 'published'; publishedAt: string }
 );
 
-// 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。
-export const posts: Post[] = [
+// 日期仅在文章正式发布时填写，格式为 YYYY-MM-DD。草稿登记在 drafts.ts。
+export const publishedPosts: Post[] = [
   {
     slug: 'matmul-ladder-fp32',
     title: '矩阵乘法优化（上）：FP32 路线',
     description: '在 H100 上从朴素写法开始，每一版只改一处、依据是上一版的瓶颈：合并访存、共享内存与寄存器分块、向量化、warp 分块与双缓冲。8192 阶达到 cuBLAS SGEMM 的 86%，止于 FP32 单元的峰值。',
     category: '算子优化',
     tags: ['GEMM', 'CUDA', 'H100', 'SGEMM', '共享内存', 'bank 冲突', 'cuBLAS'],
-    status: 'draft',
+    status: 'published',
+    publishedAt: '2026-10-23',
   },
   {
     slug: 'matmul-ladder-tc',
@@ -27,47 +30,8 @@ export const posts: Post[] = [
     description: 'Tensor Core 只能计算已经送达的数据。在 H100 上从 wmma 出发，沿显存、L2、shared memory、寄存器这条通路做七步优化：swizzle、cp.async 与 pipeline、wgmma、warp specialization、tile 分组、cluster 多播与 TMA store。8192 阶达到 cuBLAS BF16 的 99.0%，持续运行时两者都受 700 W 功耗上限约束。',
     category: '算子优化',
     tags: ['GEMM', 'CUDA', 'H100', 'Tensor Core', 'wgmma', 'TMA', 'warp specialization', 'cuBLAS'],
-    status: 'draft',
-  },
-  {
-    slug: 'cuda-graph-correctness',
-    title: 'CUDA Graph 的正确性：捕获遗漏与过期输入',
-    description: 'Replay 等价于 eager 需要两个前提：每个 GPU 操作都录进图，每个随批次变化的输入都在 replay 前写入固定地址。Liger-Kernel 的 RMSNorm backward 漏捕获了 kernel，vLLM 的 EAGLE draft prefill 在 FULL 图中拿不到本批图像 embedding。',
-    category: 'GPU 编程',
-    tags: ['CUDA Graph', 'Stream capture', 'CuTe DSL', 'Liger-Kernel', 'vLLM', 'EAGLE', 'Speculative decoding'],
-    status: 'draft',
-  },
-  {
-    slug: 'qwen-vl-video-tokens',
-    title: 'Qwen-VL 的视频 token：采样、grid 与时间戳',
-    description: 'Qwen2-VL 与 Qwen3-VL 如何把一段视频变成 prompt 中的 token：帧采样、奇数帧补齐、smart_resize、video_grid_thw 与时间戳，以及不解码视频计算 token 数、多个视频时占位符与元数据的对应。',
-    category: '多模态',
-    tags: ['Qwen3-VL', 'Qwen2-VL', 'VLM', 'Video', 'LlamaFactory', 'transformers', 'vLLM'],
-    status: 'draft',
-  },
-  {
-    slug: 'semantic-cache-verification',
-    title: 'Semantic Cache 的命中校验：误命中、校验器故障与 fail-closed',
-    description: 'Semantic cache 靠 embedding 相似度命中，意思相反的问题也可能命中。命中校验的做法，以及校验器故障时 fail-open 与 fail-closed 的取舍、请求取消与候选相似度的处理。',
-    category: '推理系统',
-    tags: ['Semantic cache', 'Semantic Router', 'NLI', 'Fail-closed', 'LLM serving'],
-    status: 'draft',
-  },
-  {
-    slug: 'liger-hf-patching',
-    title: 'Liger-Kernel 的模型接入：类替换、实例 patch 与静默回退',
-    description: 'Liger-Kernel 怎样把 Triton kernel 接入 Hugging Face 模型：构建前替换类与构建后 patch 实例的区别，漏掉的 patch 为什么静默回退到原实现，以及 patched forward 中 logits_to_keep、shift_labels 与 FLCE 的关系。',
-    category: '训练优化',
-    tags: ['Liger Kernel', 'Hugging Face', 'transformers', 'Monkey patch', 'RMSNorm', 'FLCE', 'Qwen'],
-    status: 'draft',
-  },
-  {
-    slug: 'bf16-weight-offset',
-    title: 'Gemma RMSNorm 的 1 + w：BF16 舍入与 weight offset 的相加位置',
-    description: 'Gemma 的 RMSNorm 把缩放系数写成 1 + w。weight 以 BF16 存储时，在 BF16 中加 1 会舍掉 w 的低位：BF16 的 ulp 与舍入、误差怎样进入 Y 与 dX，以及把 offset 移进 kernel、在 FP32 中相加的做法。',
-    category: '算子优化',
-    tags: ['RMSNorm', 'Gemma', 'BF16', '数值精度', 'CuTe DSL', 'Liger Kernel'],
-    status: 'draft',
+    status: 'published',
+    publishedAt: '2026-10-27',
   },
   {
     slug: 'linear-attention',
@@ -75,7 +39,8 @@ export const posts: Post[] = [
     description: '把历史写进固定大小的矩阵 state：decay gate 与 delta rule 决定忘什么、怎么写，chunkwise 计算让训练并行，Gated DeltaNet 与 KDA 以 3:1 与 full attention 混合，以及 state 在推理系统中的代价与线性 attention 与稀疏 attention 两条路线的比较。',
     category: '推理系统',
     tags: ['Attention', 'Linear attention', 'Gated DeltaNet', 'KDA', 'Qwen', 'Kimi', 'KV cache'],
-    status: 'draft',
+    status: 'published',
+    publishedAt: '2026-10-13',
   },
   {
     slug: 'sparse-attention',
@@ -87,20 +52,13 @@ export const posts: Post[] = [
     publishedAt: '2026-10-10',
   },
   {
-    slug: 'pd-scheduling',
-    title: 'PD 分离的调度：路由、接纳与比例',
-    description: 'PD 分离之后，一个请求要经过四次调度决策：选哪个 P、要不要远端 prefill、D 何时接纳、P 与 D 各几个。Mooncake、SGLang、vLLM、llm-d 与 Dynamo 的做法与取舍。',
-    category: '推理系统',
-    tags: ['PD disaggregation', 'LLM serving', 'Scheduling', 'KV cache', 'vLLM', 'SGLang', 'Dynamo', 'Mooncake'],
-    status: 'draft',
-  },
-  {
     slug: 'attention-kv-compression',
     title: 'KV Cache 压缩：MQA、GQA 与 MLA',
     description: 'decode 每步都要把 KV cache 读一遍。MQA、GQA 让多个 query head 共享 KV head，MLA 只缓存低秩 latent 并借矩阵吸收在 decode 时做 MQA，DeepSeek V4 直接训练 key 与 value 共用的单个 KV head。',
     category: '推理系统',
     tags: ['Attention', 'KV cache', 'MQA', 'GQA', 'MLA', 'DeepSeek', 'vLLM', 'LLM serving'],
-    status: 'draft',
+    status: 'published',
+    publishedAt: '2026-10-09',
   },
   {
     slug: 'dspark',
@@ -108,7 +66,8 @@ export const posts: Post[] = [
     description: 'DeepSeek V4 线上的 speculative decoding：并行 backbone 加一个很小的 Markov head 生成 draft，confidence head 估计每个 token 的存活概率，调度器按负载决定每个请求验几个。',
     category: '推理系统',
     tags: ['DSpark', 'DeepSeek V4', 'Speculative decoding', 'DFlash', 'Adaptive verification', 'vLLM', 'LLM serving'],
-    status: 'draft',
+    status: 'published',
+    publishedAt: '2026-10-07',
   },
   {
     slug: 'vllm-distributed',
@@ -120,24 +79,17 @@ export const posts: Post[] = [
     publishedAt: '2026-10-03',
   },
   {
-    slug: 'jev',
-    title: 'Jev：不生成文本的模型怎么做决定',
-    description: '用一条工单和三个问题，拆解 decision model 怎样在一次 forward 里共享 state、隔离问题，并从 hidden state 直接读出概率。',
-    category: '推理系统',
-    tags: ['Jev', 'Kev', 'Decision model', 'Attention mask', 'Pointer head', 'Calibration', 'Prefix caching'],
-    status: 'draft',
-  },
-  {
     slug: 'llm-quantization',
     title: 'LLM 量化：FP8、INT4、NVFP4 与 Marlin Kernel',
     description: '以 Qwen3.8-27B 为例，从一个数怎么用 4 bit 存讲起：16 个刻度放在哪（FP8、分组与 NVFP4），每个数落到哪个刻度（GPTQ），以及省下的字节换来的显存与速度。',
     category: '推理系统',
     tags: ['Quantization', 'FP8', 'INT4', 'NVFP4', 'Marlin', 'GPTQ', 'AWQ', 'vLLM', 'LLM serving'],
-    status: 'draft',
+    status: 'published',
+    publishedAt: '2026-10-07',
   },
   {
     slug: 'vllm-speculative-decoding',
-    title: 'Vllm · Speculative Decoding：猜多个，验一次',
+    title: 'Speculative Decoding：猜多个，验一次',
     description: '从拒绝采样出发，理解 speculative decoding 为什么不改变输出分布，以及 draft model、n-gram 与 EAGLE-3 在 vLLM 中的接受率与加速比。',
     category: '推理系统',
     tags: ['vLLM', 'Speculative decoding', 'EAGLE', 'Rejection sampling', 'LLM serving'],
@@ -146,7 +98,7 @@ export const posts: Post[] = [
   },
   {
     slug: 'vllm-cpu-overhead',
-    title: 'Vllm · CPU Overhead：让 GPU 不等 CPU',
+    title: 'CPU Overhead：让 GPU 不等 CPU',
     description: '从每步 decode 的 CPU overhead 出发，理解 vLLM V1 如何用进程拆分、async scheduling、Model Runner V2 与 CUDA Graph 让 GPU 不等 CPU。',
     category: '推理系统',
     tags: ['vLLM', 'Async scheduling', 'Model Runner V2', 'CUDA Graph', 'LLM serving'],
@@ -155,7 +107,7 @@ export const posts: Post[] = [
   },
   {
     slug: 'vllm-prefix-caching',
-    title: 'Vllm · Prefix Caching：跨请求复用 KV Cache',
+    title: 'Prefix Caching：跨请求复用 KV Cache',
     description: '从链式 hash、free queue 与 radix tree 出发，理解 vLLM 与 SGLang 如何跨请求复用 KV cache，以及路由、分层存储与侧信道带来的边界。',
     category: '推理系统',
     tags: ['vLLM', 'Prefix caching', 'KV cache', 'SGLang', 'RadixAttention', 'LLM serving'],
@@ -164,7 +116,7 @@ export const posts: Post[] = [
   },
   {
     slug: 'vllm-scheduler',
-    title: 'Vllm · Continuous Batching 与调度器',
+    title: 'Continuous Batching 与调度器',
     description: '从 token 数与算力的关系出发，理解 iteration-level scheduling、chunked prefill 与 V1 的 token budget，并对照 vLLM v0.30.0 的实现。',
     category: '推理系统',
     tags: ['vLLM', 'Continuous batching', 'Chunked prefill', 'Scheduler', 'LLM serving'],
@@ -173,7 +125,7 @@ export const posts: Post[] = [
   },
   {
     slug: 'vllm-paged-attention',
-    title: 'Vllm · PagedAttention：KV Cache 的分页管理',
+    title: 'PagedAttention：KV Cache 的分页管理',
     description: '从 KV cache 的三种浪费出发，理解 block table、按需分配与前缀共享，并对照 vLLM v0.30.0 的实现。',
     category: '推理系统',
     tags: ['vLLM', 'PagedAttention', 'KV cache', 'Prefix caching', 'LLM serving'],
@@ -245,6 +197,10 @@ export const posts: Post[] = [
   },
 ];
 
+// 草稿只在 dev 中出现；构建时这一分支被移除，草稿不进入产物。
+export const posts: Post[] = import.meta.env?.DEV ? [...publishedPosts, ...drafts] : publishedPosts;
+
+// 已发布的按日期从新到旧，同一天保持登记顺序；草稿排在最后。
 export const orderedPosts = [...posts].sort((a, b) =>
   (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''),
 );
