@@ -17,13 +17,12 @@
 .search-field input::placeholder { color: var(--color-muted); }
 .article-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border); }
 .article-list li { margin: 0; min-width: 0; border-bottom: 1px solid var(--color-border); }
-.article-row { display: grid; grid-template-columns: 104px minmax(0, 1fr) auto; align-items: baseline; gap: 24px; padding: 18px 8px; text-decoration: none; color: var(--color-text); transition: background-color .18s; }
+.article-row { display: grid; grid-template-columns: 104px minmax(0, 1fr); align-items: baseline; gap: 24px; padding: 18px 8px; text-decoration: none; color: var(--color-text); transition: background-color .18s; }
 .article-row:hover { background: var(--color-surface); }
 .article-row time { color: var(--color-muted); font-size: 13px; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 .article-row h2 { margin: 0; color: var(--color-heading); font-size: 17px; line-height: 1.6; font-weight: 600; text-wrap: pretty; }
 .article-row:hover h2 { color: var(--color-accent); }
 .title-detail { color: var(--color-muted); font-weight: 400; }
-.article-category { color: var(--color-secondary); font-size: 12px; white-space: nowrap; }
 .empty-state { padding: 36px 0; text-align: center; border-bottom: 1px solid var(--color-border); }
 .empty-state button { display: inline-flex; align-items: center; gap: 8px; padding: 8px; border: 0; background: transparent; color: var(--color-accent); font: inherit; font-size: 13px; cursor: pointer; }
 .sr-only, .skip-link:not(:focus) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

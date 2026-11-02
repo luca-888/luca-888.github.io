@@ -40,7 +40,6 @@ function App() {
                 <a className="article-row" href={`${import.meta.env.BASE_URL}posts/${post.slug}/`}>
                   <time dateTime={post.publishedAt}>{post.publishedAt ?? '草稿'}</time>
                   <h2><TitleText title={post.title} /></h2>
-                  <span className="article-category">{post.category}</span>
                 </a>
               </li>
             ))}
