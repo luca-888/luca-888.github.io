@@ -31,7 +31,7 @@ export const publishedPosts: Post[] = [
     category: '算子优化',
     tags: ['GEMM', 'CUDA', 'H100', 'Tensor Core', 'wgmma', 'TMA', 'warp specialization', 'cuBLAS'],
     status: 'published',
-    publishedAt: '2026-10-27',
+    publishedAt: '2026-10-28',
   },
   {
     slug: 'linear-attention',
